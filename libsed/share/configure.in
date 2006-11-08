@@ -1,0 +1,6 @@
+AC_INIT(test.sediment)
+
+AM_INIT_AUTOMAKE(libsed_test_files,1.0)
+
+AC_OUTPUT(Makefile)
+

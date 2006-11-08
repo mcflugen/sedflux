@@ -1,0 +1,6 @@
+AC_INIT(default.sediment)
+
+AM_INIT_AUTOMAKE(diffusion_input_files,1.0)
+
+AC_OUTPUT(Makefile)
+

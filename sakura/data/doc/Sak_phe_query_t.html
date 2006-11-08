@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>typedef struct Sak_phe_query_t </TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.8">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>typedef struct <A HREF="#DOC.DOCU">Sak_phe_query_t </A></H2></H2>
+<HR>
+<P><DL>
+ <DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.21.1">dx</A></B>
+<DD><I>The column spacing</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.21.2">x</A></B>
+<DD><I>The position of the sediment where the query will be made</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.21.3">erode_depth</A></B>
+<DD><I>The depth of erosion</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double* <B><A HREF="#DOC.21.4">phe</A></B>
+<DD><I>Array to hold the grain type distribution</I>
+</DL></P>
+
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>The Sak_phe_query_t structure describes the grain size distribution of
+the bottom sediments used in the sakura turbidity current model. It is intended
+to be passed as the data parameter of a Eh_query_func that communicates with
+the sedflux architecture.
+
+<P>The dx member specifies the column spacing in the Sed_cube.
+
+<P>The x member gives the position of the sediment that is to be queried.
+
+<P>The erode_depth is the depth of erosion.  All of the sediment up to this depth
+is averaged to find the grain size distibution.  This value should be changed
+if there is not enough sediment at the particular location.
+
+<P>The phe member points to the location to write the grain size distribution to.
+
+<P></BLOCKQUOTE>
+<DL>
+
+<A NAME="dx"></A>
+<A NAME="DOC.21.1"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double dx</B></TT>
+<DD>The column spacing
+<DL><DT><DD></DL><P>
+<A NAME="x"></A>
+<A NAME="DOC.21.2"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double x</B></TT>
+<DD>The position of the sediment where the query will be made
+<DL><DT><DD></DL><P>
+<A NAME="erode_depth"></A>
+<A NAME="DOC.21.3"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double erode_depth</B></TT>
+<DD>The depth of erosion
+<DL><DT><DD></DL><P>
+<A NAME="phe"></A>
+<A NAME="DOC.21.4"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double* phe</B></TT>
+<DD>Array to hold the grain type distribution
+<DL><DT><DD></DL><P></DL>
+<DL><DT><DT><B>See Also:</B><DD>Eh_query_func , <!1><A HREF="sakura_get_phe.html">sakura_get_phe</A> .
+<BR><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

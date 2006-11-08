@@ -1,0 +1,36 @@
+AC_INIT(src)
+
+PROGRAM=sedflux
+VERSION=0.9b
+SUBDIRS="src mfiles data"
+
+#AC_CANONICAL_SYSTEM
+
+AM_INIT_AUTOMAKE(sedflux,0.9b)
+
+AC_MSG_CHECKING(if plume centerline will be used)
+AC_ARG_ENABLE(centerline, \
+   [--enable-centerline     Use plume centerline for deposition rates], \
+   AC_DEFINE(USE_CENTERLINE), \
+   enable_centerline=no)
+AC_MSG_RESULT($enable_centerline)
+
+AC_MSG_CHECKING(for CFLAGS)
+AC_MSG_RESULT($CFLAGS)
+AC_MSG_CHECKING(for CXXFLAGS)
+AC_MSG_RESULT($CXXFLAGS)
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_MAKE_SET
+AC_PROG_LN_S
+
+AC_SUBST(PROGRAM)
+AC_SUBST(VERSION)
+AC_SUBST(SUBDIRS)
+
+AC_CONFIG_SUBDIRS(src mfiles data)
+
+AC_OUTPUT(Makefile)
+

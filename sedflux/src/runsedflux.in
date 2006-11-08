@@ -1,0 +1,11 @@
+#!/bin/bash
+
+SEDFLUX_DIR=@prefix@
+SEDFLUX_HOME=$SEDFLUX_DIR
+LD_LIBRARY_PATH=/usr/local/lang/lib/v9:$LD_LIBRARY_PATH:/usr/lib/lwp:@libdir@
+
+export SEDFLUX_DIR
+export SEDFLUX_HOME
+export LD_LIBRARY_PATH
+
+$SEDFLUX_HOME/bin/sedflux $@

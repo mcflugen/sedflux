@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+SAKURA_DIR=@prefix@
+SAKURA_HOME=$SAKURA_DIR
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/lwp:$SAKURA_DIR/lib
+
+export SAKURA_DIR
+export SAKURA_HOME
+export LD_LIBRARY_PATH
+
+$SAKURA_HOME/bin/sakura "$*"

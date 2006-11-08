@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>void sakura_get_phe</TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.8">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>void <A HREF="#DOC.DOCU">sakura_get_phe</A></H2><H2>( gpointer user_data,  gpointer data )</H2><BLOCKQUOTE>Get the grain size distribution of bottom sediments. </BLOCKQUOTE>
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>Get the fractions of each grain type of bottom sediments from a
+Sed_cube.  This function is intended to be used within another program that
+needs to communicate with the sedflux architecture but is otherwise separate
+from sedflux.
+
+<P>Note that the member, eroded_depth may be changed to reflect the actual amount
+of bottom sediment available to be eroded.  That is, we may be trying to erode
+more sediment than is actually present.
+
+<P>In this case, the data pointer should point to a Sakura_get_phe_t structure
+that contains the grain size distribution and the number of grains.  This
+information is simply copied to the location pointed to by phe.
+
+<P></BLOCKQUOTE>
+<DL><DT><DT><B>Parameters:</B><DD><B></B> - <!1><A HREF="Sak_phe_query_t.html#DOC.21.4">phe</A>  The fraction of each grain type in the bottom sediments.
+<BR><B>data</B> -  A structure that contains the necessary data for the function to
+retreive the grain type fracitons.
+<BR><DT><B>Returns:</B><DD>  A pointer to the array of grain type fractions.
+<BR><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

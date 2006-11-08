@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>typedef struct Sakura_t </TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.8">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>typedef struct <A HREF="#DOC.DOCU">Sakura_t </A></H2></H2>
+<HR>
+<P><DL>
+ <DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.1">Ea</A></B>
+<DD><I>Entrainment coefficient</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.2">Eb</A></B>
+<DD><I>Entrainment coefficient</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.3">Cd</A></B>
+<DD><I>Drag coefficient</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.4">rhoSW</A></B>
+<DD><I>Density of sea water</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.5">rhoRW</A></B>
+<DD><I>Density of river water</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.6">channelWidth</A></B>
+<DD><I>Width of the channel</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double <B><A HREF="#DOC.15.7">channelLength</A></B>
+<DD><I>Length of the channel</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>Eh_query_func <B><A HREF="#DOC.15.8">get_phe</A></B>
+<DD><I>Function that gets the grain size distribution</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>Eh_query_func <B><A HREF="#DOC.15.9">add</A></B>
+<DD><I>Function that adds sediment to a location</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>Eh_query_func <B><A HREF="#DOC.15.10">remove</A></B>
+<DD><I>Function that removes sediment from a location</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>Eh_query_func <B><A HREF="#DOC.15.11">get_depth</A></B>
+<DD><I>Function that gets the depth at an index</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>Eh_query_func <B><A HREF="#DOC.15.12">set_depth</A></B>
+<DD><I>Function that sets the depth at an index</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>gpointer <B><A HREF="#DOC.15.13">get_phe_data</A></B>
+<DD><I>Architecture data used for the get_phe function</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>gpointer <B><A HREF="#DOC.15.14">add_data</A></B>
+<DD><I>Architecture data used for the add function</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>gpointer <B><A HREF="#DOC.15.15">remove_data</A></B>
+<DD><I>Architecture data used for the remove function</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>gpointer <B><A HREF="#DOC.15.16">depth_data</A></B>
+<DD><I>Architecture data used for the set/get depth functions</I>
+</DL></P>
+
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>The Sakura_t structure holds physical constants that are required for the
+turbidity current model.  Also included are pointers to various Eh_query_func's
+that can be used to query the architecture.  Here there are functions to add
+sediment, remove sediment, and get the grain size distribution.
+</BLOCKQUOTE>
+<DL>
+
+<A NAME="Ea"></A>
+<A NAME="DOC.15.1"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double Ea</B></TT>
+<DD>Entrainment coefficient
+<DL><DT><DD></DL><P>
+<A NAME="Eb"></A>
+<A NAME="DOC.15.2"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double Eb</B></TT>
+<DD>Entrainment coefficient
+<DL><DT><DD></DL><P>
+<A NAME="Cd"></A>
+<A NAME="DOC.15.3"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double Cd</B></TT>
+<DD>Drag coefficient
+<DL><DT><DD></DL><P>
+<A NAME="rhoSW"></A>
+<A NAME="DOC.15.4"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double rhoSW</B></TT>
+<DD>Density of sea water
+<DL><DT><DD></DL><P>
+<A NAME="rhoRW"></A>
+<A NAME="DOC.15.5"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double rhoRW</B></TT>
+<DD>Density of river water
+<DL><DT><DD></DL><P>
+<A NAME="channelWidth"></A>
+<A NAME="DOC.15.6"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double channelWidth</B></TT>
+<DD>Width of the channel
+<DL><DT><DD></DL><P>
+<A NAME="channelLength"></A>
+<A NAME="DOC.15.7"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double channelLength</B></TT>
+<DD>Length of the channel
+<DL><DT><DD></DL><P>
+<A NAME="get_phe"></A>
+<A NAME="DOC.15.8"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>Eh_query_func get_phe</B></TT>
+<DD>Function that gets the grain size distribution
+<DL><DT><DD></DL><P>
+<A NAME="add"></A>
+<A NAME="DOC.15.9"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>Eh_query_func add</B></TT>
+<DD>Function that adds sediment to a location
+<DL><DT><DD></DL><P>
+<A NAME="remove"></A>
+<A NAME="DOC.15.10"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>Eh_query_func remove</B></TT>
+<DD>Function that removes sediment from a location
+<DL><DT><DD></DL><P>
+<A NAME="get_depth"></A>
+<A NAME="DOC.15.11"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>Eh_query_func get_depth</B></TT>
+<DD>Function that gets the depth at an index
+<DL><DT><DD></DL><P>
+<A NAME="set_depth"></A>
+<A NAME="DOC.15.12"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>Eh_query_func set_depth</B></TT>
+<DD>Function that sets the depth at an index
+<DL><DT><DD></DL><P>
+<A NAME="get_phe_data"></A>
+<A NAME="DOC.15.13"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>gpointer get_phe_data</B></TT>
+<DD>Architecture data used for the get_phe function
+<DL><DT><DD></DL><P>
+<A NAME="add_data"></A>
+<A NAME="DOC.15.14"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>gpointer add_data</B></TT>
+<DD>Architecture data used for the add function
+<DL><DT><DD></DL><P>
+<A NAME="remove_data"></A>
+<A NAME="DOC.15.15"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>gpointer remove_data</B></TT>
+<DD>Architecture data used for the remove function
+<DL><DT><DD></DL><P>
+<A NAME="depth_data"></A>
+<A NAME="DOC.15.16"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>gpointer depth_data</B></TT>
+<DD>Architecture data used for the set/get depth functions
+<DL><DT><DD></DL><P></DL>
+<DL><DT><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

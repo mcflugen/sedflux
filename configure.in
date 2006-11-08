@@ -1,0 +1,52 @@
+builtin(include,acsed.m4)
+
+AC_INIT(acsed.m4)
+
+PROGRAM=ew
+VERSION=1.14
+SUBDIRS="libutils libsed subside xshore squall sakura flow xpat muds avulsion diffusion hydrotrend sedutils bing compact failure inflow plume quake sedflux"
+
+AC_CANONICAL_SYSTEM
+
+AC_SUBST($CPPFLAGS)
+SED_LIB_GLIB(2,6,0)
+
+AC_PROG_LIBTOOL
+
+AM_INIT_AUTOMAKE(ew,1.13)
+
+AC_MSG_CHECKING(if plume centerline will be used)
+AC_ARG_ENABLE(centerline, \
+   [--enable-centerline     Use plume centerline for deposition rates], \
+   AC_DEFINE(USE_CENTERLINE), \
+   enable_centerline=no)
+AC_MSG_RESULT($enable_centerline)
+
+AC_MSG_CHECKING(if shared libraries will be used)
+AC_ARG_ENABLE(shared_libs, \
+   [--enable-shared         Use shared libraries], \
+   AC_DEFINE(USE_SHARED), \
+   enable_shared=no)
+AC_MSG_RESULT($enable_shared)
+
+GLIB_ADD_TO_VAR(CPPFLAGS,"-DDATADIR=${datadir}","-DDATADIR=${datadir}")
+
+AC_MSG_CHECKING(for CFLAGS)
+AC_MSG_RESULT($CFLAGS)
+AC_MSG_CHECKING(for CXXFLAGS)
+AC_MSG_RESULT($CXXFLAGS)
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_MAKE_SET
+AC_PROG_LN_S
+
+AC_SUBST(PROGRAM)
+AC_SUBST(VERSION)
+AC_SUBST(SUBDIRS)
+
+AC_CONFIG_SUBDIRS( libutils libsed subside xshore squall sakura flow xpat muds avulsion diffusion hydrotrend sedutils bing compact failure inflow plume quake sedflux )
+
+AC_OUTPUT(Makefile)
+

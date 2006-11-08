@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<HTML>
+<HEAD>
+   <TITLE>typedef struct Sak_get_phe_t </TITLE>
+   <META NAME="GENERATOR" CONTENT="DOC++ 3.4.8">
+</HEAD>
+<BODY BGCOLOR="#ffffff">
+
+<H2>typedef struct <A HREF="#DOC.DOCU">Sak_get_phe_t </A></H2></H2>
+<HR>
+<P><DL>
+ <DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>double* <B><A HREF="#DOC.16.1">phe_bottom</A></B>
+<DD><I>The grain type distribution of bottom sediments</I>
+<DT>
+<IMG ALT="[more]" BORDER=0 SRC=icon1.gif>int <B><A HREF="#DOC.16.2">n_grains</A></B>
+<DD><I>The number of grain types</I>
+</DL></P>
+
+
+<A NAME="DOC.DOCU"></A>
+<HR>
+<H2>Documentation</H2>
+<BLOCKQUOTE>The Sak_get_phe_t structure describes the grain size distribution of
+the bottom sediments used in the sakura turbidity current model. It is intended
+to be passed as the data parameter of a Eh_query_func.
+
+<P>The phe_bottom member gives the fraction of each grain type that is found on
+the sea floor.
+
+<P>The n_grains member is the number of grain types (the length of phe_bottom ).
+
+<P></BLOCKQUOTE>
+<DL>
+
+<A NAME="phe_bottom"></A>
+<A NAME="DOC.16.1"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>double* phe_bottom</B></TT>
+<DD>The grain type distribution of bottom sediments
+<DL><DT><DD></DL><P>
+<A NAME="n_grains"></A>
+<A NAME="DOC.16.2"></A>
+<DT><IMG ALT="o" BORDER=0 SRC=icon2.gif><TT><B>int n_grains</B></TT>
+<DD>The number of grain types
+<DL><DT><DD></DL><P></DL>
+<DL><DT><DT><B>See Also:</B><DD>Eh_query_func , <!1><A HREF="sakura_get_phe.html">sakura_get_phe</A> .
+<BR><DD></DL><P><P><I><A HREF="index.html">Alphabetic index</A></I></P><HR>
+<BR>
+This page was generated with the help of <A HREF="http://docpp.sourceforge.net">DOC++</A>.
+</BODY>
+</HTML>

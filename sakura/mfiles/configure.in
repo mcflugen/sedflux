@@ -1,0 +1,6 @@
+AC_INIT(read_sakura.m)
+
+AM_INIT_AUTOMAKE(sakura_matlab_files,1.0)
+
+AC_OUTPUT(Makefile)
+

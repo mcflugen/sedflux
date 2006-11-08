@@ -1,0 +1,105 @@
+--- running sedflux 2d ---
+
+to run sedflux2d you will need to create a project directory where the input
+files will be stored and the output files can be written to.  you will need at
+least four input files.  depending on the processes that you plan to use, you
+may need more (example input files are provided with the distribution within
+the share/sedflux_input_files directory).  these four files are,
+   (1) an initialization file
+   (2) a sediment file
+   (3) a bathymetry file
+   (4) a process file
+
+---
+--- initialization file
+---
+
+the initialization file will usually end with a .init extension.  the name of
+this file can be passed to sedflux on the command line:
+   sedflux in=test.init
+where test.init is the initialization file.  in this case, the project
+directory is the current working directory.  if you do not specify any command
+line arguments, you will be prompted to give a project directory and the 
+name of the initialization file.
+
+* * *
+windows note: most likely you will not be using command line arguments and
+so will have to enter the project directoy and initialization file by hand.
+in this case, to specify a directory on another filesystem, begin the path
+with the drive letter followed by a colon.  as an example,
+   c:/My Sedflux Projects/This project
+also, use forward slashes (/) rather than back slashes (\).
+* * *
+
+---
+--- sediment file
+---
+
+the sediment file specifies a number of grain types that will be used to fill
+the basin.  each grain type has a set of parameters that are specific to it.
+examples of grain type parameters are: grain size, grain density, saturated
+density, etc.  any number greater than one grain type can be specified.  the
+first grain type listed is interpreted by sedflux to be bed load.  the rest of
+the grains are assumed to be suspended load.  the particular name of the 
+sediment file is specified within the init file.
+
+---
+--- bathymetry file
+---
+
+the bathymetry file specifies the elevation of the initial floor of the model
+run.  elevations can be thought to be given with respect to sea level.
+negative elevations are below sea level.  the data is contained within an ascii
+file as in two comma-separated columns.  note however, that the data must be
+precedeed by a line that indicates the start of the data as such,
+   --- data ---
+   0, 10
+   40000, -200
+   100000, -200
+each column is in meters.  sedflux interpolates between these points to match
+the resolution of the model run.  the name of the bathymetry file is provided
+in the init file.
+
+---
+--- process file
+---
+
+this is the largest of the input files.  you use this file to control the 
+various processes that sedflux will model.  each process begins with a line
+of the form:
+   --- PROCESS_NAME ---
+where PROCESS_NAME is the name of a particular process ('sea level', or
+erosion, for example).  this is then followed by five label/value pairs.  they
+will look something like:
+   process name:               sea level
+   active:                     yes
+   logging:                    no 
+   repeat interval:            always
+   noisy repeat interval:      no
+the meaning of each of the labels are:
+   process name    - is the name of the process.  it does not have to match the
+                     name in the preceeding line.  it is only used for writing
+                     to log files and for debugging.
+   active          - should sedflux model this process or not?  if 'yes',
+                     sedflux will run the specified process.  if 'no', the
+                     process will be skipped.
+   logging         - if 'yes' additional information will be written to a log
+                     file as well as to the screen.  this information is really
+                     only of interest for debugging purposes.
+   repeat interval - specify how often the process will be run.  some processes
+                     may operate on longer time scales then others and so may
+                     not need to be run as frequently as others.  this value
+                     can either be the keyword 'always', or a period of time.
+                     'always' indicates that the process should be run with
+                     every time step.  a duration is given as a series of
+                     numbers followed by a time unit (d=day, m=month, y=year).
+                     as an example: 1y is yearly, 7d is weekly, 1y 6m is 1.5
+                     yearly etc.  if this duration is less than the time step
+                     of the run (as provided in the init file), it is set to
+                     this time step and so is run with every time step.
+   noisy repeat interval - this is no longer used.  it should be set to 'no'.
+   
+subsequent label/value pairs withing a process are specific to each process.
+i hope that the labels by themselves are sufficient as a description.  
+unfortunatly, i'm sure this is not always the case.
+

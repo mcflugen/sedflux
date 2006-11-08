@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+INFLOW_DIR=@prefix@
+INFLOW_HOME=$INFLOW_DIR
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/lwp:$INFLOW_DIR/lib
+
+export INFLOW_DIR
+export INFLOW_HOME
+export LD_LIBRARY_PATH
+
+$INFLOW_HOME/bin/inflow "$*"

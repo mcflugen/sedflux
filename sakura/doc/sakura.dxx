@@ -1,0 +1,13 @@
+/**@name sakura
+
+\begin{center}
+   {\Large{\bf Welcome to the wonderful world of sakura}}
+\end{center}
+
+@memo        The architecture of sedflux (2D)
+@version     1.0
+@author      EWH Hutton
+*/
+
+//@Include: ../src/sakura.c
+

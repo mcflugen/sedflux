@@ -1,0 +1,55 @@
+Length of basin (km):                              50
+Bin spacing (m):                                   10
+Density of seawater (kg/m^3):                      1028
+Density of river water (kg/m^3):                   1028
+Number of grain sizes:                             5
+Rate removal constant (1/day):                     25,   16.8,   9.0,   3.2,   2.4
+Equivalent grain diameter (microns):               202,   105,   69,   25,  10
+Compoinent grain diameter (microns):               150,   50,   25,   5,   1
+Fraction of each grain in river:                   0.0,      0.1,   0.2,   0.3,   0.4
+Fraction of flow occupied by each grain:           1,   1,  1,  1, 1.0
+Bulk density (kg/m^3):                             1850,   1600,   1400,   1300,   1200
+Grain density (kg/m^3):                            2650, 2650, 2650, 2650, 2650
+Distance from river to start deposition (km):      2
+Average grain size of bottom sediments (microns):  64
+Average bulk density of bottom sediments (kg/m^3): 1600
+Fraction of each grain size in bottom sediments:   .2,      .2,      .2,      0.2,      0.2
+sua (Pa/m):                                        30
+sub (kPa):                                         .5
+Entrainment constant, Ea (-):                      0.00153
+Entrainment constant, Eb (-):                      0.0204
+Coefficient of drag (-):                           0.004
+Angle of internal friction (degrees):              20
+Kinematic viscosity of clear water (*1e-6m*m/s):   1.3
+Read in flood data:                                file
+
+
+
+/*
+80            : length of basin (km) 
+5            : bin spacing (m)
+100            : river mouth width (m)
+I            : grid type, I=irregular, E=regular
+1028,1028         : density of seawater, river water (kg/m/m/m)
+2650,1            : grain density (kg/m/m/m), number of grain sizes
+25,12.3,7.0,4.0,2.7  : rate removal constants for each grain size (1/day)
+210,60,50,40,30   : equivalent grain diameter for each grain size (microns)
+150,50,25,10,5         : component grain sizes (microns)
+1,0.05,0.05,0.05,0.05      : fraction of each grain size in river water
+1850,1500,1400,1300,1200   : bulk density for each grain size (kg/m/m/m)
+2             : position to start deposition (km)
+64           : average grain size of bottom sediments (microns)
+1600         : average bulk density of bottom sediments (kg/m/m/m)
+0.0,0.0,0.33,0.33,0.331   : fraction of each grain size in bottom sediments
+400   : vertical gradient in shear strength of bottom sediments (kPa/m)
+0     : surface strength of bottom sediments (kPa)
+0.00153,0.0204      : entrainment constants, Ea,Eb for E=Ea/(Eb+Rio)
+.004         : drag coefficient
+20         : angle of internal friction (degrees)
+1.3         : kinematic viscosity of clear water (*1e-6m*m/s)
+F                    : read in flood data from file=F, or inline=I
+5000,1500               : peak discharge, average discharge
+1060.00,1035.00         : peak density, critical density
+1,5,1                   : flood duration,time elapsed to peak,peak durt.
+5.0                     : initial depth of flow
+*/

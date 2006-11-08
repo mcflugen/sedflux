@@ -1,0 +1,124 @@
+--- Compiling and installing sedflux ---
+
+The ew package requires glib version 2.6 or newer.  This latest version can
+be downloaded from www.gtk.org.  Alternatively, the latest version that is
+currently being used in ew is available at ftp://instaar.colorado.edu/pub/ew.
+
+--- Installing glib ---
+
+If you do not have glib installed on your machine, you must install it before
+installing the ew package.
+
+1) unzip and un-tar the distribution.
+
+gunzip glib-2.0.6.tar.gz
+tar xvf glib-2.0.6.tar
+
+2) create a build directory
+
+mkdir glib-build; cd glib-build
+
+3) configure the package.  Here you must decide where you want to install the
+glib package.  If you do not specify the prefix argument, then it will be
+installed in /usr/local.  When i want to install it in my home directory,
+i use /home/plum/huttone/my_progs/glib inplace of GLIB_DIR.
+
+../glib-2.0.6/configure --prefix=GLIB_DIR
+
+4) make the package
+
+make
+
+5) install the package
+
+make install
+
+If everything went ok, then glib should be installed in GLIB_DIR.  Now you can
+install the ew package.  The steps are nearly the same.
+
+--- Installing sedflux ---
+
+1) unzip and un-tar the distribution.
+
+gunzip ew-1.5.tar.gz
+tar xvf ew-1.5.tar
+
+2) create a build directory
+
+mkdir ew-build; cd ew-build
+
+3) configure the package.  Here you must decide where you want to install the
+glib package.  If you do not specify the prefix argument, then it will be
+installed in /usr/local.  When i want to install it in my home directory,
+i use /home/plum/huttone/my_progs/ew inplace of EW_DIR.  Also, you need to
+specify where the glib library and header files are found.
+
+LD_LIBRARY_PATH=GLIB_DIR/lib CPPFLAGS='-IGLIB_DIR/include/glib-2.0 -IGLIB_DIR/lib/glib-2.0/include' ../ew-1.5/configure --prefix=EW_DIR
+
+Again, GLIB_DIR and EW_DIR are the directories where glib is installed and 
+where you want ew installed.  To speed things up, configure can cache the 
+results of checks.  To turn this on, pass the option --config-cache to
+configure.
+
+4) make the package
+
+make package
+
+The ew package is now installed in EW_DIR.  The executables are located in the
+EW_DIR/bin.  Specifically, sedflux is run using EW_DIR/bin/runsedflux.  Some
+input files and matlab files (used to view output) can be found in 
+EW_DIR/share.
+
+--- compiling on cygwin ---
+
+When compiling on cygwin, i turn off shared libraries.  To do this, pass the following command line arguments to configure:
+
+--disable-shared --enable-static
+
+I believe that both arguments are needed but am not sure and iniclude them both just in case.
+
+--- compiling on 64 bit solaris ---
+
+first note that if compiling a 64 bit version of sedflux, you will nees a 64 bit version of glib.  the procedure for creating a 64 bit glib is the same as that for sedflux.  also, for this compilation i am using the following programs,
+
+autoconf-2.57
+automake-1.7.7
+libtool-1.5
+
+i'm not certain that these versions are necessary but that's just what i've been using.
+
+compiling a 64 bit version of sedflux is a little more tricky.  not much though.  first, gcc does not compile 64 bit so i have been using the compiler that comes with the forte 7 developers kit.  to make sure that the configure script uses the correct comipiler and linker i define the following variables before i run configure:
+
+CC=/usr/local/lang/bin/cc
+LD=/usr/ccs/bin/sparcv9/ld
+
+also, we have to make sure that we link with the 64 bit libraries,
+
+LDFLAGS="-L/usr/lib/sparcv9 -L/usr/ucblib/sparcv9"
+
+finally, we must pass the correct flags to the compiler,
+
+CFLAGS="-xarch=v9b -xCC"
+
+alternatively, if you would like to optimize the code you may want to try,
+
+CFLAGS="-fast -xarch=v9b -xCC -xautopar -xO5"
+
+of course LDFLAGS should also include the path to the 64 bit glib and CPPFLAGS still needs to be defined as above to point to the correct glib header files.
+
+--- compiling for OSF1 V5.1 ---
+
+I have found that when compiling for dec alpha, I need to do the following:
+
+- Add '-mieee -pthread' to CFLAGS
+- Add '-lrt' to LDFLAGS
+
+For example:
+
+setenv CPPFLAGS '-I/export/home3/gjouet/local/include/glib-2.0 -I/export/home3/gjouet/local/lib/glib-2.0/include -I/export/home3/gjouet/local/include'
+setenv LDFLAGS '-L/export/home3/gjouet/local/lib -lrt'
+setenv CFLAGS '-mieee -pthread -O3'
+../../src/ew-1.13/configure --prefix=/export/home3/gjouet/local/ew113 --config-cache
+make package
+
+

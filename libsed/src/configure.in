@@ -1,0 +1,49 @@
+builtin(include, acsed.m4)dnl
+
+AC_INIT(sed_sedflux.h)
+
+PROGRAM=libsed
+VERSION=0.14.0
+
+AM_INIT_AUTOMAKE(sed,0.14.0)
+
+AC_PROG_LIBTOOL
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_MAKE_SET
+AC_PROG_LN_S
+AM_PROG_CC_STDC
+
+AC_PROG_RANLIB
+AC_CHECK_LIB(m, main)
+
+# check for -lutils.  if you can't find it, assume that we are configuring as
+# part of a larger package and that it will be created in $prefix/lib before this
+# package is linked.
+AC_CHECK_HEADER(
+   utils.h,,
+   [echo "*** assuming utils.h will be created later."
+    echo "*** adding ${prefix}/include to \$CPPFLAGS."
+    GLIB_ADD_TO_VAR(CPPFLAGS,"-I${prefix}/include","-I${prefix}/include")])
+AC_CHECK_LIB(
+   utils,
+   main,
+   utils_lib_found=yes,
+   [echo "*** assuming -lutils will be created later."
+    echo "*** adding ${prefix}/lib to \$LIBS."
+    GLIB_ADD_TO_VAR(LIBS,"-L${prefix}/lib","-L${prefix}/lib")])
+
+GLIB_ADD_TO_VAR(CPPFLAGS,"-DDATADIR=${datadir}","-DDATADIR=${datadir}")
+
+adl_COMPUTE_STANDARD_RELATIVE_PATHS
+
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(PROGRAM)
+AC_SUBST(VERSION)
+
+AC_CONFIG_FILES([sedflux.pc])
+
+AC_OUTPUT(Makefile)
+

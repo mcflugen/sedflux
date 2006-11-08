@@ -1,0 +1,6 @@
+AC_INIT(plume.in)
+
+AM_INIT_AUTOMAKE(plume_input_files,1.11)
+
+AC_OUTPUT([Makefile])
+

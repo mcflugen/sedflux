@@ -1,0 +1,32 @@
+--- 'Season 1' ---
+Number of grain sizes:                    5
+Duration (y):                             100y
+Bedload (kg/s):                           100.0
+Suspended load concentrations (kg/m^3):   1.0,      1.0,      1.0,      1.0
+River velocity (m/s):                     1
+River width (m):                          100.0
+River depth (m):                          2.0
+--- 'Season 2' ---
+Number of grain sizes:                    5
+Duration (y):                             100y
+Bedload (kg/s):                           100.0
+Suspended load concentrations (kg/m^3):   1.0,   1.0,   1.0,   1.0
+River velocity (m/s):                     1
+River width (m):                          100.0
+River depth (m):                          2.0
+--- 'Season 3' ---
+Number of grain sizes:                    5
+Duration (y):                             100y
+Bedload (kg/s):                           100.0
+Suspended load concentrations (kg/m^3):   1.0,   1.0,   1.0,   1.0
+River velocity (m/s):                     1
+River width (m):                          100.0
+River depth (m):                          2.0
+--- 'Season 4' ---
+Number of grain sizes:                    5
+Duration (y):                             100y
+Bedload (kg/s):                           100.0
+Suspended load concentrations (kg/m^3):   1.0,   1.0,   1.0,   1.0
+River velocity (m/s):                     1
+River width (m):                          100.0
+River depth (m):                          2.0

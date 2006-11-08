@@ -1,0 +1,209 @@
+#!/bin/ksh
+#
+# runsedflux-batch - run a series of sedflux simulations with a group of
+#                    input files.
+#
+# usage:
+#
+# runsedflux-bath batch_file_dir in_file out_file sedflux_args
+#
+# batch_file_dir - the directory that contains the series of files to run
+#                  the simulations with.
+# in_file        - copy each file from the batch_file_dir to this file.  this
+#                  file name should correspond to one given in a sedflux input
+#                  file.
+# out_file       - after each sedflux simulation out_file is renamed by
+#                  appending a portion of the batch file name to it. 
+# sedflux_args   - these arguments are passed to sedflux.
+#
+
+copy_sedflux_wd () {
+   mkdir -p $2
+   $CP -r $1/!($hydro_dir) $2
+   touch $2/sedflux_lock
+}
+
+clean_up_sedflux_wd () {
+#   $MV -f $1/$output_file "$output_file-${file%.*}" ;
+   if [[ -a $1/sedflux_lock ]]
+   then
+      $RM -r $1
+   else
+      print "$1: not a sedflux working directory."
+   fi
+}
+
+trap_handler () {
+   print 'Exiting sedflux batch run...'
+   exit 1
+}
+
+###
+### One by one move an input file from the batch to the working directory.
+### The batch file is renamed to match a file name in a sedflux input
+### file and sedflux is run.  The specified sedflux output file is renamed
+### to include a portion of the batch file name.
+###
+
+run_sedflux_batch () {
+   typeset batch_list
+
+   cd $1
+   batch_list=`$LS -x $hydro_dir`
+
+   for file in $batch_list
+   do
+      print "cp -f $hydro_dir/$file ./$hydro_file" ;
+      $CP -f $hydro_dir/$file ./$hydro_file ;
+   
+      print "runsedflux $sed_params > output.txt" ;
+      $SEDFLUX_HOME/bin/runsedflux $sed_params > output.txt 2> /dev/null
+   
+      print "rm -f $file" ;
+      $RM -f $file ;
+   
+      print "mv -f $output_file "$base_dir/${output_file}_${file%.*}" ";
+      $MV -f $output_file "$base_dir/${output_file}_${file%.*}" ;
+   done
+}
+
+check_input_args () {
+
+   if [[ ! -a $1 ]]
+   then
+      print "$1: unable to find batch directory."
+      return 1
+   fi
+
+   if [[ ! -a $2 ]]
+   then
+      if ! touch $2
+      then
+         print "$2: unable to create input file."
+         return 1
+      else
+         rm -f $2
+      fi
+   else
+      if [[ ! -r $2 && ! -w $2 ]]
+      then
+         print "$2: you do not have read and write permission for input file."
+         return 1
+      fi
+   fi
+      
+   if [[ ! -a $3 ]]
+   then
+      if ! touch $3
+      then
+         print "$3: unable to create output file."
+         return 1
+      else
+         rm -f $3
+      fi
+   else
+      if [[ ! -w $3 ]]
+      then
+         print "$3: you do not have write permission for output file."
+         return 1
+      fi
+   fi
+         
+   if ! touch $TMPDIR
+   then
+      print "$TMPDIR: can not create temporary directory."
+      exit 1
+   fi
+
+}
+
+
+LS=/usr/bin/ls
+RM=/usr/bin/rm
+MV=/usr/bin/mv
+CP=/usr/bin/cp
+PWD=/usr/bin/pwd
+
+SEDFLUX_DIR=@prefix@
+SEDFLUX_HOME=$SEDFLUX_DIR
+
+export SEDFLUX_DIR
+export SEDFLUX_HOME
+
+TMPDIR=/tmp/sedflux_batch
+
+###
+### Read the command line parameters.
+###
+
+hydro_dir=$1
+hydro_file=$2
+output_file=$3
+
+check_input_args $1 $2 $3 || exit 1
+
+shift 3
+sed_params=$@
+
+###
+### Generate a list of the input files in the batch.  Find the current
+### directory.  This is where all of the output will be saved.
+###
+
+hydro_file_list=`$LS -x $hydro_dir`
+base_dir=`$PWD`
+
+###
+### Create a temp working directory for each processor.
+###
+
+echo "Creating the temporary working directories..."
+let n_procs=7
+let i=0
+while (( i < $n_procs ));
+do
+   tmp_dir[$i]="dir_$i"
+   copy_sedflux_wd . $TMPDIR/${tmp_dir[$i]}
+   mkdir -p $TMPDIR/${tmp_dir[$i]}/$hydro_dir
+   let i='i+1'
+done
+
+###
+### Divide the batch files among the new temporary directories.
+###
+
+echo "Dividing input files among temporary directories..."
+let i=0
+for file in $hydro_file_list
+do
+   let dir_no='i % n_procs'
+   $CP $hydro_dir/$file $TMPDIR/${tmp_dir[$dir_no]}/$hydro_dir
+   let i='i+1'
+done
+
+###
+### Run the sedflux simulations in each of the temporaty directories.
+###
+
+trap trap_handler INT
+let i=0
+while (( i < $n_procs ));
+do
+   run_sedflux_batch $TMPDIR/${tmp_dir[$i]} &
+   let i='i+1'
+done
+
+wait
+
+###
+### Clean up the temporary directories.
+###
+
+let i=0
+while (( i < $n_procs ));
+do
+   clean_up_sedflux_wd $TMPDIR/${tmp_dir[$i]}
+#   print 'Output files are being left in $TMPDIR/${tmp_dir[$1]}'
+   let i='i+1'
+done
+

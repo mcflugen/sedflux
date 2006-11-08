@@ -1,0 +1,6 @@
+AC_INIT(plot_property.m)
+
+AM_INIT_AUTOMAKE(sedflux_matlab_files,0.9b)
+
+AC_OUTPUT([Makefile sedflux_startup.m])
+

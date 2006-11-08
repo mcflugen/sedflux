@@ -1,0 +1,40 @@
+/**@name libsed
+
+\begin{center}
+   {\Large{\bf Welcome to the wonderful world of libsed}}
+\end{center}
+
+libsed is a collection of functions that form the basis of the sedflux
+architecture.
+
+Here is a list of the highlights:
+\begin{itemize}
+   \item sed_cell
+   \item sed_column
+   \item sed_profile
+\end{itemize}
+
+@memo        The architecture of sedflux (2D)
+@version     1.0
+@author      EWH Hutton
+*/
+
+//@{
+   /**@name Sed_cell
+      @memo A structure that describes a package of sediment.
+   */
+   //@{
+      //@Include: ../src/sed_cell.c
+   //@}
+
+   /**@name Sed_column
+      @memo A structure that describes a stack of Sed_cell's.
+   */
+   //@{
+      //@Include: ../src/sed_column.c
+   //@}
+   /**@name Sed_profile */
+   //@{
+      //@Include: ../src/sed_profile.c
+   //@}
+//@}
