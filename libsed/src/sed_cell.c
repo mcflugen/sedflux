@@ -553,7 +553,7 @@ The function sed_clear_cell is called for for each element of the array.
 \see Sed_cell , sed_clear_cell
 
 */
-Sed_cell *sed_cell_clear_vector(Sed_cell *vec,int low,int high ) G_GNUC_DEPRECATED
+Sed_cell *sed_cell_clear_vector(Sed_cell *vec,int low,int high )
 {
    int i;
    for (i=low;i<=high;i++)
@@ -624,7 +624,7 @@ Sed_cell sed_cell_set_age( Sed_cell c , double age )
 \param val The new thickness value.
 \return The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_thickness( Sed_cell c , double t ) G_GNUC_DEPRECATED
+Sed_cell sed_cell_set_thickness( Sed_cell c , double t )
 {
    eh_require( c );
    c->t = t;
@@ -1390,7 +1390,12 @@ double sed_cell_max_density( const Sed_cell c )
 */
 double sed_cell_grain_size( const Sed_cell c )
 {
-   return sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size );
+   double g = 0;
+
+   if ( c )
+      g = sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size );
+
+   return g;
 }
 
 /** \brief Get the mean grain size (in phi units) of a sediment type in a Sed_cell.
@@ -1428,12 +1433,12 @@ double sed_cell_mud_fraction( const Sed_cell c )
    return sed_sediment_property_avg( NULL , c->f , &sed_type_is_mud );
 }
 
-double sed_cell_nth_fraction( const Sed_cell c , gssize n ) G_GNUC_DEPRECATED
+double sed_cell_nth_fraction( const Sed_cell c , gssize n )
 {
    return sed_cell_fraction( c , n );
 }
 
-double* sed_cell_fraction_ptr( const Sed_cell c ) G_GNUC_DEPRECATED
+double* sed_cell_fraction_ptr( const Sed_cell c )
 {
    return c->f;
 }
@@ -1578,7 +1583,7 @@ double sed_cell_porosity_min( const Sed_cell c )
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_plastic_index( const Sed_cell c ) G_GNUC_DEPRECATED
+double sed_cell_plastic_index( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_plastic_index );
 }
@@ -1843,9 +1848,15 @@ units).  The mean grain size is then placed into a sand (phi<4), silt (4<phi<9),
 */
 Sed_size_class sed_cell_size_class( const Sed_cell c )
 {
-   double d_mean = sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size_in_phi );
+   Sed_size_class class = S_SED_TYPE_NONE;
 
-   return sed_size_class( d_mean );
+   if ( c )
+   {
+      double d_mean = sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size_in_phi );
+      class = sed_size_class( d_mean );
+   }
+
+   return class;
 }
 
 /** \brief Return the percentage of a certain size class with a Sed_cell.
@@ -1863,13 +1874,19 @@ contained in a Sed_cell.
 */
 double sed_cell_size_class_percent( const Sed_cell c , Sed_size_class size )
 {
-   return sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_is_size_class_with_data , &size );
+   double p = 0.;
+
+   if ( c )
+      p = sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_is_size_class_with_data , &size );
+   return p;
 }
 
 Sed_size_class sed_cell_size_classes( const Sed_cell c )
 {
    Sed_size_class size = S_SED_TYPE_NONE;
-   sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_sum_size_classes_with_data , &size );
+
+   if ( c )
+      sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_sum_size_classes_with_data , &size );
    return size;
 }
 
@@ -1881,12 +1898,22 @@ double sed_cell_density( const Sed_cell c )
 
 double sed_cell_sediment_volume( const Sed_cell c )
 {
-   return c->t / ( sed_cell_void_ratio(c) + 1 );
+   double v = 0.;
+
+   if ( c )
+      v = c->t / ( sed_cell_void_ratio(c) + 1 );
+
+   return v;
 }
 
 double sed_cell_sediment_mass( const Sed_cell c )
 {
-   return sed_cell_grain_density(c)*sed_cell_sediment_volume(c);
+   double m = 0;
+
+   if ( c )
+      m = sed_cell_grain_density(c)*sed_cell_sediment_volume(c);
+
+   return m;
 }
 
 //
@@ -2041,7 +2068,7 @@ double sed_cell_consolidation_rate( const Sed_cell c , double time_now )
 /** Get the current thickness of a cell.
 \param c The Sed_cell to query.
 */
-double sed_cell_thickness(const Sed_cell c) G_GNUC_DEPRECATED
+double sed_cell_thickness(const Sed_cell c)
 {
    if ( G_LIKELY(c) )
       return c->t;

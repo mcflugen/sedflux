@@ -34,7 +34,7 @@ AC_CHECK_LIB(
     echo "*** adding ${prefix}/lib to \$LIBS."
     GLIB_ADD_TO_VAR(LIBS,"-L${prefix}/lib","-L${prefix}/lib")])
 
-GLIB_ADD_TO_VAR(CPPFLAGS,"-DDATADIR=${datadir}","-DDATADIR=${datadir}")
+#GLIB_ADD_TO_VAR(CPPFLAGS,"-DDATADIR=${datadir}","-DDATADIR=${datadir}")
 
 adl_COMPUTE_STANDARD_RELATIVE_PATHS
 

@@ -673,10 +673,12 @@ uninstall-am: uninstall-binPROGRAMS uninstall-includeHEADERS \
 	uninstall-pkgconfigDATA
 
 $(pkgconfig_DATA): config.status
-datadir.h:
-	echo '#if !defined(DATADIR)'
-	echo '# define DATADIR "$(datadir)"' >$@
-	echo '#endif'
+datadir.h: force_rebuild
+	echo '#if !defined(DATADIR)' >$@
+	echo '# define DATADIR "$(datadir)"' >>$@
+	echo '#endif' >>$@
+
+force_rebuild:
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

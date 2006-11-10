@@ -31,13 +31,11 @@
 #include "datadir.h"
 
 #if !defined( DATADIR )
-#define DATADIR /usr/local/share
+# define DATADIR "/usr/local/share"
 #endif
 
-//#define SED_COLUMN_TEST_FILE_BE G_STRINGIFY(DATADIR)##"/libsed_test_files/sed_column-be.bin"
-//#define SED_COLUMN_TEST_FILE_LE G_STRINGIFY(DATADIR)##"/libsed_test_files/sed_column-le.bin"
-#define SED_COLUMN_TEST_FILE_BE DATADIR##"/libsed_test_files/sed_column-be.bin"
-#define SED_COLUMN_TEST_FILE_LE DATADIR##"/libsed_test_files/sed_column-le.bin"
+#define SED_COLUMN_TEST_FILE_BE DATADIR "/libsed_test_files/sed_column-be.bin"
+#define SED_COLUMN_TEST_FILE_LE DATADIR "/libsed_test_files/sed_column-le.bin"
 
 #include "sed_sediment.h"
 #include "sed_cell.h"

@@ -27,11 +27,10 @@
 #include "datadir.h"
 
 #if !defined( DATADIR )
-#define DATADIR /usr/local/share
+# define DATADIR "/usr/local/share"
 #endif
 
-//#define SED_SEDIMENT_TEST_FILE G_STRINGIFY(DATADIR)##"/libsed_test_files/test.sediment"
-#define SED_SEDIMENT_TEST_FILE DATADIR##"/libsed_test_files/test.sediment"
+#define SED_SEDIMENT_TEST_FILE DATADIR "/libsed_test_files/test.sediment"
 
 new_handle( Sed_type     );
 new_handle( Sed_sediment );

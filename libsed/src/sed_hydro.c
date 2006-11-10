@@ -800,7 +800,7 @@ Sed_hydro *sed_hydro_process_records( Sed_hydro* rec , gssize n_recs , gssize n_
    return return_ptr;
 }
 
-gint cmp_hydro_sort_vals( Hydro_sort_st *a , Hydro_sort_st *b ) G_GNUC_INTERNAL
+gint cmp_hydro_sort_vals( Hydro_sort_st *a , Hydro_sort_st *b )
 {
    if ( a->val < b->val )
       return -1;
@@ -810,7 +810,7 @@ gint cmp_hydro_sort_vals( Hydro_sort_st *a , Hydro_sort_st *b ) G_GNUC_INTERNAL
       return 0;
 }
 
-gint cmp_hydro_sort_inds( Hydro_sort_st *a , Hydro_sort_st *b ) G_GNUC_INTERNAL
+gint cmp_hydro_sort_inds( Hydro_sort_st *a , Hydro_sort_st *b )
 {
    if ( a->ind < b->ind )
       return -1;

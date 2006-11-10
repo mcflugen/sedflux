@@ -270,117 +270,188 @@ char* sed_measurement_name( Sed_measurement m )
 
 double sed_measure_cube_slope( Sed_cube p , gssize i , gssize j )
 {
-   return sed_cube_slope( p , i , j );
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return sed_cube_slope( p , i , j );
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_water_depth( Sed_cube p , gssize i , gssize j )
 {
-   return sed_cube_water_depth( p , i , j );
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return sed_cube_water_depth( p , i , j );
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_elevation( Sed_cube p , gssize i , gssize j )
 {
-   return sed_cube_top_height( p , i , j );
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return sed_cube_top_height( p , i , j );
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_thickness( Sed_cube p , gssize i , gssize j )
 {
-   return sed_cube_thickness( p , i , j );
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return sed_cube_thickness( p , i , j );
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_basement( Sed_cube p , gssize i , gssize j )
 {
-   return sed_cube_base_height( p , i , j );
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return sed_cube_base_height( p , i , j );
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_grain_size( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
 
-   return sed_cell_grain_size_in_phi( sed_column_nth_cell( col , i_top ) );
+      return sed_cell_grain_size_in_phi( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
+
 }
 
 double sed_measure_cube_age( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
 
-   return sed_cell_age( sed_column_nth_cell( col , i_top ) );
+      return sed_cell_age( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_sand_fraction( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SAND );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SAND );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_silt_fraction( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SILT );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SILT );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_clay_fraction( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_CLAY );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_CLAY );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_mud_fraction( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return   sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SILT )
-          + sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_CLAY );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return   sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_SILT )
+             + sed_cell_size_class_percent( sed_column_nth_cell( col , i_top ) , S_SED_TYPE_CLAY );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_density( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_density( sed_column_nth_cell( col , i_top ) );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_density( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_porosity( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_porosity( sed_column_nth_cell( col , i_top ) );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_porosity( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_permeability( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return sed_cell_permeability( sed_column_nth_cell( col , i_top ) );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return sed_cell_permeability( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_facies( Sed_cube p , gssize i , gssize j )
 {
-   Sed_column col = sed_cube_col_ij( p,i,j );
-   gssize i_top   = sed_column_top_index( col );
-   return (double)sed_cell_facies( sed_column_nth_cell( col , i_top ) );
+   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   {
+      Sed_column col = sed_cube_col_ij( p,i,j );
+      gssize i_top   = sed_column_top_index( col );
+      return (double)sed_cell_facies( sed_column_nth_cell( col , i_top ) );
+   }
+   else
+      return eh_nan();
 }
 
 double sed_measure_cube_river_mouth( Sed_cube p , gssize i , gssize j )
 {
-   gssize len = sed_cube_number_of_rivers( p );
-   gssize n;
-   Sed_river* this_river;
-   gboolean found=FALSE;
-
-   for ( n=0 ; n<len && !found ; n++ )
+   if ( sed_cube_is_in_domain(p,i,j) )
    {
-      this_river = sed_cube_river( p , n );
-      if ( this_river->x_ind==i && this_river->y_ind==j )
-         found = TRUE;
-   }
+      gssize len = sed_cube_number_of_rivers( p );
+      gssize n;
+      Sed_river* this_river;
+      gboolean found=FALSE;
 
-   return found?1:-1;
+      for ( n=0 ; n<len && !found ; n++ )
+      {
+         this_river = sed_cube_river( p , n );
+         if ( this_river->x_ind==i && this_river->y_ind==j )
+            found = TRUE;
+      }
+
+      return found?1:-1;
+   }
+   else
+      return -1;
 }
 
 Sed_tripod_header sed_tripod_header_new( Sed_measurement x )

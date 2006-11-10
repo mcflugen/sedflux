@@ -33,20 +33,22 @@ new_handle( Sed_hydro_file );
 #include "datadir.h"
 
 #if !defined( DATADIR )
-#define DATADIR /usr/local/share
+#define DATADIR "/usr/local/share"
 #endif
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-# define SED_HYDRO_TEST_FILE DATADIR##"/libsed_test_files/po_daily-be.river"
-# define SED_HYDRO_PO_FILE DATADIR##"/libsed_test_files/po_daily-be.river"
-# define SED_HYDRO_EEL_FILE DATADIR##"/libsed_test_files/eel_daily-be.river"
+# define SED_HYDRO_TEST_FILE        DATADIR "/libsed_test_files/po_daily-be.river"
+# define SED_HYDRO_PO_FILE          DATADIR "/libsed_test_files/po_daily-be.river"
+# define SED_HYDRO_EEL_FILE         DATADIR "/libsed_test_files/eel_daily-be.river"
+# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/libsed_test_files/po.inline"
 #else
-# define SED_HYDRO_TEST_FILE DATADIR##"/libsed_test_files/po_daily-le.river"
-# define SED_HYDRO_PO_FILE DATADIR##"/libsed_test_files/po_daily-le.river"
-# define SED_HYDRO_EEL_FILE DATADIR##"/libsed_test_files/eel_daily-le.river"
+# define SED_HYDRO_TEST_FILE        DATADIR "/libsed_test_files/po_daily-le.river"
+# define SED_HYDRO_PO_FILE          DATADIR "/libsed_test_files/po_daily-le.river"
+# define SED_HYDRO_EEL_FILE         DATADIR "/libsed_test_files/eel_daily-le.river"
+# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/libsed_test_files/po.inline"
 #endif
 
-#define SED_HYDRO_TEST_INLINE_FILE DATADIR##"/libsed_test_files/po.inline"
+//# define SED_HYDRO_TEST_INLINE_FILE "/home/plum/huttone/local/ew114/share"##"/libsed_test_files/po.inline"
 
 #include "sed_sediment.h"
 #include "sed_cell.h"

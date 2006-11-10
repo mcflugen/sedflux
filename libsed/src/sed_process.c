@@ -87,7 +87,7 @@ Sed_process sed_process_create( const char *name ,
    p->info->mass_total_lost  = 0.;
    p->info->error            = FALSE;
 
-   if ( TRACK_MASS_BALANCE && info_fp_is_set )
+   if ( TRACK_MASS_BALANCE && !info_fp_is_set )
    {
       info_fp_is_set = TRUE;
       info_fp = eh_fopen( "mass_balance.txt" , "w" );

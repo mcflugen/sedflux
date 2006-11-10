@@ -106,7 +106,7 @@ Sed_sediment sed_sediment_unset_env( )
    return NULL;
 }
 
-Sed_sediment sed_sediment_env( ) G_GNUC_INTERNAL
+Sed_sediment sed_sediment_env( )
 {
    return sed_env;
 }
@@ -147,7 +147,10 @@ Sed_sediment sed_sediment_dup( const Sed_sediment src )
 
 gssize sed_sediment_n_types( const Sed_sediment sed )
 {
-   return sed->len;
+   if ( sed )
+      return sed->len;
+   else
+      return sed_sediment_env_size();
 }
 
 gssize sed_sediment_env_size( )
@@ -162,7 +165,7 @@ gssize sed_sediment_env_size( )
    return n;
 }
 
-Sed_sediment sed_sediment_resize( Sed_sediment s , gssize new_len ) G_GNUC_INTERNAL
+Sed_sediment sed_sediment_resize( Sed_sediment s , gssize new_len )
 {
    if ( new_len>0 )
    {
@@ -212,7 +215,7 @@ gboolean sed_sediment_has_type( Sed_sediment s , Sed_type t )
    return found;
 }
 
-Sed_sediment sed_sediment_insert_sorted( Sed_sediment s , Sed_type t ) G_GNUC_INTERNAL
+Sed_sediment sed_sediment_insert_sorted( Sed_sediment s , Sed_type t )
 {
    eh_require( s );
    eh_require( t );
@@ -274,7 +277,7 @@ gssize sed_sediment_fprint( FILE* fp , Sed_sediment s )
    return n;
 }
 
-Sed_sediment sed_sediment_append( Sed_sediment s , Sed_type t ) G_GNUC_INTERNAL
+Sed_sediment sed_sediment_append( Sed_sediment s , Sed_type t )
 {
    eh_require( s );
    eh_require( t );
@@ -394,12 +397,15 @@ Sed_type sed_sediment_type( const Sed_sediment s , gssize id )
 {
    Sed_type t = NULL;
 
-   eh_require( s         );
-   eh_require( id>=0     );
-   eh_require( id<s->len );
+   {
+      const Sed_sediment real_s = (s)?(s):(sed_sediment_env());
 
-   if ( s->len>0 )
-      t = s->l[id];
+      eh_require( id>=0     );
+      eh_require( id<real_s->len );
+
+      if ( real_s->len>0 )
+         t = real_s->l[id];
+   }
 
    return t;
 }
@@ -434,7 +440,7 @@ Sed_type sed_type_destroy( Sed_type t )
 {
    if ( t )
    {
-      t = eh_free( t );
+      eh_free( t );
    }
 
    return t;
@@ -853,7 +859,7 @@ Sed_type sed_type_set_grain_size( Sed_type t , double gz )
    return t;
 }
 
-Sed_type sed_type_set_plastic_index( Sed_type t , double pi ) G_GNUC_DEPRECATED
+Sed_type sed_type_set_plastic_index( Sed_type t , double pi )
 {
    t->pi = pi;
    return t;
@@ -912,7 +918,7 @@ double sed_type_grain_size( const Sed_type t )
    return t->gz;
 }
 
-double sed_type_plastic_index( const Sed_type t ) G_GNUC_DEPRECATED
+double sed_type_plastic_index( const Sed_type t )
 {
    return t->pi;
 }
@@ -1236,7 +1242,7 @@ double sed_type_shear_strength( const Sed_type t , double load )
    return load*( .11 + .0037 * sed_type_plastic_index(t) );
 }
 
-double sed_type_shear_strength_with_data( const Sed_type t , gpointer data ) G_GNUC_INTERNAL
+double sed_type_shear_strength_with_data( const Sed_type t , gpointer data )
 {
    return sed_type_shear_strength( t , *((double*)data) );
 }
@@ -1250,7 +1256,7 @@ double sed_type_cohesion( const Sed_type t , double load )
 // return load * tan(sed_cell_friction_angle(c,sed,n)*M_PI/180.) - sed_cell_shear_strength(c,load,sed,n);
 }
 
-double sed_type_cohesion_with_data( const Sed_type t , gpointer data ) G_GNUC_INTERNAL
+double sed_type_cohesion_with_data( const Sed_type t , gpointer data )
 {
    return sed_type_cohesion( t , *((double*)data) );
 }
@@ -1262,7 +1268,7 @@ double sed_type_consolidation( const Sed_type t , double d , double dt )
    return sed_calculate_avg_consolidation( c_v , d , dt );
 }
 
-double sed_type_consolidation_with_data( const Sed_type t , gpointer data ) G_GNUC_INTERNAL
+double sed_type_consolidation_with_data( const Sed_type t , gpointer data )
 {
    return sed_type_consolidation_rate( t , ((double*)data)[0] , ((double*)data)[1] );
 }
@@ -1281,7 +1287,7 @@ double sed_type_consolidation_rate( const Sed_type t , double d , double dt )
    return u;
 }
 
-double sed_type_consolidation_rate_with_data( const Sed_type t , gpointer data ) G_GNUC_INTERNAL
+double sed_type_consolidation_rate_with_data( const Sed_type t , gpointer data )
 {
    return sed_type_consolidation_rate( t , ((double*)data)[0] , ((double*)data)[1] );
 }
@@ -1324,12 +1330,12 @@ double sed_type_is_size_class( Sed_type t , Sed_size_class size )
    return size & sed_type_size_class( t );
 }
 
-double sed_type_is_size_class_with_data( Sed_type t , gpointer size ) G_GNUC_INTERNAL
+double sed_type_is_size_class_with_data( Sed_type t , gpointer size )
 {
    return sed_type_is_size_class( t , *((Sed_size_class*)size) );
 }
 
-double sed_type_sum_size_classes_with_data( Sed_type t , gpointer size ) G_GNUC_INTERNAL
+double sed_type_sum_size_classes_with_data( Sed_type t , gpointer size )
 {
    Sed_size_class* c = (Sed_size_class*)size;
 
@@ -1338,12 +1344,12 @@ double sed_type_sum_size_classes_with_data( Sed_type t , gpointer size ) G_GNUC_
    return 1.0;
 }
 
-double sed_type_void_ratio_compacted( Sed_type t , gpointer d ) G_GNUC_INTERNAL
+double sed_type_void_ratio_compacted( Sed_type t , gpointer d )
 {
    return (*(double*)d)*(1+sed_type_void_ratio(t)) - 1;
 }
 
-double sed_type_density_compacted( Sed_type t , gpointer d ) G_GNUC_INTERNAL
+double sed_type_density_compacted( Sed_type t , gpointer d )
 {
    double e = sed_type_void_ratio_compacted(t,d);
    return ( sed_type_rho_grain(t) + e*sed_rho_sea_water() ) / (1.+e);

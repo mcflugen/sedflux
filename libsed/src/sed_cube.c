@@ -1209,7 +1209,7 @@ Sed_cube sed_cube_set_river_data( Sed_cube s        ,
    return s;
 }
 
-Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list ) G_GNUC_DEPRECATED
+Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list )
 {
    s->river = river_list;
    return s;

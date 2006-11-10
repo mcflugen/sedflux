@@ -23,8 +23,11 @@ pkgconfig_DATA = sedflux.pc
 $(pkgconfig_DATA): config.status
 
 DISTCLEANFILES = datadir.h
-datadir.h:
-	echo '#if !defined(DATADIR)'
-	echo '# define DATADIR "$(datadir)"' >$@
-	echo '#endif'
+datadir.h: force_rebuild
+	echo '#if !defined(DATADIR)' >$@
+	echo '# define DATADIR "$(datadir)"' >>$@
+	echo '#endif' >>$@
+
+force_rebuild:
+
 

@@ -278,7 +278,7 @@ That is, i=0 refers to the lowest cell within the column.
 
 @return A pointer to the fraction information for the requested Sed_cell.
 */
-double* sed_column_cell_fraction( const Sed_column col , gssize i ) G_GNUC_DEPRECATED
+double* sed_column_cell_fraction( const Sed_column col , gssize i )
 {
    return sed_cell_fraction_ptr( col->cell[i] );
 }
@@ -306,7 +306,7 @@ for 2d and so the position only contains one horizontal coordinate.
 
 @see sed_get_column_x_position , sed_get_column_y_position .
 */
-double sed_column_position( const Sed_column col ) G_GNUC_DEPRECATED
+double sed_column_position( const Sed_column col )
 {
    return col->x;
 }
@@ -369,7 +369,7 @@ NOTE: This function is now deprecated.  Use sed_set_column_x_position instead.
 
 @see sed_set_column_x_position , sed_set_column_y_position .
 */
-Sed_column sed_column_set_position( Sed_column col , double x ) G_GNUC_DEPRECATED
+Sed_column sed_column_set_position( Sed_column col , double x )
 {
    col->x = x;
    return col;
@@ -449,7 +449,7 @@ cell above.  Also, it can later be squeezed to a new thickness.
 
 @return The vertical resolution of the Sed_column.
 */
-double sed_column_cell_height( const Sed_column col ) G_GNUC_DEPRECATED
+double sed_column_cell_height( const Sed_column col )
 {
    return col->dz;
 }
@@ -1095,7 +1095,7 @@ depending weather the pressures should be updated or just averaged.
 */
 double sed_column_add_cell_real( Sed_column col ,
                                  Sed_cell cell  ,
-                                 gboolean update_pressure ) G_GNUC_INTERNAL
+                                 gboolean update_pressure )
 {
    double amount_to_add = 0;
 
@@ -1175,7 +1175,7 @@ double sed_column_add_cell_real( Sed_column col ,
 
 double sed_column_append_cell_real( Sed_column col ,
                                     Sed_cell cell  ,
-                                    gboolean update_pressure ) G_GNUC_INTERNAL
+                                    gboolean update_pressure )
 {
    double amount_to_add = 0;
 
@@ -2148,7 +2148,7 @@ double sed_column_water_depth( const Sed_column col )
 
 @return The number of filled (or partially filled) cells in a Sed_column
 */
-int sed_get_column_size(const Sed_column col) G_GNUC_DEPRECATED
+int sed_get_column_size(const Sed_column col)
 {
    return col->len;
 }
@@ -2220,7 +2220,7 @@ double sed_column_thickness( const Sed_column col)
 
 @param A pointer to the input Sed_column.
 */
-Sed_column sed_column_set_thickness( Sed_column col , double new_t ) G_GNUC_INTERNAL
+Sed_column sed_column_set_thickness( Sed_column col , double new_t )
 {
    col->t = new_t;
    return col;

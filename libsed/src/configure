@@ -19724,18 +19724,7 @@ else
 fi
 
 
-
-
-        case "$CPPFLAGS" in
-        *""-DDATADIR=${datadir}" "*)
-                CPPFLAGS="$CPPFLAGS"
-                ;;
-        *)
-                CPPFLAGS="$CPPFLAGS "-DDATADIR=${datadir}""
-                ;;
-        esac
-
-
+#GLIB_ADD_TO_VAR(CPPFLAGS,"-DDATADIR=${datadir}","-DDATADIR=${datadir}")
 
 ## These calls need to be on separate lines for aclocal to work!
 for _lcl_i in prefix:exec_prefix:exec_prefix_forward_relative_path exec_prefix:prefix:exec_prefix_backward_relative_path exec_prefix:bindir:bindir_forward_relative_path bindir:exec_prefix:bindir_backward_relative_path exec_prefix:libdir:libdir_forward_relative_path libdir:exec_prefix:libdir_backward_relative_path exec_prefix:libexecdir:libexecdir_forward_relative_path libexecdir:exec_prefix:libexecdir_backward_relative_path exec_prefix:sbindir:sbindir_forward_relative_path sbindir:exec_prefix:sbindir_backward_relative_path prefix:datadir:datadir_forward_relative_path datadir:prefix:datadir_backward_relative_path prefix:sysconfdir:sysconfdir_forward_relative_path sysconfdir:prefix:sysconfdir_backward_relative_path prefix:sharestatedir:sharestatedir_forward_relative_path sharestatedir:prefix:sharestatedir_backward_relative_path prefix:localstatedir:localstatedir_forward_relative_path localstatedir:prefix:localstatedir_backward_relative_path prefix:infodir:infodir_forward_relative_path infodir:prefix:infodir_backward_relative_path prefix:lispdir:lispdir_forward_relative_path lispdir:prefix:lispdir_backward_relative_path prefix:includedir:includedir_forward_relative_path includedir:prefix:includedir_backward_relative_path prefix:oldincludedir:oldincludedir_forward_relative_path oldincludedir:prefix:oldincludedir_backward_relative_path prefix:mandir:mandir_forward_relative_path mandir:prefix:mandir_backward_relative_path ; do
