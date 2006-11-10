@@ -21,12 +21,12 @@ aligned_st G_GNUC_INTERNAL;
 guint eh_str_case_hash(gconstpointer key);
 gboolean eh_str_case_equal(gconstpointer a, gconstpointer b);
 
-void eh_symbol_table_free_label( gpointer label ) G_GNUC_INTERNAL
+void eh_symbol_table_free_label( gpointer label )
 {
    eh_free( label );
 }
 
-guint eh_str_case_hash(gconstpointer key) G_GNUC_INTERNAL
+guint eh_str_case_hash(gconstpointer key)
 {
    char *new_key = g_strdup((char*)key);
    guint ans;
@@ -38,27 +38,27 @@ guint eh_str_case_hash(gconstpointer key) G_GNUC_INTERNAL
    return ans;
 }
 
-gboolean eh_str_case_equal(gconstpointer a, gconstpointer b) G_GNUC_INTERNAL
+gboolean eh_str_case_equal(gconstpointer a, gconstpointer b)
 {
    return (g_strcasecmp((char*)a,(char*)b)==0)?TRUE:FALSE;
 }
 
-void eh_destroy_key( gpointer key , gpointer value , gpointer user_data) G_GNUC_INTERNAL
+void eh_destroy_key( gpointer key , gpointer value , gpointer user_data)
 {
    eh_free(key);
 }
 
-void __eh_symbol_table_insert( char *key, char *value, Eh_symbol_table t ) G_GNUC_INTERNAL
+void __eh_symbol_table_insert( char *key, char *value, Eh_symbol_table t )
 {
    eh_symbol_table_insert( t , g_strdup(key) , g_strdup(value) );
 }
 
-void eh_print_symbol(char *key, char *value, FILE *fp) G_GNUC_INTERNAL
+void eh_print_symbol(char *key, char *value, FILE *fp)
 {
    fprintf(fp,"%s : %s\n",key,value);
 }
 
-void eh_print_symbol_aligned( char *key, char *value, aligned_st *st ) G_GNUC_INTERNAL
+void eh_print_symbol_aligned( char *key, char *value, aligned_st *st )
 {
    int len = st->max_key_len-strlen(key)+1;
    char *fill = g_strnfill( len , ' ' );
@@ -66,7 +66,7 @@ void eh_print_symbol_aligned( char *key, char *value, aligned_st *st ) G_GNUC_IN
    eh_free(fill);
 }
 
-void eh_get_max_key_len( char *key , char *value , int *max_len ) G_GNUC_INTERNAL
+void eh_get_max_key_len( char *key , char *value , int *max_len )
 {
    int len = strlen(key);
    if ( len > *max_len )

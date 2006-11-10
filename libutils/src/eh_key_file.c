@@ -6,7 +6,7 @@ CLASS( Eh_key_file )
    GHashTable* t;
 };
 
-void destroy_hash_table_list( gpointer key , gpointer value , gpointer user_data ) G_GNUC_INTERNAL
+void destroy_hash_table_list( gpointer key , gpointer value , gpointer user_data )
 {
    GList* l;
    for ( l=value ; l ; l = l->next )
@@ -14,7 +14,7 @@ void destroy_hash_table_list( gpointer key , gpointer value , gpointer user_data
    g_list_free( value );
 }
 
-void dup_key( gpointer key , gpointer value , gpointer user_data ) G_GNUC_INTERNAL
+void dup_key( gpointer key , gpointer value , gpointer user_data )
 {
    gchar** s = (gchar**)(user_data);
    gchar* new_str;
@@ -29,7 +29,7 @@ void dup_key( gpointer key , gpointer value , gpointer user_data ) G_GNUC_INTERN
 
 }
 
-gchar** eh_key_file_list_to_array( GList* l , gpointer key ) G_GNUC_INTERNAL
+gchar** eh_key_file_list_to_array( GList* l , gpointer key )
 {
    gchar** ans;
    guint len = g_list_length( l );
@@ -45,7 +45,7 @@ gchar** eh_key_file_list_to_array( GList* l , gpointer key ) G_GNUC_INTERNAL
 
 Eh_symbol_table eh_key_file_add_group( Eh_key_file f ,
                                        const gchar* group_name ,
-                                       gboolean replace ) G_GNUC_INTERNAL
+                                       gboolean replace )
 {
    GList* group_list = g_hash_table_lookup( f->t , group_name );
    Eh_symbol_table group;
@@ -68,7 +68,7 @@ Eh_symbol_table eh_key_file_add_group( Eh_key_file f ,
    return group;
 }
 
-void add_record_value( gpointer key , gpointer value , gpointer user_data ) G_GNUC_INTERNAL
+void add_record_value( gpointer key , gpointer value , gpointer user_data )
 {
    Eh_key_file f          = ((gpointer*)user_data)[0];
    gchar*      group_name = ((gpointer*)user_data)[1];
