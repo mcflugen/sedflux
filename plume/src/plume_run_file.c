@@ -112,7 +112,7 @@ dx = 12.5;
 
          if ( dt <= 1 )
 //            dep = plume_width_averaged_deposit( dep , river , sed_sediment_env() , width );
-           dep = plume_width_averaged_deposit_num( dep , river , sed_sediment_env() , width );
+           dep = plume_width_averaged_deposit_num( dep , river , NULL , width );
 //            dep = plume_centerline_deposit( dep , river , sed_sediment_env() );
 
          sed_hydro_destroy( river );

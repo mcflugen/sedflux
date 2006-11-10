@@ -227,7 +227,7 @@ START_TEST ( test_approx_from_file )
 
       for ( n=1 ; n<n_grains ; n++ )
       {
-         this_type = sed_sediment_type( sed_sediment_env() , n );
+         this_type = sed_sediment_type( NULL , n );
          for ( dt=0 ; dt<365 ; )
          {
             river = sed_hydro_file_read_record( f );

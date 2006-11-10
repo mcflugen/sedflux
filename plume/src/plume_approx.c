@@ -2,29 +2,29 @@
 
 #include "plume_approx.h"
 
-double plume_establishment_centerline_inv_at( double x , double l ) G_GNUC_INTERNAL
+double plume_establishment_centerline_inv_at( double x , double l )
 {
    return exp( -l*x );
 }
 
-double plume_established_centerline_inv_at( double x , double l ) G_GNUC_INTERNAL
+double plume_established_centerline_inv_at( double x , double l )
 {
    return   exp( -l*x )
           * pow( PLUME_XA/x , PLUME_P1 )
           * exp( -(2*l/(3*sqrt(PLUME_XA))*(pow(x,1.5)-pow(PLUME_XA,1.5))*PLUME_F2) );
 }
 
-double plume_establishment_inv_at( double x , double s , double l ) G_GNUC_INTERNAL
+double plume_establishment_inv_at( double x , double s , double l )
 {
    return   exp( -l*x );
 }
 
-double plume_plug_inventroy_at( double x , double s , double l ) G_GNUC_INTERNAL
+double plume_plug_inventroy_at( double x , double s , double l )
 {
    return exp( -l*x );
 }
 
-double plume_established_inv_at( double x , double s , double l ) G_GNUC_INTERNAL
+double plume_established_inv_at( double x , double s , double l )
 {
    return   exp( -l*x )
           * exp( -pow(PLUME_M1*s,2) )
@@ -35,13 +35,13 @@ double plume_established_inv_at( double x , double s , double l ) G_GNUC_INTERNA
                     * PLUME_F2 ) );
 }
 
-double plume_inv_far( double x , gpointer data ) G_GNUC_INTERNAL
+double plume_inv_far( double x , gpointer data )
 {
    double l = *(double*)data;
    return plume_established_centerline_inv_at( x , l );
 }
 
-double plume_inv_near( double x , gpointer data ) G_GNUC_INTERNAL
+double plume_inv_near( double x , gpointer data )
 {
    double l = *(double*)data;
    return plume_establishment_centerline_inv_at( x , l );
