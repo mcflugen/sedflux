@@ -77,7 +77,7 @@ Sed_cell   move_sediment                 ( Sed_cube p            ,
                                            Sed_cell added        ,
                                            Sed_cell in_suspension ) G_GNUC_INTERNAL;
 
-void update_bruun_zone_data( Bruun_data* data ) G_GNUC_INTERNAL
+void update_bruun_zone_data( Bruun_data* data )
 {
    if ( data && data->ind_len>2 )
    {

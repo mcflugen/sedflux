@@ -1078,7 +1078,7 @@ void sed_get_phe( gpointer data , gpointer bathy_data )
       for ( n=0 , volume=0. ; n<n_grains ; n++ )
          volume += depth
                  * phe[n]
-                 * sed_type_rho_sat( sed_sediment_type( sed_sediment_env() , n ) )
+                 * sed_type_rho_sat( sed_sediment_type( NULL , n ) )
                  / DENSITY_OF_SEDIMENT_GRAINS;
    }
    else
