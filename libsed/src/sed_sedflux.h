@@ -27,7 +27,7 @@
 
 #include "utils.h"
 
-#include "datadir.h"
+#include "datadir_path.h"
 
 #include "sed_const.h"
 #include "sed_hydro.h" 

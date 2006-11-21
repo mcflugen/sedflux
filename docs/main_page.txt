@@ -1,0 +1,291 @@
+/*! \mainpage sedflux-2.0
+
+This manual is divided into the following sections:
+- \subpage intro_sec
+- \subpage install_sec
+- \subpage run_sec
+
+*/
+
+/*! \page intro_sec Introduction
+*/
+
+/*! \page install_sec Installation
+
+\section Prerequisites
+
+To install sedflux-2.0, you need to have certain progams installed on you machine.  A list of these
+programs follows with the version numbers that I used.  It is possible that older version will
+work but I have not checked if this is the case.
+
+\par Required
+- pkg-config (0.20)
+- automake   (1.9.6)
+- autoconf   (2.60)
+- gcc        (2.95.3)
+- glib-2.0   (2.12.4)
+
+\par Optional
+- check      (0.9.4)
+- doxygen    (1.5.1)
+- gtk+-2.0   (2.2.4)
+
+If you do not have some of the optional programs, you can still install sedflux but with some loss
+of functionality.  The limitations are:
+
+\li \p check:    You will not be able to run unit tests on your compiled code.
+\li \p doxygen:  You will not be able to generate documentation
+\li <tt>gtk+-2.0</tt>: You will not be able to run the graphical user interface
+
+The configure script will check for these packages and turn them on or off depending are whether or not they are found.
+
+\section Configuring
+
+To configure sedflux-2.0:
+\code
+> configure --prefix=<program-prefix>
+\endcode
+where <program-prefix> is the path name to the location into which the program will be install.  For
+example, <program-prefix> could be <tt>/usr/local/sedflux</tt>.  In this case, all of the sedflux 
+installation files will be installed in <tt>/usr/local/sedflux</tt>.  This would mean that the
+sedflux executable program would be <tt>/usr/local/sedflux/bin/sedflux</tt>.
+
+\par Question
+I get an error message saying that I don't have gtk+-2.0 (or glib) but I know I do.
+
+\par Answer
+The configure script uses pkg-config to find the required libraries.  Make sure that you have set
+your PKG_CONFIG_PATH environment variable to include the pkg-config files for these libraries.  As
+an example,
+\code
+> setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+\endcod
+
+\section Build
+
+To compile and install the complete sedflux-2.0 package,
+\code
+> make package
+\endcode
+In addition to compiling the source code, this will copy all of the sedflux installation files
+to the location you specified during the configuration process.  Note that you will have to have
+write permission for the direction that you are installing into.
+
+*/
+
+/*! \page run_sec Running sedflux-2.0
+
+\section input_sec   Step 1: Setting up the input files
+
+To run sedflux-2.0 you will need to create a project directory where the input
+files will be stored and the output files can be written to.  You will need at
+least four input files.  Depending on the processes that you plan to use, you
+may need more (example input files are provided with the distribution within
+the share/sedflux_input_files directory).  these four files are,
+- an initialization file
+- a sediment file
+- a bathymetry file
+- a process file
+
+\subsection init_file_sec Initialization file
+
+the initialization file will usually end with a .init extension.  the name of
+this file can be passed to sedflux on the command line:
+\code
+   sedflux in=<init-file>
+\endcode
+where <init-file> is the name of the initialization file.  in this case, the project
+directory is the current working directory.  if you do not specify any command
+line arguments, you will be prompted to give a project directory and the 
+name of the initialization file.
+
+\note
+Windows note: most likely you will not be using command line arguments and
+so will have to enter the project directoy and initialization file by hand.
+in this case, to specify a directory on another filesystem, begin the path
+with the drive letter followed by a colon.  as an example,
+\code
+   c:/My Sedflux Projects/This project
+\endcode
+Make sure to use forward slashes (/) rather than back slashes (\).
+
+\subsection sediment_file_sec Sediment file
+
+the sediment file specifies a number of grain types that will be used to fill
+the basin.  each grain type has a set of parameters that are specific to it.
+examples of grain type parameters are: grain size, grain density, saturated
+density, etc.  any number greater than one grain type can be specified.  the
+first grain type listed is interpreted by sedflux to be bed load.  the rest of
+the grains are assumed to be suspended load.  the particular name of the 
+sediment file is specified within the init file.
+
+\subsection bathymetry_file_sec Bathymetry file
+
+the bathymetry file specifies the elevation of the initial floor of the model
+run.  elevations can be thought to be given with respect to sea level.
+negative elevations are below sea level.  the data is contained within an ascii
+file as in two comma-separated columns.  note however, that the data must be
+precedeed by a line that indicates the start of the data as such,
+\code
+   --- data ---
+   0, 10
+   40000, -200
+   100000, -200
+\endcode
+each column is in meters.  sedflux interpolates between these points to match
+the resolution of the model run.  the name of the bathymetry file is provided
+in the init file.
+
+\subsection process_file_sec Process file
+
+This is the largest of the input files.  You use this file to control the 
+various processes that sedflux will model.  Each process begins with a line
+of the form:
+\code
+   --- <process-name> ---
+\endcode
+where <process-name> is the name of a particular process ('sea level', or
+erosion, for example).  This is then followed by four label/value pairs.  They
+will look something like:
+\code
+   process name:               sea level
+   active:                     yes
+   logging:                    no 
+   repeat interval:            always
+\endcode
+The meaning of each of the labels are:
+
+   \par \p process_name
+      The name of the process.  It does not have to match the
+      name in the preceeding line.  It is only used for writing
+      to log files and for debugging.
+
+   \par \p active
+      should sedflux model this process or not?  if 'yes',
+      sedflux will run the specified process.  if 'no', the
+      process will be skipped.
+
+   \par \p logging
+      if 'yes' additional information will be written to a log
+      file as well as to the screen.  this information is really
+      only of interest for debugging purposes.
+
+   \par \p repeat_interval
+      specify how often the process will be run.  some processes
+      may operate on longer time scales then others and so may
+      not need to be run as frequently as others.  this value
+      can either be the keyword 'always', or a period of time.
+      'always' indicates that the process should be run with
+      every time step.  a duration is given as a series of
+      numbers followed by a time unit (d=day, m=month, y=year).
+      as an example: 1y is yearly, 7d is weekly, 1y 6m is 1.5
+      yearly etc.  if this duration is less than the time step
+      of the run (as provided in the init file), it is set to
+      this time step and so is run with every time step.
+   
+Subsequent label/value pairs withing a process are specific to each process.
+I hope that the labels by themselves are sufficient as a description.  
+Unfortunatly, i'm sure this is not always the case.
+
+\section running_sec Step 2: Running sedflux
+
+To run sedflux, 
+\code
+> cd <project-dir>
+> sedflux in=<init-file>
+\endcode
+
+where <project-dir> is the directory where you set up you input files, and <init-file>
+is the name of your initialization file.
+
+\section output_sec  Step 3: Reading the output files
+
+A small library of MATLAB mfiles is included with the sedflux-2.0 distribution that read plot the
+various output files.  When you installed sedflux, they were put into the directory <tt><sedflux-prefix>/share/ew</tt>.  You can either copy these files into you MATLAB directory, or add this path to
+in your startup.m file.
+
+There are two types of output files for sedflux-2.0: property files, and measuring station files.  The
+output of both of these file types is done in the process file.  For property files, this is done in
+the group called <tt>data dump</tt>.  For example,
+\code
+--- 'data dump' ---
+process name:                           data dump
+active:                                 yes
+logging:                                yes
+repeat interval:                        1000y
+output directory:                       ./output-grain
+vertical resolution:                    full
+horizontal resolution:                  full
+vertical limits:                        tight
+horizontal limits:                      tight
+property:                               grain
+\endcode
+In this case, sedflux will write a property file of average grain size every 1000 years.  The process
+specific key/value pairs are:
+
+\param output_directory       The directory (relative to the root directory for the simulation) where
+                              sedflux will write this output file.
+\param vertical_resolution    The vertical resolution of the output file. 'full' indicates the
+                              resolution of the simulation.  This parameter is ignored in the
+                              current version.  'full' is assumed.
+\param horizontal_resolution  The horizontal resolution of the output file. 'full' indicates the
+                              resolution of the simulation.  This parameter is ignored in the
+                              current version.  'full' is assumed.
+\param vertical_limits        The minimum and maximum limits of the vertical extent of the output.
+                              'tight' indicates that the limits will be those of the simulation.
+                              This parameter is ignored in the current version.  'tight' is assumed.
+\param horizontal_limits      The minimum and maximum limits of the vertical extent of the output.
+                              'tight' indicates that the limits will be those of the simulation.
+                              This parameter is ignored in the current version.  'tight' is assumed.
+\param property               A key that indicates what sediment property sedflux will output.
+
+In this example, sedflux will write a series of files (to the directory \p output-grain) of the 
+form, <simulation-name>####.grain.  Where <simulation-name> is the name of the simulation as specified
+in the initialization file, and #### is a four digit number.  For each successive file written, the
+number is incremented by 1 (starting at 0001).
+
+The second type of output file is a measuring station file.  Again, you can control the output of this file from the process file through the 'measuring staton' group.  For example,
+\code
+--- 'measuring station' ---
+process name:                           measuring station
+active:                                 yes
+logging:                                yes
+repeat interval:                        always
+parameter to measure:                   depth
+position wrt river mouth:               no
+position of station:                    all
+filename:                               ./output/test.depth
+\endcode
+Here, sedflux flux will write depth information every time step (as specified with the 'always' key).
+The process-specific parameters are:
+\param parameter_to_measure    A key that indicates what parameter sedflux should measure.
+\param wrt_to_river_mouth      Should horizontal positions be measured with respect to the river mouth
+                               or as absoluted distances.  This should be either 'yes' or 'no'.
+\param position_of_station     The location of the measuring stations.  'all' indicates that a
+                               measuring station be positioned at every position within the simulation
+                               This is disabled in the current version.  'all' is assumed.
+\param filename                The filename of the output file.
+
+Unlike the propery file process that writes a series of files, sedflux creates only one measuring
+station file for every measured parameter.
+
+The MATLAB function used to plot a property file is plot_property.  If we have called out simulation
+'My_Simulation', we might use the following to look at some output,
+\code
+>> plot_property( 'My_Simulation0001.grain' )
+\endcode
+
+To read the data from a measuring station file, use the command read_measuring_station_cube,
+\code
+>> [z,x,t,h]=read_measuring_station_cube( 'test.depth' );
+\endcode
+Here, \p z will be a matrix that contains all of the measurements, \p x is the positions of the
+measuring stations, \p t is an array of times the measurements were made, and \p h contains
+some header information from the file.  To plot up this output, simply use the plot command,
+\code
+>> plot( x(2,:,1) , z(:,1,[1 end] )
+\endcode
+In this case we have potted the first and last sets of measurements.
+
+*/
+

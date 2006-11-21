@@ -1,24 +1,24 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-bin_SCRIPTS = runinflow
-#bin_PROGRAMS = inflow inflow1d pseudoplume
-bin_PROGRAMS = inflow pseudoplume
-inflow_SOURCES = inflow_main.c
-#inflow1d_SOURCES = 
-pseudoplume_SOURCES = pseudoplume.c
-include_HEADERS = inflow.h
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libinflow.la
-libinflow_la_SOURCES = inflow.c
+bin_SCRIPTS              = runinflow
+bin_PROGRAMS             = inflow pseudoplume
 
-#lib_LIBRARIES = libinflow.a
-#libinflow_a_SOURCES = inflow.c
+pseudoplume_SOURCES      = pseudoplume.c
+include_HEADERS          = inflow.h
 
-LDADD = -lsedflux -lutils -lglib-2.0
-inflow_LDADD = inflowStandalone.o -lsedflux -lutils -lglib-2.0
+lib_LTLIBRARIES          = libinflow.la
+libinflow_la_SOURCES     = inflow.c
 
-inflowStandalone.o: inflow.c
-	$(COMPILE) -DINFLOW_STANDALONE -o inflowStandalone.o -c $(top_srcdir)/inflow.c
+LDADD                    = -lglib-2.0
+
+inflow_SOURCES           = inflow_main.c inflow.c
+inflow_CFLAGS            = -DINFLOW_STANDALONE
+inflow_LDADD             = -lglib-2.0
 
 inflow1d$(EXEEXT): inflow
 	ln -s inflow inflow1d

@@ -1,5 +1,0 @@
-9 Nov 00 : fixed a bug in the getM routine.  The sedimentation rate was
-   not being calculated correctly.  Not even close to correct as far as
-   I could tell.  It *may* have been close for yearly time steps.
-
-

@@ -182,7 +182,7 @@ double     get_time_step                 ( Sed_cube p              ,
 
 /** Erode/deposit sediment over a 1D profile.
 
-\param prof             A Sed_cube (<em> must be 1 dimensional </em>)
+\param p                A Sed_cube (<em> must be 1 dimensional </em>)
 \param along_shore_cell A cell of the type of sediment to be introduced to
                         the profile by long-shore transport
 \param xshore_current   Magnitude of any offshore current (m/s)
@@ -513,10 +513,11 @@ double wave_break_helper( double z , gpointer user_data )
       
 /** Find the indices for the inner and outer shelf
 
-\param p A Sed_cube
-\param z_0 Water depth limit of the inner shelf
+@param[in]      p              A Sed_cube
+@param[in]      z_0            Water depth limit of the inner shelf
+@param[in,out]  shelf_ind      Array of arrays of indices that make up each zone
 
-\return An array of arrays of the indices to the inner and outer shelf.
+\return An array of Sed_cube's.  One for each zone.
 */
 Sed_cube* get_shelf_zones( Sed_cube p , double z_0 , gssize** shelf_ind )
 {
@@ -632,11 +633,13 @@ Sed_cube* get_bruun_zones( Sed_cube p , double y_0 )
 of zones, \a n_zones since it defines the lower and upper boundaries
 of each zone.
 
-\param p A Sed_cube
-\param z Zone depth-boundaries
-\param n_zones The number of zones
+\param p         A Sed_cube
+\param z         Zone depth-boundaries
+\param n_zones   The number of zones
+\param f         Function that get a parameter from a Sed_cube
+\param ind       Array of arrays for the columns in each zone
 
-\return A array of index arrays for every zone.
+\return          A array of Sed_cube's.  One for each zone.
 */
 Sed_cube* get_zones( Sed_cube p , double* z , gssize n_zones , Sed_grid_func f , gssize** ind )
 {
@@ -762,8 +765,9 @@ Thus, for stability we require
 \f]
 
 \param p         A Sed_cube
-\param ind       Array of indices within the zone (terinated with -1)
-\param deep_wave The deep-water wave
+\param deep_wave The incoming deep-water wave
+\param u_0       Cross-shore current
+\param data      Date that describe the Bruun zone
 
 \return The time step in days
 */
@@ -909,25 +913,28 @@ position.
 
 \return Sediment flux in m^2/s
 */
-double get_total_flux_outer_shelf( double z     ,
-                       double dz_dx ,
-                       Sed_wave w   ,
-                       double u_0   ,
-                       double w_s   ,
-                       double h_b )
+double
+get_total_flux_outer_shelf( double z     ,
+                            double dz_dx ,
+                            Sed_wave w   ,
+                            double u_0   ,
+                            double w_s   ,
+                            double h_b )
 {
    double u_om = get_near_bed_velocity( z , w , h_b );
    return   get_constant( z , w , w_s , h_b )
           * ( u_0 + pow(u_om,2.)/(5.*w_s)*dz_dx );
 }
 
-/**
+/** Get the total flux at the Bruun zone
 
-\param x   Position from shore
-\param x_0 Distance from shore to breaker zone
-\param q_0 Offshore sediment flux at breaker zone
+\param x        Position from shore
+\param dz_dx    Bathymetric slope
+\param x_0      Distance from shore to breaker zone
+\param k_0      Diffusion coefficient at the edge of the Bruun zone
 */
-double get_total_flux_bruun_zone( double x , double dz_dx , double x_0 , double k_0 )
+double
+get_total_flux_bruun_zone( double x , double dz_dx , double x_0 , double k_0 )
 {
    eh_require( x>=0   );
    eh_require( x_0>0  );
@@ -956,12 +963,21 @@ double get_total_flux( double z     ,
 \note The thickness of \a in and \a out represent the \e flux of sediment into
 and out of the Sed_cube in meters per second.
 
-\param p A Sed_cube
-\param deep_wave A Sed_wave causing sediment movement
-\param dt        Time step to use (in seconds)
-\param t_total   The duration of the ocean storm (in seconds)
-\param in        A Sed_cell containing sediment flux into to Sed_cube
-\param out       A Sed_cell containing sediment flux out of the Sed_cube
+\param p                A Sed_cube
+\param deep_wave        A Sed_wave causing sediment movement
+\param u_0              Cross-shore current
+\param erosion_limit    Maximum depth of erosion along profile
+\param source_col       Unused
+\param bruun_depth      Unused
+\param along_shore_cell Unused
+\param data             Data that describe the Bruun zone
+\param dt               Time step to use (in seconds)
+\param t_total          The duration of the ocean storm (in seconds)
+\param added            A Sed_cell to record sediment that is added to the profile
+\param in               A Sed_cell containing sediment flux into to Sed_cube
+\param out              A Sed_cell containing sediment flux out of the Sed_cube
+
+\todo Tidy up function diffuse_cols.
 
 */
 void diffuse_cols( Sed_cube p                ,
@@ -1553,15 +1569,15 @@ double* get_bruun_profile( double* y      , gssize len     ,
 The columns of \a p are filled to the water depths provided in the array \a h.
 \a fill_cell provides the sediment that will be added to the columns.  The added
 sediment is given the current age of \a p, and the facies is set to S_FACIES_ALONG_SHORE.
-If \h is NULL, nothing is done.  If any depths are NaN, the column is skipped
+If \p h is NULL, nothing is done.  If any depths are NaN, the column is skipped
 over.
 
 \note The size of \a fill_cell is adjusted to reflect the amount of sediment that was 
 added to the Sed_cube.
 
-\param p[in,out]         A Sed_cube
-\param h[in]             Water depths to fill columns to
-\param fill_cell[in,out] A Sed_cell that contains the sediment to fill with
+\param[in,out]   p            A Sed_cube
+\param[in]       h            Water depths to fill columns to
+\param[in,out]   fill_cell    A Sed_cell that contains the sediment to fill with
 
 */
 void fill_to_bruun( Sed_cube p ,
@@ -1859,7 +1875,7 @@ where \f$ T \f$ is wave period.
 \param orbital_velocity Wave orbital velocity in meters per second
 \param wave_period      Wave period in seconds
 
-\param The maximum grain diameter (in meters) that can be mobilized by the orbital velocity
+\return The maximum grain diameter (in meters) that can be mobilized by the orbital velocity
 */
 double get_grain_size_threshold( double orbital_velocity , double wave_period )
 {

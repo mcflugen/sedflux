@@ -33,9 +33,9 @@
 FILE *fpout_;
 #endif
 
-/** @memo inflow turbidity current model.
+/** inflow turbidity current model.
 
-@doc A steady state turbidity current model based on the Mulder model.
+A steady state turbidity current model based on the Mulder model.
 
 Mulder, T., Savoye, B., and Syvitski, J.P.M., 1997.  Numerical modelling of a
 mid-sized gravity flow: the 1979 Nice turbidity current (dynamics, processes,
@@ -69,6 +69,7 @@ sediment budget and seafloor impact).  Sedimentology, v. 44, pp. 305-326.
 @param deposit       2d array for storing the deposition rates for each node.
                      The fast dimension is over grid node number and the slow
                      dimension is over grain type.
+@param fpout         The output file
 
 @return 0 on success and -1 if a problem is found.
 

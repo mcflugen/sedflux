@@ -374,7 +374,6 @@ Pick a random number from an exponential distribution with mean, \a mu.
 
 \param rand  A GRand
 \param mu    The scale parameter of the distribution
-\param sigma The shape parameter of the distribution
 
 \return A random number
 */

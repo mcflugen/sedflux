@@ -1420,7 +1420,6 @@ int tpool_destroy( tpool_t tpool , int finish )
 
 /** Create a list of successive file name.
 
-@doc
 Create a list of files that all have the same form but contain a numerical
 portion that is incremented.  For instance, a list of files might be something
 like: file0001.txt, file0002.txt, etc.
@@ -2523,7 +2522,6 @@ Eh_grid *sed_subgrid( Eh_grid *g , int i_0 , int j_0 , int n_x , int n_y )
 
 /** Calculate the density of sea water
 
-@doc
 Calculate the density of sea water for a given salinity, temperature, and
 pressure.  Use the international unesco equation of state 1980.
 

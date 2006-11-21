@@ -1357,11 +1357,11 @@ double sed_type_density_compacted( Sed_type t , gpointer d )
 
 /** \brief Return the Wentworth size class from a grain size.
 
- Returns the Wentworth size class for a grain size in phi units.
+Returns the Wentworth size class for a grain size in phi units.
 
-\param d The grain size is phi units.
+\param phi    The grain size is phi units.
 
-\return The grain size as a Wentworth size class.
+\return       The grain size as a Wentworth size class.
 
 \see sed_cell_size_class , Sed_size_class .
 */

@@ -197,15 +197,14 @@ int sed_cmp_epoch_no(gconstpointer a,gconstpointer b)
 
 /** Initialize an epoch from a symbol table.
 
-@doc
 An Epoch type is initialized with data from a label/value hash table.  These
 label/values are usually read in from a file.
 
-@param symbol_table A pointer to a label/value hash table.
+\param t    A pointer to a label/value hash table.
 
-@return A pointer to the new epoch.
+\return     A pointer to the new epoch.
 
-@see Epoch_labels .
+\see Epoch_labels .
 */
 Epoch *init_epoch( Eh_symbol_table t )
 {
@@ -293,19 +292,18 @@ eh_debug( "DONE INIT ALL PROCESSES" );
 
 /** Initialize the processes used in sedflux.
 
-@doc
 Scan a hash table for each of the processes.  The hash table is formed by
 scanning the input file given in the Epoch, cur_epoch.
 
-@param pl          A pointer to a Sed_process_list.
-@param epoch_table A pointer to an Epoch.
+\param pl          A pointer to a Sed_process_list.
+\param cur_epoch   A pointer to an Epoch.
 
-@return A pointer to the input Sed_process_list .
+\return A pointer to the input Sed_process_list .
 
-@see create_process_list , destroy_process_list .
+\see create_process_list , destroy_process_list .
 */
 Sed_process_list *init_process_list( Sed_process_list *pl ,
-                                 Epoch *cur_epoch )
+                                     Epoch *cur_epoch )
 {
    int i;
    Eh_key_file epoch_tab;
@@ -595,7 +593,6 @@ eh_debug( "DESTROY PROCESS LIST: DONE" );
 
 /** Check the input process files.
 
-@doc
 This function will read in all of the epoch files, and initialize the
 processes.  This is intended to find any errors in the input files at 
 the begining of the model run.

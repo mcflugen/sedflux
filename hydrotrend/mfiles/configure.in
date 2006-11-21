@@ -1,6 +1,0 @@
-AC_INIT(plot_hydro.m)
-
-AM_INIT_AUTOMAKE(hydrotrend_matlab_files,2.0)
-
-AC_OUTPUT([Makefile hydro_startup.m])
-

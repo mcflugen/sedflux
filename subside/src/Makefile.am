@@ -1,13 +1,16 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-bin_PROGRAMS = subside
-subside_SOURCES = subside_main.c
-include_HEADERS = subside.h
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libsubside.la
-libsubside_la_SOURCES = subside.c
+bin_PROGRAMS              = subside
+subside_SOURCES           = subside_main.c
+include_HEADERS           = subside.h
 
-#INCLUDES = -I$(top_srcdir)/../sed -I$(top_srcdir)/../utils -I/usr/freeware/include
+lib_LTLIBRARIES           = libsubside.la
+libsubside_la_SOURCES     = subside.c
 
-subside_LDADD = -lsubside -lsedflux -lutils -lglib-2.0 -lm
+subside_LDADD             = -lsubside -lglib-2.0 -lm
 

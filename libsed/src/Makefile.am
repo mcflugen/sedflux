@@ -1,32 +1,90 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src
 
-#lib_LIBRARIES = libsedflux.a
-lib_LTLIBRARIES = libsedflux.la
-libsedflux_la_SOURCES = datadir.h sed_cell.c sed_column.c sed_cube.c sed_epoch.c sed_hydro.c sed_process.c sed_property.c sed_property_file.c sed_sediment.c sed_tripod.c sed_wave.c
-#libsedflux_a_SOURCES = sed_cube.c sed_cell.c sed_column.c sed_hydro.c sed_sediment.c sed_print.c sed_epoch.c sed_process.c
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la
 
-include_HEADERS = datadir.h sed_cell.h sed_column.h sed_const.h sed_cube.h sed_epoch.h sed_hydro.h sed_process.h sed_property.h sed_property_file.h sed_sedflux.h sed_sediment.h sed_tripod.h sed_wave.h
+BUILT_SOURCES            = datadir_path.h
+BUILT_EXTRA_DIST         = datadir_path.h
 
-bin_PROGRAMS = libsed_unit_test
-libsed_unit_test_SOURCES = datadir.h unit_test.c sed_cell_unit_test.c sed_wave_unit_test.c sed_column_unit_test.c sed_sediment_unit_test.c sed_hydro_unit_test.c
+lib_LTLIBRARIES          = libsedflux.la libsedfluxui.la
 
-#libsedflux_la_LIBADD = -lpthread -lglib-2.0 -lgthread-2.0 -lutils
-libsedflux_la_LIBADD = -lutils -lgthread-2.0 -lglib-2.0
-libsedflux_la_LDFLAGS = -version-info 1:1
-#test_LDADD = -lthread -lglib-2.0 -lgthread-2.0 -lutils -lsedflux
-libsed_unit_test_LDADD = -lsedflux -lutils -lgthread-2.0 -lglib-2.0
+libsedflux_la_SOURCES    = datadir_path.h \
+                           sed_cell.c \
+                           sed_column.c \
+                           sed_cube.c \
+                           sed_epoch.c \
+                           sed_hydro.c \
+                           sed_process.c \
+                           sed_property.c \
+                           sed_property_file.c \
+                           sed_sediment.c \
+                           sed_tripod.c \
+                           sed_wave.c
 
-EXTRA_DIST = sedflux.pc.in
+include_HEADERS          = datadir_path.h \
+                           sed_cell.h \
+                           sed_column.h \
+                           sed_const.h \
+                           sed_cube.h \
+                           sed_epoch.h \
+                           sed_hydro.h \
+                           sed_process.h \
+                           sed_property.h \
+                           sed_property_file.h \
+                           sed_sedflux.h \
+                           sed_sediment.h \
+                           sed_tripod.h \
+                           sed_wave.h \
+                           etk_addrem.h \
+                           etk_keyvalue.h
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = sedflux.pc
-$(pkgconfig_DATA): config.status
+libsed_unit_test_SOURCES = datadir_path.h \
+                           unit_test.c \
+                           sed_cell_unit_test.c \
+                           sed_wave_unit_test.c \
+                           sed_column_unit_test.c \
+                           sed_sediment_unit_test.c \
+                           sed_hydro_unit_test.c
 
-DISTCLEANFILES = datadir.h
-datadir.h: force_rebuild
-	echo '#if !defined(DATADIR)' >$@
-	echo '# define DATADIR "$(datadir)"' >>$@
-	echo '#endif' >>$@
+bin_PROGRAMS             = libsed_unit_test
+
+if HAVE_GTK
+
+bin_PROGRAMS            += sedflux_ui select_bathy_ui
+
+libsedfluxui_la_SOURCES  = etk_addrem.c etk_keyvalue.c stk_select_bathy.c
+
+sedflux_ui_SOURCES       = sed_ui.c
+sedflux_ui_CFLAGS        = @GTK_CFLAGS@
+sedflux_ui_LDADD         = @GTK_LIBS@ -lsedfluxui
+
+select_bathy_ui_SOURCES  = stk_select_bathy_main.c
+select_bathy_ui_CFLAGS   = @GTK_CFLAGS@
+select_bathy_ui_LDADD    = @GTK_LIBS@ -lsedfluxui 
+
+libsedfluxui_la_LIBADD   = -lgthread-2.0 -lglib-2.0 @GTK_LIBS@
+libsedfluxui_la_CFLAGS   = @GTK_CFLAGS@
+
+endif
+
+libsedflux_la_LIBADD     = -lgthread-2.0 -lglib-2.0
+libsedflux_la_LDFLAGS    = -version-info 1:1
+
+libsed_unit_test_LDADD   = -lsedflux -lgthread-2.0 -lglib-2.0
+
+EXTRA_DIST               = sedflux.pc.in
+
+pkgconfigdir             = $(libdir)/pkgconfig
+pkgconfig_DATA           = sedflux.pc
+
+DISTCLEANFILES           = datadir_path.h
+
+datadir_path.h: Makefile
+	if test -f $(srcdir)/datadir_path.h ; then :; else \
+	   chmod u+w $(srcdir) ; \
+	   echo '#if !defined(DATADIR)' > $(srcdir)/datadir_path.h ; \
+	   echo '# define DATADIR "$(datadir)"' >> $(srcdir)/datadir_path.h ; \
+	   echo '#endif' >> $(srcdir)/datadir_path.h ; \
+	fi
 
 force_rebuild:
 

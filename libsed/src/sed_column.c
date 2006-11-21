@@ -46,12 +46,11 @@ CLASS( Sed_column )
 /** Create a column of sediment
 
 @param n_bins the number of Sed_cell's in the column.
-@sed   sed    the type of sediment used in the column.
 
 @return A newly created Sed_column.  NULL is returned if there was a problem
         allocating memory.
 
-@see sed_destroy_column
+@see sed_column_destroy
 */
 Sed_column sed_column_new( gssize n_bins )
 {
@@ -94,9 +93,8 @@ Sed_column sed_column_new_filled( double t , Sed_size_class size )
 /** Destroy a column of sediment.
 
 @param s        The Sed_column to be destroyed.
-@param free_sed If TRUE the memory for the sediment info will also be freed.
 
-@see sed_create_column
+@see sed_column_new
 */
 Sed_column sed_column_destroy( Sed_column s )
 {
@@ -134,14 +132,13 @@ Sed_column sed_column_clear( Sed_column s )
 
 /** Copy one column to another.
 
-@doc
 Copy the contents of one Sed_column into another.  Memory must already be
 allocated for the destination column.  Any sediment information that is 
 stored in the destination column will be destroyed and replaced with the
 information from the source column.
 
-@param s1 The destination column.
-@param s2 The source column.
+@param dest    The destination column.
+@param src     The source column.
 
 @return The destination column is returned.
 
@@ -252,7 +249,6 @@ Sed_column sed_column_copy_public_data( Sed_column dest , const Sed_column src )
 
 /** Create a column as a copy of another.
 
-@doc
 This is the copy constructor for a Sed_column.
 
 @param src The source column.
@@ -268,7 +264,6 @@ Sed_column sed_column_dup( const Sed_column src )
 
 /** Get fraction information from a Sed_cell of a Sed_column.
 
-@doc
 Get an array of fractions for each grain type contained within the specified
 Sed_cell.  The index is counted from the bottom of the Sed_column to the top.
 That is, i=0 refers to the lowest cell within the column.
@@ -363,7 +358,7 @@ for 2d and so the position only contains one horizontal coordinate.
 NOTE: This function is now deprecated.  Use sed_set_column_x_position instead.
 
 @param col      A pointer to a Sed_column.
-@param position The new horizontal location of the Sed_column.
+@param x        The new horizontal location of the Sed_column.
 
 @return A pointer to the input Sed_column.
 
@@ -439,7 +434,6 @@ Sed_column sed_column_adjust_base_height( Sed_column c , double dz )
 
 /** Get the vertical resolution of a Sed_column
 
-@doc
 The vertical resolution of a Sed_column is the initial thickness of the 
 Sed_cell's that make it up.  Sediment can be added to the cell until it 
 reached this thickness.  After it is full, sediment is then added to the 
@@ -480,8 +474,8 @@ double sed_column_top_height( const Sed_column col )
 
 /** Test if the top of a column is below some elevation.
 
-@param col       A pointer to a Sed_column.
-@param elevation The reference elevation.
+@param col     A pointer to a Sed_column.
+@param z       The reference elevation.
 
 @return TRUE if the top of the column is below the elevation.
 
@@ -494,10 +488,10 @@ gboolean sed_column_is_below( Sed_column col , double z )
 
 /** Test if the top of a column is above some elevation.
 
-@param col       A pointer to a Sed_column.
-@param elevation The reference elevation.
+@param col     A pointer to a Sed_column.
+@param z       The reference elevation.
 
-@return TRUE if the top of the column is above the elevation.
+@return        TRUE if the top of the column is above the elevation.
 
 @see sed_column_below .
 */
@@ -546,7 +540,6 @@ double sed_column_sediment_mass(const Sed_column s)
 
 /** Get the total load felt by each cell of sediment in a Sed_column.
 
-@doc
 Get the load felt by each cell of sediment due to its overlying cells.
 Returns an array containing the load felt by each cell (in units of Pa).
 The returned array should be freed using free.  If a value of NULL is given
@@ -556,10 +549,11 @@ of the column.  If n_bins <= 0, we go from the start-th bin to the top.
 If a value of NULL is given for the load pointer, a newly allocated array
 will be used.
 
-@param s      A pointer to a Sed_column.
-@param start  Index to the Sed_cell to begin at.
-@param n_bins The number of Sed_cell's to consider.
-@param load   A pointer to an array that will hold the load values.
+@param s              A pointer to a Sed_column.
+@param start          Index to the Sed_cell to begin at.
+@param n_bins         The number of Sed_cell's to consider.
+@param overlying_load The load overlying the Sed_column.
+@param load           A pointer to an array that will hold the load values.
 
 @return A pointer to an array of loads.
 */
@@ -693,7 +687,6 @@ double* sed_column_total_property( Sed_property f ,
 
 /** Get the average of a specified property for a series of Sed_cell's
 
-@doc
 This function will average a specifed property of a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the
 Sed_property_with_load_func, f.
@@ -760,7 +753,6 @@ double* sed_column_avg_property_with_load( Sed_property f ,
 
 /** Get the average of a specified property for a series of Sed_cell's
 
-@doc
 This function will average a specifed property of a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the
 Sed_property_with_load_func, f.
@@ -827,7 +819,6 @@ double* sed_column_avg_property( Sed_property f ,
 
 /** Get the value of a specified property for a series of Sed_cell's
 
-@doc
 This function will get specifed property for a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the
 Sed_property_func, f.
@@ -905,7 +896,6 @@ double sed_column_load_at( const Sed_column s , gssize n )
 
 /** Get the average property from over the cells within a column.
 
-@doc
 Use the Sed_property_func, f, to get the average property value of all the
 Sed_cell's in a Sed_column.
 
@@ -913,7 +903,7 @@ This is the same as sed_get_column_property_with_load except here f is of type
 Sed_property_func.
 
 @param f A function to get a property from a Sed_cell.
-@param s A pointer to a Sed_column.
+@param c A pointer to a Sed_column.
 
 @return The average property value for the column.
 
@@ -944,7 +934,6 @@ double sed_column_property_0( Sed_property f, const Sed_column c )
 
 /** Get the average property from over the cells within a column.
 
-@doc
 Use the Sed_property_with_load_func, f, to get the average property value
 of all the Sed_cell's in a Sed_column.
 
@@ -1015,14 +1004,13 @@ double sed_column_property( Sed_property f ,
 
 /** Change the thickness of a cell within a column.
 
-@doc
 Change the thickness of a cell within a column.  The thickness of the specifed
 cell is changed as well as the thickness of the sediment column.  The cell
 thickness is changed in such a way so as to retain its degree of compactedness.
 
 @param s             A pointer to a Sed_column.
 @param i             Index to a Sed_cell within a Sed_column. 
-@param new_thickness The new thickness of the Sed_cell.
+@param new_t         The new thickness of the Sed_cell.
 
 @return A pointer to the input Sed_column.
 
@@ -1049,17 +1037,16 @@ Sed_column sed_column_resize_cell( Sed_column s ,
 
 /** Compact a cell within a column.
 
-@doc
 Change the thickness of a cell within a column.  The thickness of the specifed
 cell is changed as well as the thickness of the sediment column.  The current
 thickness of the cell is changed but its original thickness not changed.  This
 will therefore cause the sediment to become more dense.
 
-@param s             A pointer to a Sed_column.
-@param i             Index to a Sed_cell within a Sed_column. 
-@param new_thickness The new thickness of the Sed_cell.
+@param s        A pointer to a Sed_column.
+@param i        Index to a Sed_cell within a Sed_column. 
+@param new_t    The new thickness of the Sed_cell.
 
-@return A pointer to the input Sed_column.
+@return         A pointer to the input Sed_column.
 
 @see sed_compact_cell_in_column .
 */
@@ -1079,7 +1066,6 @@ Sed_column sed_column_compact_cell( Sed_column s , gssize i , double new_t )
 
 /** Add a Sed_cell to the top of a Sed_column.
 
-@doc
 This interface should not be used.  Rather, the user should use the short cuts
 sed_add_cell_to_column or sed_add_cell_to_column_avg_pressure instead,
 depending weather the pressures should be updated or just averaged.
@@ -1220,7 +1206,6 @@ double sed_column_append_cell_real( Sed_column col ,
 
 /** Add a Sed_cell to the top of a Sed_column.
 
-@doc
 The contents of a Sed_cell is added to the top of a Sed_column.  This is the
 default mode.  In this case the pressures of the cells of the column are 
 updated to reflect the increase in overlying load due to the new sediment.
@@ -1245,7 +1230,6 @@ double sed_column_append_cell( Sed_column col , Sed_cell cell )
 
 /** Add a Sed_cell to the top of a Sed_column.
 
-@doc
 The contents of a Sed_cell is added to the top of a Sed_column.  This is
 different from sed_add_cell_to_column: In this case, the pressure of the
 top cell is averaged with the new cell.
@@ -1265,13 +1249,12 @@ double sed_column_add_cell_avg_pressure( Sed_column col , Sed_cell cell  )
 
 /** Add a vector of thicknesses to a Sed_column.
 
-@doc
 Add sediment to a column based on the amounts in an array.  The input array
 should be the same length as the number of sediment types used in the sediment
 column.  The order of the sediment types is also the same.
 
 @param c   A pointer to a Sed_column.
-@param vec An array of sediment thicknesses.
+@param t   An array of sediment thicknesses.
 
 @return The total amount of sediment that was added to the column.
 */
@@ -1312,7 +1295,6 @@ Sed_cell sed_column_top_cell( const Sed_column col )
 
 /** Get the n-th cell from a column.
 
-@doc
 Get a pointer to the Sed_cell that is n cells from the bottom of a Sed_column.
 
 @param col A pointer to a Sed_column.
@@ -1335,7 +1317,6 @@ Sed_cell sed_column_nth_cell( const Sed_column col , gssize n )
 
 /** Change the number of cells within a column.
 
-@doc
 Change the number of cells that are contained within a column.  If the new
 size is greater than the current size, more memory is allocated and new
 (cleared) Sed_cell's are added to the top of the Sed_column.  If the new size
@@ -1379,7 +1360,6 @@ Sed_column sed_column_resize( Sed_column col , gssize n )
 
 /** Remove part of the top cell of a column and save the sediment.
 
-@doc
 The top fraction (given by f) is removed from the cell at the top of a sediment
 column.  The removed sediment is placed into the destination cell.  The 
 destination cell is cleared before the new sediment is added.  If a NULL value
@@ -1420,7 +1400,6 @@ Sed_cell sed_column_extract_top_cell( Sed_column col ,
 
 /** Remove part of the top cell of a column.
 
-@doc
 The top fraction (given by f) is removed from the cell at the top of a sediment
 column.  The removed sediment is discarded.
 
@@ -1466,14 +1445,13 @@ Sed_column sed_column_remove_top_cell( Sed_column col , double f )
 
 /** Remove the top of a column and save the sediment.
 
-@doc
 The top thickness units is removed from the cells at the top of a sediment
 column.  The removed sediment is placed into the destination cell.  The 
 destination cell is cleared before the new sediment is added.  If a NULL value
 is passed as the destination cell, a new cell is created to hold the sediment.
 
 @param col       A pointer to a Sed_column.
-@param thickness The amount of sediment to remove from the top of the column.
+@param t         The amount of sediment to remove from the top of the column.
 @param dest      A pointer to a Sed_cell to hold the removed sediment.
 
 @return A pointer to a Sed_cell that holds the removed sediment.
@@ -1562,12 +1540,11 @@ Sed_cell sed_column_extract_top_fill( Sed_column col ,
 
 /** Remove the top of a column.
 
-@doc
 The top thickness units is removed from the cells at the top of a sediment
 column.  The removed sediment is discarded.
 
 @param col       A pointer to a Sed_column.
-@param thickness The amount of sediment to remove from the top of the column.
+@param t         The amount of sediment to remove from the top of the column.
 
 @see sed_extract_top_from_column , sed_get_top_from_column .
 */
@@ -1756,7 +1733,6 @@ Sed_cell sed_column_top( const Sed_column col ,
 
 /** Get a bulk property from the top of a column.
 
-@doc
 This is the same as sed_get_top_property_with_load except that here we use
 Sed_property_func.
 
@@ -1793,7 +1769,6 @@ double sed_column_top_property_0( Sed_property property ,
 
 /** Get a bulk property from the top of a column.
 
-@doc
 This is the same as sed_get_top_property except that here we use
 Sed_property_func_with_load.  As we examine only the top portion of a column,
 in this case the load is that of the sediment we are examining.
@@ -1838,7 +1813,6 @@ double sed_column_top_property( Sed_property property , const Sed_column s , dou
 
 /** Get the density of the top of a column.
 
-@doc
 Get the bulk density of the top (units of depth) of a column.  This function
 is a convenience function for sed_get_top_property (S_DENSITY,s,top) .
 
@@ -1869,7 +1843,6 @@ double sed_column_top_rho( const Sed_column s , double top )
 
 /** Get the age of the top of a column.
 
-@doc
 Get the age of the top (units of depth) of a column.  This function
 is essentially a convenience function for sed_get_top_property (S_AGE,s,top) .
 
@@ -1899,13 +1872,12 @@ double sed_column_top_age( const Sed_column s , double top )
 
 /** Get the number of cells contained within the top of a column.
 
-@doc
 Return the number of sediment bins that make up the top height-th units of
 a sediment column.  The bins may be of a size that is different from the 
 vertical resolution of the column.
 
 @param s      A pointer to a Sed_column.
-@param height The thickness of a Sed_column top.
+@param z      The thickness of a Sed_column top.
 
 @return The number of sediment bins within the top of a Sed_column.
 */
@@ -1934,10 +1906,10 @@ gssize sed_column_top_nbins( Sed_column s , double z )
 
 /** Get the index of a cell at a specified elevation within a column.
 
-@param s A pointer to a Sed_column.
-@param h The elevation of a Sed_cell within a Sed_column.
+@param s    A pointer to a Sed_column.
+@param z    The elevation of a Sed_cell within a Sed_column.
 
-@return The index to a cell at a given elevation.
+@return     The index to a cell at a given elevation.
 */
 gssize sed_column_index_at( const Sed_column s , double z )
 {
@@ -2001,14 +1973,13 @@ Sed_column sed_column_read( FILE* fp )
 
 /** Get a column from a portion of another.
 
-@doc
 Get a portion of one column from another.  The copy begins at an elevation,
 height from the source column.  No sediment is removed from the source column.
 Information is only copied.  If NULL is passed for the destination column, a
 new column is created.
 
 @param src    A pointer to the source Sed_column.
-@param height The elevation to start the copy.
+@param z      The elevation to start the copy.
 @param dest   A pointer to the destination Sed_column.
 
 @return A pointer to the destination column.
@@ -2059,7 +2030,6 @@ Sed_column sed_column_height_copy( const Sed_column src ,
 
 /** Bite off the begining of a column.
 
-@doc
 Remove the bottom portion of a column starting at an elevation, bottom.
 
 @param col    A pointer to a Sed_column.
@@ -2083,7 +2053,6 @@ Sed_column sed_column_chomp( Sed_column col , double bottom )
 
 /** Cut off the last portion of a column.
 
-@doc
 Cut off the top part of a column starting at an elevation, top.
 
 @param col A pointer to a Sed_column.
@@ -2110,7 +2079,6 @@ Sed_column sed_column_chop( Sed_column col , double top )
 
 /** Remove the begining and end of a column.
 
-@doc
 Remove the cells of a column starting at the bottom and going to an elevation,
 bottom.  Also, remove the cells starting at an elevation, top and running to
 the top of the column.  That is, keep only the cells between bottom and top.
@@ -2128,7 +2096,6 @@ Sed_column sed_column_strip( Sed_column col , double bottom , double top )
 
 /** Get the depth to the top of a column.
 
-@doc
 Get the depth to the top of a Sed_column.
 
 @param col A pointer to a Sed_column
@@ -2216,9 +2183,9 @@ double sed_column_thickness( const Sed_column col)
 /** Set the thickness of sediment in a Sed_column.
 
 @param col           A pointer to a Sed_column.
-@param new_thickness The new thickness of a Sed_column.
+@param new_t         The new thickness of a Sed_column.
 
-@param A pointer to the input Sed_column.
+@return A pointer to the input Sed_column.
 */
 Sed_column sed_column_set_thickness( Sed_column col , double new_t )
 {
@@ -2305,8 +2272,8 @@ double sed_column_depth_age( const Sed_column col , double age )
 
 /** Get the index to the cell that is a specified height above a column bottom.
 
-@param col A pointer to a Sed_column.
-@param thickness Sediment thickness to a Sed_cell within a Sed_column.
+@param col      A pointer to a Sed_column.
+@param t        Sediment thickness to a Sed_cell within a Sed_column.
 
 @return The index to the Sed_cell that is a specifed distance from the bottom
         of a Sed_column.
@@ -2337,7 +2304,7 @@ gssize sed_column_index_thickness( const Sed_column col , double t )
 /** Get the index to a cell that is at a specified burial depth.
 
 @param col   A pointer to a Sed_column.
-@param depth Burial depth of a Sed_cell.
+@param d     Burial depth of a Sed_cell.
 
 @return The index to a Sed_cell that is buried at a specified depth.
 */
@@ -2366,12 +2333,11 @@ gssize sed_column_index_depth( const Sed_column col , double d )
 
 /** Add the sediment from a portion of a column to a cell.
 
-@doc
 Sediment is added from the source column to the destination cell.  The
 destination cell is not cleared before the addition of the new sediment.
 
-@param cell A pointer to the destination Sed_cell.
-@param col  A pointer to the source Sed_column.
+@param dest A pointer to the destination Sed_cell.
+@param src  A pointer to the source Sed_column.
 
 @return A pointer the the destination Sed_cell.
 */
@@ -2394,7 +2360,6 @@ Sed_cell sed_cell_add_column( Sed_cell dest , const Sed_column src )
 
 /** Add the contents of one column to the top of another.
 
-@doc
 The contents of one column is added to the top of another.  No sediment is
 removed from the source column.  The sediment is copied and then added to the
 destination column.

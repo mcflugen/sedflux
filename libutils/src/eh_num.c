@@ -46,7 +46,7 @@ gboolean eh_compare_dbl( double a , double b , double eps )
 
 This is taken from Numerical Recipes
 
-@param x A floating point number
+@param xx A floating point number
 
 @return The log of the gamma function
 */
@@ -195,10 +195,10 @@ This is taken from Numerical Recipes.
 Calculate the incomplete Gamma function, \f$ P(a,b) \f$, using its series representation.
 This converges rapidly for \f$ x < a+1 \f$.
 
-@param gammser The incomplete Gamma function evaluated at \f$ (a,x) \f$
-@param a       A floating point number
-@param x       A floating point number
-@param gln     Log the the Gamma function at \f$ a \f$
+@param gamser The incomplete Gamma function evaluated at \f$ (a,x) \f$
+@param a      A floating point number
+@param x      A floating point number
+@param gln    Log the the Gamma function at \f$ a \f$
 
 @return The incomplete gamma function
 */
@@ -978,7 +978,7 @@ Solve the system of linear equations for \f$ x \f$ in,
        &        & 0      & l_n    & d_n } \right]
    \left\{ \matrix{ x_1\cr x_2\cr \vdots\cr x_{n-1}\cr x_n } \right\} =
    \left\{ \matrix{ b_1\cr b_2\cr \vdots\cr b_{n-1}\cr b_n } \right\}
-/f]
+\f]
 
 @param l   entries on the lower diagonal.
 @param d   entries on the diagonal.
@@ -1019,7 +1019,6 @@ double *tridiag( double *l , double *d , double *u , double *b , double *x , int
 
    return x;
 }
-//EOC
 
 #include "complex.h"
 
@@ -1283,7 +1282,6 @@ double eh_kei_0( double x )
 
 /** Inverse error function.
 
-@doc
 X = ERFINV(Y) is the inverse error function for each element of Y.
 The inverse error function satisfies y = erf(x), for -1 <= y <= 1
 and -inf <= x <= inf.

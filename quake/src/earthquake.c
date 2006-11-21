@@ -23,9 +23,7 @@
 
 /** Generate an earthquake.
 
-@doc
- This will give the maximum earthquake that occured within
- the time step dt.  
+This will give the maximum earthquake that occured within the time step dt.  
 
 @param a   determined from the mean quake over a time step.
 @param dt  the number of time steps that are considered to find the maximum.

@@ -75,7 +75,7 @@ that it is difficult to move, one that it is easy to move.
 \param dt         The time step of the diffusion
 \param options    Options that control the method of diffusion
 
-\param A Sed_cell array of sediment that was lost
+\return           A Sed_cell array of sediment that was lost
 */
 
 Sed_cell *diffuse_sediment( Sed_cube prof     , double k_max , 
@@ -412,14 +412,14 @@ grain type.  every grain type is given an alpha value between zero
 and one that characterizes its ability to be moved.  zero indicates
 that it is difficult to move, one that it is easy to move.
 
-\param prof        A Sed_cube to diffuse.
-\param k_long_max  The maximum long-shore diffusion coefficent
-\param k_cross_max The maximum cross-shore diffusion coefficent
-\param skin_depth The depth at which \f$ k \f$ reached 1% of it's maximum
-\param dt         The time step of the diffusion
-\param options    Options that control the method of diffusion
+\param prof          A Sed_cube to diffuse.
+\param k_long_max    The maximum long-shore diffusion coefficent
+\param k_cross_max   The maximum cross-shore diffusion coefficent
+\param skin_depth    The depth at which \f$ k \f$ reached 1% of it's maximum
+\param dt            The time step of the diffusion
+\param options       Options that control the method of diffusion
 
-\param A Sed_cell array of sediment that was lost
+\return              A Sed_cell array of sediment that was lost
 */
 
 Sed_cell *diffuse_sediment_2( Sed_cube prof      , double k_long_max , 

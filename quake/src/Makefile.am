@@ -1,17 +1,14 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src
 
-#bin_PROGRAMS = earthquake quakeconvert_to quakeconvert_from
-bin_PROGRAMS = earthquake 
-earthquake_SOURCES = earthquake.c earthquake_main.c
-#quakeconvert_to_SOURCES =
-#quakeconvert_from_SOURCES =
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la
 
-lib_LIBRARIES = libquake.a
-libquake_a_SOURCES = earthquake.c
+bin_PROGRAMS             = earthquake 
+earthquake_SOURCES       = earthquake_main.c
 
-#INCLUDES = -I$(top_srcdir)/../sed -I$(top_srcdir)/../utils
+lib_LTLIBRARIES          = libquake.la
+libquake_la_SOURCES      = earthquake.c
 
-LDADD = -lutils -lglib-2.0
+LDADD                    = -lquake -lglib-2.0
 
 quakeconvert_to$(EXEEXT): earthquake
 	ln -s earthquake quakeconvert_to

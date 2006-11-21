@@ -1,80 +1,112 @@
-SUBDIRS = @SUBDIRS@
+#CFLAGS              += @GLIB_CFLAGS@ -I$(top_srcdir)/libutils/src
 
-EXTRA_DIST = acsed.m4
+#libutils_dir         = $(top_builddir)/libutils/src
+#libsed_dir           = $(top_builddir)/libsed/src
 
-package: libutils libsed subside xshore squall diffusion flow avulsion bing compact muds failure inflow sakura plume quake sedflux sedutils hydrotrend
+#LIBS                += -L$(libutils_dir) -L$(libsed_dir)
 
-libutils: force_rebuild
-	cd libutils; make install
+ACLOCAL_AMFLAGS      = -I m4
 
-libsed: force_rebuild
-	cd libsed; make install
+EXTRA_DIST           = bootstrap
 
-subside: force_rebuild
-	cd subside; make install
+SUBDIRS              = docs \
+                       libutils \
+                       libsed  \
+                       avulsion  \
+                       bing  \
+                       compact  \
+                       diffusion  \
+                       failure  \
+                       flow  \
+                       inflow  \
+                       muds  \
+                       plume  \
+                       quake  \
+                       sakura  \
+                       squall  \
+                       subside  \
+                       xshore  \
+                       sedflux  \
+                       hydrotrend  \
+                       sedutils 
 
-xshore: force_rebuild
-	cd xshore; make install
+MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config-h.in \
+                       stamp-h.in
+#all: package
 
-squall: force_rebuild
-	cd squall; make install
+#package: $(SUBDIRS)
 
-flow: force_rebuild
-	cd flow; make install
+#libutils: force_rebuild
+#	@cd libutils; make install
 
-xpat: force_rebuild
-	cd xpat; make install
+#libsed: force_rebuild
+#	@cd libsed/src && make datadir.h && cd .. &&  make install
 
-avulsion: force_rebuild
-	cd avulsion; make install
+#avulsion: force_rebuild
+#	@cd avulsion; make install
 
-bing: force_rebuild
-	cd bing; make install
+#bing: force_rebuild
+#	@cd bing; make install
 
-compact: force_rebuild
-	cd compact; make install
+#compact: force_rebuild
+#	@cd compact; make install
 
-diffusion: force_rebuild
-	cd diffusion; make install
+#diffusion: force_rebuild
+#	@cd diffusion; make install
 
-muds: force_rebuild
-	cd muds; make install
+#failure: force_rebuild
+#	@cd failure; make install
 
-failure: force_rebuild
-	cd failure; make install
+#flow: force_rebuild
+#	@cd flow; make install
 
-inflow: force_rebuild
-	cd inflow; make install
+#hydrotrend: force_rebuild
+#	@cd hydrotrend; make install
 
-sakura: force_rebuild
-	cd sakura; make install
+#inflow: force_rebuild
+#	@cd inflow; make install
 
-plume: force_rebuild
-	cd plume; make install
+#muds: force_rebuild
+#	@cd muds; make install
 
-quake: force_rebuild
-	cd quake; make install
+#plume: force_rebuild
+#	@cd plume; make install
 
-sedflux: force_rebuild
-	cd sedflux; make install
+#quake: force_rebuild
+#	@cd quake; make install
 
-sedutils: force_rebuild
-	cd sedutils; make install
+#sakura: force_rebuild
+#	@cd sakura; make install
 
-hydrotrend: force_rebuild
-	cd hydrotrend; make install
+#sedflux: force_rebuild
+#	@cd sedflux; make install
+
+#sedutils: force_rebuild
+#	@cd sedutils; make install
+
+#squall: force_rebuild
+#	@cd squall; make install
+
+#subside: force_rebuild
+#	@cd subside; make install
+
+#xshore: force_rebuild
+#	@cd xshore; make install
+
+#message: force_rebuild
+#	@echo "---------------------------------------"
+#	@echo "--- Making package $@"
+#	@echo "---------------------------------------"
+
+#docs: force_rebuild
+#	@cd docs; make install
 
 force_rebuild:
 
-
-#TAR = /usr/local/gnu/bin/tar
-
 #dist-hook:
-##	mkdir $(distdir)/mfiles
-#	mkdir $(distdir)/demo
-#	mkdir $(distdir)/demo/vail
-##	cp -p $(srcdir)/mfiles/* $(distdir)/mfiles/*
-#	for file in $(DEMO_FILES) ; do \
-#	   cp -p $(srcdir)/demo/vail/$$file $(distdir)/demo/vail; \
-#	done
+#	cd docs && make all
+#	mkdir -p $(distdir)/docs && \
+#	cp -r $(top_builddir)/docs/html $(distdir)/docs && \
+#	cp -r $(top_builddir)/docs/latex $(distdir)/docs
+
 

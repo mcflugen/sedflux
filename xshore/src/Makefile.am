@@ -1,13 +1,12 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-#bin_PROGRAMS = xshore
-#xshore_SOURCES = xshore_main.c squall.c
-#xshore_SOURCES = xshore_main.c
-include_HEADERS = xshore.h
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libxshore.la
-libxshore_la_SOURCES = xshore.c
+include_HEADERS           = xshore.h
 
-xshore_LDADD = -lxshore -lsedflux -lutils -lglib-2.0
-
+lib_LTLIBRARIES           = libxshore.la
+libxshore_la_SOURCES      = xshore.c
 

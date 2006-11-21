@@ -1,3 +1,28 @@
+--- versions ---
+
+pkg-config    0.20
+automake      1.9.6
+autoconf      2.60
+gcc           2.95.3
+
+check         0.9.4
+doxygen       1.5.1
+gtk+-2.0      2.2.4
+glib-2.0      2.12.4
+
+
+--- problems ---
+
+* When running configure, I get an error saying that I don't have GTK+ but I know I do.
+
+* When I try to execute sedflux_ui, I get the following error message:
+
+"No fonts found; this probably means that the fontconfig
+library is not correctly configured. You may need to
+edit the fonts.conf configuration file. More information
+about fontconfig can be found in the fontconfig(3) manual
+page and on http://fontconfig.org"
+
 --- running sedflux 2d ---
 
 to run sedflux2d you will need to create a project directory where the input

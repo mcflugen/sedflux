@@ -1,6 +1,0 @@
-AC_INIT(plot_plume.m)
-
-AM_INIT_AUTOMAKE(plume_matlab_files,1.11)
-
-AC_OUTPUT([Makefile])
-

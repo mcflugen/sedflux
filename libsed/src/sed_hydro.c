@@ -178,6 +178,7 @@ Sed_hydro sed_hydro_init( char *file )
 
    if ( !file )
       name_used = g_strdup( SED_HYDRO_TEST_INLINE_FILE );
+//      name_used = g_strconcat( DATADIR , SED_HYDRO_TEST_INLINE_FILE , NULL );
    else
       name_used = g_strdup( file );
 

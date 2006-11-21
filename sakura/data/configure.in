@@ -1,6 +1,0 @@
-AC_INIT(sakura.input)
-
-AM_INIT_AUTOMAKE(sakura_input_files,1.0)
-
-AC_OUTPUT(Makefile)
-

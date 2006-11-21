@@ -1,5 +1,0 @@
-Overview of changes to libutils 1.0
-
-* fixed a bug in eh_logging.c.  _log_files_ was not always initialized.
-
-

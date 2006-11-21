@@ -1,6 +1,0 @@
-AC_INIT(default.sediment)
-
-AM_INIT_AUTOMAKE(muds_input_files,1.0)
-
-AC_OUTPUT(Makefile)
-

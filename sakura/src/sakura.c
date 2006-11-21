@@ -69,29 +69,31 @@ double get_depth( int i , Eh_query_func get_depth , gpointer bathy_data );
 /**
 The sakura turbidity current model.
 
-@param Dx Node spacing.
-@param Dt Time step.
-@param Basin_Len  Length of the basin.
-@param nNodes     The number of nodes in the model domain.
-@param nGrains    The number of grain types in the flow.
-@param Xx         The x-position of the model nodes.
-@param Slope      The bathymetric slope at each node.
-@param Lambda     The removal rate of each grain type.
+@param Dx               Node spacing.
+@param Dt               Time step.
+@param Basin_Len        Length of the basin.
+@param nNodes           The number of nodes in the model domain.
+@param nGrains          The number of grain types in the flow.
+@param Xx               The x-position of the model nodes.
+@param Zz         
+@param Wx         
+@param Init_U           The initial velocity of the flow.
+@param Init_C           The initial concentration of the flow.
+@param Lambda           The removal rate of each grain type.
 @param Stv
 @param Rey
 @param gDens
-@param InitH      The initial height of the flow.
-@param InitU      The initial velocity of the flow.
-@param InitC      The initial concentration of the flow.
-@param Fraction   The fraction of each grain type in the flow.
-@param PheBottom  The fraction of each grain type in the bottom sediments.
-@param DepositDensity The bulk density of each grain type when it is deposited
-                      on the sea floor.
+@param InitH            The initial height of the flow.
+@param SupplyTime
+@param DepositionStart
+@param Fraction         The fraction of each grain type in the flow.
+@param PheBottom        The fraction of each grain type in the bottom sediments.
+@param DepositDensity   The bulk density of each grain type when it is deposited
+                        on the sea floor.
 @param OutTime
-@param MaxTime    The maximum time that the flow is run for.
-@param Consts     Physical constants for the flow.
-@param Deposit    The deposition rates for each grain types at each node.
-@param Outfp2     The file pointer for output data.
+@param Consts           Physical constants for the flow.
+@param Deposit          The deposition rates for each grain types at each node.
+@param fp_data          The file pointer for output data.
 */
 int sakura ( double Dx         , double Dt              , double Basin_Len ,
              int nNodes        , int nGrains            , double Xx[]      ,
@@ -828,10 +830,10 @@ int sakura ( double Dx         , double Dt              , double Basin_Len ,
 
 /** Write sakura output to a binary file.
 
-@param fp A pointer to a FILE.
+@param fp      A pointer to a FILE.
 @param n_nodes The number of nodes.
 @param x       Array of node positions.
-@param y       Array of node velocities.
+@param u       Array of node velocities.
 @param h       Array of node thicknesses.
 @param c       Array of node concentrations.
 @param dz      Array of changes in node elevation.
@@ -848,7 +850,6 @@ void output_data( FILE* fp , int n_nodes , double *x , double *u , double *h , d
 
 /** Get a node depth from the parent architecture.
 
-@doc
 The architecture that sakura is being run in may change.  For instance, the
 standalone version of sakura will have one architecture while sedflux may
 have another.  The Eh_query_func that is passed, is an architecture specific

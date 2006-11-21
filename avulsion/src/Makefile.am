@@ -1,11 +1,16 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-bin_PROGRAMS = avulsion
-avulsion_SOURCES = avulsion_main.c
-include_HEADERS = avulsion.h
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libavulsion.la
-libavulsion_la_SOURCES = avulsion.c
+bin_PROGRAMS             = avulsion
+avulsion_SOURCES         = avulsion_main.c
+include_HEADERS          = avulsion.h
 
-avulsion_LDADD = -lavulsion -lsedflux -lutils -lglib-2.0
+lib_LTLIBRARIES          = libavulsion.la
+libavulsion_la_SOURCES   = avulsion.c
+
+avulsion_LDADD           = -lavulsion -lglib-2.0
 

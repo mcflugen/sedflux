@@ -32,9 +32,9 @@
 #include "plumevars.h"
 
 /**
-@memo Calculate the mass of sediment entering the plume.
+Calculate the mass of sediment entering the plume.
 
-@doc Calculate the mass of sediment that enters the plume and compare it
+Calculate the mass of sediment that enters the plume and compare it
 to the amount of sediment that the plume deposits.  If the two masses do
 not agree, then scale the deposit by an amount to make them agree.  The 
 multi-grain size plume is treated as a superposition of single grain size

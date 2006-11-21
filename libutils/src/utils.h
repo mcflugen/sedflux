@@ -269,7 +269,7 @@ typedef gboolean (*Eh_test_func)( void );
 
 /** A series of (x,y) pairsA
 
-\depricated Don't use this anymore.  Try Eh_dbl_grid instead.
+\deprecated Don't use this anymore.  Try Eh_dbl_grid instead.
 */
 typedef struct
 {

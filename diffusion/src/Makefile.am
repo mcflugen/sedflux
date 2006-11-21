@@ -1,12 +1,17 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-bin_PROGRAMS = diffusion
-diffusion_SOURCES = diffusion_main.c
-include_HEADERS = diffusion.h
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libdiffusion.la
-libdiffusion_la_SOURCES = diffusion.c
+bin_PROGRAMS              = diffusion
+diffusion_SOURCES         = diffusion_main.c
+include_HEADERS           = diffusion.h
 
-diffusion_LDADD = -ldiffusion -lsedflux -lutils -lglib-2.0
+lib_LTLIBRARIES           = libdiffusion.la
+libdiffusion_la_SOURCES   = diffusion.c
+
+diffusion_LDADD           = -ldiffusion -lglib-2.0
 
 

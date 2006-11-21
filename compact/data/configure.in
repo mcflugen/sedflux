@@ -1,6 +1,0 @@
-AC_INIT(compact.in)
-
-AM_INIT_AUTOMAKE(compaction_input_files,1.0)
-
-AC_OUTPUT(Makefile)
-

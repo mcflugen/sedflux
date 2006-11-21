@@ -53,7 +53,6 @@ double get_threshold_depth( double wave_length , double wave_height ,
 
 /** Calculate erosion/deposition of a Sed_cube due to waves.
 
-@doc
 Run the Storms 2003 wave model.
 
 @param p A pointer to a Sed_cube.
@@ -613,21 +612,18 @@ double get_weibull_deposition_rate( double x , double alpha , double beta )
 
 /** Calculate the erosion rate from a Sed_cube.
 
-@param p A pointer to a Sed_cube.
-@param i Index to a column of a Sed_cube.
-@param i_s Index to the shoreline of a Sed_cube.
-@param i_w Index to the wave base of a Sed_cube.
+@param p      A pointer to a Sed_cube.
+@param i      Index to a column of a Sed_cube.
+\param h_c    Maximum coastal elevation that is acted on by waves
+\param h_w    Wave height
 
-@return The erosion rate (m/year)
+@return       The erosion rate (m/year)
 */
 double get_erosion_rate_from_profile( Sed_cube p , int i ,
                                       double h_c  , double h_w )
-//                                      int i_s        , int i_w )
 {
 //   double alpha_sf    = get_shoreface_slope( p , i_s+1 , i_w );
    double alpha_sf    = 1;
-//   double h_w         = sed_get_depth_from_profile( p , i_w );
-//   double h_c         = sed_get_depth_from_profile( p , i_s );
    double h           = sed_cube_water_depth( p , 0 , i   );
    double h_wave      = sed_cube_wave_height( p );
    double h_wave_fair = h_wave;
@@ -736,7 +732,6 @@ double get_coastal_wave_energy( double wave_height_actual ,
 
 /** Get the depth of the wave base.
 
-@doc
 As per usual, the wave base is taken to be half of the wavelength of a wave.
 
 @param wave_length The wavelength of incoming waves.
@@ -750,11 +745,10 @@ double get_wave_base( double wave_length )
 
 /** Get the depth of the wave base for a breaking wave.
 
-@doc
 As per usual, the wave base is taken to be half of the wavelength of a wave.
 The wave length is assumed to be 7 times its height.
 
-@param wave_length The height of incoming waves.
+@param wave_height The height of incoming waves.
 
 @return The wave base.
 */
@@ -765,13 +759,12 @@ double get_breaking_wave_base( double wave_height )
 
 /** Get the depth of the wave base for a deep water wave.
 
-@doc
 As per usual, the wave base is taken to be half of the wavelength of a wave.
 The wave length is assumed to be 25 times the wave height.
 
-@param wave_length The height of incoming waves.
+\param wave_height The height of incoming waves.
 
-@return The wave base.
+\return The wave base.
 */
 double get_deep_water_wave_base( double wave_height )
 {
@@ -780,7 +773,6 @@ double get_deep_water_wave_base( double wave_height )
 
 /** Get the indices to the zone boundaries from a Sed_cube.
 
-@doc
 Given a Sed_cube, calculate the indices that mark the boundaries of the
 six zones in the squall model.  The five boundaries are,
 (1) h_w - Wave base.
@@ -827,7 +819,6 @@ int *get_zone_boundaries( Sed_cube p , double h_w , double h_c )
 
 /** Get the travel distance for a grain.
 
-@doc
 The travel distance is clalculated using the equations of Storms 2003.  The
 equation used is dependant on the grid resolution that is used and so a
 correction is used if the grid spacing is anything other than 50 meters.
@@ -856,7 +847,6 @@ double get_travel_dist( double grain_size_in_m , double depth , double dx )
 
 /** Get the non-dimensional travel distance for a grain size.
 
-@doc
 Calculate the non-dimensional travel distance for a grain size using the 
 formula of Storms 2003.  
 
@@ -880,7 +870,6 @@ double get_non_dim_travel_dist( double grain_size_in_m )
 
 /** Determine which grain types are able to move under given ocean conditions.
 
-@doc
 Use relations of orbital velocity to grain diameter to determine which grain
 types are able to move at some depth and wave conditions.  If a grain type
 can be moved, its corresponding element in the output array is set to 1, 

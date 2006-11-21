@@ -1336,7 +1336,7 @@ END_TEST
 
 START_TEST ( test_sed_column_read )
 {
-   FILE* fp = fopen( SED_COLUMN_TEST_FILE_BE , "rb" );
+   FILE* fp = eh_fopen( SED_COLUMN_TEST_FILE_BE , "rb" );
    Sed_column c;
 
    c = sed_column_read( fp );

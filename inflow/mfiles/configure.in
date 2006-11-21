@@ -1,6 +1,0 @@
-AC_INIT(plot_inflow.m)
-
-AM_INIT_AUTOMAKE(inflow_matlab_files,0.9b)
-
-AC_OUTPUT(Makefile)
-

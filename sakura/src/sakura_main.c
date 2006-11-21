@@ -108,9 +108,8 @@ void sakura_remove( gpointer user_data , gpointer data );
 void sakura_get_depth( gpointer user_data , gpointer data );
 void sakura_set_depth( gpointer user_data , gpointer data );
 
-/** @memo simulate a turbidity current motion and deposition.
+/** Simulate a turbidity current motion and deposition.
 
-@doc
 2-step time increments, with tentative flow velocity at t + 0.5 DT.  Based on
 layer-averaged, 3-eqs model of Parker et al. (1986)
 
@@ -521,9 +520,9 @@ int main (void)
    
 } // end of main
 
-/** @memo Get the grain size distribution of bottom sediments.
+/** Get the grain size distribution of bottom sediments.
 
-@doc Get the fractions of each grain type of bottom sediments from a
+Get the fractions of each grain type of bottom sediments from a
 Sed_cube.  This function is intended to be used within another program that
 needs to communicate with the sedflux architecture but is otherwise separate
 from sedflux.
@@ -536,11 +535,11 @@ In this case, the data pointer should point to a Sakura_get_phe_t structure
 that contains the grain size distribution and the number of grains.  This
 information is simply copied to the location pointed to by phe.
 
-@param phe  The fraction of each grain type in the bottom sediments.
-@param data A structure that contains the necessary data for the function to
-            retreive the grain type fracitons.
+@param user_data  The fraction of each grain type in the bottom sediments.
+@param data       A structure that contains the necessary data for the function to
+                  retreive the grain type fracitons.
 
-@return A pointer to the array of grain type fractions.
+@return           A pointer to the array of grain type fractions.
 
 */
 void sakura_get_phe( gpointer user_data , gpointer data )

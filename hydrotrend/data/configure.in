@@ -1,6 +1,0 @@
-AC_INIT(hydro.eel)
-
-AM_INIT_AUTOMAKE(hydrotrend_input_files,2.0)
-
-AC_OUTPUT(Makefile)
-

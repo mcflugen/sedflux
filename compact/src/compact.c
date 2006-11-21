@@ -56,10 +56,8 @@ before compaction, then overlying sediment has been removed and the
 thickness of the cell is not changed.
 
 \param s        A Sed_column to compact
-\param time_now The current time
 
 */
-
 int compact( Sed_column s )
 {
    double *load_eff;

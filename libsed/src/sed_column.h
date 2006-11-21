@@ -28,21 +28,21 @@
 # define S_ADDBINS (16)
 #endif
 
-#include "datadir.h"
+#include "datadir_path.h"
 
 #if !defined( DATADIR )
 # define DATADIR "/usr/local/share"
 #endif
 
-#define SED_COLUMN_TEST_FILE_BE DATADIR "/libsed_test_files/sed_column-be.bin"
-#define SED_COLUMN_TEST_FILE_LE DATADIR "/libsed_test_files/sed_column-le.bin"
+#define SED_COLUMN_TEST_FILE_BE DATADIR "/ew/sed_column-be.bin"
+#define SED_COLUMN_TEST_FILE_LE DATADIR "/ew/sed_column-le.bin"
 
 #include "sed_sediment.h"
 #include "sed_cell.h"
 
-/** @memo Sed_column
+/** Sed_column
 
-@doc The Sed_cell struct is used to describe a stack of Sed_cell's.  That is,
+The Sed_cell struct is used to describe a stack of Sed_cell's.  That is,
 a vertical column of sediment that is divided into bins that each contain a
 Sed_cell.  
 

@@ -1,6 +1,0 @@
-AC_INIT(libsed.dxx)
-
-AM_INIT_AUTOMAKE(libsed_docs,0.9b)
-
-AC_OUTPUT(Makefile)
-

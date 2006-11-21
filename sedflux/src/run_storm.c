@@ -38,12 +38,8 @@ double get_beaufort_scale_from_height( double wave_height );
 double get_wave_length_from_height( double wave_height );
 double get_wave_period_from_height( double wave_height_in_meters );
 
-
-double storm( GRand *rand , double storm_length, double average_storm, double variance , double last_storm);
-
 /** Calculate the magnitude of a storm.
 
-@doc
 The magnitude of a storm is calculated based on the average length of a storm,
 the average magnitude of a storm, and the magnitude of the previous storm.  
 Here a strom is merely a stretch of similar weather.  It need not be
@@ -52,11 +48,13 @@ law pdf that is fixed by the average storm magnitude.  The average storm length
 determines the probability that this storm will be the same as the last 
 (yesterday's) storm.
 
-@param storm_length  The average length of a storm.
-@param average_storm The average magnitude of a storm.
-@param last_storm    The magnitude of the last storm.
+\param rand          A GRand
+\param storm_length  The average length of a storm.
+\param average_storm The average magnitude of a storm.
+\param variance      The variance of storm PDF
+\param last_storm    The magnitude of the last storm.
 
-@return The magnitude of the next storm.
+\return The magnitude of the next storm.
 */
 double storm( GRand *rand , double storm_length, double average_storm, double variance , double last_storm)
 {
@@ -463,8 +461,8 @@ if ( sed_ocean_storm_wave_height(this_storm)>100. )
 
 /** Initialize a storm process.
 
-@param symbol_table A pointer to a Symbol_table.
-@param gpointer     A pointer to user data
+@param symbol_table  A pointer to a Symbol_table.
+@param ptr           A pointer to user data
 
 @return TRUE if no problems were encountered.  FALSE otherwise.
 */
@@ -498,7 +496,6 @@ gboolean init_storm(Eh_symbol_table symbol_table,gpointer ptr)
 
 /** Get wave characteristics from a beaufort scale value.
 
-@doc
 Calculate the wave height, period, and velocity given a Beaufort scale value.
 The wave characteristics are calculated using some ad hoc empirical relations.
 
@@ -556,7 +553,6 @@ double *get_wave_from_beaufort_scale_old( double beaufort_storm , double *wave )
 
 /** Get wave characteristics from a beaufort scale value.
 
-@doc
 Calculate the wave height, period, and length given a Beaufort scale value.
 The wave characteristics are calculated using power-law relations based on
 a fully developed sea.
@@ -625,7 +621,6 @@ double get_wind_from_beaufort_scale( double beaufort_storm )
 
 /** Get wave characteristics from a beaufort scale value.
 
-@doc
 Calculate the wave height, period, and length given a Beaufort scale value.
 The wave heights are taken from Beaufort strom tables.  Deep-water wave
 equations are used to relate wave height to wave length and period.
@@ -664,7 +659,7 @@ double *get_wave_from_beaufort_scale( double beaufort_storm , double *wave )
 
 /** Get probable wave height from Beaufort storm value.
 
-@doc Get the probable wave height (in meters) from a Beaufort storm value.
+Get the probable wave height (in meters) from a Beaufort storm value.
 Fractional storm values are allowed.  In such a case,  the wind speed will be
 estimated by linear interpolation.  
 
@@ -710,7 +705,7 @@ double get_beaufort_scale_from_height( double wave_height )
 
 /** Get wave length from wind height.
 
-@doc Assume a wave steepness of 1/7 to calculate the length of a wave from
+Assume a wave steepness of 1/7 to calculate the length of a wave from
 its height.  When wave steepness exceeds 1/7, waves become unstable and begin
 to break.
 

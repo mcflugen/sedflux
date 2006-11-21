@@ -1,6 +1,0 @@
-AC_INIT(plot_flow.m)
-
-AM_INIT_AUTOMAKE(flow_matlab_files,1.0)
-
-AC_OUTPUT(Makefile)
-

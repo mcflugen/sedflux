@@ -1,12 +1,17 @@
-## Comment line
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src \
+                           -I$(top_builddir)/libsed/src
 
-bin_PROGRAMS = compact compact_unit_test
-compact_SOURCES = compact_main.c
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-lib_LTLIBRARIES = libcompact.la
-libcompact_la_SOURCES = compact.c
+bin_PROGRAMS              = compact compact_unit_test
+compact_SOURCES           = compact_main.c
 
-compact_LDADD = -lcompact -lsedflux -lutils -lglib-2.0 -lm
+lib_LTLIBRARIES           = libcompact.la
+libcompact_la_SOURCES     = compact.c
+
+compact_LDADD             = -lcompact -lglib-2.0 -lm
 compact_unit_test_SOURCES = compact_unit_test.c
-compact_unit_test_LDADD = -lcompact -lsedflux -lutils -lglib-2.0 -lm
+compact_unit_test_LDADD   = -lcompact -lglib-2.0 -lm
 

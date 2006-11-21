@@ -20,6 +20,36 @@
 
 #include "sed_cell.h"
 
+/**
+   \defgroup sed_cell_group Sed_cell
+*/
+
+/*@{*/
+
+/** \class Sed_cell sed_cell.h ew/sed_cell.h
+
+\brief Describe a unit of sediment.
+
+The Sed_cell struct is used to hold a number of differnt sediment types.
+The cell of sediment has a thickness that is able to change but it's original
+thickness is always remembered.
+
+The fraction pointer points to an array that holds the fraction of each 
+sediment type contained within the cel.  Note that the number of sediment
+types that are stored in the cell is not part of the Sed_cell structure.  This
+was done to save space since most applications make use of this structure will
+have a single number of sediment types that does not change.
+
+\param n        The number of grain types in the cell
+\param f        The fraction of each grain size in the cell.
+\param t_0      The initial thickness of the cell, before any compaction has occured.
+\param t        The current thickness of the cell.
+\param age      The average age of the sediemnt in the cell.
+\param pressure The excess porewater pressure in the cell.
+\param facies   The facies designation of the cell.
+
+\see Sediment, sed_cell_new, sed_cell_destroy
+*/
 CLASS ( Sed_cell )
 {
    gssize n;          ///< the number of grain types is the cell.
@@ -31,267 +61,8 @@ CLASS ( Sed_cell )
    Sed_facies facies; ///< the facies designation of the cell.
 };
 
-//@Include: sed_cell.h
-/*
-///Function to get the fraction of sand in a cell.
-#define  S_SAND_FRACTION_INIT { S_PROPERTY_ID_SAND_FRACTION , \
-                           "sand"                      , \
-                           "sand"                      , \
-                           0                           , \
-                           {&sed_cell_sand_fraction} }
-///Function to get the fraction of silt in a cell.
-#define  S_SILT_FRACTION_INIT { S_PROPERTY_ID_SILT_FRACTION , \
-                           "silt"                      , \
-                           "silt"                      , \
-                           0                           , \
-                           {&sed_cell_silt_fraction} }
-///Function to get the fraction of clay in a cell.
-#define  S_CLAY_FRACTION_INIT { S_PROPERTY_ID_CLAY_FRACTION , \
-                           "clay"                      , \
-                           "clay"                      , \
-                           0                           , \
-                           {&sed_cell_clay_fraction} }
-///Function to get the fraction of mud (silt and clay) in a cell.
-#define  S_MUD_FRACTION_INIT { S_PROPERTY_ID_MUD_FRACTION  , \
-                          "mud"                       , \
-                          "mud"                       , \
-                          0                           , \
-                          {&sed_cell_mud_fraction} }
-///Function to get the average velocity of sound in the cell.
-#define  S_VELOCITY_INIT { S_PROPERTY_ID_VELOCITY      , \
-                         "velocity"                  , \
-                         "velocity"                  , \
-                         0                           , \
-                         {&sed_cell_velocity} }
-///Function to get the average viscosity of the cell.
-#define  S_VISCOSITY_INIT { S_PROPERTY_ID_VISCOSITY     , \
-                         "viscosity"                 , \
-                         "viscosity"                 , \
-                         0                           , \
-                         {&sed_cell_viscosity} }
-///Function to get the cell density relative to its uncompacted state.
-#define  S_RELATIVE_DENSITY_INIT { S_PROPERTY_ID_RELATIVE_DENSITY , \
-                              "relative density"             , \
-                              "dr"                           , \
-                              0                              , \
-                              {&sed_cell_relative_density} }
-///Function to get the porosity of the cell.
-#define  S_POROSITY_INIT { S_PROPERTY_ID_POROSITY , \
-                         "porosity"             , \
-                         "porosity"             , \
-                         0                      , \
-                         {&sed_cell_porosity} }
-///Function to get the porosity of the cell in its closest packed state.
-#define  S_POROSITY_MIN_INIT { S_PROPERTY_ID_POROSITY_MIN , \
-                          "porosity min"             , \
-                          "poremin"                  , \
-                          0                          , \
-                          {&sed_cell_porosity_min} }
-///Function to get the porosity of the cell in its (loosest) uncompacted state.
-#define  S_POROSITY_MAX_INIT { S_PROPERTY_ID_POROSITY_MAX , \
-            "porosity max" , "poremax" , 0 , {&sed_cell_porosity_max} }
-///Function to get the plastic index of the cell (obsolete).
-#define  S_PLASTIC_INDEX_INIT { S_PROPERTY_ID_PLASTIC_INDEX , \
-            "pi" , "pi" , 0 , {&sed_cell_plastic_index} }
-///Function to get the permeability of the cell.
-#define  S_PERMEABILITY_INIT { S_PROPERTY_ID_PERMEABILITY , \
-            "permeability" , "perm" , 2 , {(Sed_avg_property_func)(&sed_cell_bulk_permeability)} }
-///Function to get the permeability of the cell.
-#define  S_HYDRAULIC_CONDUCTIVITY_INIT { \
-            S_PROPERTY_ID_HYDRAULIC_CONDUCTIVITY , \
-            "hydraulic conductivity"             , \
-            "hydro"                              , \
-            2                                    , \
-            {(Sed_avg_property_func)(&sed_cell_bulk_hydraulic_conductivity)} }
-///Function to get the void ratio of a cell.
-#define  S_VOID_RATIO_INIT { S_PROPERTY_ID_VOID_RATIO , \
-                                    "void ratio"             , \
-                                    "void"                   , \
-                                    0                        , \
-                                    {&sed_cell_void_ratio} } 
-///Function to get the minimum possible void ratio of a cell.
-#define  S_VOID_RATIO_MIN_INIT { S_PROPERTY_ID_VOID_RATIO_MIN , \
-                                     "void ratio min"             , \
-                                     "voidmin"                    , \
-                                     0                            , \
-                                     {&sed_cell_void_ratio_min} }
-///Function to get the maximum possible void ratio of a cell.
-#define  S_VOID_RATIO_MAX_INIT { S_PROPERTY_ID_VOID_RATIO_MAX , \
-                                     "void ratio max"             , \
-                                     "voidmax"                    , \
-                                     0                            , \
-                                     {&sed_cell_void_ratio_max} }
-///Function to get the friction angle of a cell.
-#define  S_FRICTION_ANGLE_INIT { S_PROPERTY_ID_FRICTION_ANGLE , \
-                                     "friction angle"             , \
-                                     "angle"                      , \
-                                     0                            , \
-                                     {&sed_cell_friction_angle} }
-///Function to get the consolidation coefficient of a cell.
-#define  S_CC_INIT { S_PROPERTY_ID_CC            , \
-                                     "consolidation coefficient" , \
-                                     "cc"                        , \
-                                     0                           , \
-                                     {&sed_cell_cc} }
-///Function to get the yield strength of a cell.
-#define  S_YIELD_STRENGTH_INIT { S_PROPERTY_ID_YIELD_STRENGTH , \
-                                     "yield strength"             , \
-                                     "yield"                      , \
-                                     0                            , \
-                                     {&sed_cell_yield_strength} }
-///Function to get the dynamic viscosity of a cell.
-#define  S_DYNAMIC_VISCOSITY_INIT { S_PROPERTY_ID_DYNAMIC_VISCOSITY , \
-                                     "dynamic viscosity"            , \
-                                     "nu"                           , \
-                                     0                               , \
-                                     {&sed_cell_dynamic_viscosity} }
-
-#define  S_MV_INIT { S_PROPERTY_ID_MV , \
-                            "mv"             , \
-                            "mv"             , \
-                            0                , \
-                            {(Sed_avg_property_func)(&sed_cell_mv)} }
-#define  S_CV_INIT { S_PROPERTY_ID_CV , \
-                            "cv"             , \
-                            "cv"             , \
-                            2                , \
-                            {(Sed_avg_property_func)(&sed_cell_bulk_cv)} }
-///Function to get the shear strength of a cell.
-#define  S_SHEAR_STRENGTH_INIT { S_PROPERTY_ID_SHEAR_STRENGTH , \
-                                     "shear"                      , \
-                                     "shear"                      , \
-                                     1                            , \
-                                     {(Sed_avg_property_func)(&sed_cell_shear_strength)} }
-///Function to get the sediment cohesion of a cell.
-#define  S_COHESION_INIT { S_PROPERTY_ID_COHESION , \
-                           "cohesion"             , \
-                           "cohesion"             , \
-                           1                      , \
-                           {(Sed_avg_property_func)(&sed_cell_cohesion)} }
-///Function to get the degree of consolidation of a cell.
-#define  S_CONSOLIDATION_INIT { S_PROPERTY_ID_CONSOLIDATION , \
-                                "consolidation"             , \
-                                "con"                       , \
-                                1                           , \
-                                {(Sed_avg_property_func)(&sed_cell_consolidation)} }
-///Function to get the degree of consolidation rate of a cell.
-#define  S_CONSOLIDATION_RATE_INIT { S_PROPERTY_ID_CONSOLIDATION_RATE , \
-                                     "consolidation rate"             , \
-                                     "du"                       , \
-                                     1                           , \
-                                     {(Sed_avg_property_func)(&sed_cell_consolidation_rate)} }
-#define S_AGE_INIT { S_PROPERTY_ID_AGE , \
-                     "age"             , \
-                     "age"             , \
-                     2                 , \
-                     {(Sed_avg_property_func)(&sed_cell_age_helper)} }
-#define S_FACIES_INIT { S_PROPERTY_ID_FACIES , \
-                     "facies"             , \
-                     "facies"             , \
-                     2                 , \
-                     {(Sed_avg_property_func)(&sed_cell_facies_helper)} }
-#define S_PRESSURE_INIT { S_PROPERTY_ID_PRESSURE , \
-                     "pressure"                 , \
-                     "pressure"                 , \
-                     3                          , \
-                     {(Sed_avg_property_func)(&sed_cell_pressure_helper)} }
-#define S_EXCESS_PRESSURE_INIT { S_PROPERTY_ID_EXCESS_PRESSURE , \
-                     "excess pressure"             , \
-                     "excess"                      , \
-                     3                             , \
-                     {(Sed_avg_property_func)(&sed_cell_excess_pressure_helper)} }
-#define S_RELATIVE_PRESSURE_INIT { S_PROPERTY_ID_RELATIVE_PRESSURE , \
-                     "relative pressure"             , \
-                     "rel"                           , \
-                     3                               , \
-                     {(Sed_avg_property_func)(&sed_cell_relative_pressure_helper)} }
-#define S_COMPRESSIBILITY_INIT { S_PROPERTY_ID_COMPRESSIBILITY , \
-                     "compressibility"             , \
-                     "c"                           , \
-                     0                             , \
-                     {(Sed_avg_property_func)(&sed_cell_compressibility)} }
-#define S_FRACTION_INIT { S_PROPERTY_ID_FRACTION , \
-                          "fraction"             , \
-                          "fraction"             , \
-                          0                      , \
-                          {(Sed_avg_property_func)(&sed_cell_nth_fraction)} }
-#define S_BAD_VAL_INIT { S_PROPERTY_ID_BAD_VAL   , \
-                         NULL                    , \
-                         NULL                    , \
-                         -1                      , \
-                         { NULL } }
-
-///Function to get bulk density.
-const Sed_property S_DENSITY = S_DENSITY_INIT; 
-///Function to get cell grain density.
-const Sed_property S_GRAIN_DENSITY = S_GRAIN_DENSITY_INIT; 
-///Function to get cell 'closest packed' density.
-const Sed_property S_MAX_DENSITY = S_MAX_DENSITY_INIT; 
-///Function to get cell 'closest packed' density.
-const Sed_property S_GRAIN_SIZE_IN_PHI = S_GRAIN_SIZE_IN_PHI_INIT; 
-///Function to get cell grain size in phi units.
-const Sed_property S_GRAIN_SIZE_IN_M = S_GRAIN_SIZE_IN_M_INIT; 
-///Function to get the fraction of sand in a cell.
-const Sed_property S_SAND_FRACTION = S_SAND_FRACTION_INIT; 
-///Function to get the fraction of silt in a cell.
-const Sed_property S_SILT_FRACTION = S_SILT_FRACTION_INIT; 
-///Function to get the fraction of clay in a cell.
-const Sed_property S_CLAY_FRACTION = S_CLAY_FRACTION_INIT; 
-///Function to get the fraction of mud (silt and clay) in a cell.
-const Sed_property S_MUD_FRACTION = S_MUD_FRACTION_INIT; 
-///Function to get the average velocity of sound in the cell.
-const Sed_property S_VELOCITY = S_VELOCITY_INIT; 
-///Function to get the average viscosity of the cell.
-const Sed_property S_VISCOSITY = S_VISCOSITY_INIT; 
-///Function to get the cell density relative to its uncompacted state.
-const Sed_property S_RELATIVE_DENSITY = S_RELATIVE_DENSITY_INIT; 
-///Function to get the porosity of the cell.
-const Sed_property S_POROSITY = S_POROSITY_INIT; 
-///Function to get the porosity of the cell in its closest packed state.
-const Sed_property S_POROSITY_MIN = S_POROSITY_MIN_INIT; 
-///Function to get the porosity of the cell in its (loosest) uncompacted state.
-const Sed_property S_POROSITY_MAX = S_POROSITY_MAX_INIT; 
-///Function to get the plastic index of the cell (obsolete).
-const Sed_property S_PLASTIC_INDEX = S_PLASTIC_INDEX_INIT; 
-///Function to get the permeability of the cell.
-const Sed_property S_PERMEABILITY = S_PERMEABILITY_INIT; 
-///Function to get the permeability of the cell.
-const Sed_property S_HYDRAULIC_CONDUCTIVITY = S_HYDRAULIC_CONDUCTIVITY_INIT; 
-///Function to get the void ratio of a cell.
-const Sed_property S_VOID_RATIO = S_VOID_RATIO_INIT;
-///Function to get the minimum possible void ratio of a cell.
-const Sed_property S_VOID_RATIO_MIN = S_VOID_RATIO_MIN_INIT; 
-///Function to get the maximum possible void ratio of a cell.
-const Sed_property S_VOID_RATIO_MAX = S_VOID_RATIO_MAX_INIT; 
-///Function to get the friction angle of a cell.
-const Sed_property S_FRICTION_ANGLE = S_FRICTION_ANGLE_INIT; 
-///Function to get the consolidation coefficient of a cell.
-const Sed_property S_CC = S_CC_INIT; 
-///Function to get the yield strength of a cell.
-const Sed_property S_YIELD_STRENGTH = S_YIELD_STRENGTH_INIT; 
-///Function to get the dynamic viscosity of a cell.
-const Sed_property S_DYNAMIC_VISCOSITY = S_DYNAMIC_VISCOSITY_INIT; 
-
-const Sed_property S_MV = S_MV_INIT; 
-const Sed_property S_CV = S_CV_INIT; 
-///Function to get the shear strength of a cell.
-const Sed_property S_SHEAR_STRENGTH = S_SHEAR_STRENGTH_INIT; 
-///Function to get the sediment cohesion of a cell.
-const Sed_property S_COHESION = S_COHESION_INIT; 
-///Function to get the degree of consolidation of a cell.
-const Sed_property S_CONSOLIDATION = S_CONSOLIDATION_INIT; 
-///Function to get the degree of consolidation of a cell.
-const Sed_property S_CONSOLIDATION_RATE = S_CONSOLIDATION_RATE_INIT; 
-
-const Sed_property S_AGE = S_AGE_INIT;
-const Sed_property S_PRESSURE = S_PRESSURE_INIT;
-const Sed_property S_EXCESS_PRESSURE = S_EXCESS_PRESSURE_INIT;
-const Sed_property S_RELATIVE_PRESSURE = S_RELATIVE_PRESSURE_INIT;
-const Sed_property S_COMPRESSIBILITY = S_COMPRESSIBILITY_INIT;
-const Sed_property S_FRACTION = S_FRACTION_INIT;
-*/
-
 #include <stdlib.h>
+
 /**
 \brief Create a new cell of sediment.
 
@@ -301,7 +72,8 @@ const Sed_property S_FRACTION = S_FRACTION_INIT;
 there was a problem allocating the memory.
 
 */
-Sed_cell sed_cell_new( gssize n_grains )
+Sed_cell
+sed_cell_new( gssize n_grains )
 {
    Sed_cell c = NULL;
 
@@ -322,7 +94,12 @@ Sed_cell sed_cell_new( gssize n_grains )
    return c;
 }
 
-Sed_cell sed_cell_new_env( void )
+/** Create a new cell based on the sediment of the current sediment environment
+
+\return A newly created cell.  NULL is returned if there was a problem allocating the memory.
+*/
+Sed_cell
+sed_cell_new_env( void )
 {
    Sed_cell c = NULL;
 
@@ -332,7 +109,16 @@ Sed_cell sed_cell_new_env( void )
    return c;
 }
 
-Sed_cell sed_cell_new_sized( gssize n , double t , double* f )
+/** Create a new cell and initialize it with a specified size and fractions.
+
+\param n The number of sediment types within the cell
+\param t The initial size of the cell
+\param f A pointer to an array of fractions of each grain type
+
+\return A newly created cell.  NULL is returned if there was a problem allocating the memory.
+*/
+Sed_cell
+sed_cell_new_sized( gssize n , double t , double* f )
 {
    Sed_cell c = sed_cell_new( n );
 
@@ -342,7 +128,16 @@ Sed_cell sed_cell_new_sized( gssize n , double t , double* f )
    return c;
 }
 
-Sed_cell sed_cell_new_typed( Sed_sediment s , double t , Sed_type a_type )
+/** Create a new cell with a certain type of sediment
+
+\param s Sediment that the cell will be formed from
+\param t The initial size of the cell
+\param a_type A Sed_type that describes the sediment to be put into the Sed_cell
+
+\return A newly created cell.  NULL is returned if there was a problem allocating the memory.
+*/
+Sed_cell
+sed_cell_new_typed( Sed_sediment s , double t , Sed_type a_type )
 {
    Sed_cell c = NULL;
 
@@ -366,7 +161,16 @@ Sed_cell sed_cell_new_typed( Sed_sediment s , double t , Sed_type a_type )
    return c;
 }
 
-Sed_cell sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class )
+/** Create a new cell with a certain size class
+
+\param s     Sediment that the cell will be formed from
+\param t     The initial size of the cell
+\param class A Sed_size_class that describes the sediment to be put into the Sed_cell
+
+\return A newly created cell.  NULL is returned if there was a problem allocating the memory.
+*/
+Sed_cell
+sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class )
 {
    Sed_cell c = NULL;
 
@@ -393,20 +197,21 @@ Sed_cell sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class 
    return c;
 }
 
-/**
-\brief The copy constructor for a Sed_cell.
+/** The copy constructor for a Sed_cell.
 
 Duplicates the contents of a Sed_cell, returning a newly allocated cell or
 NULL if an error occured.  The return value should be freed when no longer
 in needed.
 
-\param n the number of Sediment types held in the cell.
+\param  c    A Sed_cell to duplicate
+
 \return sed_dup_cell will return a newly created cell that is a copy s.  NULL
 is returned if there was a problem allocating the memory.
 
-\see Sed_cell , sed_destroy_cell
+\see Sed_cell , sed_cell_destroy
 */
-Sed_cell sed_cell_dup( Sed_cell c )
+Sed_cell
+sed_cell_dup( Sed_cell c )
 {
    Sed_cell dup_cell = NULL;
 
@@ -425,14 +230,15 @@ to Sed_cell s and will be NULL terminated.  A newly created Cell_list is
 returned.  When this Cell_list is no longer used it should be freed with
 sed_destroy_cell_list .
 
-\param size     The number of Sed_cell s to put in the list.
-\param n_grains The number of sediment types in each Sed_cell .
+\param len     The number of Sed_cell s to put in the list.
+\param n       The number of sediment types in each Sed_cell .
 
-\return A new list of Cell_list .
+\return        A new list of Cell_list .
 
 \see Cell_list, sed_destroy_cell_list
 */
-Sed_cell *sed_cell_list_new( gssize len , gssize n )
+Sed_cell*
+sed_cell_list_new( gssize len , gssize n )
 {
    Sed_cell *c_list = NULL;
 
@@ -457,7 +263,8 @@ Sed_cell *sed_cell_list_new( gssize len , gssize n )
 
 \see Cell_list , sed_create_cell_list .
 */
-Sed_cell* sed_cell_list_destroy(Sed_cell *c_list)
+Sed_cell*
+sed_cell_list_destroy(Sed_cell *c_list)
 {
    eh_require( c_list )
    {
@@ -479,7 +286,8 @@ also freed.
 \param c A pointer to the Sed_cell to be freed. 
 
 */
-Sed_cell sed_cell_destroy( Sed_cell c )
+Sed_cell
+sed_cell_destroy( Sed_cell c )
 {
    if ( c )
    {
@@ -490,21 +298,33 @@ Sed_cell sed_cell_destroy( Sed_cell c )
    return NULL;   
 }
 
-void sed_cell_fprint( FILE* fp , const Sed_cell c )
+/** Print the contents of a cell
+
+\param fp A FILE to print to which 
+\param c  A Sed_cell
+
+\return The number of bytes written
+*/
+gssize
+sed_cell_fprint( FILE* fp , const Sed_cell c )
 {
+   gssize n=0;
+
    if ( c )
    {
-      gssize n;
+      gssize i;
 
-      fprintf( fp , "Thickness : %f\n" , c->t );
-      fprintf( fp , "Age       : %f\n" , c->age );
-      fprintf( fp , "Fraction: : %f"   , c->f[0] );
-      for ( n=1 ; n<sed_cell_n_types(c) ; n++ )
-         fprintf( fp , ", %f" , c->f[n] );
-      fprintf( fp , "\n" );
+      n += fprintf( fp , "Thickness : %f\n" , c->t );
+      n += fprintf( fp , "Age       : %f\n" , c->age );
+      n += fprintf( fp , "Fraction: : %f"   , c->f[0] );
+      for ( i=1 ; i<sed_cell_n_types(c) ; i++ )
+         n += fprintf( fp , ", %f" , c->f[i] );
+      n += fprintf( fp , "\n" );
    }
    else
-      fprintf( fp , "( null )\n" );
+      n += fprintf( fp , "( null )\n" );
+
+   return n;
 }
 
 /** Remove the sediment from a cell.
@@ -513,14 +333,14 @@ Remove all of the sediment from a cell.  This clears the Sed_cell so that it
 looks just like a newly allocated cell created by sed_create_cell.
 
 \param c A pointer to the cell to clear.
-\param n The number of sediment types in the cell.
 
 \return A pointer to the cleared cell, c.
 
 \see Sed_cell, sed_create_cell.
 
 */
-Sed_cell sed_cell_clear( Sed_cell c )
+Sed_cell
+sed_cell_clear( Sed_cell c )
 {
    eh_require( c )
    {
@@ -544,16 +364,15 @@ Sed_cell sed_cell_clear( Sed_cell c )
 Clear each of the cell of sediment in an (NULL terminated) array of Sed_cells.
 The function sed_clear_cell is called for for each element of the array.
 
-\param v    The NULL terminated array of Sed_cell s.
-\param low  The index into v to start clearing from.
-\param high The index into v to stop clearing at.
-\param len  The length of the array, v.
-\param n    The number of sediment types in each Sed_cell.
+\param vec    The NULL terminated array of Sed_cell s.
+\param low    The index into \p vec to start clearing from.
+\param high   The index into \p vec to stop clearing at.
 
 \see Sed_cell , sed_clear_cell
 
 */
-Sed_cell *sed_cell_clear_vector(Sed_cell *vec,int low,int high )
+Sed_cell*
+sed_cell_clear_vector(Sed_cell *vec,int low,int high )
 {
    int i;
    for (i=low;i<=high;i++)
@@ -568,13 +387,15 @@ copied, only their elements.  Thus, the number of sediment types allocated for
 by each Sed_cell must be the same (ie the parameter n in sed_create_cell ).
 
 
-\param dest A pointer to the destination Sed_cell .
-\param src  A pointer to the Sed_cell to be copied.
-\param n    The number of sediment types in each Sed_cell .
+\param dest    A pointer to the destination Sed_cell .
+\param src     A pointer to the Sed_cell to be copied.
 
-\see Sed_cell , sed_create_cell .
+\return        The destination cell
+
+\see Sed_cell , sed_cell_new
 */
-Sed_cell sed_cell_copy( Sed_cell dest , const Sed_cell src )
+Sed_cell
+sed_cell_copy( Sed_cell dest , const Sed_cell src )
 {
    eh_require( src )
 
@@ -599,20 +420,15 @@ Sed_cell sed_cell_copy( Sed_cell dest , const Sed_cell src )
    return dest;
 }
 
-/** Set Sed_cell members.
-
-Use these functions to set the members of a Sed_cell .
-
-\see Sed_cell .
-*/
-
-//@{
 /** Set the age of a cell.
+
 \param c   The Sed_cell to set.
-\param val The new age value.
+\param age The new age value.
+
 \return The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_age( Sed_cell c , double age )
+Sed_cell
+sed_cell_set_age( Sed_cell c , double age )
 {
    eh_require( c );
    c->age = age;
@@ -620,11 +436,14 @@ Sed_cell sed_cell_set_age( Sed_cell c , double age )
 }
 
 /** Sed the thickness of a cell.
-\param c   The Sed_cell to set.
-\param val The new thickness value.
-\return The Sed_cell that was set.
+
+\param c       The Sed_cell to set.
+\param t       The new thickness value.
+
+\return        The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_thickness( Sed_cell c , double t )
+Sed_cell
+sed_cell_set_thickness( Sed_cell c , double t )
 {
    eh_require( c );
    c->t = t;
@@ -632,11 +451,14 @@ Sed_cell sed_cell_set_thickness( Sed_cell c , double t )
 }
 
 /** Sed the pressure of a cell.
-\param c   The Sed_cell to set.
-\param val The new pressure value.
-\return The Sed_cell that was set.
+
+\param c    The Sed_cell to set.
+\param p    The new pressure value.
+
+\return     The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_pressure( Sed_cell c , double p )
+Sed_cell
+sed_cell_set_pressure( Sed_cell c , double p )
 {
    eh_require( c );
    c->pressure = p;
@@ -644,18 +466,22 @@ Sed_cell sed_cell_set_pressure( Sed_cell c , double p )
 }
 
 /** Sed the facies designation of a cell.
-\param c   The Sed_cell to set.
-\param val The new facies to add to the cell.
-\return The Sed_cell that was set.
+
+\param c       The Sed_cell to set.
+\param f       The new facies to add to the cell.
+
+\return        The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_facies( Sed_cell c , Sed_facies f )
+Sed_cell
+sed_cell_set_facies( Sed_cell c , Sed_facies f )
 {
    eh_require( c );
    c->facies = f;
    return c;
 }
 
-Sed_cell sed_cell_add_facies( Sed_cell c , Sed_facies f )
+Sed_cell
+sed_cell_add_facies( Sed_cell c , Sed_facies f )
 {
    eh_require( c );
    c->facies |= f;
@@ -665,15 +491,16 @@ Sed_cell sed_cell_add_facies( Sed_cell c , Sed_facies f )
 /** Set the fractions of each sediment type found in a cell.
 
 Set each of the fractions of sediment types within a Sed_cell .  Each of the 
-elements of f are copied to c.  Thus, f is free to be freed after 
+elements of \p f are copied to \p c.  Thus, \p f is free to be freed after 
 sed_set_cell_fraction is called.
 
-\param c   The Sed_cell to set.
-\param val A vector of new fractions.
-\param n   The number of sediment types in the Sed_cell .
-\return The Sed_cell that was set.
+\param c    The Sed_cell to set.
+\param f    A vector of new fractions.
+
+\return     The Sed_cell that was set.
 */
-Sed_cell sed_cell_set_fraction(Sed_cell c , double f[] )
+Sed_cell
+sed_cell_set_fraction(Sed_cell c , double f[] )
 {
    eh_require( c );
    eh_require( f );
@@ -686,11 +513,13 @@ Sed_cell sed_cell_set_fraction(Sed_cell c , double f[] )
 }
 
 /** Set the fractions of each grain to be uniform.
-\param[in,out] a The sediment cell
-\param[in] n_grains The number of grain types in the cell
+
+\param[in,out] c    The sediment cell
+
 \return The pointer to the input cell.
 */
-Sed_cell sed_cell_set_equal_fraction( Sed_cell c )
+Sed_cell
+sed_cell_set_equal_fraction( Sed_cell c )
 {
    eh_require( c );
 
@@ -703,8 +532,6 @@ Sed_cell sed_cell_set_equal_fraction( Sed_cell c )
    return c;   
 }
 
-//@}
-
 /** Add one Sed_cell to another.
 
 Add the Sed_cell b to a.  Both a and b must contain the same number of sediment
@@ -714,16 +541,15 @@ the ages (pressures) of a and b based on their relative amounts.  The new
 facies will be a combination of the facies of the two cells.  That is, the new
 facies of a will include both the facies of a and b.
 
-\param a The destination cell.
-\param b The source cell.
-\param n The number of sediment types in each cell.
+\param[out] a    The destination cell.
+\param[in]  b    The source cell.
 
 \see Sed_cell.
 */
-Sed_cell sed_cell_add( Sed_cell a , const Sed_cell b )
+Sed_cell
+sed_cell_add( Sed_cell a , const Sed_cell b )
 {
    eh_require( a );
-//   eh_require( b );
 
    {
       if ( b && !sed_cell_is_empty(b) )
@@ -748,12 +574,35 @@ Sed_cell sed_cell_add( Sed_cell a , const Sed_cell b )
    return a;
 }
 
-gboolean sed_cell_is_empty( Sed_cell c )
+/** Test if a Sed_cell is empty
+
+A Sed_cell is determined to be empty if its size is less than some tolerance.
+
+\param c A Sed_cell
+
+\return TRUE if the Sed_cell is empty
+
+\sa sed_cell_is_clear
+*/
+gboolean
+sed_cell_is_empty( Sed_cell c )
 {
    return c->t < 1e-12;
 }
 
-gboolean sed_cell_is_clear( Sed_cell c )
+/** Test if a Sed_cell is clear
+
+A Sed_cell is clear if it is empty and the fraction of each grain size is set to zero.  This is the
+state of a newly created Sed_cell.
+
+\param c A Sed_cell
+
+\return TRUE if the Sed_cell is empty
+
+\sa sed_cell_new, sed_cell_is_empty
+*/
+gboolean
+sed_cell_is_clear( Sed_cell c )
 {
    gboolean is_clear = FALSE;
 
@@ -777,27 +626,70 @@ gboolean sed_cell_is_clear( Sed_cell c )
    return is_clear;
 }
 
-gboolean sed_cell_is_size( Sed_cell c , double t )
+/** Test if a Sed_cell is of a certain size
+
+\param c A Sed_cell
+\param t The thickness to compare to.
+
+\return TRUE if the Sed_cell is of the specified size
+*/
+gboolean
+sed_cell_is_size( Sed_cell c , double t )
 {
    return eh_compare_dbl( sed_cell_size(c) , t , 1e-12 );
 }
 
-gboolean sed_cell_is_age( Sed_cell c , double a )
+/** Test if a Sed_cell is of a certain age
+
+\param c A Sed_cell
+\param a The age to compare to.
+
+\return TRUE if the Sed_cell is of the specified age
+*/
+gboolean
+sed_cell_is_age( Sed_cell c , double a )
 {
    return eh_compare_dbl( sed_cell_age(c) , a , 1e-12 );
 }
 
-gboolean sed_cell_is_mass( Sed_cell c , double m )
+/** Test if a Sed_cell is of a certain mass
+
+\param c A Sed_cell
+\param m The age to compare to.
+
+\return TRUE if the Sed_cell is of the specified mass
+*/
+gboolean
+sed_cell_is_mass( Sed_cell c , double m )
 {
    return eh_compare_dbl( sed_cell_mass(c) , m , 1e-12 );
 }
 
-gboolean sed_cell_is_size_class( Sed_cell c , Sed_size_class size )
+/** Test if a Sed_cell is of a certain size class
+
+\param c    A Sed_cell
+\param size The Sed_size_class to compare to.
+
+\return TRUE if the Sed_cell is of the specified size class
+*/
+gboolean
+sed_cell_is_size_class( Sed_cell c , Sed_size_class size )
 {
    return sed_cell_size_class( c )&size;
 }
 
-gboolean sed_cell_is_compatible( Sed_cell a , Sed_cell b )
+/** Test if two Sed_cell's are compatible.
+
+Two cells are compatible if the contain the same number of grain types.  If so, they can 
+interact with one another through adding, subtracting etc.
+
+\param a The first Sed_cell to compare
+\param b The second Sed_cell to compare
+
+\return TRUE if the two Sed_cell's are compatible
+*/
+gboolean
+sed_cell_is_compatible( Sed_cell a , Sed_cell b )
 {
    return sed_cell_n_types(a) == sed_cell_n_types(b);
 }
@@ -809,16 +701,16 @@ to remove.  The sediment is removed with the same make-up of the original cell.
 
 \note If out_cell is non-NULL, the cell is cleared before any sediment is added to it.
 
-\param a The source cell
-\param thickness The amount of each sediment type to be removed
-\param n_grains The number of grain types in each cell
-\param out_cell The location to put the removed sediment.  If NULL, a new cell is created.
+\param[in]  in       The source cell
+\param[in]  t        The amount of each sediment type to be removed
+\param[out] out      The location to put the removed sediment.  If NULL, a new cell is created.
 
 \return The destination cell.
 */
-Sed_cell sed_cell_separate_amount( Sed_cell in ,
-                                   double t[]  ,
-                                   Sed_cell out )
+Sed_cell
+sed_cell_separate_amount( Sed_cell in ,
+                          double t[]  ,
+                          Sed_cell out )
 {
    eh_require( in );
    eh_require( t  );
@@ -860,26 +752,26 @@ is removed with the same make-up of the original cell.
 
 \note If out_cell is non-NULL, the cell is cleared before any sediment is added to it.
 
-\param a The source cell
-\param thickness The total amount of sediment to be removed
-\param n_grains The number of grain types in each cell
-\param out_cell The location to put the removed sediment.  If NULL, a new cell is created.
+\param in    The source cell
+\param t     The total amount of sediment to be removed
+
+\param out   The location to put the removed sediment.  If NULL, a new cell is created.
 
 \return The destination cell.
 */
-
-#define eh_bound( x , low , high ) ( (x<low)?(low):( (x>high)?(high):(x) ) )
-
-Sed_cell sed_cell_separate_thickness( Sed_cell in ,
-                                      double t    ,
-                                      Sed_cell out )
+Sed_cell
+sed_cell_separate_thickness( Sed_cell in ,
+                             double t    ,
+                             Sed_cell out )
 {
    eh_require( in );
 
    {
       double total    = sed_cell_thickness( in );
-      double in_size  = eh_bound( total - t , 0 , total );
+      double in_size  = total - t;
       double out_size = total - in_size;
+
+      eh_clamp( in_size , 0 , total );
 
       out = sed_cell_copy( out , in );
 
@@ -896,17 +788,16 @@ Remove sediment from the source cell by specifying fractions of each grain type 
 
 \note If out_cell is non-NULL, the cell is cleared before any sediment is added to it.
 
-\param a The source cell
-\param fraction The fraction of each grain type to remove
-\param n_grains The number of grain types in each cell
-\param out_cell The location to put the removed sediment.  If NULL, a new cell is created.
+\param[in]  in      The source cell
+\param[in]  f       The fraction of each grain type to remove
+\param[out] out     The location to put the removed sediment.  If NULL, a new cell is created.
 
 \return The destination cell.
-
 */
-Sed_cell sed_cell_separate_fraction( Sed_cell in ,
-                                     double f[] ,
-                                     Sed_cell out )
+Sed_cell
+sed_cell_separate_fraction( Sed_cell in ,
+                            double f[] ,
+                            Sed_cell out )
 {
    eh_require( in );
    eh_require( f  );
@@ -939,7 +830,15 @@ Sed_cell sed_cell_separate_fraction( Sed_cell in ,
    return out;
 }
 
-Sed_cell sed_cell_set_amount( Sed_cell c , const double* t )
+/** Set the amount of each grain type in a Sed_Cell
+
+\param c A Sed_cell
+\param t A pointer to an array of amounts of each grain type
+
+\return The input Sed_cell
+*/
+Sed_cell
+sed_cell_set_amount( Sed_cell c , const double* t )
 {
    eh_return_val_if_fail( c , NULL );
    eh_return_val_if_fail( t , c    );
@@ -973,13 +872,13 @@ thickness == uncompacted_thickness
 
 for the new sediment.
 
-\param c The Sed_cell to add the sediment to.
-\param t A vector giving the amount of each grain type to add to, c.
-\param n The number of sediment types in the Sed_cell.
+\param a    The Sed_cell to add the sediment to.
+\param t    A vector giving the amount of each grain type to add to, c.
 
-\return A pointer to the Sed_cell, c.
+\return     A pointer to the Sed_cell, c.
 */
-Sed_cell sed_cell_add_amount( Sed_cell a , const double t[] )
+Sed_cell
+sed_cell_add_amount( Sed_cell a , const double t[] )
 {
    eh_return_val_if_fail( a , NULL );
    eh_return_val_if_fail( t , a    );
@@ -1009,12 +908,14 @@ Sed_cell sed_cell_add_amount( Sed_cell a , const double t[] )
 Sediment is removed from the source cell based on the fraction and amount of sediment
 in another cell.
 
-\param[out] a       The source cell from which sediment is removed
-\param[in] b        Sediment is removed based on the make up of this cell
-\param[in] n_grains The number of grain types in the cell
+\param[in]  in         The source cell from which sediment is removed
+\param[out] out        Sediment is removed based on the make up of this cell
+
+\return The input cell
 */
-Sed_cell sed_cell_separate_cell( Sed_cell in ,
-                                 Sed_cell out )
+Sed_cell
+sed_cell_separate_cell( Sed_cell in ,
+                        Sed_cell out )
 {
    sed_cell_destroy( sed_cell_separate( in , out->f , sed_cell_size(out) , NULL ) );
 
@@ -1025,18 +926,19 @@ Sed_cell sed_cell_separate_cell( Sed_cell in ,
 
 Sediment is removed from the source cell and put into the new cell.
 
-\param[in,out] a The cell to be separated
-\param[in] fraction The fraction of each grain type to remove
-\param[in] thickness The amount of each grain type to remove
-\param[in] n_grains The number of grain types in the cell
+\param[in,out] in       The cell to be separated
+\param[in]     f        The fraction of each grain type to remove
+\param[in]     t        The amount of each grain type to remove
+\param[in,out] out      A cell containing the separated sediment
 
 \return A new cell that contains the removed sediment.  The new cell should be destroyed with
 sed_destroy_cell.
 */
-Sed_cell sed_cell_separate( Sed_cell in ,
-                            double f[]  ,
-                            double t    ,
-                            Sed_cell out )
+Sed_cell
+sed_cell_separate( Sed_cell in ,
+                   double f[]  ,
+                   double t    ,
+                   Sed_cell out )
 {
    eh_require( in   );
    eh_require( f    );
@@ -1072,14 +974,14 @@ and adds it to another.  The difference from the sed_separate functions is that
 the sed_move_sediment functions add the removed sediment to any existing
 sediment that is already in the destination cell.
 
-\param dest      The destination cell where sediment is added to.
 \param src       The source cell where sediment is removed from.
-\param thickness The amount of sediment to transfer.
-\param n_grains  The number of sediment types in the the cells.
+\param dest      The destination cell where sediment is added to.
+\param t         The amount of sediment to transfer.
 
 \see sed_move_sediment_to_cell_by_fraction, sed_move_sediment_cell, sed_separate_cell_by_thickness.
 */
-void sed_cell_move_thickness( Sed_cell src , Sed_cell dest , double t )
+void
+sed_cell_move_thickness( Sed_cell src , Sed_cell dest , double t )
 {
    eh_require( src );
    eh_require( dest );
@@ -1100,16 +1002,16 @@ from one cell and adds it to another.  The difference from the sed_separate
 functions is that the sed_move_sediment functions add the removed sediment to
 any existing sediment that is already in the destination cell.
 
-\param dest      The destination cell where sediment is added to.
 \param src       The source cell where sediment is removed from.
-\param fraction  The fraction of each grain size to move.
-\param n_grains  The number of sediment types in the the cells.
+\param dest      The destination cell where sediment is added to.
+\param f         The fraction of each grain size to move.
 
 \see sed_move_sediment_to_cell_by_thickness, sed_move_sediment_cell, sed_separate_cell_by_fraction.
 */
-void sed_cell_move_fraction( Sed_cell src  ,
-                             Sed_cell dest ,
-                             double f[] )
+void
+sed_cell_move_fraction( Sed_cell src  ,
+                        Sed_cell dest ,
+                        double f[] )
 {
    eh_require( src  );
    eh_require( dest );
@@ -1132,17 +1034,18 @@ sed_move_sediment_to_cell_by_thickness( dest , src , thickness , n_grains );
 If however, fraction is an array of zeros then it is equivalent to removing
 nothing from src and not changing dest at all.
 
-\param dest      The destination cell where sediment is added to.
-\param src       The source cell where sediment is removed from.
-\param thickness The amount of sediment to transfer.
-\param n_grains  The number of sediment types in the the cells.
+\param[in]  src       The source cell where sediment is removed from.
+\param[out] dest      The destination cell where sediment is added to.
+\param[in]  f         The fractions of each grain type to move.
+\param[in]  t         The total amount of sediment to transfer.
 
 \see sed_move_sediment_to_cell_by_thickness, sed_move_sediment_to_cell_by_fraction, sed_separate_cell.
 */
-void sed_cell_move( Sed_cell src  ,
-                    Sed_cell dest ,
-                    double f[]    ,
-                    double t )
+void
+sed_cell_move( Sed_cell src  ,
+               Sed_cell dest ,
+               double f[]    ,
+               double t )
 {
    Sed_cell temp1 = sed_cell_separate_thickness( src   , t , NULL );
    Sed_cell temp2 = sed_cell_separate_fraction ( temp1 , f , NULL );
@@ -1156,178 +1059,6 @@ void sed_cell_move( Sed_cell src  ,
 
 ///////////////////////////////////////////////////////////////////
 //
-// Define functions used to calculate bulk sediment properties for
-// a cell of sediment.  For now these functions just average the
-// the properties of each sediment type within a cell.
-//
-
-/** \name Sediment Cell Property Functions
-
-These functions are used to get various sediment properties from a Sed_cell.
-
-@{
-*/
-
-/** \brief Get a bulk sediment property from a Sed_cell .
-
-Returns a bulk sediment property from a Sed_cell .  The bulk property
-is calculted simply by averaging the property for each sediment type.  The
-average is weighted by the relative amounts of each sediment type that is
-contained in the Sed_cell .  A pointer to the function that calculates the
-property for each sediment type is given as the parameter, f.
-
-\param f   A pointer to a function that is used to calculate the sediment 
-property from a single sediment type.
-\param c   The Sed_cell being examined.
-\param sed The type of sediment that is in the Sed_cell.
-
-\return Returns the bulk property of the Sed_cell .
-
-\see Sed_property_func, sed_cell_property_with_load.
-*/
-/*
-double sed_cell_sediment_property( const Sed_cell c , const Sed_property prop , ... )
-{
-   double property = 0.;
-
-   eh_require( c );
-
-   if ( !sed_cell_is_empty( c ) )
-   {
-      gssize n;
-      gssize n_grains = sed_cell_n_types(c);
-
-      if ( prop.f_type == 0 )
-      {
-         if ( prop.id > S_PROPERTY_ID_FRACTION )
-            property = (*(prop.f.f_avg))( c   ,
-                                          sed ,
-                                          prop.id-S_PROPERTY_ID_FRACTION );
-         else
-            sed_sediment_foreach( sed , prop.f.f_avg , c );
-      }
-      else if ( prop.f_type == 1  || prop.f_type == 3 )
-      {
-         double load;
-         va_list arg_list;
-         va_start( arg_list , sed );
-
-         load = va_arg( arg_list , double );
-         va_end( arg_list );
-         if ( prop.f_type == 1 )
-            for ( n=0 ; n<n_grains ; n++ )
-               property += c->f[n]*(*(prop.f.f_avg_load))(c,load,sed,n);
-         else
-            property = (*(prop.f.f_bulk_load))( c , load , sed );
-      }
-      else if ( prop.f_type == 2 )
-         property = (*(prop.f.f_bulk))( c , sed );
-      else
-         eh_require_not_reached();
-
-   }
-
-   return property;
-}
-*/
-/*
-double sed_cell_property( const Sed_property prop , const Sed_cell c , const Sed_sediment sed , ... )
-{
-   double property = 0.;
-
-   eh_require( c   );
-   eh_require( sed );
-
-   if ( !sed_cell_is_empty( c ) )
-   {
-      gssize n;
-      gssize n_grains = sed_cell_n_types(c);
-
-      if ( prop.f_type == 0 )
-      {
-         if ( prop.id > S_PROPERTY_ID_FRACTION )
-            property = (*(prop.f.f_avg))( c   ,
-                                          sed ,
-                                          prop.id-S_PROPERTY_ID_FRACTION );
-         else
-            for ( n=0 ; n<n_grains ; n++ )
-               property += c->f[n]*(*(prop.f.f_avg))(c,sed,n);
-      }
-      else if ( prop.f_type == 1  || prop.f_type == 3 )
-      {
-         double load;
-         va_list arg_list;
-         va_start( arg_list , sed );
-
-         load = va_arg( arg_list , double );
-         va_end( arg_list );
-         if ( prop.f_type == 1 )
-            for ( n=0 ; n<n_grains ; n++ )
-               property += c->f[n]*(*(prop.f.f_avg_load))(c,load,sed,n);
-         else
-            property = (*(prop.f.f_bulk_load))( c , load , sed );
-      }
-      else if ( prop.f_type == 2 )
-         property = (*(prop.f.f_bulk))( c , sed );
-      else
-         eh_require_not_reached();
-
-   }
-
-   return property;
-}
-*/
-
-/** Get a bulk sediment property that requires the overlying load from a Sed_cell.
-
- Returns a bulk sediment property from a Sed_cell .  Use this function
-when the load felt by the cell is needed to calculate the bulk property.  
-The bulk property is calculted simply by averaging the property for each
-sediment type.  The average is weighted by the relative amounts of each
-sediment type that is contained in the Sed_cell .  A pointer to the function
-that calculates the property for each sediment type is given as the parameter,
-\p f.
-
-\param f    A pointer to a function that is used to calculate the sediment 
-property from a single sediment type.
-\param c    The Sed_cell being examined.
-\param sed  The type of sediment that is in the Sed_cell.
-\param load The load felt by the Sed_cell .
-
-\return Returns the bulk property of the Sed_cell .
-
-\see Sed_property_func , sed_cell_property .
-*/
-/*
-double sed_cell_property_with_load( Sed_avg_property_with_load_func f ,
-                                    const Sed_cell c                  ,
-                                    const Sediment sed                ,
-                                    double load )
-{
-   double property = 0.;
-
-   eh_require( f );
-   eh_require( c );
-
-   if ( !sed_cell_is_empty( c ) )
-   {
-      gssize n;
-      gssize n_grains=sed_cell_n_types(c);
-
-      for ( n=0 ; n<n_grains ; n++ )
-         property += c->f[n]*(*f)(c,load,sed,n);
-   }
-
-   return property;
-}
-*/
-//
-// End of bulk property functions
-//
-///////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////
-//
 // These are the pre-defined S_property_func's
 //
 //   functions are of the form:
@@ -1335,15 +1066,15 @@ double sed_cell_property_with_load( Sed_avg_property_with_load_func f ,
 //
 
 /** \brief Get the density of a Sed_cell .
+
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The number of sediment types in the cell.
 
 \return Returns the bulk density of the cell.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_density_0( const Sed_cell c )
+double
+sed_cell_density_0( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_density_0 );
 }
@@ -1351,14 +1082,13 @@ double sed_cell_density_0( const Sed_cell c )
 /** \brief Get the density of a sediment type in a Sed_cell .
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the density of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_grain_density( const Sed_cell c )
+double
+sed_cell_grain_density( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_rho_grain );
 }
@@ -1366,14 +1096,13 @@ double sed_cell_grain_density( const Sed_cell c )
 /** \brief Get the closest packed density of a sediment type in a Sed_cell .
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the closest packed density of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_max_density( const Sed_cell c )
+double
+sed_cell_max_density( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_rho_max );
 }
@@ -1381,14 +1110,13 @@ double sed_cell_max_density( const Sed_cell c )
 /** \brief Get the mean grain size of a sediment type in a  Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the mean grain size of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_grain_size( const Sed_cell c )
+double
+sed_cell_grain_size( const Sed_cell c )
 {
    double g = 0;
 
@@ -1401,44 +1129,49 @@ double sed_cell_grain_size( const Sed_cell c )
 /** \brief Get the mean grain size (in phi units) of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the mean grain size of the sediment type in phi units.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_grain_size_in_phi( const Sed_cell c )
+double
+sed_cell_grain_size_in_phi( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size_in_phi );
 }
 
-double sed_cell_sand_fraction( const Sed_cell c )
+double
+sed_cell_sand_fraction( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_is_sand );
 }
 
-double sed_cell_silt_fraction( const Sed_cell c )
+double
+sed_cell_silt_fraction( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_is_silt );
 }
 
-double sed_cell_clay_fraction( const Sed_cell c )
+double
+sed_cell_clay_fraction( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_is_clay );
 }
 
-double sed_cell_mud_fraction( const Sed_cell c )
+double
+sed_cell_mud_fraction( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_is_mud );
 }
 
-double sed_cell_nth_fraction( const Sed_cell c , gssize n )
+double
+sed_cell_nth_fraction( const Sed_cell c , gssize n )
 {
    return sed_cell_fraction( c , n );
 }
 
-double* sed_cell_fraction_ptr( const Sed_cell c )
+double*
+sed_cell_fraction_ptr( const Sed_cell c )
 {
    return c->f;
 }
@@ -1453,7 +1186,8 @@ is NULL, a newly created array is allocated.
 
 @return A pointer to the copied data
 */
-double* sed_cell_copy_fraction( double* f , const Sed_cell c )
+double*
+sed_cell_copy_fraction( double* f , const Sed_cell c )
 {
    eh_require( c );
 
@@ -1467,14 +1201,13 @@ double* sed_cell_copy_fraction( double* f , const Sed_cell c )
 /** \brief Get the coefficient of consolidation for a sediment type in a cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the coefficient consolidation of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_c_consolidation( const Sed_cell c )
+double
+sed_cell_c_consolidation( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_c_consolidation );
 }
@@ -1482,14 +1215,13 @@ double sed_cell_c_consolidation( const Sed_cell c )
 /** \brief Get the velocity of water of a sediment type in a  Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the velocity of water of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_velocity( const Sed_cell c )
+double
+sed_cell_velocity( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_velocity );
 }
@@ -1497,14 +1229,13 @@ double sed_cell_velocity( const Sed_cell c )
 /** \brief Get the viscosity of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the viscosity of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_viscosity( const Sed_cell c )
+double
+sed_cell_viscosity( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_viscosity );
 }
@@ -1512,14 +1243,13 @@ double sed_cell_viscosity( const Sed_cell c )
 /** \brief Get the relative density of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the relative density of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_relative_density( const Sed_cell c )
+double
+sed_cell_relative_density( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_relative_density );
 }
@@ -1527,14 +1257,13 @@ double sed_cell_relative_density( const Sed_cell c )
 /** \brief Get the porosity of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The number of sediment types in the cell.
 
 \return Returns the porosity of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_porosity( const Sed_cell c )
+double
+sed_cell_porosity( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_porosity );
 }
@@ -1544,14 +1273,13 @@ double sed_cell_porosity( const Sed_cell c )
  Returns the porosity of a Sed_cell when it is in its uncompacted state.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the maximum porosity of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_porosity_max( const Sed_cell c )
+double
+sed_cell_porosity_max( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_porosity_max );
 }
@@ -1561,14 +1289,13 @@ double sed_cell_porosity_max( const Sed_cell c )
  Returns the porosity of a cell if it were in its closest packed state.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the minumum porosity of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_porosity_min( const Sed_cell c )
+double
+sed_cell_porosity_min( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_porosity_min );
 }
@@ -1576,31 +1303,27 @@ double sed_cell_porosity_min( const Sed_cell c )
 /** \brief Get the plastic index of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the plastic index of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_plastic_index( const Sed_cell c )
+double
+sed_cell_plastic_index( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_plastic_index );
 }
 
-#define S_F 1.25
-
 /** \brief Get the permeability of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the permeability of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_permeability( const Sed_cell c )
+double
+sed_cell_permeability( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_permeability );
 }
@@ -1608,14 +1331,13 @@ double sed_cell_permeability( const Sed_cell c )
 /** \brief Get the hydraulic conductivity of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the hydraulic conductivity of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_hydraulic_conductivity( const Sed_cell c )
+double
+sed_cell_hydraulic_conductivity( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_hydraulic_conductivity );
 }
@@ -1623,27 +1345,30 @@ double sed_cell_hydraulic_conductivity( const Sed_cell c )
 /** \brief Get the permeability of a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
 
 \return Returns the permeability of the cell.
 */
-double sed_cell_bulk_permeability( const Sed_cell c )
+double
+sed_cell_bulk_permeability( const Sed_cell c )
 { 
    double s;
    double e = sed_cell_void_ratio( c );
+   static const double s_f = SED_CELL_CONST_S_F;
 
    s = 6.*sed_sediment_property_avg( NULL , c->f , &sed_type_inv_grain_size_in_meters );
 
-  return 1./(5.*S_F*s*s)*(pow(e,3.)/(1+e));
+  return 1./(5.*s_f*s*s)*(pow(e,3.)/(1+e));
 }
 
-double sed_cell_bulk_log_permeability( const Sed_cell c )
+double
+sed_cell_bulk_log_permeability( const Sed_cell c )
 {
    double k = sed_cell_bulk_permeability( c );
    return ( k<=0 )?eh_nan():log(k);
 }
 
-double sed_cell_bulk_hydraulic_conductivity( const Sed_cell c )
+double
+sed_cell_bulk_hydraulic_conductivity( const Sed_cell c )
 {
    return sed_cell_bulk_permeability( c ) * S_GAMMA_WATER / S_ETA_WATER;
 }
@@ -1651,14 +1376,13 @@ double sed_cell_bulk_hydraulic_conductivity( const Sed_cell c )
 /** \brief Get the void ratio of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the void ratio of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_void_ratio( const Sed_cell c )
+double
+sed_cell_void_ratio( const Sed_cell c )
 {
    double e = sed_sediment_property_avg( NULL , c->f , &sed_type_void_ratio );
    return ( c->t/c->t_0 ) * ( 1.+e ) - 1.;
@@ -1669,14 +1393,13 @@ double sed_cell_void_ratio( const Sed_cell c )
  Returns the void ratio of a Sed_cell if it were in its closest packed state.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the minimum void ratio of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_void_ratio_min( const Sed_cell c )
+double
+sed_cell_void_ratio_min( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_void_ratio_min );
 }
@@ -1686,14 +1409,13 @@ double sed_cell_void_ratio_min( const Sed_cell c )
  Returns the void ratio of a cell if it were in its uncompacted state.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the maximum void ratio of the sediment type.
 
 \see sed_cell_property , sed_cell_property_with_load .
 */
-double sed_cell_void_ratio_max( const Sed_cell c )
+double
+sed_cell_void_ratio_max( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_void_ratio_max );
 }
@@ -1701,44 +1423,43 @@ double sed_cell_void_ratio_max( const Sed_cell c )
 /** \brief Get the Coulomb friction angle of a sediment type in a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the Coulomb friction angle of the sediment type.
 */
-double sed_cell_friction_angle( const Sed_cell c )
+double
+sed_cell_friction_angle( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_friction_angle );
 }
 
-double sed_cell_cc( const Sed_cell c )
+double
+sed_cell_cc( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_c_consolidation );
 }
 
-double sed_cell_compressibility( const Sed_cell c )
+double
+sed_cell_compressibility( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_compressibility );
 }
 
 /** \brief Get the yield strength of a sediment type in a Sed_cell.
 
-
-this formlation is taken from 'erosion and sedimentation' by pierre julien
-(p. 190). the yieled strength (in pa) of a debris flow.  that is, it should
+This formlation is taken from 'erosion and sedimentation' by Pierre Julien
+(p. 190). The yieled strength (in Pa) of a debris flow.  That is, it should
 be the remolded yield strength of the sediment which is different from the
-yield strength of the sediment before failure. the concentration here is 
-the volume concentration of sediment.  that is, the volume of sediment 
+yield strength of the sediment before failure. The concentration here is 
+the volume concentration of sediment.  That is, the volume of sediment 
 divided by the total volume (of sediment plus water); this is the same as
 one minus the porosity.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the yield strength of the sediment type.
 */
-double sed_cell_yield_strength( const Sed_cell c )
+double
+sed_cell_yield_strength( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_yield_strength );
 }
@@ -1746,11 +1467,11 @@ double sed_cell_yield_strength( const Sed_cell c )
 /** \brief Get the bulk yield strength of a Sed_cell.
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
 
 \return Returns the bulk yield strength of the cell.
 */
-double sed_cell_bulk_yield_strength( const Sed_cell c )
+double
+sed_cell_bulk_yield_strength( const Sed_cell c )
 {
    double a, f_sand;
    double conc = 1. - sed_cell_porosity( c );
@@ -1780,17 +1501,15 @@ double sed_cell_bulk_yield_strength( const Sed_cell c )
 
 /** \brief Get the dynamic viscosity of a sediment type in a Sed_cell .
 
-
-this formlation is taken from 'erosion and sedimentation' by pierre 
-julien (p. 190).
+This formlation is taken from 'erosion and sedimentation' by Pierre 
+Julien (p. 190).
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
-\param n   The sediment type to measure.
 
 \return Returns the dynamic viscosity of the sediment type.
 */
-double sed_cell_dynamic_viscosity( const Sed_cell c )
+double
+sed_cell_dynamic_viscosity( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_dynamic_viscosity );
 }
@@ -1798,11 +1517,11 @@ double sed_cell_dynamic_viscosity( const Sed_cell c )
 /** \brief Get the bulk dynamic viscosity of a Sed_cell .
 
 \param c   The cell to measure.
-\param sed The type of sediment in the cell.
 
 \return Returns the bulk dynamic viscosity of the Sed_cell .
 */
-double sed_cell_bulk_dynamic_viscosity( const Sed_cell c )
+double
+sed_cell_bulk_dynamic_viscosity( const Sed_cell c )
 {
    double a, f_sand;
    double conc = 1.-sed_cell_porosity( c );
@@ -1823,7 +1542,8 @@ double sed_cell_bulk_dynamic_viscosity( const Sed_cell c )
    return S_ETA_WATER*( 1. + 2.5*conc + exp( a*( conc - .05 ) ) );
 }
 
-double sed_cell_relative_pressure( const Sed_cell c , double load )
+double
+sed_cell_relative_pressure( const Sed_cell c , double load )
 {
    double pressure = sed_cell_pressure( c );
 
@@ -1841,12 +1561,12 @@ size of the sediment contained in a Sed_cell is averaged (in terms of phi
 units).  The mean grain size is then placed into a sand (phi<4), silt (4<phi<9), or clay (phi>9) class.
 
 \param c   The Sed_cell to measure.
-\param sed The type of sediment in the Sed_cell.
 
 \see sed_get_size_class .
 
 */
-Sed_size_class sed_cell_size_class( const Sed_cell c )
+Sed_size_class
+sed_cell_size_class( const Sed_cell c )
 {
    Sed_size_class class = S_SED_TYPE_NONE;
 
@@ -1864,15 +1584,15 @@ Sed_size_class sed_cell_size_class( const Sed_cell c )
  Retruns the fraction of a given size class (from the Wentworth scale)
 contained in a Sed_cell.
 
-\param sed_type The size class to look for.
 \param c        The Sed_cell to examine.
-\param sed      The type of sediment in the Sed_cell.
+\param size     The size class to look for.
 
 \return The percentage of the size class in the Sed_Cell.
 
 \see sed_cell_size_class , sed_get_size_class , Sed_size_class .
 */
-double sed_cell_size_class_percent( const Sed_cell c , Sed_size_class size )
+double
+sed_cell_size_class_percent( const Sed_cell c , Sed_size_class size )
 {
    double p = 0.;
 
@@ -1881,7 +1601,8 @@ double sed_cell_size_class_percent( const Sed_cell c , Sed_size_class size )
    return p;
 }
 
-Sed_size_class sed_cell_size_classes( const Sed_cell c )
+Sed_size_class
+sed_cell_size_classes( const Sed_cell c )
 {
    Sed_size_class size = S_SED_TYPE_NONE;
 
@@ -1890,13 +1611,15 @@ Sed_size_class sed_cell_size_classes( const Sed_cell c )
    return size;
 }
 
-double sed_cell_density( const Sed_cell c )
+double
+sed_cell_density( const Sed_cell c )
 {
    double d = c->t / c->t_0;
    return sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_density_compacted , &d );
 }
 
-double sed_cell_sediment_volume( const Sed_cell c )
+double
+sed_cell_sediment_volume( const Sed_cell c )
 {
    double v = 0.;
 
@@ -1906,7 +1629,8 @@ double sed_cell_sediment_volume( const Sed_cell c )
    return v;
 }
 
-double sed_cell_sediment_mass( const Sed_cell c )
+double
+sed_cell_sediment_mass( const Sed_cell c )
 {
    double m = 0;
 
@@ -1929,7 +1653,8 @@ double sed_cell_sediment_mass( const Sed_cell c )
 //   double f(Sed_cell*,double,sediment,n)
 //
 
-double sed_cell_mv( const Sed_cell c )
+double
+sed_cell_mv( const Sed_cell c )
 {
 /*
    double e=sed_cell_void_ratio(c,sed,n);
@@ -1939,12 +1664,14 @@ double sed_cell_mv( const Sed_cell c )
    return sed_sediment_property_avg( NULL , c->f , &sed_type_compressibility );
 }
 
-double sed_cell_cv( const Sed_cell c )
+double
+sed_cell_cv( const Sed_cell c )
 {
    return sed_sediment_property_avg( NULL , c->f , &sed_type_cv );
 }
 
-double sed_cell_bulk_cv( const Sed_cell c )
+double
+sed_cell_bulk_cv( const Sed_cell c )
 {
    double mv = sed_cell_mv( c );
    return sed_cell_bulk_hydraulic_conductivity( c ) / ( S_GAMMA_WATER * mv );
@@ -1954,12 +1681,11 @@ double sed_cell_bulk_cv( const Sed_cell c )
 
 \param c    The cell to measure.
 \param load The load on the cell.
-\param sed  The type of sediment in the cell.
-\param n    The sediment type to measure.
 
 \return Returns the shear strength of the sediment type.
 */
-double sed_cell_shear_strength( const Sed_cell c , double load )
+double
+sed_cell_shear_strength( const Sed_cell c , double load )
 {
    return sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_shear_strength_with_data , &load );
 }
@@ -1968,12 +1694,11 @@ double sed_cell_shear_strength( const Sed_cell c , double load )
 
 \param c    The cell to measure.
 \param load The load on the cell.
-\param sed  The type of sediment in the cell.
-\param n    The sediment type to measure.
 
 \return Returns the cohesion of the sediment type.
 */
-double sed_cell_cohesion(const Sed_cell c, double load )
+double
+sed_cell_cohesion(const Sed_cell c, double load )
 {
    load -= c->pressure;
    eh_lower_bound( load , 0 );
@@ -1993,12 +1718,11 @@ where s is the load on the cell.
 
 \param c         The cell to measure.
 \param time_now  The current time.
-\param sed       The type of sediment in the cell.
-\param n         The sediment type to measure.
 
 \return Returns the degree of consolidation.
 */
-double sed_cell_consolidation( const Sed_cell c , double time_now )
+double
+sed_cell_consolidation( const Sed_cell c , double time_now )
 {
    double dt = time_now - sed_cell_age_in_years( c );
    double d  = sed_cell_thickness(c);
@@ -2011,7 +1735,8 @@ double sed_cell_consolidation( const Sed_cell c , double time_now )
 }
 
 /* now defined in sed_property.c
-double sed_calculate_avg_consolidation( double c_v , double d , double t )
+double
+sed_calculate_avg_consolidation( double c_v , double d , double t )
 {
    double t_v = c_v*t/(d*d);
    if ( d <= 0 )
@@ -2022,7 +1747,8 @@ double sed_calculate_avg_consolidation( double c_v , double d , double t )
       return ( 1-8/(G_PI*G_PI)*exp(-G_PI*G_PI/4.*t_v) );
 }
 
-double sed_calculate_consolidation( double c_v , double d , double z , double t )
+double
+sed_calculate_consolidation( double c_v , double d , double z , double t )
 {
    double t_v = c_v*t/(d*d);
    double n, eps = G_MAXDOUBLE;
@@ -2045,7 +1771,8 @@ double sed_calculate_consolidation( double c_v , double d , double z , double t 
 }
 */
 
-double sed_cell_consolidation_rate( const Sed_cell c , double time_now )
+double
+sed_cell_consolidation_rate( const Sed_cell c , double time_now )
 {
    double dt = time_now - sed_cell_age_in_years( c );
    double d  = sed_cell_thickness(c);
@@ -2057,18 +1784,16 @@ double sed_cell_consolidation_rate( const Sed_cell c , double time_now )
    return sed_sediment_property_avg_with_data( NULL , c->f , &sed_type_consolidation_rate_with_data , data );
 }
 
-//@}
-
 //
 // End of S_property_with_load_func's
 //
 ///////////////////////////////////////////////////////////////////
 
-//@{
 /** Get the current thickness of a cell.
 \param c The Sed_cell to query.
 */
-double sed_cell_thickness(const Sed_cell c)
+double
+sed_cell_thickness(const Sed_cell c)
 {
    if ( G_LIKELY(c) )
       return c->t;
@@ -2076,7 +1801,8 @@ double sed_cell_thickness(const Sed_cell c)
       return 0;
 }
 
-double sed_cell_size( const Sed_cell c )
+double
+sed_cell_size( const Sed_cell c )
 {
    if ( G_LIKELY(c) )
       return c->t;
@@ -2084,7 +1810,8 @@ double sed_cell_size( const Sed_cell c )
       return 0;
 }
 
-double sed_cell_size_0( const Sed_cell c )
+double
+sed_cell_size_0( const Sed_cell c )
 {
    if ( G_LIKELY(c) )
       return c->t_0;
@@ -2096,7 +1823,8 @@ double sed_cell_size_0( const Sed_cell c )
 \param c The Sed_cell to query.
 \param n The sediment type to query.
 */
-double sed_cell_fraction( const Sed_cell c , gssize n )
+double
+sed_cell_fraction( const Sed_cell c , gssize n )
 {
    eh_require( c );
    eh_require( n>=0 );
@@ -2106,15 +1834,20 @@ double sed_cell_fraction( const Sed_cell c , gssize n )
 }
 
 /** Get the pressure felt by a Sed_cell .
-\param The Sed_cell to query.
+
+\param c The Sed_cell to query.
+
+\return The pressure of the cell (Pa)
 */
-double sed_cell_pressure( const Sed_cell c )
+double
+sed_cell_pressure( const Sed_cell c )
 {
    eh_require( c );
    return c->pressure;
 }
 
-double sed_cell_excess_pressure( const Sed_cell c   ,
+double
+sed_cell_excess_pressure( const Sed_cell c   ,
                                  double hydro_static )
 {
    double pressure;
@@ -2128,13 +1861,15 @@ double sed_cell_excess_pressure( const Sed_cell c   ,
 /** Get the age of a Sed_cell .
 \param c The Sed_cell to query.
 */
-double sed_cell_age(const Sed_cell c)
+double
+sed_cell_age(const Sed_cell c)
 {
    eh_require( c );
    return c->age;
 }
 
-gssize sed_cell_n_types( const Sed_cell c )
+gssize
+sed_cell_n_types( const Sed_cell c )
 {
    eh_require( c );
    return c->n;
@@ -2143,7 +1878,8 @@ gssize sed_cell_n_types( const Sed_cell c )
 /** Get the age of a Sed_cell in years.
 \param c The Sed_cell to query.
 */
-double sed_cell_age_in_years( const Sed_cell c )
+double
+sed_cell_age_in_years( const Sed_cell c )
 {
    eh_require( c );
    return c->age;
@@ -2152,7 +1888,8 @@ double sed_cell_age_in_years( const Sed_cell c )
 /** Get the facies designation of a cell.
 \param c The Sed_cell to query.
 */
-Sed_facies sed_cell_facies( const Sed_cell c )
+Sed_facies
+sed_cell_facies( const Sed_cell c )
 {
    eh_require( c );
    return c->facies;
@@ -2162,10 +1899,14 @@ Sed_facies sed_cell_facies( const Sed_cell c )
 
 Calculate the mass of sediment in a cell.  mass is in units of kg/m^2.
 
-\param c The Sed_cell to query.
-\param s The type of Sediment in the cell.
+\param c    A Sed_cell to query.
+
+\return      The mass of the Sed_cell (kg)
+
+\sa sed_cell_load
 */
-double sed_cell_mass( const Sed_cell c )
+double
+sed_cell_mass( const Sed_cell c )
 {
    double mass = 0;
 
@@ -2182,80 +1923,38 @@ double sed_cell_mass( const Sed_cell c )
 
 Get the load that a cell of sediment exerts.  load is in N/m/m or Pa.
 
-\param c The Sed_cell to query.
-\param s The type of Sediment in the cell.
+\param c   The Sed_cell to query.
+
+\return    The load of the cell (Pa)
+
+\sa sed_cell_mass
 */
-double sed_cell_load( const Sed_cell c )
+double
+sed_cell_load( const Sed_cell c )
 {
    return sed_cell_mass(c)*sed_gravity();
 }
 
-double sed_cell_sediment_load( const Sed_cell c )
+double
+sed_cell_sediment_load( const Sed_cell c )
 {
    return sed_cell_sediment_mass(c)*sed_gravity();
 }
-//@}
 
-/*******
-
- Remove a fraction of each grain size from a sediment cell.
-
-*******/
-/*
-double sed_seperate_cell(Sed_cell *s,const double fraction[],int n_grain,Sed_cell *remCell)
-{
-   double sumLeft, sumRem;
-   long n;
-   double total_thickness, total_uncompacted_thickness;
-   
-   total_thickness = s->thickness;
-   total_uncompacted_thickness = s->uncompacted_thickness;
-   
-   for (n=0,sumLeft=0.,sumRem=0.;n<n_grain;n++)
-   {
-      remCell->fraction[n] = s->fraction[n]*fraction[n];
-      s->fraction[n]       = s->fraction[n]*(1.-fraction[n]);
-      sumLeft += s->fraction[n];
-      sumRem  += remCell->fraction[n];
-   }
-   
-   remCell->thickness             = total_thickness*sumRem;
-   remCell->uncompacted_thickness = total_uncompacted_thickness*sumRem;
-   remCell->age                   = s->age;
-   remCell->facies                = s->facies;
-   remCell->pressure              = s->pressure;
-
-   s->thickness             = total_thickness*sumLeft;
-   s->uncompacted_thickness = total_uncompacted_thickness*sumLeft;
-   
-   if ( sumRem == 0 )
-      memset(remCell->fraction,0,n_grain*sizeof(double));
-   else
-      for (n=0;n<n_grain;n++)
-         remCell->fraction[n] /= sumRem;
-         
-   if ( sumLeft == 0 )
-      memset(s->fraction,0,n_grain*sizeof(double));
-   else
-      for (n=0;n<n_grain;n++) 
-         s->fraction[n]      /= sumLeft;
-   
-   return sumLeft;
-}
-*/
-
-/** \brief Dump the contents of a Sed_cell to a binary file.
+/** \brief Write the contents of a Sed_cell to a binary file.
 
  Dump the contents of a Sed_cell to a binary file.  The contents can 
 be read back into the Sed_cell from a file using sed_load_cell .
 
 \param fp       A file pointer to the file to dump the information.
 \param c        The Sed_cell to dump.
-\param n_grains The number of sediment types in the Sed_cell .
+
+\return The number of bytes written.
 
 \see sed_load_cell .
 */
-gssize sed_cell_write( FILE *fp, const Sed_cell c )
+gssize
+sed_cell_write( FILE *fp, const Sed_cell c )
 {
    gssize n = 0;
 
@@ -2277,19 +1976,19 @@ gssize sed_cell_write( FILE *fp, const Sed_cell c )
 
 /** \brief Read the contents of a Sed_cell from a binary file.
 
- Read the contents of a Sed_cell from a binary file.  The information
+Read the contents of a Sed_cell from a binary file.  The information
 must have been written with sed_dump_cell .  A newly created Sed_cell is 
 returned that contains the information read from the file.  This Sed_cell
 should be destroyed with sed_destroy_cell when no longer in use.
 
 \param fp       A pointer to a file to read the data from.
-\param n_grains The number of sediment types in the Sed_cell .
 
-\return A newly created Sed_cell containing the contents from the file.
+\return         A newly created Sed_cell containing the contents from the file.
 
 \see sed_dump_cell .
 */
-Sed_cell sed_cell_read( FILE *fp )
+Sed_cell
+sed_cell_read( FILE *fp )
 {
    Sed_cell c;
 
@@ -2328,7 +2027,8 @@ degree of compactedness </em>.
 
 \see sed_compact_cell .
 */
-Sed_cell sed_cell_resize( Sed_cell c , double t )
+Sed_cell
+sed_cell_resize( Sed_cell c , double t )
 {
    eh_require( c );
 
@@ -2359,14 +2059,15 @@ Compact a Sed_cell.
 \note The current thickness of the Sed_cell is changed <em> but the uncompacted
 thickness of the cell is unaltered </em>.
 
-\param c The Sed_cell to compact.
-\param t The new thickness of the Sed_cell.
+\param c       The Sed_cell to compact.
+\param new_t   The new thickness of the Sed_cell.
 
 \return The compacted Sed_cell.
 
 \see sed_resize_cell .
 */
-Sed_cell sed_cell_compact( Sed_cell c , double new_t )
+Sed_cell
+sed_cell_compact( Sed_cell c , double new_t )
 {
    eh_require( c );
    eh_require( new_t>=0 );
@@ -2393,7 +2094,8 @@ been created.
 
 \see Sed_cell_grid , sed_init_cell_grid , sed_free_cell_grid .
 */
-Sed_cell_grid sed_cell_grid_new( gsize n_x , gsize n_y )
+Sed_cell_grid
+sed_cell_grid_new( gsize n_x , gsize n_y )
 {
    Sed_cell_grid g = eh_grid_new( Sed_cell , n_x , n_y );
    return g;
@@ -2411,7 +2113,8 @@ have been created with sed_create_cell_grid .
 
 \see Sed_cell_grid , sed_create_cell_grid , sed_free_cell_grid .
 */
-Sed_cell_grid sed_cell_grid_init( Sed_cell_grid g , gssize n_grains )
+Sed_cell_grid
+sed_cell_grid_init( Sed_cell_grid g , gssize n_grains )
 {
    eh_require( g );
    eh_require( n_grains>0 );
@@ -2438,7 +2141,8 @@ itself is not freed.  To free the Sed_cell_grid as well, use sed_destroy_grid .
 
 \see Sed_cell_grid , sed_destroy_grid .
 */
-void sed_cell_grid_free( Sed_cell_grid g )
+void
+sed_cell_grid_free( Sed_cell_grid g )
 {
    eh_return_if_fail( g )
    {
@@ -2451,7 +2155,8 @@ void sed_cell_grid_free( Sed_cell_grid g )
    }
 }
 
-void sed_cell_grid_free_data( Sed_cell_grid g )
+void
+sed_cell_grid_free_data( Sed_cell_grid g )
 {
    eh_require( g )
    {
@@ -2466,12 +2171,14 @@ void sed_cell_grid_free_data( Sed_cell_grid g )
    return;
 }
 
-Sed_cell sed_cell_grid_val( Sed_cell_grid g , gssize i , gssize j )
+Sed_cell
+sed_cell_grid_val( Sed_cell_grid g , gssize i , gssize j )
 {
    return ((Sed_cell*)eh_grid_row(g,i))[j];
 }
 
-Sed_cell_grid sed_cell_grid_add( Sed_cell_grid g_1 , Sed_cell_grid g_2 )
+Sed_cell_grid
+sed_cell_grid_add( Sed_cell_grid g_1 , Sed_cell_grid g_2 )
 {
    gssize i;
    gssize n_i    = eh_grid_n_el( g_1 );
@@ -2487,7 +2194,8 @@ Sed_cell_grid sed_cell_grid_add( Sed_cell_grid g_1 , Sed_cell_grid g_2 )
    return g_1;
 }
 
-Sed_cell_grid sed_cell_grid_copy_data( Sed_cell_grid dest , Sed_cell_grid src )
+Sed_cell_grid
+sed_cell_grid_copy_data( Sed_cell_grid dest , Sed_cell_grid src )
 {
    gssize i;
    gssize n_i    = eh_grid_n_el( dest );
@@ -2503,7 +2211,8 @@ Sed_cell_grid sed_cell_grid_copy_data( Sed_cell_grid dest , Sed_cell_grid src )
    return dest;
 }
 
-Sed_cell_grid sed_cell_grid_clear( Sed_cell_grid g )
+Sed_cell_grid
+sed_cell_grid_clear( Sed_cell_grid g )
 {
    eh_require( g )
    {
@@ -2518,7 +2227,8 @@ Sed_cell_grid sed_cell_grid_clear( Sed_cell_grid g )
    return g;
 }
 
-double sed_cell_grid_mass( Sed_cell_grid g )
+double
+sed_cell_grid_mass( Sed_cell_grid g )
 {
    double sum = 0;
 
@@ -2543,12 +2253,14 @@ Get the data member of a Sed_cell_grid
 
 \see Sed_cell_grid , sed_destroy_grid .
 */
-Sed_cell** sed_cell_grid_data( Sed_cell_grid g )
+Sed_cell**
+sed_cell_grid_data( Sed_cell_grid g )
 {
    return (Sed_cell**)eh_grid_data( g );
 }
 
-gboolean sed_cell_is_same( Sed_cell a , Sed_cell b )
+gboolean
+sed_cell_is_same( Sed_cell a , Sed_cell b )
 {
    gboolean same = TRUE;
 
@@ -2578,7 +2290,8 @@ gboolean sed_cell_is_same( Sed_cell a , Sed_cell b )
    return same;
 }
 
-gboolean sed_cell_is_valid( Sed_cell c )
+gboolean
+sed_cell_is_valid( Sed_cell c )
 {
    gboolean is_valid = TRUE;
 
@@ -2610,6 +2323,5 @@ gboolean sed_cell_is_valid( Sed_cell c )
    return is_valid;
 }
 
-
-
+/*@}*/ /* End Sed_cell group */
 

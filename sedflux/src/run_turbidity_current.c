@@ -79,30 +79,6 @@
 #define DEFAULT_OUT_TIME    (30)
 #define DEFAULT_PHEBOTTOM   (0.2) 
 
-/** @memo Sed_get_phe_t
-
-@doc The Sed_get_phe_t struct is used to hold data that will be used by a
-function that queries a Sed_cube of bottom sediment fractions.
-
-prof points to a Sed_cube that is to be queried.
-
-dx gives the node spacing of the model.  This is provided in addition to the 
-Sed_cube as the node spacing of the function using the get_phe function 
-may be different from the Sed_cube.  For instance, inflow typically requires
-a node spacing many smaller than that used within the sedflux architecture.
-
-x gives the location where the query is to be made.  The location should be in
-meters and is compared to the Sed_column locations in the Sed_cube.
-
-erode_depth is the depth of erosion that determines what sediments are to be
-queried.  This value is changed to reflect the actual amount of sediment that
-is able to be eroded.  That is, there may be less sediment available at this
-location than is to be eroded.
-
-@see sed_get_phe
-
-*/
-
 void sed_get_phe   ( gpointer user_data , gpointer bathy_data );
 void sed_remove    ( gpointer user_data , gpointer bathy_data );
 void sed_add       ( gpointer user_data , gpointer bathy_data );
@@ -857,16 +833,16 @@ gboolean load_turbidity_current_data( gpointer ptr , FILE *fp )
    return TRUE;
 }
 
-/** @memo Calculate the equivalent grain size.
+/** Calculate the equivalent grain size.
 
-@doc Sediment grains falling through water will settle a rates that are greater than
+Sediment grains falling through water will settle a rates that are greater than
 those predicted because of flocculation.  That is, a grain will settle at a rate predicted
 for a larger grain.  This function calculates this "equivalent" grain size, given the real
 grain size.
 
-@param real_diameter The real grain size in meters.
+\param real_diameter The real grain size in meters.
 
-@return The equivalent grain size in meters.
+\return The equivalent grain size in meters.
 */
 
 double get_equivalent_diameter(double real_diameter)
@@ -1017,9 +993,9 @@ double getPhe(double *phe,double pos,double depth)
 
 #endif
 
-/** @memo Get the grain size distribution of bottom sediments.
+/** Get the grain size distribution of bottom sediments.
 
-@doc Get the fractions of each grain type of bottom sediments from a
+Get the fractions of each grain type of bottom sediments from a
 Sed_cube.  This function is intended to be used within another program that
 needs to communicate with the sedflux architecture but is otherwise separate
 from sedflux.
@@ -1028,17 +1004,17 @@ Note that the member, eroded_depth may be changed to reflect the actual amount
 of bottom sediment available to be eroded.  That is, we may be trying to erode
 more sediment than is actually present.
 
-@param phe  The fraction of each grain type in the bottom sediments.
-@param data A structure that contains the necessary data for the function to
-            retreive the grain type fracitons.
+\param data    A structure that contains the necessary data for the function to
+               retreive the grain type fracitons.
+\param p       A Sed_cube to query
 
-@returns A pointer to the array of grain type fractions.
+\return       A pointer to the array of grain type fractions.
 
 */
 
-void sed_get_phe( gpointer data , gpointer bathy_data )
+void sed_get_phe( gpointer data , gpointer p )
 {
-   Sed_cube prof = (Sed_cube)bathy_data;
+   Sed_cube prof = (Sed_cube)p;
    double dx      = EH_STRUCT_MEMBER( Sed_phe_query_t , data , dx          );
    double x       = EH_STRUCT_MEMBER( Sed_phe_query_t , data , x           );
    double depth   = EH_STRUCT_MEMBER( Sed_phe_query_t , data , erode_depth );

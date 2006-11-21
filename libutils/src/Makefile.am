@@ -1,38 +1,60 @@
-## Comment line
+#AM_CFLAGS=${CFLAGS} @GLIB_CFLAGS@
 
-#lib_LIBRARIES = libutils.a
-lib_LTLIBRARIES = libutils.la
+lib_LTLIBRARIES        = libutils.la
 
-libutils_la_SOURCES = eh_input_val.c eh_data_record.c eh_symbol_table.c eh_key_file.c eh_ndgrid.c eh_grid.c eh_opt_context.c zbsubs.c utils.c eh_rand.c eh_logging.c eh_glib.c eh_scanner.c eh_get_opt.c complex.c eh_num.c machcon.c eh_mem.c eh_project.c
-#libutils_a_SOURCES = utils.c eh_rand.c eh_logging.c eh_glib.c eh_scanner.c eh_get_opt.c complex.c eh_num.c zbsubs.c
+libutils_la_SOURCES    = eh_input_val.c \
+                         eh_data_record.c \
+                         eh_symbol_table.c \
+                         eh_key_file.c \
+                         eh_ndgrid.c \
+                         eh_grid.c \
+                         eh_opt_context.c \
+                         zbsubs.c \
+                         utils.c \
+                         eh_rand.c \
+                         eh_logging.c \
+                         eh_glib.c \
+                         eh_scanner.c \
+                         eh_get_opt.c \
+                         complex.c \
+                         eh_num.c \
+                         machcon.c \
+                         eh_mem.c \
+                         eh_project.c
 
-include_HEADERS = utils.h eh_rand.h eh_logging.h eh_scanner.h eh_glib.h eh_get_opt.h complex.h eh_num.h f2c.h eh_mem.h eh_project.h eh_opt_context.h eh_ndgrid.h eh_grid.h eh_key_file.h eh_symbol_table.h eh_data_record.h eh_types.h eh_input_val.h
-bin_PROGRAMS = test unit_test
-test_SOURCES = test.c
-unit_test_SOURCES = unit_test.c eh_grid_unit_test.c eh_project_unit_test.c eh_num_unit_test.c eh_symbol_table_unit_test.c eh_input_val_unit_test.c
+include_HEADERS        = utils.h \
+                         eh_rand.h \
+                         eh_logging.h \
+                         eh_scanner.h \
+                         eh_glib.h \
+                         eh_get_opt.h \
+                         complex.h \
+                         eh_num.h \
+                         f2c.h \
+                         eh_mem.h \
+                         eh_project.h \
+                         eh_opt_context.h \
+                         eh_ndgrid.h \
+                         eh_grid.h \
+                         eh_key_file.h \
+                         eh_symbol_table.h \
+                         eh_data_record.h \
+                         eh_types.h \
+                         eh_input_val.h
 
-libutils_la_LIBADD = -lgthread-2.0 -lglib-2.0 -lcheck
-#libutils_la_LIBADD = -lg2c -lglib-2.0 -lgthread-2.0 -lg2c
-libutils_la_LDFLAGS = -version-info 1:1
-test_LDADD = -lutils -lgthread-2.0 -lglib-2.0 -lutils -lcheck -lm
-unit_test_LDADD = -lutils -lgthread-2.0 -lglib-2.0 -lutils -lcheck -lm
-#test_LDADD = -lm -lthread -lglib-2.0 -lgthread-2.0 -lutils 
-#test_LDADD = -lg2c -lm -lglib-2.0 -lgthread-2.0 -lutils -lg2c
+bin_PROGRAMS           = test unit_test
+test_SOURCES           = test.c
+unit_test_SOURCES      = unit_test.c eh_grid_unit_test.c eh_project_unit_test.c eh_num_unit_test.c eh_symbol_table_unit_test.c eh_input_val_unit_test.c
 
-#test_LDFLAGS = -L$(top_builddir) -L/usr/local/lib
+libutils_la_LIBADD     = @GLIB_LIBS@ -lcheck
+libutils_la_LDFLAGS    = -version-info 1:1
 
-EXTRA_DIST = utils.pc.in
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = utils.pc
-$(pkgconfig_DATA): config.status
+test_LDADD             = -lutils @GLIB_LIBS@ -lutils -lcheck -lm
+unit_test_LDADD        = -lutils @GLIB_LIBS@ -lutils -lcheck -lm
 
-
-
-
-
-
-
-
+EXTRA_DIST             = utils.pc.in
+pkgconfigdir           = $(libdir)/pkgconfig
+pkgconfig_DATA         = utils.pc
 
 PURIFY = /home/huttone/local/bin/purify
 

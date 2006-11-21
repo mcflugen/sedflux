@@ -1,6 +1,0 @@
-AC_INIT(inflow.input)
-
-AM_INIT_AUTOMAKE(inflow_input_files,0.9b)
-
-AC_OUTPUT(Makefile)
-

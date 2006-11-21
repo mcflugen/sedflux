@@ -1660,11 +1660,11 @@ gboolean sed_cube_is_shore_edge( Sed_cube s , gssize i , gssize j , int edge )
 
 /** Get the indices of the cell accross some cell's edge.
 
-\param i The first index to a cell within a rectangular grid.
-\param j The second index to a cell within a rectangular grid.
-\param edge The edge of the cell over which to move.
+\param i       The first index to a cell within a rectangular grid.
+\param j       The second index to a cell within a rectangular grid.
+\param edge    The edge of the cell over which to move.
 
-\param The indices of the new cell.
+\return        The indices of the new cell.
 */
 Eh_ind_2 sed_shift_index_over_edge( gssize i , gssize j , int edge )
 {
@@ -2763,14 +2763,13 @@ gssize *sed_cube_find_column_above( Sed_cube c , double z )
 }
 /** Read floor elevation data from a file into an array.
 
-@doc
 Read a file of elevation data and interpolate to specified x-positions.  The
 output vector, y must be allocated enough size to hold the elevation data.
 
 @param filename A name of an input file.
-@param x        A pointer to an array of x-positions.
+@param y        A pointer to an array of y-positions.
 @param len      Number of positions (length of x, and y).
-@param y        A pointer to an array of elevations.
+@param z        A pointer to an array of elevations.
 
 @return The number of elevation data read.
 
@@ -2821,13 +2820,12 @@ int sed_get_floor_vec(char *filename, double *y, int len, double *z)
 
 /** Read elevation data from a file into a GArray.
 
-@doc
 Read a file of elevation data and interpolate to specified x-positions.  This
 differs from sed_get_floor_vec in that here the input x-positions and output
 elevations are held in GArray's rather than standard arrays.
 
-@param filename A name of an elevation file.
-@param x        A GArray of x-positions.
+@param file     A name of an elevation file.
+@param y_array  A GArray of y-positions.
 
 @return A GArray of the elevation data.
 
@@ -2902,11 +2900,11 @@ GArray *sed_get_floor( char *file , GArray *y_array )
 
 /** Get index from subscripts for a Sed_cube
 
-@param p A Sed_cube
-@param i First (slow) subscript
-@param j Second (fast) subscript
+@param p   A Sed_cube
+@param i   First (slow) subscript
+@param j   Second (fast) subscript
 
-@param The id corresponding to (i,j)
+@return    The id corresponding to (i,j)
 */
 gssize sed_cube_id( Sed_cube p , gssize i , gssize j )
 {
@@ -2918,7 +2916,7 @@ gssize sed_cube_id( Sed_cube p , gssize i , gssize j )
 @param p  A Sed_cube
 @param id A one-dimensional index
 
-@param The (i,j) subscript corresponding to an id
+@return The (i,j) subscript corresponding to an id
 */
 Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id )
 {

@@ -1,5 +1,3 @@
-## Comment line
-
 bin_PROGRAMS = hydrotrend
 
 hydrotrend_SOURCES = \
@@ -50,7 +48,5 @@ noinst_HEADERS = \
    hydrotrend.h \
    hydrotimeser.h \
    hydrofree_mem.h
-
-#INCLUDES = -I$(top_srcdir)
 
 LDADD = -lm
