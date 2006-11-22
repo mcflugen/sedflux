@@ -229,7 +229,8 @@ eh_watch_dbl( new_epoch->number );
 
 @see init_process_list , destroy_process_list .
 */
-Sed_process_list *create_process_list( void )
+Sed_process_list*
+create_process_list( void )
 {
    Sed_process_list *pl = eh_new( Sed_process_list , 1 );
 
@@ -249,6 +250,10 @@ Sed_process_list *create_process_list( void )
                                       &init_erosion       , &run_erosion );
    pl->river       = sed_process_new( "river"             , River_t ,
                                       &init_river         , &run_river );
+
+   pl->new_process = sed_process_new( "new process"       , New_process_t ,
+                                      &init_new_process   , &run_new_process );
+
    pl->bedload     = sed_process_new( "bedload dumping"   , Bedload_dump_t ,
                                       &init_bedload       , &run_bedload );
    pl->plume       = sed_process_new( "plume"             , Plume_t ,
@@ -302,8 +307,8 @@ scanning the input file given in the Epoch, cur_epoch.
 
 \see create_process_list , destroy_process_list .
 */
-Sed_process_list *init_process_list( Sed_process_list *pl ,
-                                     Epoch *cur_epoch )
+Sed_process_list*
+init_process_list( Sed_process_list *pl , Epoch *cur_epoch )
 {
    int i;
    Eh_key_file epoch_tab;
@@ -318,6 +323,9 @@ Sed_process_list *init_process_list( Sed_process_list *pl ,
    pl->avulsion_l     = sed_process_scan( epoch_tab , pl->avulsion     );
    pl->erosion_l      = sed_process_scan( epoch_tab , pl->erosion      );
    pl->river_l        = sed_process_scan( epoch_tab , pl->river        );
+
+   pl->new_process_l  = sed_process_scan( epoch_tab , pl->new_process  );
+
    pl->bedload_l      = sed_process_scan( epoch_tab , pl->bedload      );
    pl->plume_l        = sed_process_scan( epoch_tab , pl->plume        );
    pl->turbidity_l    = sed_process_scan( epoch_tab , pl->turbidity    );
@@ -518,7 +526,8 @@ int check_process_for_error( int error_type , GSList *pl )
 
 @see create_process_list , init_process_list .
 */
-void destroy_process_list( Sed_process_list *pl )
+void
+destroy_process_list( Sed_process_list *pl )
 {
 eh_debug( "DESTROY PROCESS LIST: START" );
    g_slist_foreach( pl->slump_l        , (GFunc)&sed_free_process , NULL );
@@ -532,6 +541,9 @@ eh_debug( "FREE: EROSION" );
    g_slist_foreach( pl->erosion_l      , (GFunc)&sed_free_process , NULL );
 eh_debug( "FREE: RIVER" );
    g_slist_foreach( pl->river_l        , (GFunc)&sed_free_process , NULL );
+
+   g_slist_foreach( pl->new_process_l  , (GFunc)&sed_free_process , NULL );
+
 eh_debug( "FREE: BEDLOAD" );
    g_slist_foreach( pl->bedload_l      , (GFunc)&sed_free_process , NULL );
 eh_debug( "FREE: PLUME" );
@@ -567,6 +579,9 @@ eh_debug( "DESTROY: AVULSION" );
    sed_process_destroy( pl->avulsion  );
    sed_process_destroy( pl->erosion  );
    sed_process_destroy( pl->river  );
+
+   sed_process_destroy( pl->new_process );
+
    sed_process_destroy( pl->bedload  );
    sed_process_destroy( pl->plume  );
    sed_process_destroy( pl->turbidity  );

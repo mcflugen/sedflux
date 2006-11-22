@@ -200,23 +200,7 @@ int run_sedflux(int argc, char *argv[])
 
       eh_key_file_destroy( init_file );
    }
-/*
-   if ( FALSE )
-   {
-   GHashTable *symbol_table = eh_scan_record_file( in_file );
 
-   eh_debug( "Initializing cube." );
-   prof         = init_cube( 
-                     (GSList*)g_hash_table_lookup( symbol_table , "global" ) ,
-                     cpr_file );
-
-
-   eh_debug( "Reading epoch file." );
-   e_list       = init_epoch_list( 
-                     (GSList*)g_hash_table_lookup( symbol_table , "epoch"  ) );
-
-   }
-*/
    n_epochs = g_slist_length(e_list);
 
    print_header( stdout );
@@ -252,6 +236,9 @@ int run_sedflux(int argc, char *argv[])
          // Set the weather.
          eh_debug( "River" );
          g_slist_foreach( pl->river_l       , (GFunc)&sed_process_run , prof );
+
+         g_slist_foreach( pl->new_process_l , (GFunc)&sed_process_run , prof );
+
          eh_debug( "Quake" );
          g_slist_foreach( pl->quake_l       , (GFunc)&sed_process_run , prof );
          eh_debug( "Tide" );

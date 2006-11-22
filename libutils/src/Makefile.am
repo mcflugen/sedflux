@@ -1,5 +1,3 @@
-#AM_CFLAGS=${CFLAGS} @GLIB_CFLAGS@
-
 lib_LTLIBRARIES        = libutils.la
 
 libutils_la_SOURCES    = eh_input_val.c \

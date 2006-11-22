@@ -1,9 +1,10 @@
-/*! \mainpage sedflux-2.0
+/*! \mainpage sedflux
 
 This manual is divided into the following sections:
 - \subpage intro_sec
 - \subpage install_sec
 - \subpage run_sec
+- \subpage prog_sec
 
 */
 
@@ -39,7 +40,9 @@ of functionality.  The limitations are:
 
 The configure script will check for these packages and turn them on or off depending are whether or not they are found.
 
-\section Configuring
+\section sec_configure Configuring
+
+\subsection sub_configure The configure command
 
 To configure sedflux-2.0:
 \code
@@ -50,7 +53,29 @@ example, <program-prefix> could be <tt>/usr/local/sedflux</tt>.  In this case, a
 installation files will be installed in <tt>/usr/local/sedflux</tt>.  This would mean that the
 sedflux executable program would be <tt>/usr/local/sedflux/bin/sedflux</tt>.
 
-\par Question
+\subsection sub_configure_options Configuration options
+
+\par --enable-libgtk
+If you have gtk+-2.0 (version >= 2.2) installed on you machine you can compile the graphical
+user interface for sedflux.  The default is to disable this functionality.  If enabled, configure
+will search for the libraries using pkg-config. (http://www.gtk.org)
+
+\par --enable-libcheck
+If you have check package installed, you can compile sedflux to include unit tests.  The default
+is for unit tests to be disabled.  If enabled, configure will use pkg-config to find the
+required libraries and header files. (http://check.sourceforge.net)
+
+\par --enable-doxygen
+Generate HTML documentation.  This must be done using the program doxygen.  If enabled, doxygen
+must be in your PATH.  The default is to disable doxygen.  (http://www.stack.nl/~dimitri/doxygen)
+
+\par --with-html-dir=PATH
+Specify a location to put HTML documentation.  If not specified, documentation is installed in
+${datadir}/ew-doc/html.
+
+\subsection sub_configure_problems Problems
+
+\par Problem
 I get an error message saying that I don't have gtk+-2.0 (or glib) but I know I do.
 
 \par Answer
@@ -59,17 +84,21 @@ your PKG_CONFIG_PATH environment variable to include the pkg-config files for th
 an example,
 \code
 > setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
-\endcod
-
-\section Build
-
-To compile and install the complete sedflux-2.0 package,
-\code
-> make package
 \endcode
-In addition to compiling the source code, this will copy all of the sedflux installation files
-to the location you specified during the configuration process.  Note that you will have to have
-write permission for the direction that you are installing into.
+
+\section sec_build Build
+
+To compile the sedflux-2.0 package,
+\code
+> make
+\endcode
+Once this has finished, you can install the package,
+\code
+> make install
+\endcode
+This will copy all of the sedflux installation files to the location you specified during the
+configuration process.  Note that you will have to have write permission for the direction
+that you are installing into.
 
 */
 
@@ -286,6 +315,127 @@ some header information from the file.  To plot up this output, simply use the p
 >> plot( x(2,:,1) , z(:,1,[1 end] )
 \endcode
 In this case we have potted the first and last sets of measurements.
+
+*/
+
+/*! \page prog_sec Programming
+
+\section sec_new_process Adding a new process
+
+
+
+
+\subsection sub_main main.c
+
+Run each process in the list of our newly-created process.
+
+\dontinclude main.c
+\skipline new_process_l
+
+
+
+
+
+\subsection sub_init init.c
+
+\dontinclude init.c
+\skip create_process_list
+\until {
+
+Create the new process.  Specify the functions used to initialize and run our new process.
+
+\skip New_process_t
+\until run_new_process
+
+
+
+\skip init_process_list
+\until {
+
+Scan entries from an input file to initialize our new process.
+
+\skipline new_process_l
+
+
+
+\skip destroy_process_list
+\until {
+
+Destroy our list of new processes
+\skipline new_process_l
+
+and the process itself
+
+\skipline new_process
+
+
+
+
+
+\subsection sub_run_new_process_c run_new_process.c
+
+Define the function that is called everytime the process is run.
+\dontinclude run_new_process.c
+\skip run_new_process(
+\until SED_EMPTY_INFO
+
+Define the function that is called when the process is initialized.
+\skip init_new_process
+\until New_process_t
+
+
+
+
+
+\subsection sub_run_new_process_h run_new_process.h
+
+Define a structure to hold data for each instance of the new process.
+\dontinclude run_new_process.h
+\skip typedef
+\until New_process_t
+
+Declare the functions to run and initialize the new process.
+\skip run_new_process
+\until init_new_process
+
+
+
+
+
+\subsection sub_processes_h processes.h
+
+Include the header file for the new process.
+\dontinclude processes.h
+\skipline run_new_process
+
+
+Structure that holds all of the sedflux processes.
+\skip typedef
+\until river_l
+
+Add the new process.  new_process_l is a list of instances of the new process.  new_process is
+the process type.
+\skipline new_process_l
+
+The rest of the processes.
+\skip turbidity_l
+\until Sed_process_list
+
+
+
+
+
+\subsection sub_makefile Makefile.am
+
+Incldue the new .c file in the package
+\code
+sedflux_SOURCES = run_new_process.c
+\endcode
+
+as well as its header file.
+\code
+noinst_HEADERS = run_new_process.h
+\endcode
 
 */
 

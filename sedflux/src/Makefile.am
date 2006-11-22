@@ -1,6 +1,5 @@
 INCLUDES                 = -I$(top_srcdir)/libutils/src \
                            -I$(top_srcdir)/libsed/src \
-                           -I$(top_builddir)/libsed/src \
                            -I$(top_srcdir)/sakura/src \
                            -I$(top_srcdir)/diffusion/src \
                            -I$(top_srcdir)/subside/src \
@@ -50,6 +49,7 @@ sedflux_SOURCES           = \
                             run_xshore.c \
                             run_storm.c \
                             run_river.c \
+                            run_new_process.c \
                             run_bedload.c \
                             run_debris_flow.c \
                             run_subsidence.c \
@@ -76,6 +76,7 @@ noinst_HEADERS            = cpr.h \
                             sealevel.h \
                             isostasy.h \
                             river.h \
+                            run_new_process.h \
                             measuring_station.h \
                             subsidence.h \
                             storms.h \
@@ -91,28 +92,6 @@ noinst_HEADERS            = cpr.h \
                             slump.h \
                             run_constants.h \
                             run_xshore.h
-
-#LDADD                     = \
-#                            -lsakura \
-#                            -ldiffusion \
-#                            -lsubside \
-#                            -lxshore \
-#                            -lsquall \
-#                            -lflow \
-#                            -lmuds \
-#                            -lbing \
-#                            -lfailure \
-#                            -lquake \
-#                            -lcompact \
-#                            -linflow \
-#                            -lplume \
-#                            -lsedflux \
-#                            -lutils \
-#                            -lgthread-2.0 \
-#                            -lglib-2.0
-
-#sedflux3d$(EXEEXT): sedflux$(EXEEXT)
-#	ln -f -s sedflux$(EXEEXT) sedflux3d$(EXEEXT)
 
 install-exec-local:
 	ln -f -s $(DESTDIR)$(bindir)/sedlfux $(DESTDIR)$(bindir)/sedflux3d

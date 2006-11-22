@@ -1,6 +1,5 @@
 INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src \
-                           -I$(top_builddir)/libsed/src
+                           -I$(top_srcdir)/libsed/src
 
 AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
                            $(top_builddir)/libsed/src/libsedflux.la

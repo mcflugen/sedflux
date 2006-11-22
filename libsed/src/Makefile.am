@@ -3,11 +3,10 @@ INCLUDES                 = -I$(top_srcdir)/libutils/src
 AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la
 
 BUILT_SOURCES            = datadir_path.h
-BUILT_EXTRA_DIST         = datadir_path.h
 
 lib_LTLIBRARIES          = libsedflux.la libsedfluxui.la
 
-libsedflux_la_SOURCES    = datadir_path.h \
+libsedflux_la_SOURCES    = \
                            sed_cell.c \
                            sed_column.c \
                            sed_cube.c \
@@ -20,7 +19,7 @@ libsedflux_la_SOURCES    = datadir_path.h \
                            sed_tripod.c \
                            sed_wave.c
 
-include_HEADERS          = datadir_path.h \
+include_HEADERS          = \
                            sed_cell.h \
                            sed_column.h \
                            sed_const.h \
@@ -37,7 +36,12 @@ include_HEADERS          = datadir_path.h \
                            etk_addrem.h \
                            etk_keyvalue.h
 
-libsed_unit_test_SOURCES = datadir_path.h \
+bin_PROGRAMS             =
+
+if ENABLE_CHECK
+bin_PROGRAMS            += libsed_unit_test
+
+libsed_unit_test_SOURCES = \
                            unit_test.c \
                            sed_cell_unit_test.c \
                            sed_wave_unit_test.c \
@@ -45,9 +49,11 @@ libsed_unit_test_SOURCES = datadir_path.h \
                            sed_sediment_unit_test.c \
                            sed_hydro_unit_test.c
 
-bin_PROGRAMS             = libsed_unit_test
+libsed_unit_test_LDADD   = -lsedflux -lgthread-2.0 -lglib-2.0
 
-if HAVE_GTK
+endif
+
+if ENABLE_GTK
 
 bin_PROGRAMS            += sedflux_ui select_bathy_ui
 
@@ -69,7 +75,6 @@ endif
 libsedflux_la_LIBADD     = -lgthread-2.0 -lglib-2.0
 libsedflux_la_LDFLAGS    = -version-info 1:1
 
-libsed_unit_test_LDADD   = -lsedflux -lgthread-2.0 -lglib-2.0
 
 EXTRA_DIST               = sedflux.pc.in
 
@@ -85,7 +90,4 @@ datadir_path.h: Makefile
 	   echo '# define DATADIR "$(datadir)"' >> $(srcdir)/datadir_path.h ; \
 	   echo '#endif' >> $(srcdir)/datadir_path.h ; \
 	fi
-
-force_rebuild:
-
 

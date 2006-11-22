@@ -43,6 +43,9 @@
 # include "measuring_station.h"
 # include "run_plume.h"
 # include "river.h"
+
+# include "run_new_process.h"
+
 # include "sealevel.h"
 # include "storms.h"
 # include "subsidence.h"
@@ -59,6 +62,9 @@ typedef struct
    GSList *erosion_l;      Sed_process erosion;
    GSList *avulsion_l;     Sed_process avulsion;
    GSList *river_l;        Sed_process river;
+
+   GSList *new_process_l;  Sed_process new_process;
+
    GSList *turbidity_l;    Sed_process turbidity;
    GSList *debris_flow_l;  Sed_process debris_flow;
    GSList *slump_l;        Sed_process slump;
