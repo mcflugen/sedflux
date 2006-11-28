@@ -1,5 +1,5 @@
 # A sea level curve with lots of ups and downs.
---- data ---
+[ data ]
 0.000000, -4.553820
 10000.000000, -2.538595
 20000.000000, -1.131533

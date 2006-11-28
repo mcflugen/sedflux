@@ -1,4 +1,4 @@
---- 'Grain 1 (bedload)' ---
+[ 'Grain 1 (bedload)' ]
 grain size (microns):       200
 grain density (kg/m^3):     2625
 saturated density (kg/m^3): 1850
@@ -7,7 +7,7 @@ diffusion coefficient (-):  .25
 removal rate (1/day):       50
 consolidation coefficient (m^2/yr): 100000
 compaction coefficient (-): 0.0000000368
---- 'Grain 2' ---
+[ 'Grain 2' ]
 grain size (microns):       100
 grain density (kg/m^3):     2600
 saturated density (kg/m^3): 1800
@@ -16,7 +16,7 @@ diffusion coefficient (-):  .25
 removal rate (1/day):       16.8
 consolidation coefficient (m^2/yr): 10000
 compaction coefficient (-): 0.00000005
---- 'Grain 3' ---
+[ 'Grain 3' ]
 grain size (microns):       40
 grain density (kg/m^3):     2550
 saturated density (kg/m^3): 1750
@@ -25,7 +25,7 @@ diffusion coefficient (-):  .5
 removal rate (1/day):       9
 consolidation coefficient (m^2/yr): 1000
 compaction coefficient (-): 0.00000007
---- 'Grain 4' ---
+[ 'Grain 4' ]
 grain size (microns):       10
 grain density (kg/m^3):     2500
 saturated density (kg/m^3): 1700
@@ -34,7 +34,7 @@ diffusion coefficient (-):  .75
 removal rate (1/day):       3.2
 consolidation coefficient (m^2/yr): 100
 compaction coefficient (-): 0.00000008
---- 'Grain 5' ---
+[ 'Grain 5' ]
 grain size (microns):       1
 grain density (kg/m^3):     2450
 saturated density (kg/m^3): 1650

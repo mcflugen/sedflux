@@ -68,26 +68,14 @@ int __cpr_signal  = 0;
 char*      get_file_name_interactively ( char**       , char** );
 char*      eh_get_input_val            ( FILE* fp     , char *msg    , char *default_str );
 void       print_choices               ( int );
-int        print_header                ( FILE* fp);
-int        print_time                  ( FILE* fp     , int epoch_no , double year );
-int        print_footer                ( FILE* fp );
+void       print_header                ( FILE* fp);
+void       print_time                  ( FILE* fp     , int epoch_no , double year );
+void       print_footer                ( FILE* fp );
 Eh_project fill_sedflux_info_file      ( Eh_project p , int argc     , char* argv[] );
 int        run_sedflux                 ( int argc     , char *argv[] );
+gboolean   check_process_files         ( Sed_epoch_queue e_list , gchar** options );
 
-gboolean          check_process_files         ( Sed_epoch_queue e_list , gchar** options );
 Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** );
-
-Eh_opt_entry all_entries[] = {
-   { "init-file"   , 'i' , "Initialization file"                   , NULL , "-" } ,
-   { "out-file"    , 'o' , "Output file"                           , NULL , "-" } ,
-   { "working-dir" , 'd' , "working directory"                     , NULL , "." } ,
-   { "just-plume"  , 'p' , "Run just the plume"                    , NULL , "FALSE" } ,
-   { "just-rng"    , 'r' , "Run just the the processes with rng's" , NULL , "FALSE" } ,
-   { "summary"     , 's' , "Print a summary without running"       , NULL , "FALSE" } ,
-   { "warn"        , 'w' , "Warnings"                              , NULL , "FALSE" } ,
-   { "verbose"     , 'v' , "Verbose"                               , NULL , "5" } ,
-   { NULL }
-};
 
 static gchar* just_plume_procs[] = { "plume" , "bbl" , NULL };
 static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };
@@ -117,43 +105,53 @@ int main( int argc , char *argv[] )
    return 1;
 }
 
+/* Command line options */
+static gchar* init_file    = "-";
+static gchar* out_file     = "-";
+static gchar* working_dir  = ".";
+static gboolean just_plume = FALSE;
+static gboolean just_rng   = FALSE;
+static gboolean summary    = FALSE;
+static gboolean warn       = FALSE;
+static gint verbose        = 0;
+
+/* Define the command line options */
+static GOptionEntry entries[] =
+{
+   { "init-file"   , 'i' , 0 , G_OPTION_ARG_FILENAME , &init_file   , "Initialization file"        , "<file>" } ,
+   { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME , &out_file    , "Output file"                , "<file>" } ,
+   { "working-dir" , 'd' , 0 , G_OPTION_ARG_FILENAME , &working_dir , "Working directory"          , "<dir>" } ,
+   { "just-plume"  , 'p' , 0 , G_OPTION_ARG_NONE     , &just_plume  , "Run just the plume"         , NULL } ,
+   { "just-rng"    , 'r' , 0 , G_OPTION_ARG_NONE     , &just_rng    , "Run just the rng processes" , NULL } ,
+   { "summary"     , 's' , 0 , G_OPTION_ARG_NONE     , &summary     , "Print a summary and quit"   , NULL } ,
+   { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE     , &warn        , "Print warnings"             , NULL } ,
+   { "verbose"     , 'v' , 0 , G_OPTION_ARG_INT      , &verbose     , "Verbosity level"            , "n" } ,
+   { NULL }
+};
+
 int run_sedflux(int argc, char *argv[])
 {
    Sed_epoch_queue   list;
    Sed_epoch         epoch;
    Sed_cube          prof;
-   gboolean          warn;
-   gboolean          just_plume;
-   gboolean          just_rng;
-   gboolean          summary;
-   gchar*            in_file;
-   gchar*            out_file;
    gchar**           options = NULL;
 
    g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
 
    eh_require( argv )
    {
-      Eh_project proj       = eh_create_project( "sedflux" );
-      GLogLevelFlags ignore = 0;
-      char* working_dir     = NULL;
-      gboolean verbose;
+      Eh_project     proj         = eh_create_project( "sedflux" );
+      GLogLevelFlags ignore       = 0;
+      GError*        error        = NULL;
       Eh_opt_context this_context = eh_opt_create_context( "SEDFLUX" ,
                                                            "Run the sedflux model." ,
                                                            "Options specific to sedflux" );
+      GOptionContext* context = g_option_context_new( "Run basin filling model, sedflux-2.0" );
 
-      eh_opt_set_context  ( this_context , all_entries );
-      eh_opt_parse_context( this_context , &argc , &argv , NULL );
+      g_option_context_add_main_entries( context , entries , NULL );
 
-      warn        = eh_opt_bool_value( this_context , "warn"        );
-      in_file     = eh_opt_str_value ( this_context , "init-file"   );
-      out_file    = eh_opt_str_value ( this_context , "out-file"    );
-      working_dir = eh_opt_str_value ( this_context , "working-dir" );
-      verbose     = eh_opt_int_value ( this_context , "verbose"     );
-
-      just_plume  = eh_opt_bool_value( this_context , "just-plume"  );
-      just_rng    = eh_opt_bool_value( this_context , "just-rng"    );
-      summary     = eh_opt_bool_value( this_context , "summary"     );
+      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+         eh_error( "Error parsing command line arguments: %s" , error->message );
 
       switch (verbose)
       {
@@ -173,8 +171,8 @@ int run_sedflux(int argc, char *argv[])
 
       eh_set_ignore_log_level( ignore );
 
-      if ( g_ascii_strcasecmp(in_file,"-")==0 )
-         in_file = get_file_name_interactively( &working_dir , &in_file );
+      if ( g_ascii_strcasecmp(init_file,"-")==0 )
+         init_file = get_file_name_interactively( &working_dir , &init_file );
 
       if ( g_chdir( working_dir )!=0 )
          perror( working_dir );
@@ -190,15 +188,16 @@ int run_sedflux(int argc, char *argv[])
 
       eh_free           ( working_dir );
       eh_destroy_project( proj        );
-      eh_destroy_context( this_context );
+
+      g_option_context_free( context );
    }
 
    signal(2,&print_choices);
 
    eh_debug( "Scan the init file" );
    {
-      prof = sed_cube_new_from_file( in_file );
-      list = sed_epoch_queue_new   ( in_file );
+      prof = sed_cube_new_from_file( init_file );
+      list = sed_epoch_queue_new   ( init_file );
    }
 
    if ( summary )
@@ -334,7 +333,7 @@ char *eh_get_input_val( FILE *fp , char *msg , char *default_str )
    return str;
 }
 
-int print_header(FILE *fp)
+void print_header(FILE *fp)
 {
    time_t sedflux_start_time;
    sedflux_start_time = time(&sedflux_start_time);
@@ -347,23 +346,24 @@ int print_header(FILE *fp)
             PROGRAM_MICRO_VERSION );
    fprintf( fp , "Start time is %s\n" , ctime(&sedflux_start_time) );
 
-   return 0;
+   return;
 }
 
-int print_time(FILE *fp, int epoch_no, double year)
+void print_time(FILE *fp, int epoch_no, double year)
 {
    fprintf( fp , "%.2f years (epoch %2d)\r" , year , epoch_no+1 );
    fflush( fp );
-   return 0;
+
+   return;
 }
 
-int print_footer(FILE *fp)
+void print_footer(FILE *fp)
 {
    time_t sedflux_end_time;
    sedflux_end_time = time(&sedflux_end_time);
    fprintf( fp , "End time is %s\n" , ctime(&sedflux_end_time) );
    fprintf( fp , "\n" );
-   return 0;
+   return;
 }
 
 void print_choices(int i)
@@ -411,6 +411,8 @@ void print_choices(int i)
       fprintf(stdout,"((( Terminating run without saving...\n\n" );
       eh_exit(0);
    }
+
+   return;
 }
 
 #include <time.h>

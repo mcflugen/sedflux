@@ -1,14 +1,13 @@
 # This file defines the processes for a sedflux (version 1.10) model run.
 #
 # Each process begins with:
-#  '--- PROCESS NAME ---'
+#  [ <process-name> ]
 # followed by a series of parameter/value pairs that specify the parameters for
 # that process.  The processes can come in any order.
 #
 # There are some common parameter for all of the processes.  These are:
-# process name, active, logging, and repeat interval.
+# active, logging, and repeat interval.
 #
-# process name:    The processe name identifies the process.
 # active:          'Active' identifies if the process will be turned on (yes) or
 #                     not (no).
 # logging:         If logging is set to 'yes', logging messages for that
@@ -23,8 +22,7 @@
 # Global constants
 #
 
---- constants ---
-process name:                           constants
+[ constants ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -42,8 +40,7 @@ density of mantle (kg/m^3):             3300
 # entire model run.  Don't tell sedflux to run for 1My but only provide a
 # sea level curve for 10ky.
 
---- 'sea level' ---
-process name:                           sea level
+[ 'sea level' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -60,8 +57,7 @@ sea level file:                         test.sealevel
 # 100 years, the squall time step is 5 days, and the duration of squall is
 # 10d then we are modeling two 5 day storm events over a 100 year period.
 
---- squall ---
-process name:                           squall
+[ squall ]
 active:                                 no
 logging:                                no
 repeat interval:                        always
@@ -76,8 +72,7 @@ duration of squall:                     10d
 # which means that the tidal period will be the length of the sedflux time
 # step.  The tidal range is the amplitude of the tide.
 
---- tide ---
-process name:                           tide
+[ tide ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -94,8 +89,7 @@ tidal period (days):                    'time step'
 #
 # NOTE: The kinematic viscosity and yield strength values are ignored.
 
---- 'debris flow' ---
-process name:                           debris flow
+[ 'debris flow' ]
 active:                                 no
 logging:                                no
 repeat interval:                        50y
@@ -109,8 +103,7 @@ maximum run time (min):                 240
 #
 # Cohesion and coulomb friction angle, and colsolidation are not used.
 
---- failure ---
-process name:                           failure
+[ failure ]
 active:                                 no
 logging:                                no
 repeat interval:                        300y
@@ -139,8 +132,7 @@ fraction of clay for debris flow:       .1
 #  Mean = exp( mu + .5*sigma^2 )
 #  Var  = exp( 2*mu+sigma^2 )( exp(sigma^2) - 1 )
 
---- earthquake ---
-process name:                           earthquake
+[ earthquake ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -157,8 +149,7 @@ seed for random number generator:       1945
 # That is, don't define the bathymetry up to 500km but only give a subsidence
 # file that gives surbidence rate to 200km.
 
---- subsidence ---
-process name:                           subsidence
+[ subsidence ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -170,8 +161,7 @@ subsidence file:                        test.subsidence
 # This is subsidence due to sediment loading.  It is based on the elastic 
 # plate model that Lambeck describes in his book, "Geophysical Geodesy".
 
---- isostasy ---
-process name:                           isostasy
+[ isostasy ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        100y
@@ -185,8 +175,7 @@ relaxation time (years):                2500
 # Compact sediment under it's own weight.  This the compaction model of
 # Bahr et al. based on Athy's Law.
 
---- compaction ---
-process name:                           compaction
+[ compaction ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -195,8 +184,7 @@ repeat interval:                        always
 #
 # There isn't a need to change the number of grid nodes.
 
---- plume ---
-process name:                           plume
+[ plume ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -208,8 +196,7 @@ number of grid nodes in river mouth:    3
 
 # Diffusion
 
---- diffusion ---
-process name:                           diffusion
+[ diffusion ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -218,8 +205,7 @@ diffusion 1% depth:                     100
 
 # Storms
 
---- storms ---
-process name:                           storms
+[ storms ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -234,8 +220,7 @@ seed for random number generator:       1945
 ### Turbidity currents
 ###
 
---- 'turbidity current' ---
-process name:                           turbidity current
+[ 'turbidity current' ]
 active:                                 no
 logging:                                no
 repeat interval:                        1y
@@ -261,8 +246,7 @@ algorithm (inflow|sakura):              inflow
 #
 # In both cases the eroded sediment is added to the river.
 
---- erosion ---
-process name:                           erosion
+[ erosion ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -279,8 +263,7 @@ method (diffusion|slope):               diffusion
 # enough, this is now taken care of by the erosion process (but only when set
 # to 'diffusion').
 
---- 'bedload dumping' ---
-process name:                           bedload dumping
+[ 'bedload dumping' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -296,8 +279,7 @@ river name:                             river_1
 # The algorithm should be set to 'none'.  This will cause the sediment to
 # settle vertically.  The 'muds' algorithm is still in development.
 
---- bbl ---
-process name:                           bottom boundary layer
+[ bbl ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -308,8 +290,7 @@ external sediment source file:		none
 ### Measuring Stations
 ###
 
---- 'measuring station' ---
-process name:                           measuring station
+[ 'measuring station' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        1000y
@@ -318,8 +299,7 @@ position wrt river mouth:               yes
 position of station:                    0.
 filename:                               ./output/test.river
 
---- 'measuring station' ---
-process name:                           measuring station
+[ 'measuring station' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        1000y
@@ -328,8 +308,7 @@ position wrt river mouth:               no
 position of station:                    all
 filename:                               ./output/test.elevation
 
---- 'measuring station' ---
-process name:                           measuring station
+[ 'measuring station' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -342,8 +321,7 @@ filename:                               ./output/test.depth
 ### data dump
 ###
 
---- 'data dump' ---
-process name:                           data dump
+[ 'data dump' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        1000y
@@ -358,8 +336,7 @@ property:                               grain
 ### data dump
 ###
 
---- 'data dump' ---
-process name:                           data dump
+[ 'data dump' ]
 active:                                 no
 logging:                                no
 repeat interval:                        10000y
@@ -374,8 +351,7 @@ property:                               age,grain,pressure
 ### final dump
 ###
 
---- 'final dump' ---
-process name:                           final dump
+[ 'final dump' ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        1y
@@ -390,8 +366,7 @@ property:                               grain,age
 ### river
 ###
 
---- river ---
-process name:                           river_1
+[ river ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -406,8 +381,7 @@ river name:                             river_1
 # in mind when setting the maximum and minimum river angle when running
 # sedflux2d.
 
---- avulsion ---
-process name:                           avulsion
+[ avulsion ]
 active:                                 yes
 logging:                                yes
 repeat interval:                        always
@@ -434,8 +408,7 @@ river name:                             river_1
 # The terzaghi method, is based on an analytic solution of darcy's equation
 # assuming constant sedimentation and homogeneous sediments.
 
---- flow ---
-process name:                           flow
+[ flow ]
 active:                                 no
 logging:                                yes
 repeat interval:                        always

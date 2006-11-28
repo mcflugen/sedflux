@@ -2,7 +2,7 @@
 ### A sample margin initialization file.
 ###
 
---- global ---
+[ global ]
 margin name:            Test
 vertical resolution:    .05
 x resolution:           100000
@@ -14,7 +14,7 @@ sediment file:          test.sediment
 ### Epoch parameters.
 ###
 
---- epoch ---
+[ epoch ]
 epoch number:           1
 epoch duration:         125000y
 epoch time step:        100y
