@@ -59,13 +59,13 @@
 // #define           S_PROPERTY_VELOCITY
 
 #define PROGRAM_NAME "sedflux"
-#define PROGRAM_MAJOR_VERSION "1"
-#define PROGRAM_MINOR_VERSION "10"
-#define PROGRAM_MICRO_VERSION "0"
+#define PROGRAM_MAJOR_VERSION "2"
+#define PROGRAM_MINOR_VERSION "0"
+#define PROGRAM_MICRO_VERSION "9"
 
-#define S_MAJOR_VERSION (1)
-#define S_MINOR_VERSION (10)
-#define S_MICRO_VERSION (0)
+#define S_MAJOR_VERSION (2)
+#define S_MINOR_VERSION (0)
+#define S_MICRO_VERSION (9)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \

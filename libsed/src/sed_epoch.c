@@ -24,61 +24,320 @@
 
 #include "sed_epoch.h"
 
-Epoch *epoch_create_epoch(void)
+CLASS( Sed_epoch )
 {
-   Epoch *e = eh_new(Epoch,1);
+   char*    name;
+   double   number;
+   double   duration;
+   double   time_step;
+   char*    filename;
+};
+
+CLASS( Sed_epoch_queue )
+{
+   GList* l;
+};
+
+Sed_epoch
+sed_epoch_new( void )
+{
+   Sed_epoch e;
+
+   NEW_OBJECT( Sed_epoch , e );
+
+   e->name      = NULL;
+   e->number    = -1;
+   e->duration  = -1;
+   e->time_step = -1;
+   e->filename  = NULL;
+
    return e;
 }
 
-void epoch_destroy_epoch(Epoch *e)
+#define SED_KEY_EPOCH_NUMBER       "epoch number"
+#define SED_KEY_EPOCH_DURATION     "epoch duration"
+#define SED_KEY_EPOCH_TIME_STEP    "epoch time step"
+#define SED_KEY_EPOCH_FILE         "epoch process file"
+
+Sed_epoch
+sed_epoch_new_from_table( Eh_symbol_table t )
 {
-   eh_free(e);
-   return;
+   Sed_epoch e = NULL;
+
+   if ( t )
+   {
+      e = sed_epoch_new( );
+
+      sed_epoch_set_number   ( e , eh_symbol_table_dbl_value ( t , SED_KEY_EPOCH_NUMBER    ) );
+      sed_epoch_set_duration ( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_DURATION  ) );
+      sed_epoch_set_time_step( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_TIME_STEP ) );
+      sed_epoch_set_filename ( e , eh_symbol_table_value     ( t , SED_KEY_EPOCH_FILE      ) );
+
+      if ( !eh_try_open( sed_epoch_filename( e ) ) )
+      {
+         eh_error( "Could not open Sed_epoch file (%s)" , sed_epoch_filename(e) );
+      }
+
+   }
+
+   return e;
 }
 
-#include <string.h>
-
-int epoch_set_epoch_name(Epoch *e,char *name)
+Sed_epoch_queue
+sed_epoch_queue_new( const gchar* file )
 {
-   strcpy(e->name,name);
-   return 0;
+   Sed_epoch_queue e_list = NULL;
+
+   if ( file )
+   {
+      Eh_key_file       key_file = eh_key_file_scan( file );
+      Eh_symbol_table*  tables   = eh_key_file_get_symbol_tables( key_file , "epoch" );
+      Eh_symbol_table*  this_table;
+
+      NEW_OBJECT( Sed_epoch_queue , e_list );
+
+      for ( this_table=tables ; *this_table ; this_table++ )
+      {
+         e_list->l = g_list_append( e_list->l , sed_epoch_new_from_table( *this_table) );
+
+         eh_symbol_table_destroy( *this_table );
+      }
+
+      e_list->l = g_list_sort( e_list->l , sed_epoch_number_cmp );
+
+      eh_free( tables );
+      eh_key_file_destroy( key_file );
+   }
+
+   return e_list;
 }
 
-int epoch_set_epoch_duration(Epoch *e,double duration)
+gint
+sed_epoch_number_cmp( Sed_epoch a , Sed_epoch b )
 {
-   e->duration = duration;
-   return 0;
+   gint val = 0;
+
+   if ( a && b )
+   {
+      if ( a->number > b->number )
+         val =  1;
+      else if ( a->number < b->number )
+         val = -1;
+   }
+
+   return val;
 }
 
-int epoch_set_epoch_time_step(Epoch *e,double time_step)
+Sed_epoch
+sed_epoch_destroy( Sed_epoch e )
 {
-   e->time_step = time_step;
-   return 0;
+   if ( e )
+   {
+      e->number    = -1;
+      e->duration  = -1;
+      e->time_step = -1;
+
+      eh_free( e->name     );
+      eh_free( e->filename );
+      eh_free( e           );
+   }
+   return NULL;
 }
 
-int epoch_set_epoch_filename(Epoch *e,char *filename)
+Sed_epoch_queue
+sed_epoch_queue_destroy( Sed_epoch_queue list )
 {
-   strcpy(e->filename,filename);
-   return 0;
+   if ( list )
+   {
+      GList* link;
+
+      for ( link=list->l ; link ; link = link->next )
+         sed_epoch_destroy( link->data );
+
+      g_list_free( list->l );
+      eh_free( list );
+   }
+
+   return NULL;
 }
 
-char *epoch_get_epoch_name(Epoch *e)
+Sed_epoch
+epoch_set_name( Sed_epoch e , gchar* name )
 {
-   return (e->name);
+   if ( e )
+   {
+      if ( e->name )
+         eh_free( e->name );
+      e->name = g_strdup( name );
+   }
+
+   return e;
 }
 
-double epoch_get_epoch_duration(Epoch *e)
+Sed_epoch
+sed_epoch_set_number( Sed_epoch e , gssize n )
 {
-   return (e->duration);
+   if ( e )
+   {
+      e->number = n;
+   }
+
+   return e;
 }
 
-double epoch_get_epoch_time_step(Epoch *e)
+Sed_epoch
+sed_epoch_set_duration( Sed_epoch e , double duration )
 {
-   return (e->time_step);
+   if ( e )
+   {
+      e->duration = duration;
+   }
+
+   return e;
 }
 
-char *epoch_get_epoch_filename(Epoch *e)
+Sed_epoch
+sed_epoch_set_time_step( Sed_epoch e , double time_step )
 {
-   return (e->filename);
+   if ( e )
+   {
+      e->time_step = time_step;
+   }
+   return e;
+}
+
+Sed_epoch
+sed_epoch_set_filename( Sed_epoch e , gchar* filename )
+{
+   if ( e )
+   {
+      if ( e->filename )
+         eh_free( e->filename );
+
+      e->filename = g_strdup( filename );
+   }
+
+   return e;
+}
+
+const gchar*
+sed_epoch_name( Sed_epoch e )
+{
+   eh_return_val_if_fail( e , NULL );
+
+   return e->name;
+}
+
+gssize
+sed_epoch_number( Sed_epoch e )
+{
+   eh_return_val_if_fail( e , G_MAXINT );
+
+   return e->number;
+}
+
+double
+sed_epoch_duration( Sed_epoch e )
+{
+   eh_return_val_if_fail( e , -1 );
+
+   return e->duration;
+}
+
+double
+sed_epoch_time_step( Sed_epoch e )
+{
+   eh_return_val_if_fail( e , -1 );
+
+   return e->time_step;
+}
+
+const gchar*
+sed_epoch_filename( Sed_epoch e )
+{
+   eh_return_val_if_fail( e , NULL );
+
+   return e->filename;
+}
+
+
+gssize
+sed_epoch_queue_length ( Sed_epoch_queue q )
+{
+   gssize len = 0;
+   if ( q )
+   {
+      len = g_list_length( q->l );
+   }
+   return len;
+}
+
+Sed_epoch
+sed_epoch_queue_pop( Sed_epoch_queue q )
+{
+   Sed_epoch e = NULL;
+
+   if ( q && q->l )
+   {
+      e = (q->l)->data;
+
+      q->l = g_list_delete_link( q->l , q->l );
+   }
+
+   return e;
+}
+
+Sed_epoch
+sed_epoch_queue_nth( Sed_epoch_queue q , gssize n )
+{
+   Sed_epoch e;
+
+   if ( q && q->l )
+   {
+      e = g_list_nth_data( q->l , n );
+   }
+
+   return e;
+}
+
+gssize
+sed_epoch_fprint( FILE* fp , Sed_epoch e )
+{
+   gssize n = 0;
+
+   if ( e )
+   {
+      n += fprintf( fp , "[Epoch Info]\n" );
+
+      n += fprintf( fp , "Id           = %f\n" , e->number    );
+      n += fprintf( fp , "Duration     = %f\n" , e->duration  );
+
+      n += fprintf( fp , "Time step    = %f  " , e->time_step );
+      n += fprintf( fp , "# NOTE: A river file may override this time step!\n" );
+
+      n += fprintf( fp , "Process file = %s\n" , e->filename  );
+
+
+   }
+   return n;
+}
+
+gssize
+sed_epoch_queue_fprint( FILE* fp , Sed_epoch_queue q )
+{
+   gssize n = 0;
+
+   if ( q )
+   {
+      GList* link;
+
+      for ( link=q->l ; link ; link=link->next )
+      {
+         n += sed_epoch_fprint( fp , link->data );
+      }
+
+   }
+
+   return n;
 }
 

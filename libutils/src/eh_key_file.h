@@ -26,6 +26,12 @@ gchar**       eh_key_file_get_all_values   ( Eh_key_file f           ,
 gchar*        eh_key_file_get_value        ( Eh_key_file f           ,
                                              const gchar* group_name ,
                                              const gchar* key );
+gchar*        eh_key_file_get_str_value    ( Eh_key_file f           ,
+                                             const gchar* group_name ,
+                                             const gchar* key );
+gchar**       eh_key_file_get_str_values   ( Eh_key_file f           ,
+                                             const gchar* group_name ,
+                                             const gchar* key );
 gboolean      eh_key_file_get_bool_value   ( Eh_key_file f           ,
                                              const gchar* group_name ,
                                              const gchar* key );

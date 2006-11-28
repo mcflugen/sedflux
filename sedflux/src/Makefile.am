@@ -61,7 +61,6 @@ sedflux_SOURCES           = \
                             run_slump.c \
                             run_turbidity_current.c \
                             run_plume.c \
-                            main_3d.c \
                             main.c \
                             init.c
 
@@ -94,6 +93,9 @@ noinst_HEADERS            = cpr.h \
                             run_xshore.h
 
 install-exec-local:
+	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
+	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
+	fi 
 	ln -f -s $(DESTDIR)$(bindir)/sedlfux $(DESTDIR)$(bindir)/sedflux3d
 
 uninstall-local:

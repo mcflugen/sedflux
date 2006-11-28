@@ -21,45 +21,35 @@
 #if !defined(SED_EPOCH_H)
 # define SED_EPOCH_H
 
-// Name : Epoch -- a sedflux portion of time
-//
-// Synopsis :
-//
-// typedef           Epoch;
-//
-// Epoch*            epoch_create_epoch               ( void );
-// void              epoch_destroy_epoch              ( Epoch *e );
-// int               epoch_set_epoch_name             ( Epoch *e,
-//                                                      char *name );
-// int               epoch_set_epoch_duration         ( Epoch *e,
-//                                                      double duration );
-// int               epoch_set_epoch_time_step        ( Epoch *e,
-//                                                      double time_step );
-// int               epoch_set_epoch_filename         ( Epoch *e,
-//                                                      char *filename );
-// char*             epoch_get_epoch_name             ( Epoch *e );
-// double            epoch_get_epoch_duration         ( Epoch *e );
-// double            epoch_get_epoch_time_step        ( Epoch *e );
-// char*             epoch_get_epoch_filename         ( Epoch *e );
+new_handle( Sed_epoch       );
+new_handle( Sed_epoch_queue );
 
-typedef struct
-{
-   char*   name;
-   double  number;
-   double  duration;
-   double  time_step;
-   char*   filename;
-} Epoch;
+Sed_epoch     sed_epoch_new            ( void        );
+Sed_epoch     sed_epoch_new_from_table ( Eh_symbol_table t );
+Sed_epoch     sed_epoch_destroy        ( Sed_epoch e );
 
-Epoch*  epoch_create_epoch         ( void );
-void    epoch_destroy_epoch        ( Epoch *e );
-int     epoch_set_epoch_name       ( Epoch *e , char *name );
-int     epoch_set_epoch_duration   ( Epoch *e , double duration );
-int     epoch_set_epoch_time_step  ( Epoch *e , double time_step );
-int     epoch_set_epoch_filename   ( Epoch *e , char *filename );
-char*   epoch_get_epoch_name       ( Epoch *e );
-double  epoch_get_epoch_duration   ( Epoch *e );
-double  epoch_get_epoch_time_step  ( Epoch *e );
-char*   epoch_get_epoch_filename   ( Epoch *e );
+Sed_epoch     sed_epoch_set_name       ( Sed_epoch e , gchar* name      );
+Sed_epoch     sed_epoch_set_number     ( Sed_epoch e , gssize name      );
+Sed_epoch     sed_epoch_set_duration   ( Sed_epoch e , double duration  );
+Sed_epoch     sed_epoch_set_time_step  ( Sed_epoch e , double time_step );
+Sed_epoch     sed_epoch_set_filename   ( Sed_epoch e , gchar* filename  );
+
+const char*   sed_epoch_name           ( Sed_epoch e );
+gssize        sed_epoch_number         ( Sed_epoch e );
+double        sed_epoch_duration       ( Sed_epoch e );
+double        sed_epoch_time_step      ( Sed_epoch e );
+const char*   sed_epoch_filename       ( Sed_epoch e );
+
+Sed_epoch_queue sed_epoch_queue_new    ( const gchar* file );
+Sed_epoch_queue sed_epoch_queue_destroy( Sed_epoch_queue q );
+gssize          sed_epoch_queue_length ( Sed_epoch_queue q );
+gint            sed_epoch_number_cmp   ( Sed_epoch a , Sed_epoch b );
+Sed_epoch       sed_epoch_queue_pop    ( Sed_epoch_queue q );
+Sed_epoch       sed_epoch_queue_nth    ( Sed_epoch_queue q , gssize n );
+
+
+gssize          sed_epoch_fprint      ( FILE* fp , Sed_epoch e );
+gssize          sed_epoch_queue_fprint( FILE* fp , Sed_epoch_queue q );
+
 
 #endif /* sed_epoch.h */

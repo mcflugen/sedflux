@@ -33,6 +33,16 @@
 
 #define SED_MAX_LOG_FILES (2)
 
+#define SED_ERROR_MULTIPLE_PROCS      (1<<0)
+#define SED_ERROR_PROC_ABSENT         (1<<1)
+#define SED_ERROR_INACTIVE            (1<<2)
+#define SED_ERROR_NOT_ALWAYS          (1<<3)
+#define SED_ERROR_ABSENT_PARENT       (1<<4)
+#define SED_ERROR_INACTIVE_PARENT     (1<<5)
+#define SED_ERROR_MULTIPLE_PARENTS    (1<<6)
+#define SED_ERROR_INACTIVE_CHILDREN   (1<<7)
+#define SED_ERROR_DT_MISMATCH         (1<<8)
+
 typedef struct
 {
 // Public
@@ -51,7 +61,18 @@ typedef Sed_process_info (*run_func)   (gpointer,Sed_cube);
 typedef gboolean         (*load_func)  (gpointer,FILE*);
 typedef gboolean         (*dump_func)  (gpointer,FILE*);
 
-new_handle( Sed_process );
+typedef struct
+{
+   gchar*      name;      //< The name of the process
+   gssize      data_size; //< The size of the process data structure
+   init_func   init_f;    //< Function that initialize the process
+   run_func    run_f;     //< Function that runs the process
+}
+Sed_process_init_t;
+
+
+new_handle( Sed_process       );
+new_handle( Sed_process_queue );
 
 Sed_process    sed_process_create         ( const char *name ,
                                             size_t data_size ,
@@ -68,16 +89,52 @@ gboolean       sed_process_array_run      ( GPtrArray *a     , Sed_cube );
 gboolean       sed_process_run            ( Sed_process      , Sed_cube );
 gboolean       sed_process_run_now        ( Sed_process      , Sed_cube );
 void           sed_process_init           ( Sed_process a    , Eh_symbol_table symbol_table );
-GSList*        sed_process_scan           ( Eh_key_file k    , Sed_process p );
-gssize         sed_process_fprint         ( FILE *fp         , Sed_process p );
+GList*         sed_process_scan           ( Eh_key_file k    , Sed_process p );
+gssize         sed_process_fprint         ( FILE* fp         , Sed_process p );
+gssize         sed_process_queue_fprint   ( FILE* fp         , Sed_process_queue q );
+gssize         sed_process_queue_size     ( Sed_process_queue q );
+gssize         sed_process_queue_n_active ( Sed_process_queue q );
+gssize         sed_process_queue_n_absent ( Sed_process_queue q );
+gssize         sed_process_queue_n_inactive( Sed_process_queue q );
 
 gpointer       sed_process_data           ( Sed_process p );
 double         sed_process_interval       ( Sed_process p );
 gchar*         sed_process_name           ( Sed_process p );
+gboolean       sed_process_name_is_same   ( Sed_process a , Sed_process b );
 gboolean       sed_process_is_active      ( Sed_process p );
 
 gssize         sed_process_fprint_info( FILE* fp , Sed_process p );
-gboolean       sed_process_error( Sed_process p );
+gboolean       sed_process_error      ( Sed_process p );
+
+int            sed_process_queue_check       ( Sed_process_queue , const gchar* );
+int            sed_process_queue_check_family( Sed_process_queue ,
+                                               const gchar* parent ,
+                                               const gchar* child  ,
+                                               ... );
+
+Sed_process_queue sed_process_queue_new     ( void );
+Sed_process_queue sed_process_queue_destroy ( Sed_process_queue );
+Sed_process_queue sed_process_queue_scan    ( Sed_process_queue , Eh_key_file );
+Sed_process_queue sed_process_queue_remove  ( Sed_process_queue , gchar*   );
+Sed_process_queue sed_process_queue_delete  ( Sed_process_queue , const gchar* );
+Sed_process_queue sed_process_queue_run     ( Sed_process_queue , Sed_cube );
+Sed_process_queue sed_process_queue_run_process_now( Sed_process_queue q ,
+                                                     const gchar* name   ,
+                                                     Sed_cube cube );
+
+Sed_process       sed_process_queue_find_nth_obj( Sed_process_queue q ,
+                                                  const gchar* name   ,
+                                                  gssize n );
+Sed_process_queue sed_process_queue_push        ( Sed_process_queue q ,
+                                                  Sed_process_init_t init );
+gpointer*         sed_process_queue_obj_data( Sed_process_queue q , const char* name );
+Sed_process_queue sed_process_queue_activate  ( Sed_process_queue q ,
+                                                const gchar* name );
+Sed_process_queue sed_process_queue_deactivate( Sed_process_queue q ,
+                                                const gchar* name );
+Sed_process_queue sed_process_queue_set_active( Sed_process_queue q ,
+                                                const gchar* name   ,
+                                                gboolean val );
 
 #define sed_process_new(name,type,f_init,f_run) ( \
    sed_process_create( name , sizeof(type) , f_init , f_run ) )

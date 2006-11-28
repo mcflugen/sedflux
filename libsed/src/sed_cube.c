@@ -48,6 +48,14 @@ CLASS ( Sed_cube )
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 };
 
+gboolean is_sedflux_3d( void )
+{
+   if ( strcasecmp( g_get_application_name( ) , "sedflux3d" )==0 )
+      return TRUE;
+   else
+      return FALSE;
+}
+
 #define DEFAULT_BINS (16)
 
 Sed_cube sed_cube_new( gssize n_x , gssize n_y )
@@ -118,6 +126,92 @@ Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y )
    s->shore        = NULL;
    
    return s;
+}
+
+#define SED_KEY_MARGIN_NAME    "margin name"
+#define SED_KEY_V_RES          "vertical resolution"
+#define SED_KEY_X_RES          "x resolution"
+#define SED_KEY_Y_RES          "y resolution"
+#define SED_KEY_H_RES          "horizontal resolution"
+#define SED_KEY_LENGTH         "basin length"
+#define SED_KEY_WIDTH          "basin width"
+#define SED_KEY_BATHY_FILE     "bathymetry file"
+#define SED_KEY_SEDIMENT_FILE  "sediment file"
+
+Sed_cube
+sed_cube_new_from_file( gchar* file )
+{
+   Sed_cube p = NULL;
+
+   if ( file )
+   {
+      gchar* name;
+      gchar* bathy_file;
+      gchar* sediment_file;
+      double x_res, y_res, z_res;
+      Eh_key_file key_file = eh_key_file_scan( file );
+
+      /* Scan Sed_cube parameters from key-file */
+      name          = eh_key_file_get_value    ( key_file , "global" , SED_KEY_MARGIN_NAME );
+      z_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_V_RES );
+      x_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_X_RES );
+      y_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_Y_RES );
+      bathy_file    = eh_key_file_get_value    ( key_file , "global" , SED_KEY_BATHY_FILE );
+      sediment_file = eh_key_file_get_value    ( key_file , "global" , SED_KEY_SEDIMENT_FILE );
+
+      /* Scan in the sediment and set the environment. */
+      {
+         Sed_sediment sediment_type = sed_sediment_scan( sediment_file );
+         sed_sediment_set_env( sediment_type );
+         sed_sediment_destroy( sediment_type );
+      }
+
+      /* Create the cube and set positions and elevations. */
+      {
+         gssize i, j;
+         Sed_column this_col;
+         Eh_dbl_grid grid;
+
+         /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
+         if ( is_sedflux_3d() )
+            grid = sed_get_floor_2d_grid( bathy_file , x_res , y_res );
+         else
+            grid = sed_get_floor_1d_grid( bathy_file , x_res , y_res );
+
+         /* Create the cube. */
+         p = sed_cube_new( eh_grid_n_x(grid) , eh_grid_n_y(grid) );
+
+         /* Set column positions and elevations. */
+         for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
+            for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
+            {
+               this_col = sed_cube_col_ij(p,i,j);
+
+               sed_column_set_x_position ( this_col , eh_grid_x(grid)[i]        );
+               sed_column_set_y_position ( this_col , eh_grid_y(grid)[j]        );
+
+               sed_column_set_base_height( this_col , eh_dbl_grid_val(grid,i,j) );
+            }
+
+         eh_grid_destroy     ( grid , TRUE   );
+      }
+
+      /* Set cube resolutions. */
+      sed_cube_set_x_res( p , x_res );
+      sed_cube_set_y_res( p , y_res );
+      sed_cube_set_z_res( p , z_res );
+
+      /* Set cube name */
+      sed_cube_set_name( p , name );
+
+      /* Free resources */
+      eh_free             ( name          );
+      eh_free             ( bathy_file    );
+      eh_free             ( sediment_file );
+      eh_key_file_destroy ( key_file      );
+   }
+
+   return p;
 }
 
 Sed_cube sed_cube_free( Sed_cube s , gboolean free_data )
@@ -1133,6 +1227,11 @@ Sed_cube sed_cube_set_sea_level( Sed_cube s , double new_sea_level )
    return s;
 }
 
+Sed_cube sed_cube_adjust_sea_level( Sed_cube s , double dz )
+{
+   return sed_cube_set_sea_level( s , s->sea_level + dz );
+}
+
 Sed_cube sed_cube_set_base_height( Sed_cube s , gssize i , gssize j , double height )
 {
    sed_column_set_base_height( sed_cube_col_ij(s,i,j) , height );
@@ -1343,6 +1442,16 @@ Sed_cube sed_cube_set_age( Sed_cube s , double new_age )
       s->age = new_age;
    }
    return s;
+}
+
+Sed_cube sed_cube_adjust_age( Sed_cube s , double dt )
+{
+   return sed_cube_set_age( s , s->age + dt );
+}
+
+Sed_cube sed_cube_increment_age( Sed_cube s )
+{
+   return sed_cube_adjust_age( s , sed_cube_time_step(s) );
 }
 
 Sed_hydro sed_cube_nth_river_data( Sed_cube s , int n )
@@ -2953,5 +3062,48 @@ gboolean sed_cube_is_1d( Sed_cube p )
 {
    eh_return_val_if_fail( p!=NULL , FALSE );
    return p->n_x == 1;
+}
+
+gssize
+sed_cube_fprint( FILE* fp , Sed_cube c )
+{
+   gssize n = 0;
+
+   if ( c )
+   {
+      gssize i;
+      double z;
+      double min_z =  G_MAXDOUBLE;
+      double max_z = -G_MAXDOUBLE;
+
+      n += fprintf( fp , "[Cube Info]\n" );
+
+      n += fprintf( fp , "Name          = %s\n" , sed_cube_name (c) );
+
+      n += fprintf( fp , "x resolution  = %f\n" , sed_cube_x_res(c) );
+      n += fprintf( fp , "y resolution  = %f\n" , sed_cube_y_res(c) );
+      n += fprintf( fp , "z resolution  = %f\n" , sed_cube_z_res(c) );
+
+      for ( i=0 ; i<sed_cube_size(c) ; i++ )
+      {
+         z = sed_cube_base_height(c,0,i);
+         if ( z < min_z )
+            min_z = z;
+         if ( z > max_z )
+            max_z = z;
+      }
+
+      n == fprintf( fp , "No. x-columns = %d\n" , sed_cube_n_x(c) );
+      n == fprintf( fp , "No. y-columns = %d\n" , sed_cube_n_y(c) );
+
+      n += fprintf( fp , "Max elevation = %f\n" , max_z );
+      n += fprintf( fp , "Min elevation = %f\n" , min_z );
+
+      n += fprintf( fp , "Start         = %f\n" , sed_cube_col_y( c , 0 ) );
+      n += fprintf( fp , "End           = %f\n" , sed_cube_col_y( c , sed_cube_n_y(c)-1 ) );
+
+   }
+
+   return n;
 }
 

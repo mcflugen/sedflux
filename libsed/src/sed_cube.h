@@ -73,7 +73,10 @@ typedef gboolean (*Sed_cube_func) ( const Sed_cube , gssize , gssize , gpointer 
 #define S_WATER_DEPTH_FUNC  (&sed_cube_water_depth)
 #define S_LOAD_FUNC         (&sed_cube_load)
 
+gboolean is_sedflux_3d( void );
+
 Sed_cube sed_cube_new( gssize n_x , gssize n_y );
+Sed_cube sed_cube_new_from_file( gchar* file );
 Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y );
 Sed_cube sed_cube_free( Sed_cube c , gboolean free_data );
 Sed_cube sed_cube_free_river( Sed_cube p );
@@ -85,6 +88,7 @@ Sed_cell_grid sed_cube_destroy_in_suspension( Sed_cell_grid g );
 gchar* sed_cube_name( const Sed_cube s );
 GSList* sed_cube_storm_list( Sed_cube c );
 Sed_cube sed_cube_set_storm_list( Sed_cube c , GSList *storms );
+Sed_cube sed_cube_adjust_sea_level( Sed_cube s , double dz );
 Sed_cube sed_cube_destroy_storm_list( Sed_cube c );
 Sed_cube sed_cube_set_bathy( Sed_cube c , Eh_dbl_grid g );
 Sed_cube sed_cube_set_dz( Sed_cube p , double new_dz );
@@ -179,6 +183,8 @@ Sed_cube sed_cube_set_wave_length( Sed_cube s , double new_wave_length );
 Sed_cube sed_cube_set_storm( Sed_cube s , double new_storm_value );
 Sed_cube sed_cube_set_quake( Sed_cube s , double new_quake_value );
 Sed_cube sed_cube_set_age( Sed_cube s , double new_age );
+Sed_cube sed_cube_adjust_age( Sed_cube s , double dt );
+Sed_cube sed_cube_increment_age( Sed_cube s );
 
 Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index );
 Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index );
@@ -288,5 +294,6 @@ gboolean sed_cube_is_in_domain   ( Sed_cube p , gssize i , gssize j );
 gboolean sed_cube_is_in_domain_id( Sed_cube p , gssize id );
 gboolean sed_cube_is_1d( Sed_cube p );
 
+gssize   sed_cube_fprint( FILE* fp , Sed_cube c );
 #endif
 

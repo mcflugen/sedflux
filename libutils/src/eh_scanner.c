@@ -404,7 +404,13 @@ GPtrArray *eh_scan_data_record(GScanner *s, const char *delimeter, gboolean row_
 
    if ( !g_scanner_scope_lookup_symbol(s,0,"---") )
       g_scanner_scope_add_symbol(s,0,"---",g_strdup("---") );
+/*
+   if ( !g_scanner_scope_lookup_symbol(s,0,"[") )
+      g_scanner_scope_add_symbol(s,0,"[",g_strdup("[") );
 
+   if ( !g_scanner_scope_lookup_symbol(s,0,"]") )
+      g_scanner_scope_add_symbol(s,0,"]",g_strdup("]") );
+*/
    eh_debug( "Find the next record" );
    {
       char *record_name = eh_seek_record_start(s);
@@ -612,6 +618,14 @@ char *eh_scan_next_record( GScanner *s , Eh_symbol_table symbol_table )
    if ( !g_scanner_scope_lookup_symbol(s,0,"---") )
       g_scanner_scope_add_symbol(s,0,"---",g_strdup("---") );
 
+/*
+   if ( !g_scanner_scope_lookup_symbol(s,0,"[") )
+      g_scanner_scope_add_symbol(s,0,"[",g_strdup("[") );
+
+   if ( !g_scanner_scope_lookup_symbol(s,0,"]") )
+      g_scanner_scope_add_symbol(s,0,"]",g_strdup("]") );
+*/
+
    record_name = eh_seek_record_start(s);
    if ( !record_name )
       return NULL;
@@ -652,14 +666,18 @@ gboolean eh_scanner_eor(GScanner *s)
 {
    if ( g_scanner_peek_next_token(s) == G_TOKEN_SYMBOL )
    {
-      if ( strncmp((char*)(s->next_value.v_symbol),"---",3)==0 )
+      /* We've reached the start of the next record */
+      if (    strncmp((char*)(s->next_value.v_symbol),"---",3)==0 )
          return TRUE;
       else
       {
-         g_scanner_unexp_token(s,G_TOKEN_STRING,NULL,NULL,NULL,NULL,TRUE);
+         g_scanner_unexp_token(s,G_TOKEN_STRING,NULL,NULL,NULL,"eh_scanner_eor",TRUE);
          eh_exit(-1);
       }
    }
+   else if ( g_scanner_peek_next_token(s) == G_TOKEN_LEFT_BRACE )
+      return TRUE;
+
    return FALSE;
 }
 
@@ -810,9 +828,11 @@ char *eh_seek_record_start(GScanner *s)
    {
       if ( g_scanner_get_next_token(s) == G_TOKEN_SYMBOL )
       {
-         if ( strncmp((char*)g_scanner_cur_value(s).v_symbol,"---",3)==0 )
+         if ( strncmp((char*)g_scanner_cur_value(s).v_symbol,"---",3)==0  )
             break;
       }
+      else if ( g_scanner_cur_token(s)==G_TOKEN_LEFT_BRACE )
+         break;
    }
 
    if ( g_scanner_eof(s) )
@@ -827,15 +847,17 @@ char *eh_seek_record_start(GScanner *s)
       {
          g_string_append(record_name,g_scanner_cur_value(s).v_string);
       }
-      else if ( g_scanner_cur_token(s) < G_TOKEN_NONE )
-      {
-         c[0] = g_scanner_cur_token(s);
-         g_string_append(record_name,c);
-      }
+      else if ( g_scanner_cur_token(s) == G_TOKEN_RIGHT_BRACE )
+         break;
       else if ( g_scanner_cur_token(s) == G_TOKEN_SYMBOL )
       {
          if ( strncmp((char*)g_scanner_cur_value(s).v_symbol,"---",3)==0 )
             break;
+      }
+      else if ( g_scanner_cur_token(s) < G_TOKEN_NONE )
+      {
+         c[0] = g_scanner_cur_token(s);
+         g_string_append(record_name,c);
       }
       else
       {
@@ -874,9 +896,9 @@ void eh_print_data_record( Eh_data_record *p , char *rec_name , char *delimeter 
 {
    if ( with_header )
    {
-      fprintf( fp , "--- %s ---\n" , rec_name );
+      fprintf( fp , "[ %s ]\n" , rec_name );
       eh_print_symbol_table_aligned( p->symbol_table , fp );
-      fprintf(fp,"--- data ---\n");
+      fprintf(fp,"[ data ]\n");
    }
    eh_print_data_table( p->data , delimeter , row_major , fp );
 }

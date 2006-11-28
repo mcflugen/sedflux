@@ -2,6 +2,7 @@
 
 This manual is divided into the following sections:
 - \subpage intro_sec
+- \subpage download_sec
 - \subpage install_sec
 - \subpage run_sec
 - \subpage prog_sec
@@ -9,6 +10,35 @@ This manual is divided into the following sections:
 */
 
 /*! \page intro_sec Introduction
+*/
+
+/*! \page download_sec Downloading
+
+The latest version of sedflux can be downloaded with anonymous ftp from:
+ftp://instaar.colorado.edu/pub/ew
+This will download a .tar.gz file that can be unpacked by
+\code
+> tar xvfz ew-2.0.7.tar.gz
+\endcode
+
+If you are interested in developing sedflux, you can checkout a copy through our subversion
+repository at:
+https://instaar.colorado.edu/svn
+
+To checkout the latest version of sedflux susing subversion,
+\code
+> svn checkout https://instaar.colorado.edu/svn/Main sedflux
+\endcode
+
+\note The repository needs to be bootstrapped to generate the configuration files need to
+compile the code.  This is done by running \p bootstrap,
+\code
+> svn checkout https://instaar.colorado.edu/svn/Main sedflux
+> cd sedflux/sedflux/trunk
+> ./bootstrap
+\endcode
+The configure script can now be run on the package.
+
 */
 
 /*! \page install_sec Installation
@@ -121,12 +151,18 @@ the share/sedflux_input_files directory).  these four files are,
 the initialization file will usually end with a .init extension.  the name of
 this file can be passed to sedflux on the command line:
 \code
-   sedflux in=<init-file>
+   sedflux --init-file=<init-file>
 \endcode
 where <init-file> is the name of the initialization file.  in this case, the project
 directory is the current working directory.  if you do not specify any command
 line arguments, you will be prompted to give a project directory and the 
 name of the initialization file.
+
+\note This syntax was introduced in version 2.0.8.  Previous versions used
+\code
+   sedflux in=<init-file>
+\endcode
+
 
 \note
 Windows note: most likely you will not be using command line arguments and
@@ -221,7 +257,7 @@ Unfortunatly, i'm sure this is not always the case.
 To run sedflux, 
 \code
 > cd <project-dir>
-> sedflux in=<init-file>
+> sedflux --init-file=<init-file>
 \endcode
 
 where <project-dir> is the directory where you set up you input files, and <init-file>
@@ -322,74 +358,64 @@ In this case we have potted the first and last sets of measurements.
 
 \section sec_new_process Adding a new process
 
+This section describes how to add a new process to sedflux-2.0.  The code includes a template
+for a new process called 'new process'.  The main files for this process are new_process.c and
+new_process.h.  You will also need to make additions to a few other files as well.
 
 
+\subsection PROG_SUB_RUN_NEW_PROCESS_C run_new_process.c
 
-\subsection sub_main main.c
+First, you will need to create a file that will define how sedflux will initialize your process
+as well as run it.  For our example, this is done is run_new_process.c.
 
-Run each process in the list of our newly-created process.
-
-\dontinclude main.c
-\skipline new_process_l
-
-
-
-
-
-\subsection sub_init init.c
-
-\dontinclude init.c
-\skip create_process_list
-\until {
-
-Create the new process.  Specify the functions used to initialize and run our new process.
-
-\skip New_process_t
-\until run_new_process
-
-
-
-\skip init_process_list
-\until {
-
-Scan entries from an input file to initialize our new process.
-
-\skipline new_process_l
-
-
-
-\skip destroy_process_list
-\until {
-
-Destroy our list of new processes
-\skipline new_process_l
-
-and the process itself
-
-\skipline new_process
-
-
-
-
-
-\subsection sub_run_new_process_c run_new_process.c
-
-Define the function that is called everytime the process is run.
 \dontinclude run_new_process.c
+
+Define the name of the process as well as it's log domain.  This is necessary so that
+logging messages will be written to the correct file.
+\skipline SED_NEW_PROCESS_PROC_NAME
+\skipline EH_LOG_DOMAIN
+
+Define the function that is called everytime the process is run.  The first argument is a
+pointer to the instance data of this process and the second is the Sed_cube that the
+process acts on.  Initialize the mass balance information.
 \skip run_new_process(
 \until SED_EMPTY_INFO
 
-Define the function that is called when the process is initialized.
+When a process is destroyed, it's run function is called with \p prof == NULL to indicate
+that any allocated resources should be freed.
+\skip Free resources
+\until }
+\until }
+
+If the instance data has not yet been initialized (and it needs to be), do it here.
+\skip Initialize the data
+\until }
+
+The process now acts on the Sed_cube.  In this case, we change sea level by a user specified
+amount.
+\skip Do something
+\until }
+
+The mass of the Sed_cube is measured before and after the process is run.  If any sediment
+is (intentionally) added or removed from the system, it should be included here.  
+\skip Set and return mass balance
+\until }
+
+
+
+Define an init_func for your new process.  This function is called everytime sedflux
+initializes a new instance of your process. 
 \skip init_new_process
 \until New_process_t
 
 
 
-
-
-\subsection sub_run_new_process_h run_new_process.h
+\subsection PROG_SUB_RUN_NEW_PROCESS_H run_new_process.h
 
 Define a structure to hold data for each instance of the new process.
+In this case, the member \p param is unique for each instance of the
+process.  Thus, sedflux is able to run different version of the same
+process.
 \dontinclude run_new_process.h
 \skip typedef
 \until New_process_t
@@ -402,39 +428,63 @@ Declare the functions to run and initialize the new process.
 
 
 
-\subsection sub_processes_h processes.h
+
+\subsection PROG_SUB_INIT_C init.c
+
+\dontinclude init.c
+
+Now that we have created functions to run and initialize our process, we must add it to the
+list of processes that sedflux will run.  We do this in init.c.  All that needs to be done here
+is to add our new process to the process_list variable,
+
+This variable is a list of all the process that sedflux will run (in the order that they will
+be run!).  Each element of the array tells sedflux the name of the process, the size of the
+process-specific data structure, the function used to initialize the process, and the function
+used to run the process.
+\skip Global variable
+\until river
+
+Add the new process to the list.  The new process is run after the river process and before the
+bed load dumping process.
+\skip A new process
+\until }
+
+The remainder of the processes.
+\skip The rest of the processes
+\until };
+
+\note Where you add the new process is important!  sedflux will run the processes in the order they
+are listed here.
+
+
+
+
+
+
+
+\subsection PROG_SUB_PROCESSES_H processes.h
+
+Finally, we need to add our new header file to the list of process header files in processes.h.
 
 Include the header file for the new process.
 \dontinclude processes.h
 \skipline run_new_process
 
 
-Structure that holds all of the sedflux processes.
-\skip typedef
-\until river_l
-
-Add the new process.  new_process_l is a list of instances of the new process.  new_process is
-the process type.
-\skipline new_process_l
-
-The rest of the processes.
-\skip turbidity_l
-\until Sed_process_list
 
 
 
+\subsection PROG_SUB_MAKEFILE Makefile.am
 
-
-\subsection sub_makefile Makefile.am
-
-Incldue the new .c file in the package
+To make sure that our new files are compiled, we must add them to the list of source file in
+Makefile.am.  Include the new .c file in the package
 \code
-sedflux_SOURCES = run_new_process.c
+sedflux_SOURCES    += run_new_process.c
 \endcode
 
 as well as its header file.
 \code
-noinst_HEADERS = run_new_process.h
+noinst_HEADERS     += run_new_process.h
 \endcode
 
 */

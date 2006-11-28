@@ -52,6 +52,16 @@
 # include "turbidity_current.h"
 # include "avulsion.h"
 
+/** Holds all of the processes for sedflux
+
+Each process has two entries in the structure.  The first, a GList is a
+list of instances of a process.  sedflux will run each of the processes
+in the list every time step.
+
+The second entry is a Sed_process that describes the process.
+
+*/
+/*
 typedef struct
 {
    GSList *constants_l;    Sed_process constants;
@@ -85,7 +95,6 @@ typedef struct
    GSList *cpr_l;          Sed_process cpr;
 }
 Sed_process_list;
-
-gboolean is_sedflux_3d( void );
+*/
 
 #endif

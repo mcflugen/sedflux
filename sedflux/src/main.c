@@ -29,39 +29,6 @@
 #include "sed_sedflux.h"
 #include "processes.h"
 
-// Self Documentation
-char *help_msg[] =
-{
-"                                                                             ",
-" sedflux [options] [parameters]  [filein]                                    ",
-"  run the sedflux basin filling model.                                       ",
-"                                                                             ",
-" Options                                                                     ",
-"  -v          - be verbose. [off]                                            ",
-"  -h          - print this help message.                                     ",
-"                                                                             ",
-" Parameters                                                                  ",
-"  -pdt=value  - Use a time step of value seconds. [ .01 ]                    ",
-"  -pnu=value  - Use a viscosity value of value m^2/s for the flow. [ .00083 ]",
-"  -pnuart=value - Use a numerical viscosity value of value m^2/s for the     ",
-"                  flow. [ .01 ]                                              ",
-"  -pyield=value - Use a yield strength of value N/m^2. [ 100. ]              ",
-"  -prho=value - Use a flow density of value kg/m^3. [ 1500. ]                ",
-"  -pend=value - Stop the simulation after value minutes. [ 60. ]             ",
-"  -pint=value - Write to output file every value seconds [ 120 ]             ",
-"                                                                             ",
-" Files                                                                       ",
-"  Input File                                                                 ",
-"   filein      -- Read bathymetry data from filein. [ stdin ]                ",
-"    Bathymetry is defined by x-y pairs with each point given on a new line.  ",
-"    Values are in meters from an arbitrary origin.  Comment lines are allowed",
-"    and are defined as any lines not beginning with a number.                ",
-"                                                                             ",
-"  Output Files:                                                              ",
-"                                                                             ",
-NULL
-};
-
 char *copyleft_msg[] =
 {
 "                                                                             ",
@@ -98,54 +65,95 @@ int __dump_signal = 0;
 // signal to indicate that the user wishes to create a checkpoint.
 int __cpr_signal  = 0;
 
-char *get_file_name_interactively( char** , char** );
-char *eh_get_input_val( FILE *fp , char *msg , char *default_str );
-void print_choices(int);
-//Sed_cube *init_cube( GSList* , char* );
-//GSList *init_epoch_list( GSList*symbol_table_list );
-Sed_cube init_cube( Eh_key_file , char* );
-GSList *init_epoch_list( Eh_key_file );
-void destroy_epoch_list( GSList *epoch_list );
-int print_header(FILE *fp);
-int print_time(FILE *fp, int epoch_no, double year);
-int print_footer(FILE *fp);
-gboolean check_process_files( GSList *e_list );
-Sed_process_list *init_process_list( Sed_process_list *pl , Epoch *cur_epoch );
-Sed_process_list *create_process_list( void );
-void destroy_process_list( Sed_process_list *pl );
-Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] );
+char*      get_file_name_interactively ( char**       , char** );
+char*      eh_get_input_val            ( FILE* fp     , char *msg    , char *default_str );
+void       print_choices               ( int );
+int        print_header                ( FILE* fp);
+int        print_time                  ( FILE* fp     , int epoch_no , double year );
+int        print_footer                ( FILE* fp );
+Eh_project fill_sedflux_info_file      ( Eh_project p , int argc     , char* argv[] );
+int        run_sedflux                 ( int argc     , char *argv[] );
 
-void print_run_info_file( int argc , char *argv[] );
+gboolean          check_process_files         ( Sed_epoch_queue e_list , gchar** options );
+Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** );
+
+Eh_opt_entry all_entries[] = {
+   { "init-file"   , 'i' , "Initialization file"                   , NULL , "-" } ,
+   { "out-file"    , 'o' , "Output file"                           , NULL , "-" } ,
+   { "working-dir" , 'd' , "working directory"                     , NULL , "." } ,
+   { "just-plume"  , 'p' , "Run just the plume"                    , NULL , "FALSE" } ,
+   { "just-rng"    , 'r' , "Run just the the processes with rng's" , NULL , "FALSE" } ,
+   { "summary"     , 's' , "Print a summary without running"       , NULL , "FALSE" } ,
+   { "warn"        , 'w' , "Warnings"                              , NULL , "FALSE" } ,
+   { "verbose"     , 'v' , "Verbose"                               , NULL , "5" } ,
+   { NULL }
+};
+
+static gchar* just_plume_procs[] = { "plume" , "bbl" , NULL };
+static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };
+
+int main( int argc , char *argv[] )
+{
+   char *program_name;
+
+   eh_init_glib();
+
+   program_name = g_path_get_basename( argv[0] );
+
+   if ( strcasecmp( program_name , "sedflux3d" )==0 )
+   {
+      g_set_application_name( "sedflux3d" );
+      run_sedflux( argc , argv );
+   }
+   else if (    strcasecmp( program_name , "sedflux2d" )==0 
+             || strcasecmp( program_name , "sedflux"   )==0 )
+   {
+      g_set_application_name( "sedflux2d" );
+      run_sedflux( argc , argv );
+   }
+   else
+      eh_exit(-1);
+
+   return 1;
+}
 
 int run_sedflux(int argc, char *argv[])
 {
-   Sed_process_list *pl;
-   GSList *e_list;
-   Epoch *cur_epoch;
-   Sed_cube prof;
-   double n_years, year, time_step;
-   int epoch_no, n_epochs;
-   gboolean warn;
-   char *in_file, *cpr_file;
+   Sed_epoch_queue   list;
+   Sed_epoch         epoch;
+   Sed_cube          prof;
+   gboolean          warn;
+   gboolean          just_plume;
+   gboolean          just_rng;
+   gboolean          summary;
+   gchar*            in_file;
+   gchar*            out_file;
+   gchar**           options = NULL;
 
    g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
 
    eh_require( argv )
    {
-      Eh_args *args   = eh_opts_init( argc , argv );
-      Eh_project proj = eh_create_project( "sedflux" );
-      GLogLevelFlags ignore=0;
-      char* working_dir = NULL;
+      Eh_project proj       = eh_create_project( "sedflux" );
+      GLogLevelFlags ignore = 0;
+      char* working_dir     = NULL;
       gboolean verbose;
+      Eh_opt_context this_context = eh_opt_create_context( "SEDFLUX" ,
+                                                           "Run the sedflux model." ,
+                                                           "Options specific to sedflux" );
 
-      if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-         eh_exit(-1);
+      eh_opt_set_context  ( this_context , all_entries );
+      eh_opt_parse_context( this_context , &argc , &argv , NULL );
 
-      warn        = eh_get_opt_bool( args , g_strdup("warn") , FALSE );
-      in_file     = eh_get_opt_str ( args , g_strdup("in")   , NULL  );
-      cpr_file    = eh_get_opt_str ( args , g_strdup("cpr")  , NULL  );
-      working_dir = eh_get_opt_str ( args , g_strdup("wd")   , NULL  );
-      verbose     = eh_get_opt_int ( args , g_strdup("v")    , 5     );
+      warn        = eh_opt_bool_value( this_context , "warn"        );
+      in_file     = eh_opt_str_value ( this_context , "init-file"   );
+      out_file    = eh_opt_str_value ( this_context , "out-file"    );
+      working_dir = eh_opt_str_value ( this_context , "working-dir" );
+      verbose     = eh_opt_int_value ( this_context , "verbose"     );
+
+      just_plume  = eh_opt_bool_value( this_context , "just-plume"  );
+      just_rng    = eh_opt_bool_value( this_context , "just-rng"    );
+      summary     = eh_opt_bool_value( this_context , "summary"     );
 
       switch (verbose)
       {
@@ -165,159 +173,100 @@ int run_sedflux(int argc, char *argv[])
 
       eh_set_ignore_log_level( ignore );
 
-      if ( !in_file )
+      if ( g_ascii_strcasecmp(in_file,"-")==0 )
          in_file = get_file_name_interactively( &working_dir , &in_file );
 
-      if ( working_dir )
-      {
-         if ( g_chdir( working_dir )!=0 )
-            perror( working_dir );
-      }
-      else
-         working_dir = g_get_current_dir();
+      if ( g_chdir( working_dir )!=0 )
+         perror( working_dir );
+
+      if ( just_plume )
+         options = just_plume_procs;
+      if ( just_rng )
+         options = just_rng_procs;
 
       eh_set_project_dir( proj , working_dir );
-
       fill_sedflux_info_file( proj , argc , argv );
       eh_write_project_info_file( proj );
 
       eh_free           ( working_dir );
       eh_destroy_project( proj        );
-      eh_destroy_args   ( args        );
+      eh_destroy_context( this_context );
    }
 
    signal(2,&print_choices);
 
    eh_debug( "Scan the init file" );
    {
-      Eh_key_file init_file = eh_key_file_scan( in_file );
-
-      eh_debug( "Initializing cube." );
-      prof         = init_cube( init_file , cpr_file );
-
-      eh_debug( "Reading epoch file." );
-      e_list       = init_epoch_list( init_file );
-
-      eh_key_file_destroy( init_file );
+      prof = sed_cube_new_from_file( in_file );
+      list = sed_epoch_queue_new   ( in_file );
    }
 
-   n_epochs = g_slist_length(e_list);
+   if ( summary )
+   {
+      sed_cube_fprint       ( stdout , prof );
+      sed_epoch_queue_fprint( stdout , list );
+
+      exit(0);
+   }
 
    print_header( stdout );
 
    eh_debug( "Checking consistancy of processes in epoch file." );
-   if ( check_process_files( e_list )!=0 && warn )
+   if ( check_process_files( list , options )!=0 && warn )
       eh_exit(-1);
 
-   eh_debug( "The main loop." );
-   for ( epoch_no=0 ; epoch_no < n_epochs && !__quit_signal ; epoch_no++ )
    {
-      // Create the processes.
-      pl = create_process_list( );
+      Sed_epoch         epoch;
+      double            year;
+      double            n_years;
+      double            time_step;
+      Sed_process_queue q;
 
-      cur_epoch = (Epoch*)g_slist_nth_data(e_list,epoch_no);
-
-      // Scan the process constants from a file.
-      init_process_list( pl , cur_epoch );
-
-      time_step = epoch_get_epoch_time_step(cur_epoch);
-      n_years   = epoch_get_epoch_duration(cur_epoch);
-      sed_cube_set_time_step( prof , time_step );
-
-      for ( year=time_step ; year<=n_years && !__quit_signal ; year+=time_step )
+      epoch = sed_epoch_queue_pop( list );
+      while ( epoch  && !__quit_signal )
       {
+         q = sedflux_create_process_queue( sed_epoch_filename(epoch) , options );
 
-         print_time(stdout,epoch_no,year);
+         time_step = sed_epoch_time_step( epoch );
+         n_years   = sed_epoch_duration ( epoch );
 
-         // Set the constants for this time step.
-         eh_debug( "Constants" );
-         g_slist_foreach( pl->constants_l   , (GFunc)&sed_process_run , prof );
+         sed_cube_set_time_step( prof , time_step );
 
-         // Set the weather.
-         eh_debug( "River" );
-         g_slist_foreach( pl->river_l       , (GFunc)&sed_process_run , prof );
-
-         g_slist_foreach( pl->new_process_l , (GFunc)&sed_process_run , prof );
-
-         eh_debug( "Quake" );
-         g_slist_foreach( pl->quake_l       , (GFunc)&sed_process_run , prof );
-         eh_debug( "Tide" );
-         g_slist_foreach( pl->tide_l        , (GFunc)&sed_process_run , prof );
-         eh_debug( "Sea level" );
-         g_slist_foreach( pl->sea_level_l   , (GFunc)&sed_process_run , prof );
-         eh_debug( "Storm" );
-         g_slist_foreach( pl->storm_l       , (GFunc)&sed_process_run , prof );
-         eh_debug( "Avulsion" );
-         g_slist_foreach( pl->avulsion_l    , (GFunc)&sed_process_run , prof );
-         eh_debug( "Erosion" );
-         g_slist_foreach( pl->erosion_l     , (GFunc)&sed_process_run , prof );
-
-         // Add sediment to the system from each source.
-         eh_debug( "Plume" );
-         g_slist_foreach( pl->plume_l       , (GFunc)&sed_process_run , prof );
-         eh_debug( "Bed load" );
-         g_slist_foreach( pl->bedload_l     , (GFunc)&sed_process_run , prof );
-
-         // Redistribute sediment.
-         eh_debug( "Bottom boundary layer" );
-         g_slist_foreach( pl->bbl_l         , (GFunc)&sed_process_run , prof );
-         eh_debug( "Diffusion" );
-         g_slist_foreach( pl->diffusion_l   , (GFunc)&sed_process_run , prof );
-         eh_debug( "Xshore" );
-         g_slist_foreach( pl->xshore_l      , (GFunc)&sed_process_run , prof );
-         eh_debug( "Squall" );
-         g_slist_foreach( pl->squall_l      , (GFunc)&sed_process_run , prof );
-         eh_debug( "Failure" );
-         g_slist_foreach( pl->failure_l     , (GFunc)&sed_process_run , prof );
-         eh_debug( "Fluid flow" );
-         g_slist_foreach( pl->flow_l        , (GFunc)&sed_process_run , prof );
-         eh_debug( "Compaction" );
-         g_slist_foreach( pl->compaction_l  , (GFunc)&sed_process_run , prof );
-         eh_debug( "Isostasy" );
-         g_slist_foreach( pl->isostasy_l    , (GFunc)&sed_process_run , prof );
-         eh_debug( "Subsidence" );
-         g_slist_foreach( pl->subsidence_l  , (GFunc)&sed_process_run , prof );
-         eh_debug( "Tripod" );
-         g_slist_foreach( pl->met_station_l , (GFunc)&sed_process_run , prof );
-         eh_debug( "Data dump" );
-         g_slist_foreach( pl->data_dump_l   , (GFunc)&sed_process_run , prof );
-         eh_debug( "CPR" );
-         g_slist_foreach( pl->cpr_l         , (GFunc)&sed_process_run , prof );
-
-         if ( __dump_signal )
+         for ( year  = sed_cube_time_step(prof) ;
+               year <= n_years && !__quit_signal ;
+               year += sed_cube_time_step(prof) )
          {
-            g_slist_foreach( pl->final_dump_l            ,
-                             (GFunc)&sed_process_run_now ,
-                             prof );
-            __dump_signal = 0;
-         }
-         if ( __cpr_signal )
-         {
-            g_slist_foreach( pl->cpr_l                   ,
-                             (GFunc)&sed_process_run_now ,
-                             prof );
-            __cpr_signal = 0;
+            print_time( stdout , sed_epoch_number(epoch) , year );
+
+            sed_process_queue_run( q , prof );
+
+            if ( __dump_signal )
+            {
+               sed_process_queue_run_process_now( q , "final dump" , prof );
+
+               __dump_signal = FALSE;
+            }
+
+            sed_cube_increment_age( prof );
          }
 
-         sed_cube_set_age( prof ,   sed_cube_age(prof)
-                                  + sed_cube_time_step(prof) );
-         
-         time_step = sed_cube_time_step_in_years( prof );
+         sed_process_queue_run_process_now( q , "final dump" , prof );
+
+         sed_process_queue_destroy( q );
+
+         sed_cube_free_river( prof );
+
+         epoch = sed_epoch_queue_pop( list );
       }
 
-      g_slist_foreach( pl->final_dump_l , (GFunc)&sed_process_run_now , prof );
-
-      // Destroy the processes.
-      destroy_process_list( pl );
-
-      sed_cube_free_river( prof );
    }
    
    print_footer(stdout);
    
-   destroy_epoch_list( e_list );
+   sed_epoch_queue_destroy( list );
 
    sed_cube_destroy( prof );
+
    eh_heap_dump( "heap_dump.txt" );
 
    eh_exit(0);

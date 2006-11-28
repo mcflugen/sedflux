@@ -195,6 +195,18 @@ gchar* eh_key_file_get_value( Eh_key_file f , const gchar* group_name , const gc
    return value;
 }
 
+gchar*
+eh_key_file_get_str_value( Eh_key_file f , const gchar* group_name , const gchar* key )
+{
+   return eh_key_file_get_value( f , group_name , key );
+}
+
+gchar**
+eh_key_file_get_str_values( Eh_key_file f , const gchar* group_name , const gchar* key )
+{
+   return eh_key_file_get_all_values(f,group_name,key);
+}
+
 gboolean eh_key_file_get_bool_value( Eh_key_file f           ,
                                      const gchar* group_name ,
                                      const gchar* key )
