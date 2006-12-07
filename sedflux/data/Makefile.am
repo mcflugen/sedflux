@@ -11,7 +11,7 @@ EXTRA_DIST = \
              test.river \
              test.subsidence \
              140k.sealevel \
-             1000k.sealevel \
+             1000k.sealevel
 
 pkgdata_DATA = \
              sample-init.kvf \
@@ -24,5 +24,5 @@ pkgdata_DATA = \
              test.river \
              test.subsidence \
              140k.sealevel \
-             1000k.sealevel \
+             1000k.sealevel
 
