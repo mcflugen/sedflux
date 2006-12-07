@@ -28,8 +28,8 @@
 #include "utils.h"
 #include "sealevel.h"
 
-Eh_data_record read_sea_level_curve(char *filename);
-double get_sea_level(Eh_data_record,double);
+double**  read_sea_level_curve( char* , gint* );
+double    get_sea_level       ( double** , gint , double );
 
 Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
 {
@@ -42,7 +42,7 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
    {
       if ( data->initialized )
       {
-         eh_data_record_destroy( data->sea_level );
+         eh_free_2( data->sea_level );
          data->initialized = FALSE;
       }
       return SED_EMPTY_INFO;
@@ -50,14 +50,17 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
 
    if ( !data->initialized )
    {
-      data->sea_level = read_sea_level_curve(data->filename);
-      data->start_year = sed_cube_age_in_years(prof);
+      gint len;
+
+      data->sea_level   = read_sea_level_curve( data->filename , &len );
+      data->len         = len;
+      data->start_year  = sed_cube_age_in_years(prof);
       data->initialized = TRUE;
    }
 
    year = sed_cube_age_in_years( prof )-data->start_year;
 
-   new_sea_level = get_sea_level( data->sea_level , year );
+   new_sea_level = get_sea_level( data->sea_level , data->len , year );
 
    if ( eh_isnan( new_sea_level ) )
    {
@@ -69,6 +72,7 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
 
    if ( eh_isnan(sed_cube_sea_level(prof)) )
       return info;
+
    sed_cube_find_all_river_mouths( prof );
 
    eh_message( "time      : %f" , sed_cube_age_in_years(prof) );
@@ -113,12 +117,9 @@ gboolean dump_sea_level_data( gpointer ptr , FILE *fp )
 
    fwrite( &(data->start_year) , sizeof(double) , 1 , fp );
 
-   len = eh_data_record_size( data->sea_level , 1 );
-   t   = eh_data_record_row ( data->sea_level , 0 );
-   z   = eh_data_record_row ( data->sea_level , 1 );
-   fwrite( &len , sizeof(guint) , 1 , fp );
-   fwrite( t , sizeof(double) , len , fp );
-   fwrite( z , sizeof(double) , len , fp );
+   fwrite( &(data->len) , sizeof(gint) , 1 , fp );
+   fwrite( data->sea_level[0] , sizeof(double) , data->len , fp );
+   fwrite( data->sea_level[1] , sizeof(double) , data->len , fp );
 
    return TRUE;
 }
@@ -135,35 +136,26 @@ gboolean load_sea_level_data( gpointer ptr , FILE *fp )
    fread( data->filename , sizeof(char) , len , fp );
    fread( &(data->start_year) , sizeof(double) , 1 , fp );
 
-   fread( &len , sizeof(guint) , 1 , fp );
+   fread( &len , sizeof(gint) , 1 , fp );
 
-   t = eh_new( double , len );
-   z = eh_new( double , len );
+   data->len       = len;
+   data->sea_level = eh_new_2( double , 2 , len );
 
-   fread( t , sizeof(double) , len , fp );
-   fread( z , sizeof(double) , len , fp );
-
-   data->sea_level = eh_data_record_new();
-
-   eh_data_record_add_row( data->sea_level , t );
-   eh_data_record_add_row( data->sea_level , z );
-
-   eh_free( t );
-   eh_free( z );
+   fread( data->sea_level[0] , sizeof(double) , len , fp );
+   fread( data->sea_level[1] , sizeof(double) , len , fp );
 
    return TRUE;
 }
 
-double get_sea_level(Eh_data_record sea_level, double year)
+double get_sea_level(double** sea_level, gint len , double year)
 {
    double new_sea_level;
 
    eh_require( sea_level );
 
    {
-      double* t  = eh_data_record_row ( sea_level , 0 );
-      double* z  = eh_data_record_row ( sea_level , 1 );
-      gssize len = eh_data_record_size( sea_level , 1 );
+      double* t  = sea_level[0];
+      double* z  = sea_level[1];
 
       interpolate(t,z,len,&year,&new_sea_level,1);
    }
@@ -171,28 +163,36 @@ double get_sea_level(Eh_data_record sea_level, double year)
    return new_sea_level;
 }
 
-Eh_data_record read_sea_level_curve(char *filename)
+double** read_sea_level_curve(char *filename , gint* len )
 {
+   double** data;
    Eh_data_record sea_level_curve;
 
    eh_require( filename );
 
    {
-      gssize i;
-      Eh_data_record* all_records;
+      gint i, j;
+      gint n_rows;
+      double** tmp_data;
+      GError* error = NULL;
 
-      all_records = eh_data_record_scan_file( filename , "," , EH_FAST_DIM_COL , FALSE );
+      tmp_data = eh_dlm_read_swap( filename , ",;" , &n_rows , len , &error);
 
-      if ( all_records )
-         sea_level_curve = all_records[0];
-      else
-         eh_error( "Problem reading sea-level curve from %s" , filename );
+      if ( error )
+         eh_error( "Unable to read file: %s\n" , error->message );
 
-      for ( i=1 ; all_records[i] ; i++ )
-         eh_data_record_destroy( all_records[i] );
-      eh_free( all_records );
+      if ( n_rows < 2 )
+         eh_error( "Sea level file must contain two columns of data" );
+
+      if ( n_rows > 2 )
+      {
+         eh_warning( "Sea-level file should contain only two columns of data" );
+         eh_warning( "%d were found.  Extra columns ignored" , n_rows );
+      }
+      
+      eh_free_2( tmp_data );
    }
 
-   return sea_level_curve;
+   return data;
 }
 

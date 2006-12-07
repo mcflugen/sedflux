@@ -1,5 +1,20 @@
-# A sea level curve with lots of ups and downs.
-[ data ]
+/* A sample sea-level file.
+
+A sea-level curve is defined by two comma-delimeted columns.  The
+first is time (in years) and the second is sea level (m).  Sea
+level is measured with respect to the same datum that the bathymetry
+is.
+
+sedflux will linearly interpolate between data points for simulation
+times that fall between data points.
+
+The range of times in the sea-level file should span the entire model run.
+Undefined results will occur if the simulation time extends beyond that of
+the sea-level curve.
+
+The first column must be monotonically increasing.
+
+*/
 0.000000, -4.553820
 10000.000000, -2.538595
 20000.000000, -1.131533

@@ -52,20 +52,11 @@ char *copyleft_msg[] =
 NULL
 };
 
+int __quit_signal = 0; //< signal to indicate that the user wishes to quit.
+int __dump_signal = 0; //< signal to indicate that the user wishes to dump output.
+int __cpr_signal  = 0; //< signal to indicate that the user wishes to create a checkpoint.
 
-#define DEFAULT_VERBOSE      0
-#define DEFAULT_IN_FILE      stdin
-#define DEFAULT_IN_FILE_NAME "stdin"
-#define DEFAULT_TIME_STEP    1
-
-// signal to indicate that the user wishes to quit.
-int __quit_signal = 0;
-// signal to indicate that the user wishes to dump output.
-int __dump_signal = 0;
-// signal to indicate that the user wishes to create a checkpoint.
-int __cpr_signal  = 0;
-
-char*      get_file_name_interactively ( char**       , char** );
+gchar*     get_file_name_interactively ( gchar**      , gchar** );
 char*      eh_get_input_val            ( FILE* fp     , char *msg    , char *default_str );
 void       print_choices               ( int );
 void       print_header                ( FILE* fp);
@@ -73,12 +64,9 @@ void       print_time                  ( FILE* fp     , int epoch_no , double ye
 void       print_footer                ( FILE* fp );
 Eh_project fill_sedflux_info_file      ( Eh_project p , int argc     , char* argv[] );
 int        run_sedflux                 ( int argc     , char *argv[] );
-gboolean   check_process_files         ( Sed_epoch_queue e_list , gchar** options );
+gboolean   check_process_files         ( Sed_epoch_queue e_list , gchar** active );
 
 Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** );
-
-static gchar* just_plume_procs[] = { "plume" , "bbl" , NULL };
-static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };
 
 int main( int argc , char *argv[] )
 {
@@ -106,47 +94,47 @@ int main( int argc , char *argv[] )
 }
 
 /* Command line options */
-static gchar* init_file    = "-";
-static gchar* out_file     = "-";
-static gchar* working_dir  = ".";
-static gboolean just_plume = FALSE;
-static gboolean just_rng   = FALSE;
-static gboolean summary    = FALSE;
-static gboolean warn       = FALSE;
-static gint verbose        = 0;
+static gchar*   init_file    = NULL;
+static gchar*   out_file     = NULL; 
+static gchar*   working_dir  = NULL;
+static gboolean just_plume   = FALSE;
+static gboolean just_rng     = FALSE;
+static gboolean summary      = FALSE;
+static gboolean warn         = FALSE;
+static gint     verbose      = 0;
+static char**   active_procs = NULL;
 
 /* Define the command line options */
 static GOptionEntry entries[] =
 {
-   { "init-file"   , 'i' , 0 , G_OPTION_ARG_FILENAME , &init_file   , "Initialization file"        , "<file>" } ,
-   { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME , &out_file    , "Output file"                , "<file>" } ,
-   { "working-dir" , 'd' , 0 , G_OPTION_ARG_FILENAME , &working_dir , "Working directory"          , "<dir>" } ,
-   { "just-plume"  , 'p' , 0 , G_OPTION_ARG_NONE     , &just_plume  , "Run just the plume"         , NULL } ,
-   { "just-rng"    , 'r' , 0 , G_OPTION_ARG_NONE     , &just_rng    , "Run just the rng processes" , NULL } ,
-   { "summary"     , 's' , 0 , G_OPTION_ARG_NONE     , &summary     , "Print a summary and quit"   , NULL } ,
-   { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE     , &warn        , "Print warnings"             , NULL } ,
-   { "verbose"     , 'v' , 0 , G_OPTION_ARG_INT      , &verbose     , "Verbosity level"            , "n" } ,
+   { "init-file"   , 'i' , 0 , G_OPTION_ARG_FILENAME     , &init_file   , "Initialization file"        , "<file>" } ,
+   { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME     , &out_file    , "Output file"                , "<file>" } ,
+   { "working-dir" , 'd' , 0 , G_OPTION_ARG_FILENAME     , &working_dir , "Working directory"          , "<dir>"  } ,
+   { "active-proc" , 'a' , 0 , G_OPTION_ARG_STRING_ARRAY , &active_procs, "Specify active process"     , "<name>" } ,
+   { "just-plume"  , 'p' , 0 , G_OPTION_ARG_NONE         , &just_plume  , "Run just the plume"         , NULL     } ,
+   { "just-rng"    , 'r' , 0 , G_OPTION_ARG_NONE         , &just_rng    , "Run just the rng processes" , NULL     } ,
+   { "summary"     , 's' , 0 , G_OPTION_ARG_NONE         , &summary     , "Print a summary and quit"   , NULL     } ,
+   { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE         , &warn        , "Print warnings"             , NULL     } ,
+   { "verbose"     , 'v' , 0 , G_OPTION_ARG_INT          , &verbose     , "Verbosity level"            , "n"      } ,
    { NULL }
 };
 
+static gchar* just_plume_procs[] = { "plume"      , "river"  ,  "bbl" , NULL }; //< Processes to run with just-plume option
+static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };          //< Process to run with just-rng option
+
 int run_sedflux(int argc, char *argv[])
 {
-   Sed_epoch_queue   list;
-   Sed_epoch         epoch;
-   Sed_cube          prof;
-   gchar**           options = NULL;
+   Sed_epoch_queue   list; //< List of all the epochs
+   Sed_cube          prof; //< The cube 
 
    g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
 
    eh_require( argv )
    {
-      Eh_project     proj         = eh_create_project( "sedflux" );
-      GLogLevelFlags ignore       = 0;
-      GError*        error        = NULL;
-      Eh_opt_context this_context = eh_opt_create_context( "SEDFLUX" ,
-                                                           "Run the sedflux model." ,
-                                                           "Options specific to sedflux" );
-      GOptionContext* context = g_option_context_new( "Run basin filling model, sedflux-2.0" );
+      Eh_project      proj    = eh_create_project( "sedflux" );
+      GLogLevelFlags  ignore  = 0;
+      GError*         error   = NULL;
+      GOptionContext* context = g_option_context_new( "Run basin filling model sedflux-2.0" );
 
       g_option_context_add_main_entries( context , entries , NULL );
 
@@ -171,25 +159,27 @@ int run_sedflux(int argc, char *argv[])
 
       eh_set_ignore_log_level( ignore );
 
-      if ( g_ascii_strcasecmp(init_file,"-")==0 )
-         init_file = get_file_name_interactively( &working_dir , &init_file );
+      if ( !init_file )
+         get_file_name_interactively( &working_dir , &init_file );
 
-      if ( g_chdir( working_dir )!=0 )
+      if ( working_dir && g_chdir( working_dir )!=0 )
          perror( working_dir );
 
-      if ( just_plume )
-         options = just_plume_procs;
-      if ( just_rng )
-         options = just_rng_procs;
+      if ( !active_procs )
+      {
+         if ( just_plume )
+            active_procs = just_plume_procs;
+         if ( just_rng )
+            active_procs = just_rng_procs;
+      }
 
-      eh_set_project_dir( proj , working_dir );
-      fill_sedflux_info_file( proj , argc , argv );
+      eh_set_project_dir        ( proj , working_dir );
+      fill_sedflux_info_file    ( proj , argc , argv );
       eh_write_project_info_file( proj );
 
-      eh_free           ( working_dir );
-      eh_destroy_project( proj        );
-
-      g_option_context_free( context );
+      eh_free              ( working_dir );
+      eh_destroy_project   ( proj        );
+      g_option_context_free( context     );
    }
 
    signal(2,&print_choices);
@@ -198,22 +188,22 @@ int run_sedflux(int argc, char *argv[])
    {
       prof = sed_cube_new_from_file( init_file );
       list = sed_epoch_queue_new   ( init_file );
+
    }
 
    if ( summary )
    {
       sed_cube_fprint       ( stdout , prof );
       sed_epoch_queue_fprint( stdout , list );
-
-      exit(0);
    }
 
    print_header( stdout );
 
    eh_debug( "Checking consistancy of processes in epoch file." );
-   if ( check_process_files( list , options )!=0 && warn )
+   if ( !check_process_files( list , active_procs )!=0 && warn )
       eh_exit(-1);
 
+   eh_debug( "Start the simulation" );
    {
       Sed_epoch         epoch;
       double            year;
@@ -221,17 +211,19 @@ int run_sedflux(int argc, char *argv[])
       double            time_step;
       Sed_process_queue q;
 
-      epoch = sed_epoch_queue_pop( list );
-      while ( epoch  && !__quit_signal )
+      for ( epoch = sed_epoch_queue_pop( list ) ;
+            epoch && !__quit_signal             ;
+            epoch = sed_epoch_queue_pop( list ) )
       {
-         q = sedflux_create_process_queue( sed_epoch_filename(epoch) , options );
+         eh_debug( "Read the process data" );
+         q = sedflux_create_process_queue( sed_epoch_filename(epoch) , active_procs );
 
          time_step = sed_epoch_time_step( epoch );
          n_years   = sed_epoch_duration ( epoch );
 
          sed_cube_set_time_step( prof , time_step );
 
-         for ( year  = sed_cube_time_step(prof) ;
+         for ( year  = sed_cube_time_step(prof)  ;
                year <= n_years && !__quit_signal ;
                year += sed_cube_time_step(prof) )
          {
@@ -241,7 +233,7 @@ int run_sedflux(int argc, char *argv[])
 
             if ( __dump_signal )
             {
-               sed_process_queue_run_process_now( q , "final dump" , prof );
+               sed_process_queue_run_process_now( q , "data dump" , prof );
 
                __dump_signal = FALSE;
             }
@@ -249,13 +241,11 @@ int run_sedflux(int argc, char *argv[])
             sed_cube_increment_age( prof );
          }
 
-         sed_process_queue_run_process_now( q , "final dump" , prof );
+         sed_process_queue_run_at_end( q , prof );
 
-         sed_process_queue_destroy( q );
-
-         sed_cube_free_river( prof );
-
-         epoch = sed_epoch_queue_pop( list );
+         sed_process_queue_destroy( q     );
+         sed_epoch_destroy        ( epoch );
+         sed_cube_free_river      ( prof  );
       }
 
    }
@@ -274,7 +264,7 @@ int run_sedflux(int argc, char *argv[])
    return -1;
 }
 
-char *get_file_name_interactively( char **working_dir , char **in_file )
+gchar *get_file_name_interactively( gchar **working_dir , gchar **in_file )
 {
    char *dir       = eh_new( char , 2048 );
    char *cur_dir   = eh_new( char , 2048 );
@@ -310,11 +300,16 @@ char *get_file_name_interactively( char **working_dir , char **in_file )
    fprintf( stderr , "Initialization file      : %s\n" , init_file );
 
    *working_dir = g_strdup( dir );
-   *in_file     = g_strdup( init_file );
+
+   eh_free( *in_file     );
+   eh_free( *working_dir );
+
+   *working_dir = dir;
+   *in_file     = init_file;
 
    eh_free( cur_dir   );
 
-   return init_file;
+   return *in_file;
 }
 
 char *eh_get_input_val( FILE *fp , char *msg , char *default_str )
@@ -370,45 +365,45 @@ void print_choices(int i)
 {
    char ch;
 
-   fprintf( stdout , "\n"                                          );
-   fprintf( stdout , "(((\n"                                         );
-   fprintf( stdout , "((( You have some choices.  They are these:\n" );
-   fprintf( stdout , "(((  1) End run after this time step.\n"       );
-   fprintf( stdout , "(((  2) Dump results and continue.\n"          );
-   fprintf( stdout , "(((  3) Create a checkpoint.\n"                );
-   fprintf( stdout , "(((  4) Continue.\n"                           );
-   fprintf( stdout , "(((  5) Quit immediatly (without saving).\n"   );
-   fprintf( stdout , "((( My choice is this: "                       );
+   fprintf( stdout , "\n"                                                );
+   fprintf( stdout , "-----------------------------------------------\n" );
+   fprintf( stdout , "  (1) End run after this time step.\n"             );
+   fprintf( stdout , "  (2) Dump results and continue.\n"                );
+   fprintf( stdout , "  (3) Create a checkpoint.\n"                      );
+   fprintf( stdout , "  (4) Continue.\n"                                 );
+   fprintf( stdout , "  (5) Quit immediatly (without saving).\n"         );
+   fprintf( stdout , "-----------------------------------------------\n" );
+   fprintf( stdout , "   Your choice? "                                  );
 
    fscanf(stdin,"%s",&ch);
 
    if ( g_strcasecmp( &ch , "1" )==0 )
    {
       __quit_signal = 1;
-      fprintf(stdout,"((( You have opted to quit early...\n\n");
+      fprintf(stdout,"   You have opted to quit early...\n\n");
    }
    else if ( g_strcasecmp( &ch , "2" )==0 )
    {
       __dump_signal = 1;
       signal(2,&print_choices);
       fprintf( stdout ,
-               "((( Temporary output files will be dumped as soon as we can get to it...\n\n");
+               "   Temporary output files will be dumped as soon as we can get to it...\n\n");
    }
    else if ( g_strcasecmp( &ch , "3" )==0 )
    {
       __cpr_signal = 1;
       signal(2,&print_choices);
-      fprintf(stdout,"((( Creating a checkpoint/reset file...\n\n");
+      fprintf(stdout,"   Creating a checkpoint/reset file...\n\n");
    }
    else if ( g_strcasecmp( &ch , "4" )==0 )
    {
       signal(2,&print_choices);
-      fprintf(stdout,"((( Continuing...\n\n");
+      fprintf(stdout,"   Continuing...\n\n");
    }
    else
    {
       signal(2,&print_choices);
-      fprintf(stdout,"((( Terminating run without saving...\n\n" );
+      fprintf(stdout,"   Terminating run without saving...\n\n" );
       eh_exit(0);
    }
 

@@ -99,7 +99,9 @@ install-exec-local:
 	ln -f -s $(DESTDIR)$(bindir)/sedlfux $(DESTDIR)$(bindir)/sedflux3d
 
 uninstall-local:
-	rm $(DESTDIR)$(bindir)/sedflux3d
+	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
+	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
+	fi
 
 
 

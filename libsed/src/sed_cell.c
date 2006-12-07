@@ -771,7 +771,8 @@ sed_cell_separate_thickness( Sed_cell in ,
       double in_size  = total - t;
       double out_size = total - in_size;
 
-      eh_clamp( in_size , 0 , total );
+      eh_clamp( in_size  , 0 , total );
+      eh_clamp( out_size , 0 , total );
 
       out = sed_cell_copy( out , in );
 
@@ -1956,18 +1957,37 @@ be read back into the Sed_cell from a file using sed_load_cell .
 gssize
 sed_cell_write( FILE *fp, const Sed_cell c )
 {
+   return sed_cell_write_to_byte_order( fp , c , G_BYTE_ORDER );
+}
+
+gssize
+sed_cell_write_to_byte_order( FILE *fp, const Sed_cell c , int order )
+{
    gssize n = 0;
 
    eh_require( fp );
    eh_require( c  );
 
-   n += fwrite( &c->n        , sizeof(gssize)        , 1    , fp );
-   n += fwrite( c->f         , sizeof(double)        , c->n , fp );
-   n += fwrite( &c->t_0      , sizeof(double)        , 1    , fp );
-   n += fwrite( &c->t        , sizeof(double)        , 1    , fp );
-   n += fwrite( &c->age      , sizeof(double)        , 1    , fp );
-   n += fwrite( &c->pressure , sizeof(double)        , 1    , fp );
-   n += fwrite( &c->facies   , sizeof(unsigned char) , 1    , fp );
+   if ( order==G_BYTE_ORDER )
+   {
+      n += fwrite( &c->n        , sizeof(gssize)        , 1    , fp );
+      n += fwrite( c->f         , sizeof(double)        , c->n , fp );
+      n += fwrite( &c->t_0      , sizeof(double)        , 1    , fp );
+      n += fwrite( &c->t        , sizeof(double)        , 1    , fp );
+      n += fwrite( &c->age      , sizeof(double)        , 1    , fp );
+      n += fwrite( &c->pressure , sizeof(double)        , 1    , fp );
+      n += fwrite( &c->facies   , sizeof(unsigned char) , 1    , fp );
+   }
+   else
+   {
+      n += eh_fwrite_int32_swap( &c->n        , sizeof(gssize)        , 1    , fp );
+      n += eh_fwrite_dbl_swap  ( c->f         , sizeof(double)        , c->n , fp );
+      n += eh_fwrite_dbl_swap  ( &c->t_0      , sizeof(double)        , 1    , fp );
+      n += eh_fwrite_dbl_swap  ( &c->t        , sizeof(double)        , 1    , fp );
+      n += eh_fwrite_dbl_swap  ( &c->age      , sizeof(double)        , 1    , fp );
+      n += eh_fwrite_dbl_swap  ( &c->pressure , sizeof(double)        , 1    , fp );
+      n += fwrite              ( &c->facies   , sizeof(unsigned char) , 1    , fp );
+   }
 
    eh_require( n == 6+c->n );
 
@@ -1997,18 +2017,18 @@ sed_cell_read( FILE *fp )
    {
       gssize n;
 
-      fread( &n , sizeof(gssize) , 1 , fp );
+      fread( &n             , sizeof(gssize)        , 1 , fp );
 
       eh_require( n>0 );
 
       c = sed_cell_new( n );
 
-      fread( c->f         , sizeof(double)        , n , fp );
-      fread( &c->t_0      , sizeof(double)        , 1 , fp );
-      fread( &c->t        , sizeof(double)        , 1 , fp );
-      fread( &c->age      , sizeof(double)        , 1 , fp );
-      fread( &c->pressure , sizeof(double)        , 1 , fp );
-      fread( &c->facies   , sizeof(Sed_facies)    , 1 , fp );
+      fread( c->f           , sizeof(double)        , n , fp );
+      fread( &(c->t_0)      , sizeof(double)        , 1 , fp );
+      fread( &(c->t)        , sizeof(double)        , 1 , fp );
+      fread( &(c->age)      , sizeof(double)        , 1 , fp );
+      fread( &(c->pressure) , sizeof(double)        , 1 , fp );
+      fread( &(c->facies)   , sizeof(Sed_facies)    , 1 , fp );
    }
 
    return c;

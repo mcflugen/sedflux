@@ -326,6 +326,22 @@ sed_process_queue_run( Sed_process_queue q , Sed_cube p )
 }
 
 Sed_process_queue
+sed_process_queue_run_at_end( Sed_process_queue q , Sed_cube p )
+{
+   if ( q && p )
+   {
+      GList* link;
+
+      for ( link=q->l ; link ; link=link->next )
+      {
+         g_list_foreach( SED_PROCESS_LINK(link->data)->obj_list , (GFunc)sed_process_run_at_end , p );
+      }
+   }
+
+   return q;
+}
+
+Sed_process_queue
 sed_process_queue_run_process_now( Sed_process_queue q , const gchar* name , Sed_cube cube )
 {
    if ( q )
@@ -466,9 +482,9 @@ gboolean sed_process_is_on( Sed_process p , double time )
 
    {
       double last_event;
-      if ( !p->active )
+      if ( !p->active || sed_process_interval_is_at_end(p) )
          is_on = FALSE;
-      else if ( p->interval < 0 )
+      else if ( sed_process_interval_is_always(p) )
          is_on = TRUE;
       else if ( time >= sed_process_next_event(p) )
       {
@@ -492,10 +508,20 @@ gboolean sed_process_array_run( GPtrArray *a , Sed_cube p )
    return rtn_val;
 }
 
-gboolean sed_process_run( Sed_process a , Sed_cube p )
+gboolean
+sed_process_run( Sed_process a , Sed_cube p )
 {
    gboolean rtn_val = TRUE;
    if ( sed_process_is_on( a , sed_cube_age(p) ) )
+      rtn_val = sed_process_run_now(a,p);
+   return rtn_val;
+}
+
+gboolean
+sed_process_run_at_end( Sed_process a , Sed_cube p )
+{
+   gboolean rtn_val = TRUE;
+   if ( sed_process_is_active(a) && sed_process_interval_is_at_end(a) )
       rtn_val = sed_process_run_now(a,p);
    return rtn_val;
 }
@@ -591,8 +617,10 @@ GList *sed_process_scan( Eh_key_file k , Sed_process p )
          {
             new_proc->logging = logging[i];
 
-            if ( g_strcasecmp( interval[i] ,"always") == 0 )
+            if      ( g_strcasecmp( interval[i] , "always" ) == 0 )
                new_proc->interval = -1;
+            else if ( g_strcasecmp( interval[i] , "at-end" ) == 0 )
+               new_proc->interval = -2;
             else
                new_proc->interval = strtotime( interval[i] );
 
@@ -820,10 +848,43 @@ sed_process_name_is_same( Sed_process a , Sed_process b )
 
 @return The process interval in years
 */
-double sed_process_interval( Sed_process p )
+double
+sed_process_interval( Sed_process p )
 {
    eh_return_val_if_fail( p!=NULL , 0. );
    return p->interval;
+}
+
+/** Is the time interval set to 'always'
+
+If the interval of a process is 'always', it will be run for
+every sedflux time step.
+
+\param p A Sed_process
+
+\return Returns true if the interval is 'always'
+*/
+gboolean
+sed_process_interval_is_always( Sed_process p )
+{
+   eh_return_val_if_fail( p , FALSE );
+   return p->interval>-1.5 && p->interval<-.5;
+}
+
+/** Is the time interval set to 'at-end'
+
+If the interval of a process is 'at-end', it will only
+be run for at the end of an epoch.
+
+\param p A Sed_process
+
+\return Returns true if the interval is 'at-end'
+*/
+gboolean
+sed_process_interval_is_at_end( Sed_process p )
+{
+   eh_return_val_if_fail( p , FALSE );
+   return p->interval>-2.5 && p->interval<-1.5;
 }
 
 /** Is the Sed_process turned on

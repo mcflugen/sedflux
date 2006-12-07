@@ -192,8 +192,8 @@ Sed_sediment sed_sediment_add_type( Sed_sediment sed , const Sed_type new_type )
       if ( !sed_sediment_has_type(sed,new_type) )
       {
          sed = sed_sediment_resize( sed , sed->len+1 );
-//         sed = sed_sediment_append( sed , new_type   );
-         sed = sed_sediment_insert_sorted( sed , new_type   );
+         sed = sed_sediment_append( sed , new_type   );
+//         sed = sed_sediment_insert_sorted( sed , new_type   );
       }
    }
 
@@ -450,10 +450,12 @@ Sed_type sed_type_destroy( Sed_type t )
 
 Sed_type sed_type_copy( Sed_type dest , Sed_type src )
 {
+   eh_require( src );
+
    if ( !dest )
       dest = sed_type_new();
 
-   g_memmove( dest , src , sizeof( *dest ) );
+   memcpy( dest , src , sizeof( *dest ) );
    
    return dest;
 }
@@ -573,6 +575,26 @@ void sed_sediment_fprint_default( FILE *fp )
    }
 }
 
+/** Scan sediment information from a file
+
+Scan sediment information from a file.  The file consists of a series of groups (one
+for each type of sediment).  Each groups contains a key-value pairs describing the
+sediment type.
+
+An example group:
+\dontinclude test.sediment
+\skip start of the first group
+\until rest of the groups
+This is the start of the next group.
+
+\note The order that the sediment groups appear in the file are the order they
+      are placed into the Sed_sediment class.  They are no longer sorted by
+      grain size.
+
+\param file    The name of the file to scan
+
+\return A new Sed_sediment constructed from the file.  Use sed_sediment_destroy to free.
+*/
 Sed_sediment sed_sediment_scan( const char *file )
 {
    Sed_sediment sed = NULL;
@@ -588,23 +610,21 @@ Sed_sediment sed_sediment_scan( const char *file )
 //      eh_debug( "Read in the sediment types" );
       {
          Eh_key_file key_file = eh_key_file_scan( name_used );
-         gchar** groups       = eh_key_file_get_groups( key_file );
-         gchar** group_name;
-         Eh_symbol_table t;
+         Eh_symbol_table group;
          Sed_type new_type;
 
-         for ( group_name=groups ; *group_name ; group_name++ )
+         for ( group = eh_key_file_pop_group( key_file ) ;
+               group ;
+               group = eh_key_file_pop_group( key_file ) )
          {
-            t        = eh_key_file_get_symbol_table( key_file , *group_name );
-            new_type = sed_type_init( t );
+            new_type = sed_type_init( group );
 
             sed      = sed_sediment_add_type( sed , new_type );
 
-            t        = eh_symbol_table_destroy( t );
-            new_type = sed_type_destroy( new_type );
+            group    = eh_symbol_table_destroy( group );
+            new_type = sed_type_destroy       ( new_type );
          }
 
-         g_strfreev( groups );
          eh_key_file_destroy( key_file );
       }
 

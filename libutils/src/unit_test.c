@@ -1,5 +1,6 @@
 #include "utils.h"
 
+int test_utils       ( void );
 int test_grid        ( void );
 int test_project     ( void );
 int test_num         ( void );
@@ -17,6 +18,14 @@ int main( void )
    n += test_num();
    n += test_symbol_table();
    n += test_input_val();
+   n += test_utils();
+
+   fprintf( stdout , "-----------------------------------\n\n" );
+   if ( n==0 )
+      fprintf( stdout , "All tests passed!\n\n" );
+   else
+      fprintf( stdout , "There were %d failures\n\n" , n );
+   fprintf( stdout , "-----------------------------------\n" );
 
    return n;
 }

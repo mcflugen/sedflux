@@ -1,9 +1,9 @@
---- 'season 1' ---
+[ 'season 1' ]
 Number of grain sizes:                    5
 Duration (y):                             1y
 Bedload (kg/s):                           23.1
 Suspended load concentrations (kg/m^3):   .071,      .071,      .089,      .124
-River velocity (m/s):                     1.06
-River width (m):                           263
-River depth (m):                           8.3
+Velocity (m/s):                           1.06
+Width (m):                                263
+Depth (m):                                8.3
 

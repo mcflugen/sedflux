@@ -347,14 +347,10 @@ vertical limits:                        tight
 horizontal limits:                      tight
 property:                               age,grain,pressure
 
-###
-### final dump
-###
-
-[ 'final dump' ]
+[ 'data dump' ]
 active:                                 yes
 logging:                                yes
-repeat interval:                        1y
+repeat interval:                        at-end
 output directory:                       ./output
 vertical resolution:                    full
 horizontal resolution:                  full

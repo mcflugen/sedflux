@@ -1,0 +1,28 @@
+/*! \page download_sec Downloading
+
+The latest version of sedflux can be downloaded with anonymous ftp from:
+ftp://instaar.colorado.edu/pub/ew
+This will download a .tar.gz file that can be unpacked by
+\code
+> tar xvfz ew-2.0.7.tar.gz
+\endcode
+
+If you are interested in developing sedflux, you can checkout a copy through our subversion
+repository at:
+https://instaar.colorado.edu/svn
+
+To checkout the latest version of sedflux susing subversion,
+\code
+> svn checkout https://instaar.colorado.edu/svn/Main sedflux
+\endcode
+
+\note The repository needs to be bootstrapped to generate the configuration files need to
+compile the code.  This is done by running \p bootstrap,
+\code
+> svn checkout https://instaar.colorado.edu/svn/Main sedflux
+> cd sedflux/sedflux/trunk
+> ./bootstrap
+\endcode
+The configure script can now be run on the package.
+
+*/

@@ -40,15 +40,35 @@ include_HEADERS        = utils.h \
                          eh_types.h \
                          eh_input_val.h
 
-bin_PROGRAMS           = test unit_test
+bin_PROGRAMS           = test
 test_SOURCES           = test.c
-unit_test_SOURCES      = unit_test.c eh_grid_unit_test.c eh_project_unit_test.c eh_num_unit_test.c eh_symbol_table_unit_test.c eh_input_val_unit_test.c
 
-libutils_la_LIBADD     = @GLIB_LIBS@ -lcheck
+if ENABLE_CHECK
+
+bin_PROGRAMS          += unit_test
+unit_test_SOURCES      = \
+                         unit_test.c \
+                         eh_utils_unit_test.c \
+                         eh_grid_unit_test.c \
+                         eh_project_unit_test.c \
+                         eh_num_unit_test.c \
+                         eh_symbol_table_unit_test.c \
+                         eh_input_val_unit_test.c
+unit_test_LDADD        = -lutils @GLIB_LIBS@ @CHECK_LIBS@ -lm
+
+unit_test_CFLAGS       = @CHECK_CFLAGS@
+
+endif
+
+libutils_la_LIBADD     = @GLIB_LIBS@
 libutils_la_LDFLAGS    = -version-info 1:1
 
-test_LDADD             = -lutils @GLIB_LIBS@ -lutils -lcheck -lm
-unit_test_LDADD        = -lutils @GLIB_LIBS@ -lutils -lcheck -lm
+if ENABLE_BLAS
+libutils_la_LIBADD   += @BLAS_LIBS@
+libutils_la_CFLAGS    = @BLAS_CFLAGS@
+endif
+
+test_LDADD             = -lutils @GLIB_LIBS@ -lutils -lm
 
 EXTRA_DIST             = utils.pc.in
 pkgconfigdir           = $(libdir)/pkgconfig

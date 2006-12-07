@@ -387,7 +387,7 @@ START_TEST ( test_cell_separate_thickness )
 
       b = sed_cell_separate_thickness( a , .75 , NULL );
 
-      fail_unless( sed_cell_is_valid(b)    , "Separated cell must be a valid cell" );
+      fail_unless( sed_cell_is_valid(b)        , "Separated cell must be a valid cell" );
       fail_unless( sed_cell_is_same(a,a_after) , "Original cell not separated correctly" );
       fail_unless( sed_cell_is_same(b,b_after) , "Separated cell not separated correctly" );
 
@@ -396,7 +396,7 @@ START_TEST ( test_cell_separate_thickness )
 
       b = sed_cell_separate_thickness( a , .75 , NULL );
 
-      fail_unless( sed_cell_is_valid(b)    , "Separated cell must be a valid cell" );
+      fail_unless( sed_cell_is_valid(b)        , "Separated cell must be a valid cell" );
       fail_unless( sed_cell_is_same(a,a_after) , "Original cell not separated correctly" );
       fail_unless( sed_cell_is_same(b,b_after) , "Separated cell not separated correctly" );
 

@@ -3,9 +3,21 @@
 
 CLASS( Eh_key_file )
 {
-   GHashTable* t;
+   GHashTable* t; //< A hash table that holds all of the group lists
+   GList*      l; //< A list of the groups in the order they appear in the file
 };
 
+/** \brief Destroy each symbol table in a list.
+
+A helper function that destroys each Eh_symbol_table in a GList, as well as
+the GList itself.  In this case, it is used to destroy a group of an Eh_key_file.
+
+\param key         The key parameter of a GHashTable.  In this case, it is the name of group.
+\param value       The value parameter of a GHashTable.  In this case, it is a pointer to a GList*
+                   of Eh_symbol_table's.
+\param user_data   Unused.
+
+*/
 void destroy_hash_table_list( gpointer key , gpointer value , gpointer user_data )
 {
    GList* l;
@@ -14,6 +26,16 @@ void destroy_hash_table_list( gpointer key , gpointer value , gpointer user_data
    g_list_free( value );
 }
 
+/** \brief Duplicate a key of a GHashTable and add it to a list.
+
+A helper function to duplicate each key of a GHashTable and add it to
+a list of all the keys.  The keys in the list are delimited by '\n'.
+
+\param key         A pointer to GHashTable key
+\param value       A pointer to GHashTable value
+\param user_data   Location of the string containing the list of keys
+
+*/
 void dup_key( gpointer key , gpointer value , gpointer user_data )
 {
    gchar** s = (gchar**)(user_data);
@@ -29,6 +51,16 @@ void dup_key( gpointer key , gpointer value , gpointer user_data )
 
 }
 
+/** \brief Construct an array of value-strings from a list of symbol tables
+
+From a GList of Eh_symbol_tables, get the corresponding value for the
+given key-string and put it in an array of strings.
+
+\param l     The GList of Eh_symbol_tables's
+\param key   The key-string specifying the value to get
+
+\return An array of strings.  The array should be freed with g_strfreev.
+*/
 gchar** eh_key_file_list_to_array( GList* l , gpointer key )
 {
    gchar** ans;
@@ -43,21 +75,43 @@ gchar** eh_key_file_list_to_array( GList* l , gpointer key )
    return ans;
 }
 
+/** Add a group to a Eh_key_file
+
+Add the group \p group_name to an Eh_key_file.  If \p replace is TRUE, and the \p group_name
+is already present in the key-file, the symbol table of the present group is returned.
+Otherwise, a new symbol table is created.
+
+\param f           An Eh_key_file
+\param group_name  The name of the group to add (or append)
+\param replace     If TRUE, and the given group already exists, it is replaced.  Otherwise,
+                   a new instance of the group is created.
+
+\return The symbol table of the group
+*/
 Eh_symbol_table eh_key_file_add_group( Eh_key_file f ,
                                        const gchar* group_name ,
                                        gboolean replace )
 {
+   /* Find the group in the GHashTable */
    GList* group_list = g_hash_table_lookup( f->t , group_name );
    Eh_symbol_table group;
 
+   /* If the group doesn't exist or it does but replace is off */
    if ( !group_list || (group_list&&!replace) )
    {
       Eh_symbol_table new_tab = eh_symbol_table_new();
 
+      /* prepend a new symbol table to the list. */
       group_list = g_list_prepend(group_list,new_tab);
+
+      /* add the group to the GHashTable of the key-file */
       g_hash_table_insert( f->t                   ,
                            g_strdup( group_name ) ,
                            group_list );
+
+      /* Add the group name to the end of the list */
+      f->l = g_list_append( f->l , g_strdup( group_name ));
+
       group = new_tab;
    }
    else
@@ -65,9 +119,19 @@ Eh_symbol_table eh_key_file_add_group( Eh_key_file f ,
 
    eh_require( group );
 
+   /* The symbol table of the specified group. */
    return group;
 }
 
+/** 
+\brief Add a key-value pair to a key-file group
+
+A helper function to add a key-value pair to a Eh_key_file
+
+\param key        The key-string to add
+\param value      The value-string to add
+\param user_data  Location of a the key-file and group name.
+*/
 void add_record_value( gpointer key , gpointer value , gpointer user_data )
 {
    Eh_key_file f          = ((gpointer*)user_data)[0];
@@ -75,6 +139,11 @@ void add_record_value( gpointer key , gpointer value , gpointer user_data )
    eh_key_file_set_value( f , group_name , key , value );
 }
 
+/** Create a new Eh_key_file
+
+\return The new Eh_key_file.  Use eh_key_file_destroy to free.
+
+*/
 Eh_key_file eh_key_file_new( )
 {
    Eh_key_file f;
@@ -85,17 +154,42 @@ Eh_key_file eh_key_file_new( )
                                  &g_str_equal                 ,
                                  (GDestroyNotify)&eh_free_mem ,
                                  NULL );
+   f->l = NULL;
+
    return f;
 }
 
+/** Destroy an Eh_key_file
+
+Free all of the resources used by an Eh_key_file.
+
+\return Returns NULL.
+*/
 Eh_key_file eh_key_file_destroy( Eh_key_file f )
 {
-   g_hash_table_foreach( f->t , (GHFunc)&destroy_hash_table_list , NULL );
-   g_hash_table_destroy( f->t );
-   eh_free( f );
+   if ( f )
+   {
+      GList* link;
+
+      g_hash_table_foreach( f->t , (GHFunc)&destroy_hash_table_list , NULL );
+      g_hash_table_destroy( f->t );
+
+      for ( link=f->l ; link ; link=link->next )
+         eh_free( link->data );
+      g_list_free( f->l );
+
+      eh_free( f );
+   }
    return NULL;
 }
 
+/** Query if a key-file has the given group.
+
+\param f          An Eh_key_file
+\param group_name The name of the group in question
+
+\return Returns TRUE if the key-file contains the group.
+*/
 gboolean eh_key_file_has_group( Eh_key_file f , const gchar* group_name )
 {
    if ( f && g_hash_table_lookup( f->t , group_name ) )
@@ -104,6 +198,14 @@ gboolean eh_key_file_has_group( Eh_key_file f , const gchar* group_name )
       return FALSE;
 }
 
+/** Query if a key-file group has the given key.
+
+\param f          An Eh_key_file
+\param group_name The name of the group in question
+\param key        The name of the key
+
+\return Returns TRUE if the key-file group contains the key.
+*/
 gboolean eh_key_file_has_key( Eh_key_file f , const gchar* group_name , const gchar* key )
 {
    if ( f )
@@ -118,6 +220,12 @@ gboolean eh_key_file_has_key( Eh_key_file f , const gchar* group_name , const gc
       return FALSE;
 }
 
+/** Get the names of all the groups in an Eh_key_file
+
+\param f   An Eh_key_file
+
+\return A (NULL-terminated) array of all the group names.  Use g_strfreev to free it.
+*/
 gchar** eh_key_file_get_groups( Eh_key_file f )
 {
    gchar** groups = NULL;
@@ -136,13 +244,49 @@ gchar** eh_key_file_get_groups( Eh_key_file f )
    return groups;
 }
 
-guint eh_key_file_group_size( Eh_key_file f ,
-                              const gchar* group_name )
+/** The number of instances of a group in an Eh_key_file
+
+\param f   An Eh_key_file
+\param group_name The name of a key-file group
+
+\return The number of occurances of the group in an Eh_key_file
+*/
+gint eh_key_file_group_size( Eh_key_file f ,
+                             const gchar* group_name )
 {
    GList* group = g_hash_table_lookup( f->t , group_name );
    return g_list_length( group );
 }
 
+/** The number of groups in an Eh_key_file
+
+The total number of groups including repeated occurances of
+a group.
+
+\param f   An Eh_key_file
+
+\return The total number of groups.
+*/
+gint eh_key_file_size( Eh_key_file f )
+{
+   gint len = 0;
+   if ( f )
+   {
+      len = g_list_length( f->l );
+   }
+   return len;
+}
+
+/** Get all of the keys present in a given group
+
+Note that copies of the key-strings are made, so it is ok to free them
+when they are no longer needed.
+
+\param f            An Eh_key_file
+\param group_name   The name of a key-file group
+
+\return A NULL-terminated array of key-strings.  Use g_strfreev to free it.
+*/
 gchar** eh_key_file_get_keys( Eh_key_file f , const gchar* group_name )
 {
    gchar** keys = NULL;
@@ -167,6 +311,17 @@ gchar** eh_key_file_get_keys( Eh_key_file f , const gchar* group_name )
    return keys;
 }
 
+/** Get all of the values associated with a key from a key-file group
+
+Note that copies of the value-strings are made, so it is ok to free them
+when they are no longer needed.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return A NULL-terminated array of value-strings.  Use g_strfreev to free it.
+*/
 gchar** eh_key_file_get_all_values( Eh_key_file f , const gchar* group_name , const gchar* key )
 {
    gchar** value = NULL;
@@ -181,7 +336,20 @@ gchar** eh_key_file_get_all_values( Eh_key_file f , const gchar* group_name , co
    return value;
 }
 
-gchar* eh_key_file_get_value( Eh_key_file f , const gchar* group_name , const gchar* key )
+/** Get the value associated with the first occurance of key in a key-file group
+
+Note that a copy of the value-string is made, so it is ok to free it
+when it is no longer needed.  If there is more than one occurance of the group in the
+key-file, the value is obtained from the first occurance of the group.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return A newly-allocated string of the value.  Use eh_free to free it.
+*/
+gchar*
+eh_key_file_get_value( Eh_key_file f , const gchar* group_name , const gchar* key )
 {
    gchar* value = NULL;
 
@@ -195,18 +363,50 @@ gchar* eh_key_file_get_value( Eh_key_file f , const gchar* group_name , const gc
    return value;
 }
 
+/** Get a string value from a key-file
+
+Note that a copy of the value-string is made, so it is ok to free it
+when it is no longer needed.  If there is more than one occurance of the group
+in the key-file, the value is obtained from the first occurance of the group.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return A newly-allocated string of the value.  Use eh_free to free it.
+
+*/
 gchar*
 eh_key_file_get_str_value( Eh_key_file f , const gchar* group_name , const gchar* key )
 {
    return eh_key_file_get_value( f , group_name , key );
 }
 
+/** Get an array of strings from a key-file
+
+Note that copies of the value-strings are made, so it is ok to free them
+when they are no longer needed.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return A NULL-terminated array of value-strings.  Use g_strfreev to free it.
+*/
 gchar**
 eh_key_file_get_str_values( Eh_key_file f , const gchar* group_name , const gchar* key )
 {
    return eh_key_file_get_all_values(f,group_name,key);
 }
 
+/** Find a key in a key-file and convert its value to a gboolean
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return The value converted to a gboolean.
+*/
 gboolean eh_key_file_get_bool_value( Eh_key_file f           ,
                                      const gchar* group_name ,
                                      const gchar* key )
@@ -219,6 +419,16 @@ gboolean eh_key_file_get_bool_value( Eh_key_file f           ,
    return ans;
 }
 
+/** Find all values of a key in a key-file and convert them to gboolean
+
+\note Use eh_key_file_group_size to get the length of the array.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return Array of values converted to a gboolean.  Use eh_free to free.
+*/
 gboolean* eh_key_file_get_bool_values( Eh_key_file f           ,
                                        const gchar* group_name ,
                                        const gchar* key )
@@ -236,6 +446,14 @@ gboolean* eh_key_file_get_bool_values( Eh_key_file f           ,
    return ans;
 }
 
+/** Find a key in a key-file and convert its value to a double
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return The value converted to a double.
+*/
 double eh_key_file_get_dbl_value( Eh_key_file f ,
                                   const gchar* group_name ,
                                   const gchar* key )
@@ -248,6 +466,16 @@ double eh_key_file_get_dbl_value( Eh_key_file f ,
    return ans;
 }
 
+/** Find all values of a key in a key-file and convert them to double
+
+\note Use eh_key_file_group_size to get the length of the array.
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+
+\return Array of values converted to a double.  Use eh_free to free.
+*/
 double* eh_key_file_get_dbl_values( Eh_key_file f           ,
                                     const gchar* group_name ,
                                     const gchar* key )
@@ -265,6 +493,21 @@ double* eh_key_file_get_dbl_values( Eh_key_file f           ,
    return ans;
 }
 
+/** Set a value in a key-file.
+
+Set the value of a key within a group of a key-file.  If the group, \p group_name
+does not already exist, then a new group is created and the key-value pair added.
+If the specified key is already present within the group, a new occurance of the
+group is created and the key-value pair added to it.
+
+\note Both the \p key and \p value strings are duplicated, so it is fine to free
+them after use.
+
+\param f          An Eh_key_file
+\param group_name The name of a key-file group
+\param key        The name of the key whose value to set
+\param value      A string containing the new value
+*/
 void eh_key_file_set_value( Eh_key_file f           ,
                             const gchar* group_name ,
                             const gchar* key        ,
@@ -274,18 +517,37 @@ void eh_key_file_set_value( Eh_key_file f           ,
 
    {
       Eh_symbol_table group;
+
+      /* If the group doesn't exist, or the key is alreay present, add a new group */
       if ( !eh_key_file_has_group( f , group_name )
            || eh_key_file_has_key( f , group_name , key ) )
          group = eh_key_file_add_group( f , group_name , FALSE );
       else
          group = g_list_first(g_hash_table_lookup( f->t , group_name ))->data;
+      /* We are now sure that the key is not present in this table. */
 
       eh_require( group );
 
+      /* We duplicate the strings and add them to the table */
       eh_symbol_table_insert( group , g_strdup( key ) , g_strdup( value ) );
    }
 }
 
+/** Reset a value in a key-file
+
+This is similar to eh_key_file_set_value, only if the key is already present
+in the given group, it's value is set to the new value.  If the group is not
+present, then a new group is created.
+
+\note Both the \p key and \p value strings are duplicated, so it is fine to free
+them after use.
+
+\param f          An Eh_key_file
+\param group_name The name of a key-file group
+\param key        The name of the key whose value to set
+\param value      A string containing the new value
+
+*/
 void eh_key_file_reset_value( Eh_key_file f           ,
                               const gchar* group_name ,
                               const gchar* key        ,
@@ -300,6 +562,18 @@ void eh_key_file_reset_value( Eh_key_file f           ,
    eh_symbol_table_insert( group , g_strdup( key ) , g_strdup( value ) );
 }
 
+
+/** Construct a Eh_symbol_table of key-value pairs for a given group
+
+A new symbol table is created that contains all of the key-value pairs of
+the given group.  If the key-file contains more than one occurance of the
+group, only the first occurance is used.
+
+\param f          An Eh_key_file
+\param group_name The name of a key-file group
+
+\return A new Eh_symbol_table of key-value pairs.  Use eh_symbol_table_destroy to free.
+*/
 Eh_symbol_table eh_key_file_get_symbol_table( Eh_key_file f ,
                                               const gchar* group_name )
 {
@@ -307,6 +581,18 @@ Eh_symbol_table eh_key_file_get_symbol_table( Eh_key_file f ,
    return eh_symbol_table_dup( group->data );
 }
 
+/** Construct Eh_symbol_table's of key-value pairs for all occurances of a group
+
+A new symbol table of key-value pairs is created for each occurance of the group and
+placed into a NULL-terminated array.  Each symbol table can be safely destroyed 
+using eh_symbol_table_destroy.
+
+\param f          An Eh_key_file
+\param group_name The name of a key-file group
+
+\return A NULL-terminated array of newly-allocated Eh_symbol_table's of key-value pairs.
+        Use eh_symbol_table_destroy to free each element of the array.
+*/
 Eh_symbol_table* eh_key_file_get_symbol_tables( Eh_key_file f , 
                                                 const gchar* group_name )
 {
@@ -330,11 +616,26 @@ Eh_symbol_table* eh_key_file_get_symbol_tables( Eh_key_file f ,
    return value;
 }
 
+/** \brief Print the name of a key
+
+\param key        A key-string to print
+\param value      Not used
+\param user_data  Not used
+*/
 void print_keys( gpointer key , gpointer value , gpointer user_data )
 {
    eh_message( "KEY = %s" , (gchar*)key );
 }
 
+/** Scan a key-file
+
+Scan an entire key-file and construct a new Eh_key_file containing
+the file information.
+
+\param file   The name of the file to scan
+
+\return A new Eh_key_file.  Use eh_key_file_destroy to free.
+*/
 Eh_key_file eh_key_file_scan( const char* file )
 {
    Eh_key_file f = eh_key_file_new();
@@ -353,6 +654,7 @@ Eh_key_file eh_key_file_scan( const char* file )
       {
          symbol_table = eh_symbol_table_new();
          group_name = eh_scan_next_record( s , symbol_table );
+
          if ( group_name )
          {
             user_data[0] = f;
@@ -372,6 +674,21 @@ Eh_key_file eh_key_file_scan( const char* file )
    return f;
 }
 
+/** Scan a file for a particular key-file group
+
+Scan a key-file for a particular group and place the key-value pairs found in
+this group into a Eh_symbol_table.  If the input symbol table, \p tab is
+NULL, a new symbol table is constructed.  Only the first occurance of the
+group is scanned.
+
+\param file     The name of the file to scan
+\param name     The name of the group to scan
+\param tab      A symbol table to place the key-value pairs into.  If NULL, a
+                new table will be created.
+
+\return         An Eh_symbol_table containing the key-value pairs of the group, or NULL if the
+                file does not contain the specified group.
+*/
 Eh_symbol_table eh_key_file_scan_for( const gchar* file ,
                                       const gchar* name ,
                                       Eh_symbol_table tab )
@@ -396,10 +713,54 @@ Eh_symbol_table eh_key_file_scan_for( const gchar* file ,
 
    if ( tab && new_tab )
    {
-      eh_symbol_table_copy( tab , new_tab );
+      eh_symbol_table_copy   ( tab , new_tab );
       eh_symbol_table_destroy( new_tab );
+
+      new_tab = tab;
    }
 
    return new_tab;
+}
+
+/** Pop the next group of a key-file
+
+Construct a symbol table of key-value pairs from the next group in a
+key-file.  The group is removed from the Eh_key_file.  The groups are
+ordered in the same way as they are in the original file that was scanned.
+
+\param f   An Eh_key_file
+
+\return An Eh_symbol_table of key-value pairs from the next group in a key-file
+*/
+Eh_symbol_table eh_key_file_pop_group( Eh_key_file f )
+{
+   Eh_symbol_table new_table = NULL;
+
+   if ( f && f->l )
+   {
+      gchar* group_name = g_list_first(f->l)->data;
+      GList* group_list = g_hash_table_lookup( f->t , group_name );
+
+      eh_require( group_list );
+
+      /* Pop the next group in the list */
+      new_table = g_list_first( group_list )->data;
+
+      /* Delete the link to this group */
+      group_list = g_list_delete_link( group_list , group_list );
+
+      if ( group_list )
+         /* If the list isn't empty, insert the new start of the list into the hash table */
+         g_hash_table_replace( f->t , g_strdup(group_name) , group_list );
+      else
+         /* Otherwise, remove the group from the hash table */
+         g_hash_table_remove( f->t , group_name );
+
+      /* Delete the first link in the list and free the data */
+      eh_free( group_name );
+      f->l = g_list_delete_link( f->l , f->l );
+   }
+
+   return new_table;
 }
 

@@ -61,11 +61,11 @@
 #define PROGRAM_NAME "sedflux"
 #define PROGRAM_MAJOR_VERSION "2"
 #define PROGRAM_MINOR_VERSION "0"
-#define PROGRAM_MICRO_VERSION "9"
+#define PROGRAM_MICRO_VERSION "11"
 
 #define S_MAJOR_VERSION (2)
 #define S_MINOR_VERSION (0)
-#define S_MICRO_VERSION (9)
+#define S_MICRO_VERSION (11)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \
@@ -208,9 +208,9 @@ NULL }
 "Event duration:                           .25y                              ",\
 "Bedload (kg/s):                           100.0                             ",\
 "Suspended load concentrations (kg/m^3):   1.0,      1.0,      1.0,      1.0 ",\
-"River velocity (m/s):                     1                                 ",\
-"River width (m):                          100.0                             ",\
-"River depth (m):                          2.0                               ",\
+"Velocity (m/s):                           1                                 ",\
+"Width (m):                                100.0                             ",\
+"Depth (m):                                2.0                               ",\
 NULL }
 
 

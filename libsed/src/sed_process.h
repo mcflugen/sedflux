@@ -87,6 +87,7 @@ Sed_process    sed_process_set_next_event ( Sed_process p    , double new_next_e
 gboolean       sed_process_is_on          ( Sed_process p    , double time );
 gboolean       sed_process_array_run      ( GPtrArray *a     , Sed_cube );
 gboolean       sed_process_run            ( Sed_process      , Sed_cube );
+gboolean       sed_process_run_at_end     ( Sed_process      , Sed_cube );
 gboolean       sed_process_run_now        ( Sed_process      , Sed_cube );
 void           sed_process_init           ( Sed_process a    , Eh_symbol_table symbol_table );
 GList*         sed_process_scan           ( Eh_key_file k    , Sed_process p );
@@ -99,6 +100,8 @@ gssize         sed_process_queue_n_inactive( Sed_process_queue q );
 
 gpointer       sed_process_data           ( Sed_process p );
 double         sed_process_interval       ( Sed_process p );
+gboolean       sed_process_interval_is_always ( Sed_process p );
+gboolean       sed_process_interval_is_at_end ( Sed_process p );
 gchar*         sed_process_name           ( Sed_process p );
 gboolean       sed_process_name_is_same   ( Sed_process a , Sed_process b );
 gboolean       sed_process_is_active      ( Sed_process p );
@@ -118,6 +121,7 @@ Sed_process_queue sed_process_queue_scan    ( Sed_process_queue , Eh_key_file );
 Sed_process_queue sed_process_queue_remove  ( Sed_process_queue , gchar*   );
 Sed_process_queue sed_process_queue_delete  ( Sed_process_queue , const gchar* );
 Sed_process_queue sed_process_queue_run     ( Sed_process_queue , Sed_cube );
+Sed_process_queue sed_process_queue_run_at_end ( Sed_process_queue q , Sed_cube p );
 Sed_process_queue sed_process_queue_run_process_now( Sed_process_queue q ,
                                                      const gchar* name   ,
                                                      Sed_cube cube );

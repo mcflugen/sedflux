@@ -34,11 +34,20 @@ Eh_symbol_table  eh_symbol_table_destroy        ( Eh_symbol_table s      );
 
 gboolean         eh_symbol_table_has_label      ( Eh_symbol_table s      ,
                                                   gchar* label           );
+gboolean         eh_symbol_table_has_labels     ( Eh_symbol_table s      ,
+                                                  gchar** labels );
 gchar*           eh_symbol_table_value          ( Eh_symbol_table s      ,
-                                                  gchar* label           );
+                                                  const gchar* label     );
+gchar**          eh_symbol_table_values         ( Eh_symbol_table s      ,
+                                                  const gchar* label     ,
+                                                  const gchar* delimiters );
 
 double           eh_symbol_table_dbl_value      ( Eh_symbol_table s      ,
                                                   gchar* label           );
+double*          eh_symbol_table_dbl_array_value( Eh_symbol_table s      ,
+                                                  gchar* label           ,
+                                                  gint* len              ,
+                                                  const gchar* delims    );
 double           eh_symbol_table_time_value     ( Eh_symbol_table s      ,
                                                   gchar* label );
 gboolean         eh_symbol_table_bool_value     ( Eh_symbol_table s      ,

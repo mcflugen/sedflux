@@ -735,11 +735,11 @@ START_TEST ( test_convolve )
       x[i] = pow(i,.5) + g_random_double()-.5;
    }
 
-   eh_dbl_array_fprint( stdout , x , len_x );
+//   eh_dbl_array_fprint( stdout , x , len_x );
 
    z = eh_low_pass_filter( x , len_x );
 
-   eh_dbl_array_fprint( stdout , z , len_x );
+//   eh_dbl_array_fprint( stdout , z , len_x );
 }
 END_TEST
 

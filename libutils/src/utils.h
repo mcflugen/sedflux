@@ -757,4 +757,46 @@ gboolean eh_input_boolean( char *msg , gboolean default_val );
 
 gssize       eh_pointer_list_length ( gpointer* x );
 
+#if G_BYTE_ORDER==G_LITTLE_ENDIAN
+gssize eh_fwrite_dbl_to_be  ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fwrite_int32_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+
+#define eh_fwrite_dbl_to_le(p,s,n,f) ( fwrite(p,s,n,f) )
+#define eh_fwrite_int_to_le(p,s,n,f) ( fwrite(p,s,n,f) )
+
+#define eh_fwrite_dbl_swap(p,s,n,f) ( eh_fwrite_dbl_to_be(p,s,n,f) )
+#define eh_fwrite_int32_swap(p,s,n,f) ( eh_fwrite_int32_to_be(p,s,n,f) )
+
+#else
+gssize eh_fwrite_dbl_to_le  ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+
+#define eh_fwrite_dbl_to_be(p,s,n,f) ( fwrite(p,s,n,f) )
+#define eh_fwrite_int_to_be(p,s,n,f) ( fwrite(p,s,n,f) )
+
+#define eh_fwrite_dbl_swap(p,s,n,f) ( eh_fwrite_dbl_to_le(p,s,n,f) )
+#define eh_fwrite_int32_swap(p,s,n,f) ( eh_fwrite_int32_to_le(p,s,n,f) )
+
+#endif
+
+double**   eh_dlm_read_swap              ( const gchar* file ,
+                                           gchar* delims     ,
+                                           gint* n_rows      ,
+                                           gint* n_cols      ,
+                                           GError** error );
+double**   eh_dlm_read                   ( const gchar* file ,
+                                           gchar* delims     ,
+                                           gint* n_rows      ,
+                                           gint* n_cols      ,
+                                           GError** error );
+gint       eh_dlm_find_n_cols            ( gchar* content , gchar* delims );
+gint       eh_dlm_find_n_rows            ( gchar* content , gint delim );
+
+void       eh_str_remove_empty_lines     ( gchar* content );
+void       eh_str_remove_to_eol_comments ( gchar* content , gchar* com_start );
+void       eh_str_remove_c_style_comments( gchar* content );
+void       eh_str_remove_comments        ( gchar* content ,
+                                           const gchar* start_str ,
+                                           const gchar* end_str );
+
 #endif /* utils.h is included */

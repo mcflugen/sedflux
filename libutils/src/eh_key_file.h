@@ -16,8 +16,9 @@ gboolean      eh_key_file_has_key          ( Eh_key_file f           ,
                                              const gchar* group_name ,
                                              const gchar* key );
 gchar**       eh_key_file_get_groups       ( Eh_key_file f );
-guint         eh_key_file_group_size       ( Eh_key_file f           ,
+gint          eh_key_file_group_size       ( Eh_key_file f           ,
                                              const gchar* group_name );
+gint          eh_key_file_size             ( Eh_key_file f );
 gchar**       eh_key_file_get_keys         ( Eh_key_file f           ,
                                              const gchar* group_name );
 gchar**       eh_key_file_get_all_values   ( Eh_key_file f           ,
@@ -60,5 +61,6 @@ Eh_key_file   eh_key_file_scan              ( const char* file );
 Eh_symbol_table eh_key_file_scan_for        ( const gchar* file      ,
                                               const gchar* name      ,
                                               Eh_symbol_table tab );
+Eh_symbol_table eh_key_file_pop_group       ( Eh_key_file f );
 
 #endif

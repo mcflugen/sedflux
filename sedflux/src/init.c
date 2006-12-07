@@ -28,7 +28,12 @@
 #include "plume_types.h"
 #include "utils.h"
 
-/* Global variable that lists all of the process that sedflux will run */
+/** Global variable that lists all of the process that sedflux will run 
+
+sedflux will cycle through the process in the order that they are listed here.
+To add a new process to sedflux, you will need to add an entry to this list.
+sedflux will will then automatically cycle through your process.
+*/
 static Sed_process_init_t process_list[] =
 {
    { "constants"         , sizeof(Constants_t)    , init_constants     , run_constants   } , 
@@ -57,12 +62,27 @@ static Sed_process_init_t process_list[] =
    { "isostasy"          , sizeof(Isostasy_t)     , init_isostasy      , run_isostasy    } ,
    { "subsidence"        , sizeof(Subsidence_t)   , init_subsidence    , run_subsidence  } ,
    { "data dump"         , sizeof(Data_dump_t)    , init_data_dump     , run_data_dump   } ,
-   { "final dump"        , sizeof(Data_dump_t)    , init_data_dump     , run_data_dump   } ,
    { "failure"           , sizeof(Failure_proc_t) , init_failure       , run_failure     } ,
    { "measuring station" , sizeof(Met_station_t)  , init_met_station   , run_met_station } ,
    { "bbl"               , sizeof(Bbl_t)          , init_bbl           , run_bbl         } ,
    { "cpr"               , sizeof(Cpr_t)          , init_cpr           , run_cpr         }
 };
+
+/** Create a queue of processes from a file
+
+Create a new queue of process for sedflux to run.  The processes are initialized
+using the process file, \p file.
+
+If the string array, \p user_data is non-NULL, it is a NULL-terminated list
+of strings that indicate which processes should be active.  This will override
+the process file of the epochs.  Any process not listed in \p active
+will \b NOT be active.
+
+\param file      The file containing the process information
+\param user_data A string array of process to activate (or NULL)
+
+\return A newly-allocated (and initialized) Sed_process_queue.
+*/
 
 Sed_process_queue
 sedflux_create_process_queue( const gchar* file , gchar** user_data )
@@ -119,6 +139,8 @@ typedef struct
    gint error;
 } Process_check_t;
 
+/** Individual process errors
+*/
 Process_check_t process_check[] =
 {
    {"plume"           , SED_ERROR_MULTIPLE_PROCS|SED_ERROR_INACTIVE|SED_ERROR_NOT_ALWAYS } ,
@@ -136,6 +158,8 @@ typedef struct
    gint error;
 } Family_check_t;
 
+/** Process-family errors
+*/
 Family_check_t family_check[] =
 {
    { "failure"   , "earthquake" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH },
@@ -144,20 +168,34 @@ Family_check_t family_check[] =
    { "diffusion" , "storms" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH }
 };
 
+/** Check a Sed_process_queue for potential errors
+
+The Sed_process_queue is examined for potential errors.  The type of
+errors are listed in the variables \p process_check and \p family_check.
+\p process_check describes errors that occur in individual processes
+while \p family_check describes errors in families of processes.
+
+\param q    A Sed_process_queue
+
+\return TRUE if there were no erros, FALSE otherwise.
+*/
 gboolean check_process_list( Sed_process_queue q )
 {
+   gboolean no_errors = TRUE;
    gint error = 0;
    gssize n_checks = sizeof( process_check ) / sizeof( Process_check_t );
    gssize n_families;
    gssize i;
-   gchar* str = "failure";
 
    for ( i=0 ; i<n_checks ; i++ )
    {
       error = sed_process_queue_check( q , process_check[i].name );
       if ( error & process_check[i].error )
+      {
          eh_warning( "%s: Possible error (#%d) in process input file." ,
                      process_check[i].name , error );
+         no_errors = FALSE;
+      }
    }
 
    n_families = sizeof( family_check ) / sizeof( Family_check_t );
@@ -168,11 +206,14 @@ gboolean check_process_list( Sed_process_queue q )
                                               family_check[i].parent_name ,
                                               family_check[i].child_name , NULL );
       if (   error & family_check[i].error )
+      {
          eh_warning( "%s: Possible error (#%d) in process input file." ,
                      family_check[i].parent_name , error );
+         no_errors = FALSE;
+      }
    }
 
-   return error;
+   return no_errors;
 }
 
 
@@ -182,12 +223,19 @@ This function will read in all of the epoch files, and initialize the
 processes.  This is intended to find any errors in the input files at 
 the begining of the model run.
 
-@param e_list A singly liked list of pointers to Epoch's.
+If the string array, \p active is non-NULL, it is a NULL-terminated list
+of strings that indicate which process should be active.  This will override
+the process file of the epochs.  Any process not listed in \p active
+will \b NOT be active.
 
-@return TRUE if no problems were found, FALSE otherwise.
+\param e_list  A singly liked list of pointers to Epoch's.
+\param active  If non-NULL, a list of process to activate.  
+
+\return TRUE if there were no errors, FALSE otherwise
 */
-gboolean check_process_files( Sed_epoch_queue e_list , gchar** options )
+gboolean check_process_files( Sed_epoch_queue e_list , gchar** active )
 {
+   gboolean no_errors = TRUE;
    int n_epochs = sed_epoch_queue_length( e_list );
    gssize i;
    Sed_process_queue q;
@@ -201,13 +249,13 @@ gboolean check_process_files( Sed_epoch_queue e_list , gchar** options )
    {
       this_epoch = sed_epoch_queue_nth( e_list , i );
 
-      q = sedflux_create_process_queue( sed_epoch_filename(this_epoch) , options );
+      q = sedflux_create_process_queue( sed_epoch_filename(this_epoch) , active );
 
-      check_process_list( q );
+      no_errors = no_errors && check_process_list( q );
 
       sed_process_queue_destroy( q );
    } 
 
-   return TRUE;
+   return no_errors;
 }
 

@@ -142,7 +142,6 @@ GSList *get_equivalent_storm( GFunc get_storm           ,
 
    sig_event_fraction = fabs(sig_event_fraction);
 
-//   n_days -= 1e-6;
    n_sig_events = n_days*sig_event_fraction;
 
    {
@@ -163,7 +162,6 @@ GSList *get_equivalent_storm( GFunc get_storm           ,
       sed_ocean_storm_set_index   ( this_storm , i );
       sed_ocean_storm_set_duration( this_storm , 1. );
 
-//      get_storm( &(this_storm->value) , user_data );
       get_storm( &storm_value , user_data );
 
       sed_ocean_storm_set_val( this_storm , storm_value );

@@ -54,10 +54,19 @@ sed_epoch_new( void )
    return e;
 }
 
-#define SED_KEY_EPOCH_NUMBER       "epoch number"
-#define SED_KEY_EPOCH_DURATION     "epoch duration"
-#define SED_KEY_EPOCH_TIME_STEP    "epoch time step"
-#define SED_KEY_EPOCH_FILE         "epoch process file"
+#define SED_KEY_EPOCH_NUMBER       "number"
+#define SED_KEY_EPOCH_DURATION     "duration"
+#define SED_KEY_EPOCH_TIME_STEP    "time step"
+#define SED_KEY_EPOCH_FILE         "process file"
+
+static gchar* required_labels[] =
+{
+   SED_KEY_EPOCH_NUMBER       ,
+   SED_KEY_EPOCH_DURATION     ,
+   SED_KEY_EPOCH_TIME_STEP    ,
+   SED_KEY_EPOCH_FILE         ,
+   NULL
+};
 
 Sed_epoch
 sed_epoch_new_from_table( Eh_symbol_table t )
@@ -68,16 +77,22 @@ sed_epoch_new_from_table( Eh_symbol_table t )
    {
       e = sed_epoch_new( );
 
-      sed_epoch_set_number   ( e , eh_symbol_table_dbl_value ( t , SED_KEY_EPOCH_NUMBER    ) );
-      sed_epoch_set_duration ( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_DURATION  ) );
-      sed_epoch_set_time_step( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_TIME_STEP ) );
-      sed_epoch_set_filename ( e , eh_symbol_table_value     ( t , SED_KEY_EPOCH_FILE      ) );
-
-      if ( !eh_try_open( sed_epoch_filename( e ) ) )
+      if ( eh_symbol_table_has_labels( t , required_labels ) )
       {
-         eh_error( "Could not open Sed_epoch file (%s)" , sed_epoch_filename(e) );
-      }
 
+         sed_epoch_set_number   ( e , eh_symbol_table_dbl_value ( t , SED_KEY_EPOCH_NUMBER    ) );
+         sed_epoch_set_duration ( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_DURATION  ) );
+         sed_epoch_set_time_step( e , eh_symbol_table_time_value( t , SED_KEY_EPOCH_TIME_STEP ) );
+         sed_epoch_set_filename ( e , eh_symbol_table_value     ( t , SED_KEY_EPOCH_FILE      ) );
+
+         if ( !eh_try_open( sed_epoch_filename( e ) ) )
+         {
+            eh_error( "Could not open Sed_epoch file (%s)" , sed_epoch_filename(e) );
+         }
+
+      }
+      else
+         eh_error( "Required labels are missing in epoch group" );
    }
 
    return e;
@@ -95,11 +110,11 @@ sed_epoch_queue_new( const gchar* file )
       Eh_symbol_table*  this_table;
 
       NEW_OBJECT( Sed_epoch_queue , e_list );
+      e_list->l = NULL;
 
       for ( this_table=tables ; *this_table ; this_table++ )
       {
-         e_list->l = g_list_append( e_list->l , sed_epoch_new_from_table( *this_table) );
-
+         e_list->l = g_list_append( e_list->l , sed_epoch_new_from_table(*this_table) );
          eh_symbol_table_destroy( *this_table );
       }
 

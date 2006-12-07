@@ -96,7 +96,7 @@ int main( int argc , char *argv[] )
    Sed_river *new_river;
    Eh_dbl_grid bathy_grid;
    Eh_ind_2 hinge_point;
-   Sed_hydro hydro_data;
+   Sed_hydro* hydro_data;
   
    args = eh_opts_init(argc,argv);
    if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
@@ -126,7 +126,7 @@ int main( int argc , char *argv[] )
    }
 
    bathy_grid    = sed_get_floor_3_default( 1 , n_i , n_j );
-   hydro_data    = sed_hydro_init( NULL );
+   hydro_data    = sed_hydro_scan( NULL );
    cube          = sed_cube_new( eh_grid_n_x(bathy_grid) ,
                                  eh_grid_n_y(bathy_grid) );
    sed_cube_set_dz( cube , 1. );
@@ -159,7 +159,7 @@ else
       new_river->hinge->std_dev   = .1;
 }
 
-      sed_hydro_copy( new_river->data , hydro_data );
+      sed_hydro_copy( new_river->data , hydro_data[0] );
       sed_cube_add_river( cube , new_river );
    }
 

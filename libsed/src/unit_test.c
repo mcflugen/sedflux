@@ -24,10 +24,12 @@ int main( void )
 
    sed_sediment_unset_env();
 
-   if ( n>0 )
-      eh_message( ":( There w%s %d error%s." , (n==1)?"as":"ere" , n , (n==1)?"":"s"  );
+   fprintf( stdout , "-----------------------------------\n\n" );
+   if ( n==0 )
+      fprintf( stdout , "All tests passed!\n\n" );
    else
-      eh_message( ":) No errors were found." , n );
+      fprintf( stdout , "There were %d failures\n\n" , n );
+   fprintf( stdout , "-----------------------------------\n" );
 
    return n;
 }

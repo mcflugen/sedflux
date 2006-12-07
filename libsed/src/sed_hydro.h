@@ -77,19 +77,21 @@ Sed_hydro     sed_hydro_read_record( FILE *fp , int n_grains );
 
 void          sed_hydro_fprint_default_inline_file( FILE *fp );
 gssize        sed_hydro_fprint( FILE* fp , Sed_hydro rec );
-Sed_hydro     sed_hydro_init( char *file );
-Sed_hydro     sed_hydro_scan( FILE *fp );
+//Sed_hydro     sed_hydro_init( char *file );
+Sed_hydro*    sed_hydro_scan( const gchar* file );
 
 Hydro_header* sed_hydro_scan_inline_header( FILE *fp );
 gssize        sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
 
-Sed_hydro     sed_hydro_new( gssize n_grains );
-Sed_hydro     sed_hydro_copy( Sed_hydro dest , Sed_hydro src );
-Sed_hydro     sed_hydro_dup( Sed_hydro src );
-gboolean      sed_hydro_is_same( Sed_hydro a , Sed_hydro b );
-Sed_hydro     sed_hydro_resize( Sed_hydro a , gssize n );
-gssize        sed_hydro_size( Sed_hydro a );
-Sed_hydro     sed_hydro_destroy( Sed_hydro rec );
+Sed_hydro     sed_hydro_new             ( gssize n_grains );
+Sed_hydro     sed_hydro_new_from_table  ( Eh_symbol_table );
+Sed_hydro     sed_hydro_copy            ( Sed_hydro dest , Sed_hydro src );
+Sed_hydro     sed_hydro_dup             ( Sed_hydro src );
+gboolean      sed_hydro_is_same         ( Sed_hydro a    , Sed_hydro b );
+Sed_hydro     sed_hydro_resize          ( Sed_hydro a    , gssize n );
+gssize        sed_hydro_size            ( Sed_hydro a   );
+Sed_hydro     sed_hydro_destroy         ( Sed_hydro rec );
+Sed_hydro*    sed_hydro_array_destroy   ( Sed_hydro* arr );
 
 gssize        sed_hydro_write                ( FILE *fp , Sed_hydro a );
 Sed_hydro     sed_hydro_read                 ( FILE *fp );

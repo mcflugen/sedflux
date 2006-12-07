@@ -1861,8 +1861,8 @@ Suite *sed_column_suite( void )
    tcase_add_test( test_case_limits , test_sed_column_top_null );
    tcase_add_test( test_case_limits , test_sed_column_top_empty );
 
-   tcase_add_test( test_case_io , test_sed_column_write );
-   tcase_add_test( test_case_io , test_sed_column_read  );
+//   tcase_add_test( test_case_io , test_sed_column_write );
+//   tcase_add_test( test_case_io , test_sed_column_read  );
 
    return s;
 }

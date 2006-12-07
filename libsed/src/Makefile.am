@@ -36,9 +36,13 @@ include_HEADERS          = \
                            etk_addrem.h \
                            etk_keyvalue.h
 
-bin_PROGRAMS             =
+bin_PROGRAMS             = write_test_file
+
+write_test_file_SOURCES  = sed_column_write_test_file.c
+write_test_file_LDADD    = -lsedflux -lgthread-2.0 -lglib-2.0
 
 if ENABLE_CHECK
+
 bin_PROGRAMS            += libsed_unit_test
 
 libsed_unit_test_SOURCES = \
@@ -49,7 +53,8 @@ libsed_unit_test_SOURCES = \
                            sed_sediment_unit_test.c \
                            sed_hydro_unit_test.c
 
-libsed_unit_test_LDADD   = -lsedflux -lgthread-2.0 -lglib-2.0
+libsed_unit_test_LDADD   = -lsedflux -lgthread-2.0 -lglib-2.0 @CHECK_LIBS@
+libsed_unit_test_CFLAGS  = @CHECK_CFLAGS@
 
 endif
 
@@ -73,6 +78,9 @@ libsedfluxui_la_CFLAGS   = @GTK_CFLAGS@
 endif
 
 libsedflux_la_LIBADD     = -lgthread-2.0 -lglib-2.0
+#libsedflux_la_LIBADD     = \
+#                           /usr/local/sparcv9/lib/libgthread-2.0.so \
+#                           /usr/local/sparcv9/lib/libglib-2.0.so
 libsedflux_la_LDFLAGS    = -version-info 1:1
 
 

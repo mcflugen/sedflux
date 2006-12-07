@@ -143,7 +143,8 @@ Eh_project eh_set_project_dir( Eh_project proj , const char* dir_name )
 {
    GError *error = NULL;
 
-   eh_require( dir_name );
+   if ( !dir_name )
+      dir_name = ".";
 
    proj->working_dir_name = g_strdup( dir_name );
    proj->working_dir = g_dir_open( dir_name , 0 , &error );

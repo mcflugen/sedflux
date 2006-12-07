@@ -153,6 +153,7 @@ Sed_cell   sed_column_top         ( const Sed_column c , double t , Sed_cell d )
 gssize     sed_column_top_nbins   ( const Sed_column c , double z );
 
 gssize     sed_column_write   (FILE* fp , const Sed_column  c );
+gssize     sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint order );
 Sed_column sed_column_read    (FILE* fp                       );
 
 Sed_column sed_column_height_copy(const Sed_column,double,Sed_column);

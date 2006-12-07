@@ -28,9 +28,10 @@ typedef struct
 {
    gboolean initialized;
 
-   char *filename;
-   double start_year;
-   Eh_data_record sea_level;
+   char*     filename;
+   double    start_year;
+   double**  sea_level;
+   gint      len;
 }
 Sea_level_t;
 

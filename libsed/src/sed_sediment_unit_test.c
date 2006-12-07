@@ -53,7 +53,7 @@ START_TEST ( test_sed_type_copy )
       Sed_type t_2;
 
       sed_type_set_grain_size( t_1 , 1945 );
-      t_2 = sed_type_copy( NULL , t_2 );
+      t_2 = sed_type_copy( NULL , t_1 );
 
       fail_unless( sed_type_is_same(t_1,t_2) , "NULL destination should duplicate" );
       fail_if    ( t_2==t_1                  , "Should make a copy" );

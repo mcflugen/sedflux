@@ -145,8 +145,8 @@ END_TEST
 
 START_TEST ( test_sed_hydro_init )
 {
-   Sed_hydro a = sed_hydro_init( NULL );
-   Sed_hydro b = sed_hydro_new( 4 );
+   Sed_hydro* a = sed_hydro_scan( NULL );
+   Sed_hydro  b = sed_hydro_new( 4 );
 
    sed_hydro_set_duration( b , 365. );
    sed_hydro_set_bedload ( b , 23.1 );
@@ -155,11 +155,11 @@ START_TEST ( test_sed_hydro_init )
    sed_hydro_set_depth   ( b , 8.3 );
 
    {
-      double qb = sed_hydro_bedload (a);
-      double u  = sed_hydro_velocity(a);
-      double w  = sed_hydro_width   (a);
-      double d  = sed_hydro_depth   (a);
-      double dt = sed_hydro_duration(a);
+      double qb = sed_hydro_bedload (a[0]);
+      double u  = sed_hydro_velocity(a[0]);
+      double w  = sed_hydro_width   (a[0]);
+      double d  = sed_hydro_depth   (a[0]);
+      double dt = sed_hydro_duration(a[0]);
 
       fail_unless( eh_compare_dbl( qb , 23.1 , 1e-12 ) , "Bedload not scanned properly"  );
       fail_unless( eh_compare_dbl( u  , 1.06 , 1e-12 ) , "Veloctiy not scanned properly" );
@@ -168,22 +168,22 @@ START_TEST ( test_sed_hydro_init )
       fail_unless( eh_compare_dbl( dt , 365  , 1e-12 ) , "Duration not scanned properly" );
    }
 
-   fail_unless( sed_hydro_is_same(b,a) , "Record not scanned properly" );
+   fail_unless( sed_hydro_is_same(b,a[0]) , "Record not scanned properly" );
 
-   sed_hydro_destroy( a );
+   sed_hydro_array_destroy( a );
    sed_hydro_destroy( b );
 }
 END_TEST
 
 START_TEST ( test_sed_hydro_init_file )
 {
-   Sed_hydro a = sed_hydro_init( NULL );
-   Sed_hydro b = sed_hydro_init( SED_HYDRO_TEST_INLINE_FILE );
+   Sed_hydro* a = sed_hydro_scan( NULL );
+   Sed_hydro* b = sed_hydro_scan( SED_HYDRO_TEST_INLINE_FILE );
 
-   fail_unless( sed_hydro_is_same(b,a) , "Record not scanned properly" );
+   fail_unless( sed_hydro_is_same(b[0],a[0]) , "Record not scanned properly" );
 
-   sed_hydro_destroy( a );
-   sed_hydro_destroy( b );
+   sed_hydro_array_destroy( a );
+   sed_hydro_array_destroy( b );
 }
 END_TEST
 

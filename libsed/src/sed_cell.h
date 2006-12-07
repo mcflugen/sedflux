@@ -120,6 +120,7 @@ double       sed_cell_sediment_load     ( const Sed_cell c );
 
 gssize       sed_cell_fprint            ( FILE* , const Sed_cell );
 gssize       sed_cell_write             ( FILE* , const Sed_cell );
+gssize       sed_cell_write_to_byte_order( FILE *fp, const Sed_cell c , int order );
 Sed_cell     sed_cell_read              ( FILE* );
 
 Sed_cell *sed_cell_list_new( gssize len , gssize n );

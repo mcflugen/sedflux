@@ -445,7 +445,7 @@ Suite *grid_suite( void )
    tcase_add_test( test_case_set  , test_reindex_grid         );
    tcase_add_test( test_case_set  , test_reduce_grid          );
    tcase_add_test( test_case_set  , test_rebin_grid           );
-   tcase_add_test( test_case_set  , test_line_path            );
+//   tcase_add_test( test_case_set  , test_line_path            );
 
    return s;
 }

@@ -1171,11 +1171,6 @@ double *anneal( double *x , int n , Cost_fcn *f , double cost_min )
 
       if ( cost_after>cost_before )
          swap_dbl_vec( x , i , j );
-/*
-for ( i=0 ; i<n ; i++ )
-   fprintf( stderr , "%f " , x[i] );
-fprintf( stderr, "\n" );
-*/
 
    }
    while ( cost_after>cost_min && ++itr<max_itr );
@@ -1395,7 +1390,7 @@ double d1mach_( long int *i )
    }
 }
 
-#if defined( CBLAS )
+#if defined( ENABLE_BLAS )
 #include <cblas.h>
 #endif
 
@@ -1498,7 +1493,7 @@ double eh_dbl_array_abs_max( const double* x , gsize n )
 
    eh_require( x )
 
-#if !defined( CBLAS )
+#if !defined( ENABLE_BLAS )
    {
       gssize i;
       double val;
@@ -1584,7 +1579,7 @@ double* eh_dbl_array_add( double* dest , double* src , gssize n )
    eh_require( dest );
    eh_require( src  );
 
-#if !defined( CBLAS )
+#if !defined( ENABLE_BLAS )
    {
       gssize i;
       for ( i=0 ; i<n ; i++ )
@@ -1600,7 +1595,7 @@ double* eh_dbl_array_add( double* dest , double* src , gssize n )
 double* eh_dbl_array_mult( double* x , gsize n , double a )
 {
    eh_require( x );
-#if !defined( CBLAS )
+#if !defined( ENABLE_BLAS )
    {
       gssize i;
       for ( i=0 ; i<n ; i++ )
@@ -1651,7 +1646,7 @@ double eh_dbl_array_abs_sum( const double *x , gsize n )
    eh_return_val_if_fail( n>0 , eh_nan() );
    eh_return_val_if_fail( x   , eh_nan() );
 
-#if !defined( CBLAS )
+#if !defined( ENABLE_BLAS )
    {
       gssize i;
       for ( i=0 ; i<n ; i++ )
@@ -2138,9 +2133,7 @@ void convlv(double data[], unsigned long n, double respns[], unsigned long m,
 	realft(ans,n,-1);
 //	free_vector(fft,1,n<<1);
    fft += 1;
-eh_watch_ptr( fft );
    eh_free( fft );
-eh_watch_ptr( fft );
 }
 
 double *vector( long l , long h )

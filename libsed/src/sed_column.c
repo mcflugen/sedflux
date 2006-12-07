@@ -1927,17 +1927,49 @@ gssize sed_column_index_at( const Sed_column s , double z )
 */
 gssize sed_column_write( FILE* fp , const Sed_column s )
 {
+   return sed_column_write_to_byte_order( fp , s , G_BYTE_ORDER );
+}
+
+gssize sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint order )
+{
    gssize n = 0;
 
    if ( s && fp )
    {
-      gssize i;
+      if ( order == G_BYTE_ORDER )
+      {
+         gssize i;
 
-      n += fwrite( s , sizeof(*s) , 1 , fp );
+         n += fwrite( &(s->z)    , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->t)    , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->len)  , sizeof(gssize) , 1 , fp );
+         n += fwrite( &(s->size) , sizeof(gssize) , 1 , fp );
+         n += fwrite( &(s->dz)   , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->x)    , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->y)    , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->age)  , sizeof(double) , 1 , fp );
+         n += fwrite( &(s->sl)   , sizeof(double) , 1 , fp );
 
-//      n += sed_sediment_write( fp , s->sed );
-      for ( i=0 ; i<s->size ; i++ )
-         n += sed_cell_write( fp , s->cell[i] );
+         for ( i=0 ; i<s->size ; i++ )
+            n += sed_cell_write( fp , s->cell[i] );
+      }
+      else
+      {
+         gssize i;
+
+         n += eh_fwrite_dbl_swap  ( &(s->z)    , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->t)    , sizeof(double) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(s->len)  , sizeof(gssize) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(s->size) , sizeof(gssize) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->dz)   , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->x)    , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->y)    , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->age)  , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(s->sl)   , sizeof(double) , 1 , fp );
+
+         for ( i=0 ; i<s->size ; i++ )
+            n += sed_cell_write_to_byte_order( fp , s->cell[i] , order );
+      }
    }
 
    return n;
@@ -1961,7 +1993,15 @@ Sed_column sed_column_read( FILE* fp )
 
       NEW_OBJECT( Sed_column , s );
 
-      fread( s , sizeof(*s) , 1 , fp );
+      fread( &(s->z)    , sizeof(double) , 1 , fp );
+      fread( &(s->t)    , sizeof(double) , 1 , fp );
+      fread( &(s->len)  , sizeof(gssize) , 1 , fp );
+      fread( &(s->size) , sizeof(gssize) , 1 , fp );
+      fread( &(s->dz)   , sizeof(double) , 1 , fp );
+      fread( &(s->x)    , sizeof(double) , 1 , fp );
+      fread( &(s->y)    , sizeof(double) , 1 , fp );
+      fread( &(s->age)  , sizeof(double) , 1 , fp );
+      fread( &(s->sl)   , sizeof(double) , 1 , fp );
 
       s->cell = eh_new( Sed_cell , s->size );
       for ( i=0 ; i<s->size ; i++ )

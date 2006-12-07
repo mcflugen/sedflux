@@ -13,7 +13,7 @@ CLASS( Eh_input_val )
 /// Pointer to a user-specified file, if necessary.  NULL, otherwise.
    FILE *fp;
 /// The name of a user-specified file, if necessary.  NULL, otherwise.
-   char *file_name;
+   char *file;
 /// Array of x-values for a time series or a user-defined CDF
    double *x;
 /// Array of y-values for a time series or a user-defined CDF
@@ -43,7 +43,7 @@ Eh_input_val eh_input_val_new( )
    if ( val )
    {
       val->fp        = NULL;
-      val->file_name = NULL;
+      val->file      = NULL;
       val->x         = NULL;
       val->y         = NULL;
       val->len       = 0;
@@ -66,7 +66,7 @@ Eh_input_val eh_input_val_destroy( Eh_input_val val )
    {
       eh_free( val->x         );
       eh_free( val->y         );
-      eh_free( val->file_name );
+      eh_free( val->file      );
       g_rand_free( val->rand );
       eh_free( val );
    }
@@ -119,34 +119,43 @@ Eh_input_val eh_input_val_set( const char *input_str )
       if (    g_ascii_strcasecmp( equal_split[0] , "FILE" ) == 0 
            || g_ascii_strcasecmp( equal_split[0] , "USER" ) == 0  )
       {
-         Eh_data_record* data_rec;
+         double** data;
+         gint n_rows, n_cols;
+         GError* error;
 
          if ( g_ascii_strcasecmp( equal_split[0] , "FILE" ) == 0 )
             val->type = EH_INPUT_VAL_FILE;
          else
             val->type = EH_INPUT_VAL_RAND_USER;
 
-         val->file_name = g_strdup( equal_split[1] );
+         val->file = g_strdup( equal_split[1] );
 
-         data_rec = eh_data_record_scan_file( val->file_name , "," , EH_FAST_DIM_COL , FALSE );
+         data = eh_dlm_read_swap( val->file      ,
+                                  ";,"           ,
+                                  &n_rows        ,
+                                  &n_cols        ,
+                                  &error );
 
-         if ( data_rec )
+         if ( !error )
          {
-            gssize i;
-
-            if ( eh_data_record_size( data_rec[0] , 0 )>=2 )
+            if ( n_rows<2 )
+               eh_error( "Expecting at least two columns of data: %s" ,
+                         val->file );
+            if ( n_rows>2 )
             {
-               val->len = eh_data_record_size   ( data_rec[0] , 1 );
-               val->x   = eh_data_record_dup_row( data_rec[0] , 0 );
-               val->y   = eh_data_record_dup_row( data_rec[0] , 1 );
+               eh_warning( "Expecting two columns of data: %s" , val->file );
+               eh_warning( "%d were found.  Ignoring excess columns." , n_rows );
             }
-            else
-               eh_error( "Only one column of data found (expecting two)" );
 
-            for ( i=0 ; data_rec[i] ; i++ )
-               eh_data_record_destroy( data_rec[i] );
-            eh_free( data_rec );
+            val->len = n_cols;
+            val->x   = g_memdup( data[0] , sizeof(double)*n_cols );
+            val->y   = g_memdup( data[1] , sizeof(double)*n_cols );
+
+            eh_free_2( data );
          }
+         else
+            eh_error( "Unable to open input file: %s" , error->message );
+
       }
       else if (    g_ascii_strcasecmp( equal_split[0] , "UNIFORM" ) == 0 
                 || g_ascii_strcasecmp( equal_split[0] , "NORMAL"  ) == 0 

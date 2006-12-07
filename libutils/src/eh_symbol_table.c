@@ -195,7 +195,24 @@ gboolean eh_symbol_table_has_label( Eh_symbol_table s , gchar* label )
    return FALSE;
 }
 
-gchar* eh_symbol_table_value( Eh_symbol_table s , gchar* label )
+gboolean
+eh_symbol_table_has_labels( Eh_symbol_table s , gchar** labels )
+{
+   gboolean has_all_labels = TRUE;
+
+   if ( labels )
+   {
+      gchar** this_label;
+
+      for ( this_label=labels ; *this_label && has_all_labels ; this_label++ )
+         has_all_labels = has_all_labels && eh_symbol_table_has_label( s , *this_label );
+   }
+
+   return has_all_labels;
+}
+
+gchar*
+eh_symbol_table_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* ans = NULL;
    if ( s && label )
@@ -203,7 +220,31 @@ gchar* eh_symbol_table_value( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
-double eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
+gchar**
+eh_symbol_table_values( Eh_symbol_table s , const gchar* label , const gchar* delimiters )
+{
+   gchar** str_list = NULL;
+
+   if ( s )
+   {
+      gchar* value_str = eh_symbol_table_value( s , label );
+
+      if ( value_str )
+      {
+         if ( !delimiters )
+            delimiters = ",:;";
+
+         str_list = g_strsplit_set( value_str , delimiters , -1 );
+      }
+
+      eh_free( value_str );
+   }
+
+   return str_list;
+}
+
+double
+eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    double ans;
@@ -216,6 +257,36 @@ double eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
    eh_free( str );
 
    return ans;
+}
+
+double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , gchar* label , gint* len , const gchar* delims )
+{
+   double* dbl_array = NULL;
+
+   eh_require( s     );
+   eh_require( label );
+
+   if ( s && label )
+   {
+      gchar** str_array = eh_symbol_table_values( s , label , delims );
+
+      if ( str_array )
+      {
+         gint i;
+         gchar** str;
+
+         dbl_array = eh_new( double , g_strv_length( str_array ) );
+
+         for ( str=str_array,i=0 ; *str ; str++,i++ )
+            dbl_array[i] = g_ascii_strtod( *str , NULL );
+
+         *len = i;
+      }
+
+      eh_free( str_array );
+   }
+
+   return dbl_array;
 }
 
 double eh_symbol_table_time_value( Eh_symbol_table s , gchar* label )

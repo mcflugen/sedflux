@@ -2364,9 +2364,6 @@ Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y )
 Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy )
 {
    Eh_dbl_grid grid = NULL;
-   double *y, *z;
-   gssize n;
-   Eh_data_record floor_data = NULL;
 
    //---
    // Scan the data file.
@@ -2374,31 +2371,33 @@ Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy )
    //---
    eh_debug( "Scan the bathymetry file" );
    {
-      gssize i;
-      Eh_data_record* all_data = eh_data_record_scan_file( file , "," , EH_FAST_DIM_COL , FALSE );
+      double** data;
+      double *y, *z;
+      GError* error;
+      gint n, n_rows, n_cols;
 
-      eh_debug( "done." );
-      if ( all_data )
+      data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &error );
+
+      if ( error )
+         eh_error( "Unable to read bathymetry file: %s" , error->message );
+
+      if ( n_rows<2 )
+         eh_error( "Bathymetry file must contain two columns of data" );
+
+      if ( n_rows>2 )
       {
-         floor_data = all_data[0];
-         for ( i=1 ; all_data[i] ; i++ )
-            eh_data_record_destroy( all_data[i] );
-         eh_free( all_data );
+         eh_warning( "Bathymetry file should contain two columns of data" );
+         eh_warning( "%d were found.  Ignoring extra columns." , n_rows );
       }
-      else
-         eh_error( "Error reading bathymetry file, %s." , file );
-   }
 
-   eh_require( floor_data )
-   {
       //---
       // The cross-shore positions will be the first row, and the depths the
       // second row (in the file they are listed in columns).
       // They should both be the same length.  We don't bother checking.
       //---
-      y = eh_data_record_row ( floor_data , 0 );
-      z = eh_data_record_row ( floor_data , 1 );
-      n = eh_data_record_size( floor_data , 1 );
+      y = data[0];
+      z = data[1];
+      n = n_cols;
 
       //---
       // Make sure the cross-shore distances are monotonically increasing.
@@ -2419,7 +2418,9 @@ Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy )
          interpolate( y , z , n , eh_grid_y(grid) , eh_grid_data_start(grid) , n_y );
       }
 
-      eh_data_record_destroy( floor_data );
+      eh_free_2( data );
+
+      eh_debug( "done." );
    }
 
    return grid;
@@ -2692,8 +2693,10 @@ void find_river_mouth_helper( Sed_river *this_river , Sed_cube c )
 
 /** Write a Sed_cube to a binary file.
 
-\param fp A pointer to an open file.
-\param p  A pointer to a Sed_cube .
+\todo  Members storm_list, shore, and constants are not written.  Fix this.
+
+\param fp    A pointer to an open file.
+\param p     A pointer to a Sed_cube .
 
 */
 gssize sed_cube_write( FILE *fp , const Sed_cube p )
@@ -2706,12 +2709,20 @@ gssize sed_cube_write( FILE *fp , const Sed_cube p )
       gssize len = sed_cube_size(p);
       GList *list;
 
-      //---
-      // Write all of the Sed_cube information.  This includes all of the
-      // pointers.  They will be of no use when we read them back in, but
-      // we do this just for ease.
-      //---
-      n += fwrite( p , sizeof(*p) , 1 , fp );
+      /* Write all of the scalar data */
+      n += fwrite( &(p->age)          , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->time_step)    , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->storm_value)  , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->quake_value)  , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->tidal_range)  , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->tidal_period) , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->n_x)          , sizeof(gint)   , 1 , fp );
+      n += fwrite( &(p->n_y)          , sizeof(gint)   , 1 , fp );
+      n += fwrite( &(p->basinWidth)   , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->dx)           , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->dy)           , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->sea_level)    , sizeof(double) , 1 , fp );
+      n += fwrite( &(p->cell_height)  , sizeof(double) , 1 , fp );
 
       //---
       // Now write all of the pointer data.

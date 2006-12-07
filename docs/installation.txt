@@ -1,0 +1,132 @@
+/*! \page install_sec Installation
+
+\section Prerequisites
+
+To install sedflux-2.0, you need to have certain progams installed on you machine.  A list of these
+programs follows with the version numbers that I used.  It is possible that older version will
+work but I have not checked if this is the case.
+
+\par Required
+- pkg-config (0.20)
+- automake   (1.9.6)
+- autoconf   (2.60)
+- gcc        (2.95.3)
+- glib-2.0   (2.12.4)
+
+\par Optional
+- check      (0.9.4)
+- doxygen    (1.5.1)
+- gtk+-2.0   (2.2.4)
+
+If you do not have some of the optional programs, you can still install sedflux but with some loss
+of functionality.  The limitations are:
+
+\li \p check:    You will not be able to run unit tests on your compiled code.
+\li \p doxygen:  You will not be able to generate documentation
+\li <tt>gtk+-2.0</tt>: You will not be able to run the graphical user interface
+
+The configure script will check for these packages and turn them on or off depending are whether or not they are found.
+
+\section sec_configure Configuring
+
+\subsection sub_configure The configure command
+
+To configure sedflux-2.0:
+\code
+> configure --prefix=<program-prefix>
+\endcode
+where <program-prefix> is the path name to the location into which the program will be install.  For
+example, <program-prefix> could be <tt>/usr/local/sedflux</tt>.  In this case, all of the sedflux 
+installation files will be installed in <tt>/usr/local/sedflux</tt>.  This would mean that the
+sedflux executable program would be <tt>/usr/local/sedflux/bin/sedflux</tt>.
+
+\subsection sub_configure_options Configuration options
+
+\par --enable-libgtk
+If you have gtk+-2.0 (version >= 2.2) installed on you machine you can compile the graphical
+user interface for sedflux.  The default is to disable this functionality.  If enabled, configure
+will search for the libraries using pkg-config. (http://www.gtk.org)
+
+\par --enable-libcheck
+If you have check package installed, you can compile sedflux to include unit tests.  The default
+is for unit tests to be disabled.  If enabled, configure will use pkg-config to find the
+required libraries and header files. (http://check.sourceforge.net)
+
+\par --enable-doxygen
+Generate HTML documentation.  This must be done using the program doxygen.  If enabled, doxygen
+must be in your PATH.  The default is to disable doxygen.  (http://www.stack.nl/~dimitri/doxygen)
+
+\par --enable-blas
+\par --with-blas-dir=PATH
+Currently, there is only minimal support for BLAS/LAPACK libraries.  If you wish to use these libraries
+rather than the ones that come with the distribution, you can indicate such with the <tt>--enable-blas</tt>
+option.  If pkg-config can not find the necessaty libraries, you can manually specify the base path of the
+BLAS installation with the <tt>--with-blas-dir=PATH</tt> option.
+
+\par --with-html-dir=PATH
+Specify a location to put HTML documentation.  If not specified, documentation is installed in
+${datadir}/ew-doc/html.
+
+\subsection sub_configure_problems Problems
+
+\par Problem
+I get an error message saying that I don't have gtk+-2.0 (or glib) but I know I do.
+
+\par Answer
+The configure script uses pkg-config to find the required libraries.  Make sure that you have set
+your PKG_CONFIG_PATH environment variable to include the pkg-config files for these libraries.  As
+an example,
+\code
+> setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+\endcode
+
+\section sec_build Build
+
+To compile the sedflux-2.0 package,
+\code
+> make
+\endcode
+Once this has finished, you can install the package,
+\code
+> make install
+\endcode
+This will copy all of the sedflux installation files to the location you specified during the
+configuration process.  Note that you will have to have write permission for the directory
+that you are installing into.
+
+\section sec_64bit_build Building for 64 bit Machines
+
+This really just describes how I go about building a 64-bit version of sedflux
+on our Solaris machines.
+
+All it takes is to define correctly the necessary environment
+variables.  To make sure we use the proper compiler and linker, set
+the environment variables \p CC and \p LD.  For our machine this means,
+\code
+> setenv CC /usr/local/lang/bin/cc
+> setenv LD /usr/ccs/bin/sparcv9/ld
+\endcode
+Now set \p CFLAGS to compile the 64 bit code,
+\code
+> setenv CFLAGS "-xarch=v9b -xCC"
+\endcode
+Optionally, to build faster running code I'll instead use,
+\code
+> setenv CFLAGS "-fast -xarch=v9b -xCC -xautopar -xO5"
+\endcode
+To make sure the correct libraries are linked to, I'll define \p LDFLAGS as,
+\code
+> setenv LDFLAGS "-L/usr/lib/sparcv9 -L/usr/ucblib/sparcv9 -L/usr/local/sparcv9/lib"
+\endcode
+The sedlux configure script uses <tt>pkg-config</tt> to locate required
+libraries (usually, this is just glib-2.0).  To make sure that it finds the
+64-bit versions, set your \p PKG_CONFIG_PATH to include these paths.  For
+our system, this is
+\code
+> setenv PKG_CONFIG_PATH /usr/local/sparcv9/lib/pkgconfig
+\endcode
+Finally, because I'm paranoid, I'll remove all references to the regular 32 bit
+libraries from my LD_LIBRARY_PATH.  Somehow, no matter how hard I try, LD
+tries to link to these libraries instead of the 64 bit versions.
+
+*/

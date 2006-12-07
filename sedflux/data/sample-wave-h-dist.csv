@@ -1,0 +1,38 @@
+/* An example of a distribution file for a random variable
+
+Most values in a sedflux process file are given fixed values.
+However, some are allowed to vary with time, to picked from
+a random distribution.  For the case of a random distribution,
+the user may specify a file that defines a distribution 
+function.
+
+The user defines the distibution by two columns of comma
+delimited data.  The first column is the value of the 
+random variable and the second CDF for the variable.  For 
+the function to be defined correctly, a number of requirements
+need to be satisfied,
+- Both column must be monotonically increasing
+- The CDF values must vary from 0 to 1 (and include both 0 and 1)
+
+*/
+0, 0
+0.300000, 0.470000
+0.600000, 0.755000
+0.900000, 0.835000
+1.200000, 0.875000
+1.500000, 0.904000
+1.800000, 0.930000
+2.100000, 0.955000
+2.400000, 0.975000
+2.700000, 0.985000
+3.000000, 0.991000
+3.300000, 0.996000
+3.600000, 0.998000
+3.900000, 0.999000
+4.200000, 0.999600
+4.500000, 0.999800
+4.800000, 0.999900
+5.100000, 0.999940
+5.400000, 0.999970
+5.700000, 0.999990
+6.000000, 1.000000

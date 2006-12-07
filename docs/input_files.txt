@@ -1,0 +1,97 @@
+/*! \page input_files_sec Input Files
+
+\section sed_input_files Sedflux Input Files
+
+
+The main input files are:
+- \subpage sub_sec_init
+- \subpage sub_sec_bathy
+- \subpage sub_sec_sediment
+- \subpage sub_sec_process
+
+
+The above are all required files.  Files that are optionally included are:
+- \subpage sub_sec_river
+- \subpage sub_sec_sea_level
+- \subpage sub_sec_subsidence
+
+Many of these files, are of a similar format (sedflux key-file).
+Although the format is simple, you may want to have a quick look here:
+\subpage sub_sec_key_file
+for a description.
+
+*/
+
+/** \page sub_sec_key_file The Sedflux Key-File
+
+Many of the (ascii) input files for sedflux are of a common format.  I'll
+often refer to them as sedflux key-files.  They are plain text files that
+define a series of groups.  Each group then contains a series of key-value
+pairs.  A group begins with its name surrounded by braces and ends at the
+begining of the next group.
+
+The key-value pairs then follow, one per line.  They consist of a parameter
+name (or key), follows by a colon, and then the value.  As an example, a
+valid group looks like,
+\code
+[ global ]
+vertical resolution (m):   0.05
+x resolution (m):          10000
+y resolution (m):          100
+\endcode
+In this example, we've defined a group called \p global.  For this group,
+we've set the values for three parameters.  There can be any number of groups
+or key-value pairs per file.  In fact, the same group name can appear in the
+same file more than once.  The data are not overwritten but a new instance
+of the group created.  However, in some instances it may not make sense to have
+multiple occurances of a group.
+*/
+
+/** \page sub_sec_init Initialization File
+*/
+
+/** \page sub_sec_bathy Bathymetry File
+*/
+
+/** \page sub_sec_process Process File
+*/
+
+/** \page sub_sec_river River File
+*/
+
+/** \page sub_sec_sea_level Sea-Level File
+*/
+
+/** \page sub_sec_subsidence Subsidence File
+*/
+
+/** \page sub_sec_sediment Sediment File
+
+The characteristics of each sediment type is defined by key-value pairs
+in its own group.  A group begins with <tt>[ <group-name> ]</tt>, is 
+followed by a series of key-values pairs, and ends at the start of the
+next group (or EOF).  The key-value lines are of the
+form:
+\code
+<name-of-key> : <value>
+\endcode
+Groups are listed one after another.  The order that they occur here is
+important.  sedflux assumes that the order they appear here corresponds
+to the same order as the river input files.
+
+
+For a sediment file, the required parameters are:
+- <tt>grain size</tt>                 Grain size (in microns) of the sediment type.
+- <tt>grain density</tt>              Density (in kg/m^3) of the sediment grains.
+- <tt>saturated density</tt>          Bulk density (in kg/m3) that the sediment saturated with water.
+- <tt>minimum void ratio</tt>         Void ratio (-) of the sediment in its closest packed state.
+- <tt>diffusion coefficient</tt>      Diffusion index between 0 (unable to be moved) and 1 (easily moved).
+- <tt>removal rate</tt>               Removal rate (in 1/day)
+- <tt>consolidation coefficient</tt>  How quickly the sediment consolidates.
+- <tt>compaction coefficient</tt>     Rate that sediment is compacted under load.
+
+\note The first grain type listed in the sediment file is assumed
+      by sedflux to be bedload!  That is, it is not carried by the
+      plume process but by the bedload dumping process.
+*/
+
