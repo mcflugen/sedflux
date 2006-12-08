@@ -6,7 +6,7 @@ EXTRA_DIST = \
              sample-inline.kvf \
              sample-sediment.kvf \
              sample-bathy.csv \
-             sample-sealevel.csv \
+             sample-sea-level.csv \
              sample-wave-h-dist.csv \
              test.river \
              test.subsidence \
@@ -19,7 +19,7 @@ pkgdata_DATA = \
              sample-inline.kvf \
              sample-sediment.kvf \
              sample-bathy.csv \
-             sample-sealevel.csv \
+             sample-sea-level.csv \
              sample-wave-h-dist.csv \
              test.river \
              test.subsidence \

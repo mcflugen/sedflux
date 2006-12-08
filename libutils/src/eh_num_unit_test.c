@@ -119,7 +119,8 @@ User_data;
 #define F2 (0.9)
 #define XA (5.176)
 
-#include <ieeefp.h>
+//#include <ieeefp.h>
+#include <math.h>
 
 double inventory( double x , double s , double l )
 {
