@@ -1,9 +1,23 @@
 #if !defined( EH_INPUT_VAL_H )
 #define EH_INPUT_VAL_H
 
+#include <glib.h>
 #include "eh_types.h"
 
 new_handle( Eh_input_val );
+
+typedef enum
+{
+   EH_INPUT_VAL_ERROR_NOT_TWO_COLUMNS ,
+   EH_INPUT_VAL_ERROR_X_NOT_MONOTONIC ,
+   EH_INPUT_VAL_ERROR_F_NOT_MONOTONIC ,
+   EH_INPUT_VAL_ERROR_BAD_F_RANGE ,
+   EH_INPUT_VAL_ERROR_NOT_TWO_DIST_VALS ,
+   EH_INPUT_VAL_ERROR_BAD_DIST_KEY
+}
+Eh_input_val_error;
+
+#define EH_INPUT_VAL_ERROR eh_input_val_error_quark()
 
 /** The ways an Eh_input_val is obtained
 */
@@ -24,10 +38,10 @@ typedef enum
 }
 Eh_input_val_type;
 
-Eh_input_val    eh_input_val_new      (                             );
-Eh_input_val    eh_input_val_destroy  ( Eh_input_val val            );
-Eh_input_val    eh_input_val_set      ( const char *input_str       );
-double          eh_input_val_eval     ( Eh_input_val val      , ... );
+Eh_input_val    eh_input_val_new      (                                      );
+Eh_input_val    eh_input_val_destroy  ( Eh_input_val val                     );
+Eh_input_val    eh_input_val_set      ( const char *input_str , GError** err );
+double          eh_input_val_eval     ( Eh_input_val val      , ...          );
 
 #endif
 

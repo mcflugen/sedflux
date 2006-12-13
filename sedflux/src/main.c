@@ -29,7 +29,7 @@
 #include "sed_sedflux.h"
 #include "processes.h"
 
-char *copyleft_msg[] =
+gchar* copyleft_msg[] =
 {
 "                                                                             ",
 " sedflux - A process based basin fill model.                                 ",
@@ -52,17 +52,26 @@ char *copyleft_msg[] =
 NULL
 };
 
+gchar* brief_copyleft_msg[] =
+{
+"Copywrite (C) 2006 Eric Hutton." ,
+"This is free software; see the source for copying conditions.  This is NO" ,
+"warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE." ,
+NULL
+};
+
 int __quit_signal = 0; //< signal to indicate that the user wishes to quit.
 int __dump_signal = 0; //< signal to indicate that the user wishes to dump output.
 int __cpr_signal  = 0; //< signal to indicate that the user wishes to create a checkpoint.
 
 gchar*     get_file_name_interactively ( gchar**      , gchar** );
 char*      eh_get_input_val            ( FILE* fp     , char *msg    , char *default_str );
+void       print_version_info          ( void );
 void       print_choices               ( int );
 void       print_header                ( FILE* fp);
 void       print_time                  ( FILE* fp     , int epoch_no , double year );
 void       print_footer                ( FILE* fp );
-Eh_project fill_sedflux_info_file      ( Eh_project p , int argc     , char* argv[] );
+Eh_project fill_sedflux_info_file      ( Eh_project p , int argc     , char* argv[] , gchar* desc );
 int        run_sedflux                 ( int argc     , char *argv[] );
 gboolean   check_process_files         ( Sed_epoch_queue e_list , gchar** active );
 
@@ -97,11 +106,13 @@ int main( int argc , char *argv[] )
 static gchar*   init_file    = NULL;
 static gchar*   out_file     = NULL; 
 static gchar*   working_dir  = NULL;
+static gchar*   run_desc     = NULL;
 static gboolean just_plume   = FALSE;
 static gboolean just_rng     = FALSE;
 static gboolean summary      = FALSE;
 static gboolean warn         = FALSE;
 static gint     verbose      = 0;
+static gboolean version      = FALSE;
 static char**   active_procs = NULL;
 
 /* Define the command line options */
@@ -110,12 +121,14 @@ static GOptionEntry entries[] =
    { "init-file"   , 'i' , 0 , G_OPTION_ARG_FILENAME     , &init_file   , "Initialization file"        , "<file>" } ,
    { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME     , &out_file    , "Output file"                , "<file>" } ,
    { "working-dir" , 'd' , 0 , G_OPTION_ARG_FILENAME     , &working_dir , "Working directory"          , "<dir>"  } ,
+   { "msg"         , 'm' , 0 , G_OPTION_ARG_STRING       , &run_desc    , "Run description"            , "<msg>"  } ,
    { "active-proc" , 'a' , 0 , G_OPTION_ARG_STRING_ARRAY , &active_procs, "Specify active process"     , "<name>" } ,
    { "just-plume"  , 'p' , 0 , G_OPTION_ARG_NONE         , &just_plume  , "Run just the plume"         , NULL     } ,
    { "just-rng"    , 'r' , 0 , G_OPTION_ARG_NONE         , &just_rng    , "Run just the rng processes" , NULL     } ,
    { "summary"     , 's' , 0 , G_OPTION_ARG_NONE         , &summary     , "Print a summary and quit"   , NULL     } ,
    { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE         , &warn        , "Print warnings"             , NULL     } ,
-   { "verbose"     , 'v' , 0 , G_OPTION_ARG_INT          , &verbose     , "Verbosity level"            , "n"      } ,
+   { "verbose"     , 'V' , 0 , G_OPTION_ARG_INT          , &verbose     , "Verbosity level"            , "n"      } ,
+   { "version"     , 'v' , 0 , G_OPTION_ARG_NONE         , &version     , "Version number"             , NULL     } ,
    { NULL }
 };
 
@@ -140,6 +153,12 @@ int run_sedflux(int argc, char *argv[])
 
       if ( !g_option_context_parse( context , &argc , &argv , &error ) )
          eh_error( "Error parsing command line arguments: %s" , error->message );
+
+      if ( version )
+      {
+         print_version_info( );
+         exit(0);
+      }
 
       switch (verbose)
       {
@@ -174,7 +193,7 @@ int run_sedflux(int argc, char *argv[])
       }
 
       eh_set_project_dir        ( proj , working_dir );
-      fill_sedflux_info_file    ( proj , argc , argv );
+      fill_sedflux_info_file    ( proj , argc , argv , run_desc );
       eh_write_project_info_file( proj );
 
       eh_free              ( working_dir );
@@ -255,13 +274,34 @@ int run_sedflux(int argc, char *argv[])
    sed_epoch_queue_destroy( list );
 
    sed_cube_destroy( prof );
+   sed_sediment_unset_env( );
 
-   eh_heap_dump( "heap_dump.txt" );
+   if ( g_getenv("SED_MEM_CHECK") )
+      eh_heap_dump( "heap_dump.txt" );
+
+   /* Command line options */
+   eh_free   ( init_file    );
+   eh_free   ( out_file     );
+   eh_free   ( working_dir  );
+   eh_free   ( run_desc     );
+   g_strfreev( active_procs );
 
    eh_exit(0);
 
    eh_require_not_reached();
    return -1;
+}
+
+void
+print_version_info( void )
+{
+   g_print( "%s %d.%d.%d\n" , PROGRAM_NAME , 
+                              S_MAJOR_VERSION ,
+                              S_MINOR_VERSION ,
+                              S_MICRO_VERSION );
+   g_print( "Written by Eric Hutton <huttone@colorado.edu>.\n" );
+   g_print( "\n" );
+   eh_print_message( stdout , brief_copyleft_msg );
 }
 
 gchar *get_file_name_interactively( gchar **working_dir , gchar **in_file )
@@ -346,7 +386,7 @@ void print_header(FILE *fp)
 
 void print_time(FILE *fp, int epoch_no, double year)
 {
-   fprintf( fp , "%.2f years (epoch %2d)\r" , year , epoch_no+1 );
+   fprintf( fp , "%.2f years (epoch %2d)\r" , year , epoch_no );
    fflush( fp );
 
    return;
@@ -412,24 +452,28 @@ void print_choices(int i)
 
 #include <time.h>
 
-Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] )
+Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] , gchar* desc )
 {
    //---
    // Define the description of the model run.
    //---
    eh_require( p )
    {
-      char* default_str;
-      char* desc_str;
+      char* default_str = NULL;
+      char* desc_str    = NULL;
       Eh_project temp = eh_create_project( eh_project_name(p) );
 
       eh_set_project_dir( temp , eh_project_dir_name(p) );
       eh_read_project_info_file( temp );
 
-      default_str = eh_project_get_info_val( temp , "RUN DESCRIPTION" );
-      desc_str    = eh_input_str( "RUN DESCRIPTION" , default_str );
-
-      eh_project_add_info_val( p , "RUN DESCRIPTION" , desc_str );
+      if ( !desc )
+      {
+         default_str = eh_project_get_info_val( temp , "RUN DESCRIPTION" );
+         desc_str    = eh_input_str( "RUN DESCRIPTION" , default_str );
+         eh_project_add_info_val( p , "RUN DESCRIPTION" , desc_str );
+      }
+      else
+         eh_project_add_info_val( p , "RUN DESCRIPTION" , desc );
 
       eh_destroy_project( temp );
       eh_free( default_str );
@@ -452,11 +496,11 @@ Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] )
 
    //---
    // Define the modification time of the executable.
-   //---
+   //--
    eh_require( argv[0] )
    {
       struct stat stat_buf;
-      char mod_str[S_LINEMAX];
+      char* mod_str = eh_new( gchar , S_LINEMAX );
       GDate *today = g_date_new();
 
       g_stat( argv[0] , &stat_buf );
@@ -466,6 +510,7 @@ Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] )
       eh_project_add_info_val( p , "CREATED" , mod_str );
 
       g_date_free( today );
+      eh_free( mod_str );
    }
 
 

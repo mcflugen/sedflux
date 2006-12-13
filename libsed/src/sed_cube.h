@@ -31,6 +31,21 @@
 #include "sed_hydro.h"
 #include "sed_wave.h"
 
+typedef enum
+{
+   SED_CUBE_ERROR_NO_TIME_LABEL , 
+   SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+   SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
+   SED_CUBE_ERROR_INSUFFICIENT_DATA ,
+   SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
+   SED_CUBE_ERROR_DATA_BAD_RANGE
+}
+Sed_cube_error;
+
+#define SED_CUBE_ERROR sed_cube_error_quark()
+
+GQuark sed_cube_error_quark( void );
+
 /**
    A structure to describe the hinge point of a stream
 */
@@ -265,11 +280,15 @@ double sed_get_river_angle( Sed_river *river );
 double sed_cube_river_angle( Sed_cube c , GList *river );
 
 Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y );
-Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy );
+Eh_dbl_grid sed_get_floor_1d_grid( const char *file ,
+                                   double dx        ,
+                                   double dy        ,
+                                   GError** err );
 Eh_dbl_grid sed_get_floor_2d_grid( const char *file , double dx , double dy );
 Eh_sequence *sed_get_floor_sequence_2( const char *file ,
                                        double *y        ,
-                                       gssize n_y );
+                                       gssize n_y       ,
+                                       GError** err );
 Eh_sequence *sed_get_floor_sequence_3( const char *file ,
                                        double dx        ,
                                        double dy );

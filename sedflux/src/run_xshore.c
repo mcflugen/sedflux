@@ -32,7 +32,8 @@
 
 gboolean is_worth_running( Sed_ocean_storm s );
 
-Sed_process_info run_xshore( gpointer ptr , Sed_cube prof )
+Sed_process_info
+run_xshore( gpointer ptr , Sed_cube prof )
 {
    Xshore_t *data=(Xshore_t*)ptr;
    Sed_process_info p_info = SED_EMPTY_INFO;
@@ -91,19 +92,20 @@ Sed_process_info run_xshore( gpointer ptr , Sed_cube prof )
          this_link ;
          this_link=this_link->next )
    {
+      double storm_wave;
       double max_current = eh_input_val_eval( data->xshore_current ,
                                               current_time );
       mass_before = sed_cube_mass( prof );
 
       this_storm = this_link->data;
 
-eh_watch_int( sed_cube_river_mouth_1d( prof ) );
+      storm_wave = sed_ocean_storm_wave_height( this_storm );
 
-      xshore_current = max_current*sed_ocean_storm_wave_height( this_storm )/2.;
+      xshore_current = max_current*0.5*storm_wave;
       eh_clamp( xshore_current , 0 , max_current );
 
       this_sea_level = sed_cube_sea_level( prof );
-      sed_cube_set_sea_level( prof , this_sea_level + sed_ocean_storm_wave_height( this_storm )/2. );
+      sed_cube_adjust_sea_level( prof , storm_wave*.5 );
 
 //   if ( sed_cube_time_step_in_days( prof ) > 3. )
 //      sed_cube_set_time_step( prof , 3./S_DAYS_PER_YEAR );
@@ -200,28 +202,36 @@ eh_watch_int( sed_cube_river_mouth_1d( prof ) );
    return p_info;
 }
 
-gboolean is_worth_running( Sed_ocean_storm s )
+gboolean
+is_worth_running( Sed_ocean_storm s )
 {
    return sed_ocean_storm_wave_height( s ) > .1;
 }
 
 #define S_KEY_ALONG_SHORE_SEDIMENT_NO "Grain type of along shore sediment"
-#define S_KEY_XSHORE_CURRENT "Cross shore current"
+#define S_KEY_XSHORE_VEL              "Cross shore current"
 
-gboolean init_xshore( Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_xshore( Eh_symbol_table tab , gpointer ptr )
 {
    Xshore_t *data=(Xshore_t*)ptr;
-   if ( symbol_table == NULL )
+   GError* err = NULL;
+
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->xshore_current );
       data->initialized = FALSE;
       return TRUE;
    }
 
-   data->sediment_type = eh_symbol_table_int_value( symbol_table , S_KEY_ALONG_SHORE_SEDIMENT_NO );
-   data->xshore_current = eh_input_val_set( eh_symbol_table_lookup(
-                                               symbol_table ,
-                                               S_KEY_XSHORE_CURRENT ) );
+   data->sediment_type = eh_symbol_table_int_value( tab , S_KEY_ALONG_SHORE_SEDIMENT_NO );
+
+   if ( (data->xshore_current = eh_symbol_table_input_value(tab,S_KEY_XSHORE_VEL ,&err)) == NULL )
+   {
+      fprintf( stderr , "Unable to read input values: %s" , err->message );
+      eh_exit(-1);
+   }
+
 
    return TRUE;
 }

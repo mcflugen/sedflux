@@ -50,6 +50,7 @@ libsed_unit_test_SOURCES = \
                            sed_cell_unit_test.c \
                            sed_wave_unit_test.c \
                            sed_column_unit_test.c \
+                           sed_cube_unit_test.c \
                            sed_sediment_unit_test.c \
                            sed_hydro_unit_test.c
 
@@ -78,9 +79,6 @@ libsedfluxui_la_CFLAGS   = @GTK_CFLAGS@
 endif
 
 libsedflux_la_LIBADD     = -lgthread-2.0 -lglib-2.0
-#libsedflux_la_LIBADD     = \
-#                           /usr/local/sparcv9/lib/libgthread-2.0.so \
-#                           /usr/local/sparcv9/lib/libglib-2.0.so
 libsedflux_la_LDFLAGS    = -version-info 1:1
 
 

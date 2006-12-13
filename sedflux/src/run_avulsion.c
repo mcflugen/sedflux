@@ -150,12 +150,13 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 #define S_KEY_FRACTION    "fraction of sediment remaining in plane"
 /* @} */
 
-gboolean init_avulsion(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
 {
    Avulsion_t *data=(Avulsion_t*)ptr;
    char **hinge_point;
+   GError* err = NULL;
 
-   if ( symbol_table == NULL )
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->min_angle );
       eh_input_val_destroy( data->max_angle );
@@ -167,23 +168,21 @@ gboolean init_avulsion(Eh_symbol_table symbol_table,gpointer ptr)
       return TRUE;
    }
 
-   data->std_dev  = eh_input_val_set( eh_symbol_table_lookup( symbol_table ,
-                                                             S_KEY_STDDEV ) );
-   data->f_remain = eh_input_val_set( eh_symbol_table_lookup( symbol_table ,
-                                                             S_KEY_FRACTION ) );
-   data->min_angle = eh_input_val_set(
-                        eh_symbol_table_lookup( symbol_table ,
-                                                   S_KEY_MIN_ANGLE ) );
-   data->max_angle = eh_input_val_set(
-                        eh_symbol_table_lookup( symbol_table ,
-                                                   S_KEY_MAX_ANGLE ) );
+   if (    (data->std_dev   = eh_symbol_table_input_value(tab,S_KEY_STDDEV   ,&err)) == NULL
+        || (data->f_remain  = eh_symbol_table_input_value(tab,S_KEY_FRACTION ,&err)) == NULL
+        || (data->min_angle = eh_symbol_table_input_value(tab,S_KEY_MIN_ANGLE,&err)) == NULL
+        || (data->max_angle = eh_symbol_table_input_value(tab,S_KEY_MAX_ANGLE,&err)) == NULL )
+   {
+      fprintf( stderr , "Unable to read input values: %s" , err->message );
+      eh_exit(-1);
+   }
 
    data->hinge = eh_new( Sed_hinge_pt , 1 );
 
-   data->river_name = eh_symbol_table_value( symbol_table , S_KEY_RIVER_NAME );
+   data->river_name = eh_symbol_table_value( tab , S_KEY_RIVER_NAME );
 
    hinge_point = g_strsplit ( eh_symbol_table_lookup( 
-                                  symbol_table ,
+                                  tab ,
                                   S_KEY_HINGE_POINT ) ,
                               "," , -1 );
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <glib.h>
 #include "eh_types.h"
+#include "eh_input_val.h"
 
 new_handle( Eh_symbol_table );
 
@@ -54,5 +55,8 @@ gboolean         eh_symbol_table_bool_value     ( Eh_symbol_table s      ,
                                                   gchar* label );
 gint             eh_symbol_table_int_value      ( Eh_symbol_table s      ,
                                                   gchar* label           );
+Eh_input_val     eh_symbol_table_input_value    ( Eh_symbol_table s      ,
+                                                  gchar* label           ,
+                                                  GError** err );
 
 #endif

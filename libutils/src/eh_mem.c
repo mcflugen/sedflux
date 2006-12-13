@@ -1,8 +1,101 @@
 #include "eh_mem.h"
-#include <utils.h>
+#include "utils.h"
 #include <stdio.h>
 
 USE_WIN_ASSERT
+
+#define EH_MEM_TABLE_SIZE (4096)
+static glong profile_data_malloc[EH_MEM_TABLE_SIZE];
+static glong profile_data_realloc[EH_MEM_TABLE_SIZE];
+static glong profile_data_free[EH_MEM_TABLE_SIZE];
+static glong  total_alloc   = -1;
+static glong  total_realloc = 0;
+static glong  total_free    = 0;
+
+typedef enum
+{
+   EH_MEM_PROFILE_MALLOC ,
+   EH_MEM_PROFILE_REALLOC ,
+   EH_MEM_PROFILE_FREE
+}
+Eh_mem_job;
+
+#include <stdlib.h>
+
+void eh_mem_profile_log( Eh_mem_job job , gulong size )
+{
+   if ( size>0 )
+   {
+      gulong ind = size-1;
+
+//      if ( profile_data_malloc==NULL )
+      if ( total_alloc<0 )
+      {
+/*
+         profile_data_malloc  = (glong*)calloc( EH_MEM_TABLE_SIZE , sizeof(glong) );
+         profile_data_realloc = (glong*)calloc( EH_MEM_TABLE_SIZE , sizeof(glong) );
+         profile_data_free    = (glong*)calloc( EH_MEM_TABLE_SIZE , sizeof(glong) );
+*/
+         total_alloc = 0;
+
+         memset( profile_data_malloc  , 0 , EH_MEM_TABLE_SIZE );
+         memset( profile_data_realloc , 0 , EH_MEM_TABLE_SIZE );
+         memset( profile_data_free    , 0 , EH_MEM_TABLE_SIZE );
+      }
+
+
+      if ( ind>EH_MEM_TABLE_SIZE-1 )
+         ind = EH_MEM_TABLE_SIZE-1;
+
+      if      ( job == EH_MEM_PROFILE_MALLOC )
+      {
+         profile_data_malloc[ind]  += 1;
+         total_alloc               += size;
+      }
+      else if ( job == EH_MEM_PROFILE_REALLOC )
+      {
+         profile_data_realloc[ind] += 1;
+         total_realloc             += size;
+      }
+      else if ( job == EH_MEM_PROFILE_FREE )
+      {
+         profile_data_free[ind]    += 1;
+         total_free                += size;
+      }
+   }
+}
+
+void eh_mem_profile_fprint( FILE* fp )
+{
+   glong i;
+   glong t_alloc, t_realloc, t_free, t_left;
+   glong total;
+
+   fprintf( fp , " Block Size | N Mallocs | N Reallocs | N Frees    | Remaining\n" );
+   fprintf( fp , " (in bytes) |           |            |            | (in bytes)\n" );
+
+   for ( i=0 ; i<EH_MEM_TABLE_SIZE ; i++ )
+   {
+      t_alloc   = profile_data_malloc[i];
+      t_realloc = profile_data_realloc[i];
+      t_free    = profile_data_free[i];
+      t_left    = (i+1)*(t_alloc + t_realloc - t_free);
+
+      if ( t_alloc!=0 || t_realloc!=0 || t_free!=0 )
+         fprintf( fp , "%11ld | %9ld | %10ld | %10ld | %10ld\n" ,
+                  i+1 , t_alloc , t_realloc , t_free , t_left );
+
+      total_alloc += (i+1)*(t_alloc+t_realloc);
+      total_free  += (i+1)*t_free;
+   }
+
+   total = total_alloc+total_realloc;
+
+   fprintf( fp , "Bytes allocated    : %12ld\n" , total_alloc );
+   fprintf( fp , "Bytes re-allocated : %12ld\n" , total_realloc );
+   fprintf( fp , "Bytes freed        : %12ld (%f%%)\n" , total_free , total_free*100./total );
+   fprintf( fp , "Bytes in use       : %12ld (%f%%)\n" , total-total_free , (total-total_free)*100./total );
+}
 
 //#define ALIGNMENT (sizeof(size_t))
 #define ALIGNMENT (8)
@@ -22,7 +115,7 @@ typedef struct tag_Heap_Prefix
    char *file_name;
    gint32 line_no;
    void *mem;
-   Class_Desc* class_desc;
+   Class_Desc class_desc;
 }
 Prefix;
 
@@ -43,9 +136,8 @@ gsize    LOCAL render_desc             ( Heap_Prefix , char* );
 
 #include <stdlib.h>
 
-
 gpointer API_ENTRY eh_malloc( gsize w_size     ,
-                              Class_Desc* desc ,
+                              Class_Desc desc ,
                               const char* file ,
                               int line_no )
 {
@@ -70,7 +162,10 @@ gpointer API_ENTRY eh_malloc( gsize w_size     ,
       prefix->mem             = prefix+1;
       prefix->class_desc      = desc;
       memset( prefix->mem , 0 , w_size );
-//fprintf( stderr , "Allocated %d bytes at %p (%p)\n" , w_size , prefix , prefix->mem );
+
+      /* Update profile data */
+      eh_mem_profile_log( EH_MEM_PROFILE_MALLOC , w_size );
+
    }
    else
    {
@@ -86,7 +181,6 @@ gpointer API_ENTRY eh_malloc_c_style( gsize w_size )
    {
       gpointer mem;
 
-//fprintf( stderr , "eh_malloc:" );
       mem = eh_malloc( w_size , NULL , __FILE__ , __LINE__ );
 
       if ( mem )
@@ -103,7 +197,6 @@ gpointer API_ENTRY eh_calloc_c_style( gsize n_blocks , gsize n_block_bytes )
    {
       gpointer mem;
 
-//fprintf( stderr , "eh_calloc:" );
       mem = eh_malloc( n_blocks*n_block_bytes , NULL , __FILE__ , __LINE__ );
 
       if ( mem )
@@ -115,6 +208,8 @@ gpointer API_ENTRY eh_calloc_c_style( gsize n_blocks , gsize n_block_bytes )
    return NULL;
 }
 
+#if defined( USE_MY_VTABLE )
+
 void* API_ENTRY eh_free_mem( gpointer mem )
 {
    if ( !mem )
@@ -123,22 +218,24 @@ void* API_ENTRY eh_free_mem( gpointer mem )
    if ( verify_heap_pointer(mem) )
    {
       Heap_Prefix prefix = (Heap_Prefix)mem-1;
-      size_t w_size = (char*)(prefix->postfix+1) - (char*)prefix;
-//fprintf( stderr , "Freed %d bytes at %p (%p)\n" , w_size , prefix , prefix->mem );
+      size_t w_size = (size_t)(prefix->postfix) - (size_t)prefix->mem;
       remove_from_linked_list( prefix );
       memset( prefix , 0 , w_size );
       free( prefix );
+
+      eh_mem_profile_log( EH_MEM_PROFILE_FREE , w_size );
    }
 
    return NULL;
 }
-
 
 void API_ENTRY eh_free_c_style( gpointer mem )
 {
    if ( mem )
       eh_free_mem( mem );
 }
+
+#endif
 
 gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
                                const char *file , int line_no )
@@ -152,6 +249,7 @@ gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
          Heap_Prefix prefix = (Heap_Prefix)old - 1;
          Heap_Prefix new_prefix;
          Heap_Prefix pre;
+         size_t old_bytes = (size_t)(prefix->postfix) - (size_t)prefix->mem;
 
          remove_from_linked_list( prefix );
          memset( prefix->postfix , 0 , sizeof( Postfix ) );
@@ -173,6 +271,10 @@ gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
          {
             assert_error;
          }
+
+         /* Update profile data */
+         eh_mem_profile_log( EH_MEM_PROFILE_FREE    , old_bytes );
+         eh_mem_profile_log( EH_MEM_PROFILE_REALLOC , w_size    );
       }
    }
    else
@@ -222,6 +324,8 @@ void API_ENTRY eh_walk_heap( void )
    }
 }
 
+#if defined( USE_MY_VTABLE )
+
 void API_ENTRY eh_heap_dump( const char *file )
 {
    FILE *fp;
@@ -246,7 +350,8 @@ void API_ENTRY eh_heap_dump( const char *file )
          char buffer[2048];
          total_bytes += render_desc( cur , buffer );
 
-         fprintf( fp , "%s\n" , buffer );
+         if ( strlen(buffer)>0 )
+            fprintf( fp , "%s\n" , buffer );
          cur = cur->next;
          if ( cur == heap_head )
          {
@@ -256,6 +361,8 @@ void API_ENTRY eh_heap_dump( const char *file )
       fprintf( fp ,
                "Total number of allocated bytes in heap: %ld\n" ,
                total_bytes );
+
+      eh_mem_profile_fprint( fp );
    }
    else
       fprintf( fp , "Heap is empty\n" );
@@ -263,6 +370,7 @@ void API_ENTRY eh_heap_dump( const char *file )
    fclose( fp );
 
 }
+#endif
 
 void LOCAL add_to_linked_list( Heap_Prefix add )
 {
@@ -329,29 +437,33 @@ gsize LOCAL render_desc( Heap_Prefix prefix , char* buffer )
    {
       bytes = (size_t)(prefix->postfix) - (size_t)prefix->mem;
 
-      sprintf( buffer , "%08lx " , prefix->mem );
-      if ( prefix->file_name )
-      {
-         sprintf( buffer+strlen(buffer) ,
-                  "%s: line %d: %ld bytes allocated " ,
-                  prefix->file_name ,
-                  prefix->line_no   ,
-                  bytes );
-      }
-      else
-         sprintf( buffer+strlen(buffer) ,
-                  "%s: line %d: %ld bytes allocated but not yet freed." ,
-                  "(unknown file)" ,
-                  prefix->line_no   ,
-                  bytes );
-
       if ( prefix->class_desc )
       {
-         sprintf( buffer+strlen(buffer) ,
-                  "of type %s" , prefix->class_desc->var_name );
+
+         sprintf( buffer , "%08lx " , prefix->mem );
+         if ( prefix->file_name )
+         {
+            sprintf( buffer+strlen(buffer) ,
+                     "%s: line %d: %ld bytes allocated " ,
+                     prefix->file_name ,
+                     prefix->line_no   ,
+                     bytes );
+         }
+         else
+            sprintf( buffer+strlen(buffer) ,
+                     "%s: line %d: %ld bytes allocated but not yet freed." ,
+                     "(unknown file)" ,
+                     prefix->line_no   ,
+                     bytes );
+
+         if ( prefix->class_desc )
+         {
+            sprintf( buffer+strlen(buffer) ,
+                     "of type %s" , prefix->class_desc );
+         }
+         else
+            sprintf( buffer+strlen(buffer) , "(unknown type)" );
       }
-      else
-         sprintf( buffer+strlen(buffer) , "(unknown type)" );
    }
    else
    {

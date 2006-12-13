@@ -1,0 +1,14 @@
+[ global ]
+margin name:            Benchmark
+vertical resolution:    .01
+x resolution:           100000
+y resolution:           100
+bathymetry file:        sample-bathy.csv
+sediment file:          sample-sediment.csv
+
+[ epoch ]
+epoch number:           1
+epoch duration:         100y
+epoch time step:        1y
+epoch process file:     benchmark-epoch.kvf
+

@@ -79,9 +79,9 @@ Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
                                     sed_cube_y_res( prof ) );
       else
          data->subsidence_seq  = sed_get_floor_sequence_2(
-                                    data->filename ,
-                                    y              ,
-                                    sed_cube_n_y(prof) );
+                                    data->filename     ,
+                                    y                  ,
+                                    sed_cube_n_y(prof) , NULL );
       eh_free( y );
 
       data->last_year = sed_cube_age_in_years(prof);

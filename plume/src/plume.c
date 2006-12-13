@@ -21,7 +21,7 @@
 #include "plumevars.h"
 #include "plumeinput.h"
 
-#include <utils.h>
+#include "utils.h"
 
 //grid_type_3d *grid;
 //river_type river;

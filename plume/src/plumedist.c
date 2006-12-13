@@ -33,7 +33,7 @@
  */
 #include "plumeinput.h"
 #include "plumevars.h"
-#include <utils.h>
+#include "utils.h"
 
 int plumedist( Plume_grid *grid , Plume_options *opt )
 {

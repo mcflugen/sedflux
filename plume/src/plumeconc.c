@@ -29,7 +29,7 @@
 #include "plumeinput.h"
 #include "plumevars.h"
 #include <math.h>
-#include <utils.h>
+#include "utils.h"
 
 int plumeconc(Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
 {

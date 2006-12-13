@@ -181,12 +181,14 @@ Eh_grid eh_grid_resize( Eh_grid g , gssize n_x , gssize n_y )
          if ( g->data )
          {
             g->data    = eh_renew( void* , g->data , n_x );
-            g->data[0] = eh_realloc( g->data[0] , n_x*n_y*g->el_size , __FILE__ , __LINE__ );
+//            g->data[0] = eh_realloc( g->data[0] , n_x*n_y*g->el_size , __FILE__ , __LINE__ );
+            g->data[0] = eh_renew( gchar , g->data[0] , n_x*n_y*g->el_size );
          }
          else
          {
             g->data    = eh_new( void* , n_x );
-            g->data[0] = eh_malloc( n_x*n_y*g->el_size , NULL , __FILE__ , __LINE__ );
+//            g->data[0] = eh_malloc( n_x*n_y*g->el_size , NULL , __FILE__ , __LINE__ );
+            g->data[0] = eh_new( gchar , n_x*n_y*g->el_size );
          }
          for ( i=1 ; i<n_x ; i++ )
             g->data[i] = (gint8*)(g->data[i-1]) + n_y*g->el_size;
@@ -1078,7 +1080,8 @@ Eh_grid eh_grid_transpose( Eh_grid g )
       {
          void** temp = eh_new( void* , g->n_y );
 
-         temp[0] = eh_malloc( g->n_y*g->n_x*g->el_size , NULL , __FILE__ , __LINE__ );
+//         temp[0] = eh_malloc( g->n_y*g->n_x*g->el_size , NULL , __FILE__ , __LINE__ );
+         temp[0] = eh_new( gchar , g->n_y*g->n_x*g->el_size );
          for ( i=1 ; i<g->n_y ; i++ )
             temp[i] = (gint8*)(temp[i-1]) + g->n_x*g->el_size;
 

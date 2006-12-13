@@ -369,7 +369,8 @@ Sed_process sed_process_create( const char *name ,
    NEW_OBJECT( Sed_process , p );
 
 //   p->data = g_malloc0(data_size);
-   p->data = eh_malloc( data_size , NULL , __FILE__ , __LINE__ );
+//   p->data = eh_malloc( data_size , NULL , __FILE__ , __LINE__ );
+   p->data = eh_new( gchar , data_size );
 
    p->log_files    = eh_new( FILE* , SED_MAX_LOG_FILES+1 );
    p->log_files[0] = NULL;
@@ -537,7 +538,7 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
       log_name = "/dev/null";
    eh_redirect_log(log_name,DEFAULT_LOG);
 
-   if ( TRACK_MASS_BALANCE )
+   if ( g_getenv("SED_TRACK_MASS") )
    {
       double mass_before = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
       Sed_process_info info;

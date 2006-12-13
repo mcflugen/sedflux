@@ -30,7 +30,8 @@
 #include "run_diffusion.h"
 #include "processes.h"
 
-Sed_process_info run_diffusion( gpointer ptr , Sed_cube prof )
+Sed_process_info
+run_diffusion( gpointer ptr , Sed_cube prof )
 {
    Diffusion_t *data=(Diffusion_t*)ptr;
    double k_max, skin_depth;
@@ -105,37 +106,26 @@ Sed_process_info run_diffusion( gpointer ptr , Sed_cube prof )
 #define S_KEY_K_CROSS_MAX   "cross-shore diffusion constant"
 #define S_KEY_SKIN_DEPTH    "diffusion 1% depth"
 
-gboolean init_diffusion(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_diffusion( Eh_symbol_table tab , gpointer ptr )
 {
    Diffusion_t *data=(Diffusion_t*)ptr;
-   if ( symbol_table == NULL )
+   GError* err = NULL;
+
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->k_max );
       data->initialized = FALSE;
       return TRUE;
    }
-/*
-   // Read diffusion constant in m^2/day.
-   if ( is_sedflux_3d() || !is_sedflux_3d() )
-   {
-      data->k_long_max  = eh_set_input_val( eh_symbol_table_lookup(
-                                               symbol_table ,
-                                               S_KEY_K_LONG_MAX ) );
-      data->k_cross_max = eh_set_input_val( eh_symbol_table_lookup(
-                                               symbol_table ,
-                                               S_KEY_K_CROSS_MAX ) );
-   }
-   else
-   data->k_max       = g_strtod( eh_symbol_table_lookup(
-                                    symbol_table ,
-                                    S_KEY_K_MAX      ) ,
-                                 NULL );
-*/
-   data->k_max = eh_input_val_set( eh_symbol_table_lookup(
-                                      symbol_table ,
-                                      S_KEY_K_MAX ) );
 
-   data->skin_depth = eh_symbol_table_dbl_value( symbol_table , S_KEY_SKIN_DEPTH );
+   if ( (data->k_max = eh_symbol_table_input_value(tab,S_KEY_K_MAX ,&err)) == NULL )
+   {
+      fprintf( stderr , "Unable to read input values: %s" , err->message );
+      eh_exit(-1);
+   }
+
+   data->skin_depth = eh_symbol_table_dbl_value( tab , S_KEY_SKIN_DEPTH );
 
    return TRUE;
 }

@@ -24,6 +24,7 @@
 
 void eh_init_glib( void )
 {
+#if defined( USE_MY_VTABLE )
    static GMemVTable my_vtable;
 
    my_vtable.malloc      = &eh_malloc_c_style;
@@ -34,6 +35,9 @@ void eh_init_glib( void )
    my_vtable.try_realloc = &eh_realloc_c_style;
 
    g_mem_set_vtable( &my_vtable );
+#else
+//   g_mem_set_vtable( glib_mem_profiler_table );
+#endif
 }
 
 void eh_exit( int code )
@@ -114,7 +118,8 @@ int eh_isnan(float x)
 
 double eh_nan( void )
 {
-   return sqrt(-1);
+//   return sqrt(-1);
+   return strtod( "NAN" , NULL );
 }
 
 gboolean eh_isnan( double x )
@@ -682,7 +687,8 @@ void **eh_alloc_2( gssize m , gssize n , gssize size )
       if ( !p )
          eh_error( "Failed to allocate %d bytes" , n*sizeof(void*) );
 //      p[0] = (void*)malloc( m*n*size );
-      p[0] = eh_malloc( m*n*size , NULL , __FILE__ , __LINE__ );
+//      p[0] = eh_malloc( m*n*size , NULL , __FILE__ , __LINE__ );
+      p[0] = eh_new( gchar ,  m*n*size );
       if ( !p )
          eh_error( "Failed to allocate %d bytes" , n*m*size );
       for ( i=1 ; i<m ; i++ )
@@ -1256,7 +1262,8 @@ void tpool_init(tpool_t *tpoolp, int num_worker_threads, int max_queue_size, int
 
 //   if ( (tpool = (tpool_t)malloc(sizeof(struct tpool))) == NULL )
 //      perror("malloc"), eh_exit(-1);
-   tpool = (tpool_t)eh_malloc( sizeof(tpool_t) , NULL , __FILE__ , __LINE__ );
+//   tpool = (tpool_t)eh_malloc( sizeof(tpool_t) , NULL , __FILE__ , __LINE__ );
+   tpool = eh_new( struct tpool , 1 );
 
    tpool->num_threads = num_worker_threads;
    tpool->max_queue_size = max_queue_size;
@@ -1690,7 +1697,8 @@ Eh_ndgrid *eh_malloc_ndgrid( gssize n_dim , gssize el_size , ... )
    va_end( args );
 
 //   g->data = (double*)g_malloc0( n_el*el_size );
-   g->data = (double*)eh_malloc( n_el*el_size , NULL , __FILE__ , __LINE__ );
+//   g->data = (double*)eh_malloc( n_el*el_size , NULL , __FILE__ , __LINE__ );
+   g->data = (double*)eh_new( gchar , n_el*el_size );
 
    return g;
 }
@@ -1892,7 +1900,8 @@ Eh_grid *eh_malloc_grid( gssize n_x , gssize n_y , gssize size )
    eh_return_if_fail( size>0 , NULL );
 
    g->data    = eh_new( void* , n_x );
-   g->data[0] = eh_malloc( n_x*n_y*size , NULL , __FILE__ , __LINE__ );
+//   g->data[0] = eh_malloc( n_x*n_y*size , NULL , __FILE__ , __LINE__ );
+   g->data[0] = eh_new( gchar , n_x*n_y*size );
 
    g->x = eh_new( double , n_x );
    g->y = eh_new( double , n_y );
@@ -3098,476 +3107,4 @@ gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FI
 }
 
 #endif
-
-#include <string.h>
-
-gchar*
-eh_dlm_prepare( const gchar* file , GError** err )
-{
-   gchar* str = NULL;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   if ( file )
-   {
-      GError* tmp_error = NULL;
-
-      g_file_get_contents( file , &str , NULL , &tmp_error );
-
-      if ( !tmp_error )
-      {
-         /* Remove comments and empty lines */
-         eh_str_remove_c_style_comments( str );
-         eh_str_remove_to_eol_comments ( str , "#"  );
-         eh_str_remove_to_eol_comments ( str , "//" );
-         eh_dlm_remove_empty_lines     ( str );
-      }
-      else
-         g_propagate_error( err , tmp_error );
-   }
-
-   return str;
-}
-
-double** eh_dlm_read( const gchar* file , 
-                      gchar* delims     ,
-                      gint* n_rows      ,
-                      gint* n_cols      ,
-                      GError** err )
-{
-   double** data = NULL;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   if ( file )
-   {
-      double*** data_3;
-      gint* n_x = NULL;
-      gint* n_y = NULL;
-      GError* tmp_err = NULL;
-
-      data_3 = eh_dlm_read_full( file , delims , &n_x , &n_y , NULL , 1 , &tmp_err );
-
-      if ( data_3 )
-      {
-         data    = data_3[0];
-         *n_rows = n_x[0];
-         *n_cols = n_y[0];
-
-         eh_free( data_3 );
-         eh_free( n_x    );
-         eh_free( n_y    );
-      }
-      else
-         g_propagate_error( err , tmp_err );
-   }
-
-   return data;
-}
-
-double** eh_dlm_read_swap( const gchar* file ,
-                           gchar* delims     ,
-                           gint* n_rows      ,
-                           gint* n_cols      ,
-                           GError** err )
-{
-   double** data = NULL;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   if ( file )
-   {
-      gint tmp_rows, tmp_cols;
-      double** tmp;
-      GError* tmp_err = NULL;
-
-      tmp  = eh_dlm_read( file , delims , &tmp_rows , &tmp_cols , &tmp_err );
-
-      if ( tmp )
-      {
-         gint i, j;
-
-         data = eh_new_2( double , tmp_cols , tmp_rows );
-
-         for ( i=0 ; i<tmp_rows ; i++ )
-            for ( j=0 ; j<tmp_rows ; j++ )
-               data[j][i] = tmp[i][j];
-
-         *n_rows = tmp_cols;
-         *n_cols = tmp_rows;
-
-      }
-      else
-         g_propagate_error( err , tmp_err );
-
-      eh_free_2( tmp );
-   }
-
-   return data;
-}
-
-double*** eh_dlm_read_full( const gchar* file ,
-                            gchar* delims     ,
-                            gint** n_rows     ,
-                            gint** n_cols     ,
-                            gchar*** rec_data ,
-                            gint max_records  ,
-                            GError** err )
-{
-   double*** data = NULL;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   if ( file )
-   {
-      gchar* str;
-      GError* tmp_error = NULL;
-
-      str = eh_dlm_prepare( file , &tmp_error );
-
-      if ( !tmp_error )
-      {
-         gchar** rec;
-         gint i, n_recs;
-         rec = eh_dlm_split_records( str , "[" , "]" , rec_data );
-
-         n_recs  = g_strv_length( rec );
-         if ( max_records>0 )
-            n_recs = MAX( max_records , n_recs );
-
-         data    = eh_new( double** , n_recs+1 );
-         *n_rows = eh_new( gint     , n_recs );
-         *n_cols = eh_new( gint     , n_recs );
-
-         for ( i=0 ; i<n_recs ; i++ )
-         {
-            data[i] = eh_dlm_read_data( rec[i]    ,
-                                        delims    ,
-                                        *n_rows+i ,
-                                        *n_cols+i ,
-                                        NULL );
-         }
-         data[i] = NULL;
-
-         g_strfreev( rec );
-      }
-      else
-         g_propagate_error( err , tmp_error );
-
-      eh_free( str );
-   }
-
-   return data;
-}
-
-double**
-eh_dlm_read_data( gchar* str        ,
-                  gchar* delims     ,
-                  gint* n_rows      ,
-                  gint* n_cols      ,
-                  GError** err )
-{
-   double** data;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   if ( !delims )
-      delims = ";,";
-
-   if ( str )
-   {
-      *n_rows = eh_dlm_find_n_rows( str , '\n' );
-      *n_cols = eh_dlm_find_n_cols( str , delims );
-
-      /* Parse the data */
-      {
-         gint i, j;
-         gchar* pos_0;
-         gchar* pos_1;
-         gchar** values;
-         gchar** line;
-         gint n_vals;
-         gchar* str_end = str+strlen(str);
-
-         data = eh_new_2( double , *n_rows , *n_cols );
-
-         pos_0 = str;
-         for ( i=0 ; pos_0<str_end ; i++ )
-         {
-            pos_1 = strchr( pos_0 , '\n' );
-            if ( !pos_1 )
-               pos_1 = str_end;
-            pos_1[0] = '\0';
-
-            values = g_strsplit_set( pos_0 , delims , -1 );
-
-            n_vals = g_strv_length( values );
-
-            for ( j=0 ; j<n_vals ; j++ )
-               data[i][j] = g_ascii_strtod( values[j] , NULL );
-            for (     ; j<*n_cols ; j++ )
-               data[i][j] = 0.;
-
-            pos_0 = pos_1+1;
-
-            g_strfreev( values );
-         }
-      }
-   }
-
-   return data;
-}
-
-gint
-eh_dlm_find_n_rows( gchar* str , gint delim )
-{
-   gint n = 0;
-
-   if ( str )
-   {
-      n = eh_str_count_chr( str , str+strlen(str) , delim )+1;
-   }
-
-   return n;
-}
-
-gint
-eh_str_count_chr( gchar* str , gchar* end , gint delim )
-{
-   gint n = 0;
-
-   if ( str )
-   {   
-      gchar* pos;
-      for ( pos=strchr(str  , delim ),n=0 ;
-            pos && pos<=end ;
-            pos=strchr(pos+1, delim ),n++ );
-   }
-
-   return n;
-}
-
-gint
-eh_dlm_find_n_cols( gchar* str , gchar* delims )
-{
-   gint n_cols = 0;
-
-   if ( str )
-   {
-      gint i, n;
-      gint n_delims  = strlen(delims);
-      gchar* str_end = str + strlen(str);
-      gchar* pos_0;
-      gchar* pos_1;
-
-      pos_0 = str;
-      while ( pos_0<str_end )
-      {
-         pos_1 = strchr( pos_0 , '\n' );
-         if ( !pos_1 )
-            pos_1 = str_end;
-
-         for ( i=0,n=0 ; i<n_delims ; i++ )
-            n += eh_str_count_chr( pos_0 , pos_1 , delims[i] );
-
-         if ( n>n_cols )
-            n_cols = n;
-
-         pos_0 = pos_1+1;
-      }
-   }
-
-   return n_cols+1;
-}
-
-void eh_dlm_remove_empty_lines( gchar* str )
-{
-
-   if ( str )
-   {
-      gboolean is_empty;
-      gchar* pos;
-      gchar* pos_0;
-      gchar* pos_1;
-      gchar* str_end = str+strlen(str);
-
-      pos_0 = str;
-      while ( pos_0 && pos_0<str_end )
-      {
-         pos_1 = strchr( pos_0 , '\n' );
-
-         if ( !pos_1 )
-            pos_1 = str_end;
-
-         is_empty = TRUE;
-         for ( pos=pos_0 ; is_empty && pos<pos_1 ; pos++ )
-            if ( !g_ascii_isspace(*pos) )
-               is_empty = FALSE;
-
-         if ( is_empty )
-         {
-            g_memmove( pos_0 , pos_1+1 , str_end - pos_1 );
-            str_end -= pos_1-pos_0+1;
-         }
-         else
-            pos_0 = pos_1+1;
-      }
-   }
-
-}
-
-void eh_str_remove_to_eol_comments( gchar* str , gchar* com_start )
-{
-   eh_str_remove_comments( str , com_start , NULL , NULL );
-   return;
-}
-
-void eh_str_remove_c_style_comments( gchar* str )
-{
-   eh_str_remove_comments( str , "/*" , "*/" , NULL );
-}
-
-void
-eh_str_remove_comments( gchar* str             ,
-                        const gchar* start_str ,
-                        const gchar* end_str   ,
-                        gchar*** comments )
-{
-   gchar* str_0 = str;
-   gint end_len;
-
-   eh_require( start_str );
-
-   if ( !end_str )
-   {
-      /* This is a special case where the comment ends at the end of the
-         line but we don't want to remove the EOL character */
-      end_str = "\n";
-      end_len = 0;
-   }
-   else
-      end_len = strlen(end_str);
-
-   if ( comments )
-      *comments = NULL;
-
-   if ( str )
-   {
-      gchar* pos_0;
-      gchar* pos_1;
-      gchar* str_end = str+strlen(str);
-      gint   start_len = strlen(start_str);
-      gint   len = 1;
-
-      pos_0 = strstr( str , start_str );
-      while ( pos_0 )
-      {
-         pos_1 = strstr( pos_0 , end_str );
-
-         if ( !pos_1 )
-            pos_1 = str_end-end_len;
-
-         if ( comments )
-         {
-            len             += 1;
-            *comments        = eh_renew( gchar* , *comments , len );
-            *comments[len-2] = g_memdup( pos_0 + start_len ,
-                                         pos_1 - (pos_0+start_len)+1 );
-            *comments[len-2][pos_1-(pos_0+start_len)] = '\0';
-            *comments[len-1] = NULL;
-         }
-
-         g_memmove( pos_0 ,
-                    pos_1+end_len ,
-                    str_end - (pos_1+end_len)+1 );
-         str_end -= pos_1+end_len - pos_0;
-
-         pos_0 = strstr( pos_0 , start_str );
-      }
-   }
-}
-
-gchar**
-eh_dlm_split_records( gchar* str             ,
-                      const gchar* start_str ,
-                      const gchar* end_str   ,
-                      gchar*** rec_data )
-{
-   gchar** split_str = NULL;
-
-   eh_require( start_str );
-   eh_require( end_str   );
-
-   if ( rec_data )
-      *rec_data = NULL;
-
-   if ( str )
-   {
-      for ( ; g_ascii_isspace(*str) ; str++ );
-
-      if ( strstr( str , start_str ) != str )
-      {
-         eh_strv_append( &split_str , g_strdup(str) );
-      }
-      else
-      {
-         gchar* pos_0;
-         gchar* pos_1;
-         gchar* str_end = str+strlen(str);
-         gint start_len = strlen(start_str);
-         gint end_len   = strlen(end_str  );
-         gint len;
-         gchar* new_line;
-
-         pos_0 = str+start_len;
-         for ( len=2 ; pos_0<str_end ; len++ )
-         {
-            pos_1 = strstr( pos_0 , end_str );
-            if ( !pos_1 )
-               pos_1 = str_end-end_len;
-
-            if ( rec_data )
-            {
-               new_line              = g_memdup( pos_0 , pos_1-pos_0+1 );
-               new_line[pos_1-pos_0] = '\0';
-               eh_strv_append( rec_data , new_line );
-               g_strstrip( new_line );
-            }
-
-            pos_0 = pos_1 + end_len;
-            for ( ; g_ascii_isspace(*pos_0) ; pos_0++ );
-
-            pos_1 = strstr( pos_0 , start_str );
-            if ( !pos_1 )
-               pos_1 = str_end-end_len;
-
-            new_line = g_memdup( pos_0 , pos_1-pos_0+1 );
-            new_line[pos_1-pos_0] = '\0';
-            g_strstrip( new_line );
-            
-            eh_strv_append( &split_str , new_line );
-
-            pos_0 = pos_1+start_len;
-            for ( ; g_ascii_isspace(*pos_0) ; pos_0++ );
-         }
-      }
-   }
-
-   return split_str;
-}
-
-gchar** eh_strv_append( gchar*** str_l , gchar* new_str )
-{
-   if ( str_l && new_str )
-   {
-      gint len = (*str_l)?(g_strv_length(*str_l)+1):1;
-
-      *str_l = eh_renew( gchar* , *str_l , len+1 );
-
-      (*str_l)[len-1] = new_str;
-      (*str_l)[len]   = NULL;
-   }
-
-   return *str_l;
-}
 

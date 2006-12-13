@@ -49,6 +49,10 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
    {
       if ( data->initialized )
       {
+         gint i;
+         for ( i=0 ; i<data->src_seq->len ; i++ )
+            eh_grid_destroy( data->src_seq->data[i] , TRUE );
+         eh_destroy_sequence( data->src_seq , FALSE );
          data->initialized = FALSE;
       }
       return SED_EMPTY_INFO;
@@ -60,6 +64,7 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
 
       if ( data->src_file )
       {
+         GError* err = NULL;
          if ( is_sedflux_3d() )
             data->src_seq  = sed_get_floor_sequence_3( data->src_file         ,
                                                        sed_cube_x_res( prof ) ,
@@ -67,7 +72,14 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
          else
             data->src_seq  = sed_get_floor_sequence_2( data->src_file ,
                                                        y              ,
-                                                       sed_cube_n_y(prof) );
+                                                       sed_cube_n_y(prof) ,
+                                                       &err );
+
+         if ( err )
+         {
+            fprintf( stderr , "Unable to read subsidence sequence file: %s\n" , err->message );
+            eh_exit(-1);
+         }
       }
       else
          data->src_seq = NULL;
@@ -80,17 +92,19 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
 
    if ( data->src_seq )
    {
+eh_message( "START" );
       info.mass_added =
          add_sediment_from_external_source( prof            ,
                                             data->src_seq   ,
                                             data->last_year ,
                                             sed_cube_age_in_years(prof) );
       data->last_year = sed_cube_age_in_years( prof );
+eh_message( "START" );
    }
 
    n_rivers = sed_cube_number_of_rivers( prof );
 
-   init_mass = sed_cube_mass( prof );
+//   init_mass = sed_cube_mass( prof );
 
    info.mass_lost = 0.;
    if ( n_rivers>0 )
@@ -106,18 +120,11 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
          sed_cell_grid_clear( sed_cube_in_suspension( prof , i ) );
    }
 
-   total_mass = sed_cube_mass( prof );
+//   total_mass = sed_cube_mass( prof );
 
    eh_message( "time                          : %f" , sed_cube_age_in_years( prof ) );
-   eh_message( "sediment added (kg)           : %g" , total_mass - init_mass );
-   eh_message( "total mass of the profile (kg): %g" , total_mass );
-
-/*
-   if ( error )
-      return FALSE;
-   else
-      return TRUE;
-*/
+//   eh_message( "sediment added (kg)           : %g" , total_mass - init_mass );
+//   eh_message( "total mass of the profile (kg): %g" , total_mass );
 
    return info;
 }
@@ -198,7 +205,7 @@ double add_sediment_from_external_source( Sed_cube p       ,
       }
    }
 
-   eh_require( start<finish );
+   eh_require( start<=finish );
 
    time_step = finish-start;
 

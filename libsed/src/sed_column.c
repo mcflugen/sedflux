@@ -1340,7 +1340,10 @@ Sed_column sed_column_resize( Sed_column col , gssize n )
          gssize new_size = col->size + add_bins;
 
          if ( col->cell )
+         {
+            Sed_cell* new_col;
             col->cell = eh_renew( Sed_cell , col->cell , col->size+add_bins );
+         }
          else
             col->cell = eh_new( Sed_cell , col->size+add_bins );
 

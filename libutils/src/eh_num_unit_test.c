@@ -8,7 +8,7 @@ START_TEST ( test_nan )
 
    x = eh_nan();
    fail_unless( isnan(x)    , "eh_nan does not produce a NaN" );
-   fail_unless( eh_isnan(x) , "Undetected NaN by eh is_nan" );
+   fail_unless( eh_isnan(x) , "Undetected NaN by eh_isnan" );
 
 //   x = 1945/0.;
 //   fail_unless( eh_isnan(x) , "eh_isnan does not detect divide-by-zero NaN" );
@@ -118,9 +118,6 @@ User_data;
 #define P1 (0.8)
 #define F2 (0.9)
 #define XA (5.176)
-
-//#include <ieeefp.h>
-#include <math.h>
 
 double inventory( double x , double s , double l )
 {

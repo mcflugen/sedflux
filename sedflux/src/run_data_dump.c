@@ -75,13 +75,9 @@ eh_warning( "property file attributes are not being used." );
       sed_set_sed_file_attr_x_lim( attr , data->x_lim_min , data->x_lim_max );
 */
 
-eh_debug( "Opening data file." );
       fp = sed_property_file_new( filename , property , NULL );
 
-eh_debug( "Writing to data file." );
       sed_property_file_write( fp , prof );
-
-eh_debug( "Closing data file." );
       sed_property_file_attr_destroy( attr );
       sed_property_file_destroy( fp );
 

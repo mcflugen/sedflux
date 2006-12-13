@@ -61,11 +61,11 @@
 #define PROGRAM_NAME "sedflux"
 #define PROGRAM_MAJOR_VERSION "2"
 #define PROGRAM_MINOR_VERSION "0"
-#define PROGRAM_MICRO_VERSION "11"
+#define PROGRAM_MICRO_VERSION "14"
 
 #define S_MAJOR_VERSION (2)
 #define S_MINOR_VERSION (0)
-#define S_MICRO_VERSION (11)
+#define S_MICRO_VERSION (14)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \
@@ -131,7 +131,7 @@ Sed_constants;
 #endif
 
 #ifndef S_ADDBINS
-# define S_ADDBINS (16)
+# define S_ADDBINS (512)
 #endif
 
 // Define the facies.

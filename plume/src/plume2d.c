@@ -21,7 +21,7 @@
 #include <glib.h>
 #include "plumevars.h"
 #include "plumeinput.h"
-#include <utils.h>
+#include "utils.h"
 
 //void init_plume2d(plume_inputs *plume_const,river_type river_passed,int ngrains_passed,sedload_type *sedload_passed, double dx,double **deposit,int depositLen);
 

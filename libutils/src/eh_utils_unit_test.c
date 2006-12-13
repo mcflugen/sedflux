@@ -133,7 +133,7 @@ Suite *eh_utils_suite( void )
 
    suite_add_tcase( s , test_case_core );
 
-//   tcase_add_test( test_case_core , test_dlmread     );
+   tcase_add_test( test_case_core , test_dlmread     );
    tcase_add_test( test_case_core , test_dlmread_seq );
 
    return s;

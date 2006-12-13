@@ -51,7 +51,8 @@ Eh_ndgrid eh_ndgrid_malloc( gssize n_dim , gssize el_size , ... )
    va_end( args );
 
 //   g->data = (double*)g_malloc0( n_el*el_size );
-   g->data = (double*)eh_malloc( n_el*el_size , NULL , __FILE__ , __LINE__ );
+//   g->data = (double*)eh_malloc( n_el*el_size , NULL , __FILE__ , __LINE__ );
+   g->data = (double*)eh_new( gchar , n_el*el_size );
 
    return g;
 }

@@ -73,7 +73,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include "sakura.h"
-#include <utils.h>
+#include "utils.h"
 
 /** The length of a day in days. */
 #define DEFAULT_DAY_LENGTH           (1)

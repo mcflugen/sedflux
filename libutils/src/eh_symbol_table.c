@@ -330,4 +330,8 @@ gint eh_symbol_table_int_value( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
+Eh_input_val eh_symbol_table_input_value( Eh_symbol_table s , gchar* label , GError** err )
+{
+   return eh_input_val_set( eh_symbol_table_lookup( s , label ) , err );
+}
 

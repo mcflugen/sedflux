@@ -27,7 +27,8 @@
 #include "sed_sedflux.h"
 #include "run_constants.h"
 
-Sed_process_info run_constants( gpointer ptr , Sed_cube prof )
+Sed_process_info
+run_constants( gpointer ptr , Sed_cube prof )
 {
    Constants_t *data=(Constants_t*)ptr;
 
@@ -85,10 +86,13 @@ Sed_process_info run_constants( gpointer ptr , Sed_cube prof )
 #define S_KEY_CONST_RHO_QUARTZ  "density of quartz"
 #define S_KEY_CONST_RHO_MANTLE  "density of mantle"
 
-gboolean init_constants(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_constants( Eh_symbol_table tab , gpointer ptr )
 {
    Constants_t *data=(Constants_t*)ptr;
-   if ( symbol_table == NULL )
+   GError* err = NULL;
+
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->gravity     );
       eh_input_val_destroy( data->rho_sea_h2o );
@@ -100,32 +104,16 @@ gboolean init_constants(Eh_symbol_table symbol_table,gpointer ptr)
       return TRUE;
    }
    
-   data->gravity     = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_GRAVITY ) );
-   data->rho_sea_h2o = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_RHO_SEA_H2O ) );
-   data->rho_h2o     = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_RHO_H2O ) );
-/*
-   data->mu_h2o      = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_MU_H2O ) );
-   data->eta_h2o     = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_ETA_H2O ) );
-*/
-   data->salinity    = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_SALINITY ) );
-   data->rho_quartz  = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_RHO_QUARTZ ) );
-   data->rho_mantle  = eh_input_val_set(
-                          eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_CONST_RHO_MANTLE ) );
+   if (    (data->gravity     = eh_symbol_table_input_value(tab,S_KEY_CONST_GRAVITY ,&err)    ) == NULL
+        || (data->rho_sea_h2o = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_SEA_H2O ,&err)) == NULL
+        || (data->rho_h2o     = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_H2O ,&err)    ) == NULL
+        || (data->salinity    = eh_symbol_table_input_value(tab,S_KEY_CONST_SALINITY,&err)    ) == NULL
+        || (data->rho_quartz  = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_QUARTZ,&err)  ) == NULL
+        || (data->rho_mantle  = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_MANTLE,&err)  ) == NULL )
+   {
+      fprintf( stderr , "Unable to read input values: %s" , err->message );
+      eh_exit(-1);
+   }
 
    return TRUE;
 }

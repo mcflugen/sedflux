@@ -56,7 +56,8 @@ determines the probability that this storm will be the same as the last
 
 \return The magnitude of the next storm.
 */
-double storm( GRand *rand , double storm_length, double average_storm, double variance , double last_storm)
+double
+storm( GRand *rand , double storm_length, double average_storm, double variance , double last_storm)
 {
    double alpha,f,a;
    static long seed[1];
@@ -330,7 +331,8 @@ gint cmp_storm_time( Sed_ocean_storm a , Sed_ocean_storm b )
       return 0;
 }
 
-Sed_process_info run_storm(gpointer ptr,Sed_cube prof)
+Sed_process_info
+run_storm(gpointer ptr,Sed_cube prof)
 {
    Storm_t *data=(Storm_t*)ptr;
    GSList *storm_list;
@@ -464,29 +466,30 @@ if ( sed_ocean_storm_wave_height(this_storm)>100. )
 
 @return TRUE if no problems were encountered.  FALSE otherwise.
 */
-gboolean init_storm(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_storm( Eh_symbol_table tab , gpointer ptr )
 {
    Storm_t *data=(Storm_t*)ptr;
+   GError* err = NULL;
 
-   if ( symbol_table == NULL )
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->wave_height );
       data->initialized = FALSE;
       return TRUE;
    }
 
-   data->wave_height        = eh_input_val_set( eh_symbol_table_lookup(
-                                            symbol_table ,
-                                            S_KEY_WAVE_HEIGHT ) );
-   data->fraction           = eh_symbol_table_dbl_value ( symbol_table , S_KEY_FRACTION        );
-   data->average_non_events = eh_symbol_table_bool_value( symbol_table , S_KEY_NON_EVENTS      );
-//   data->alpha              = eh_symbol_table_dbl_value ( symbol_table , S_KEY_SHAPE_PARAMETER );
-//   data->beta               = eh_symbol_table_dbl_value ( symbol_table , S_KEY_SCALE_PARAMETER );
-   data->rand_seed          = eh_symbol_table_int_value ( symbol_table , S_KEY_SEED            );
+   if ( (data->wave_height = eh_symbol_table_input_value(tab,S_KEY_WAVE_HEIGHT ,&err)) == NULL )
+   {
+      fprintf( stderr , "Unable to read input values: %s" , err->message );
+      eh_exit(-1);
+   }
+
+   data->fraction           = eh_symbol_table_dbl_value ( tab , S_KEY_FRACTION        );
+   data->average_non_events = eh_symbol_table_bool_value( tab , S_KEY_NON_EVENTS      );
+   data->rand_seed          = eh_symbol_table_int_value ( tab , S_KEY_SEED            );
 
    eh_require( data->fraction>=0 && data->fraction<=1 );
-//   eh_require( data->alpha > 0                        );
-//   eh_require( data->beta  > 0                        );
 
    return TRUE;
 

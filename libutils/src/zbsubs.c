@@ -12,7 +12,7 @@
 
 #include <math.h>
 #include <glib.h>
-#include <utils.h>
+#include "utils.h"
 #include "f2c.h"
 
 #define DSIGN(a,b) ( (b>0)?((a)>0?a:-(a)):((a)<=0?a:-(a)))

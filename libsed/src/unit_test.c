@@ -4,6 +4,7 @@ int test_sed_cell( void );
 int test_sed_hydro( void );
 int test_sed_wave( void );
 int test_sed_column( void );
+int test_sed_cube( void );
 int test_sed_sediment( void );
 
 int main( void )
@@ -20,6 +21,7 @@ int main( void )
    n += test_sed_hydro();
    n += test_sed_wave();
    n += test_sed_column();
+   n += test_sed_cube();
    n += test_sed_sediment();
 
    sed_sediment_unset_env();

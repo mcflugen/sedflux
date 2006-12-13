@@ -20,8 +20,8 @@
 
 #include <string.h>
 #include <glib.h>
-#include <eh_glib.h>
-#include <utils.h>
+#include "eh_glib.h"
+#include "utils.h"
 
 gsize eh_string_find_first_of(GString *s, char c)
 {

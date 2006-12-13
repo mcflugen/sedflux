@@ -8,25 +8,22 @@
 */
 CLASS( Eh_input_val )
 {
-/// The type of Eh_input_val.  This defines the way the value changes.
-   Eh_input_val_type type;
-/// Pointer to a user-specified file, if necessary.  NULL, otherwise.
-   FILE *fp;
-/// The name of a user-specified file, if necessary.  NULL, otherwise.
-   char *file;
-/// Array of x-values for a time series or a user-defined CDF
-   double *x;
-/// Array of y-values for a time series or a user-defined CDF
-   double *y;
-/// Length of \a x and \a y
-   double len;
-/// A random number generator, if necessary.  NULL, otherwise.
-   GRand* rand;
-/// Data used to calculate a new value
-   double data[2];
-/// The current value of the Eh_input_val
-   double val;
+   Eh_input_val_type type; //< The type of Eh_input_val.  This defines the way the value changes.
+   FILE *fp;               //< Pointer to a user-specified file, if necessary.  NULL, otherwise.
+   char *file;             //< The name of a user-specified file, if necessary.  NULL, otherwise.
+   double *x;              //< Array of x-values for a time series or a user-defined CDF
+   double *y;              //< Array of y-values for a time series or a user-defined CDF
+   double len;             //< Length of \a x and \a y
+   GRand* rand;            //< A random number generator, if necessary.  NULL, otherwise.
+   double data[2];         //< Data used to calculate a new value
+   double val;             //< The current value of the Eh_input_val
 };
+
+GQuark
+eh_input_val_error_quark( void )
+{
+   return g_quark_from_static_string( "eh-input-val-error-quark" );
+}
 
 /** Create an Eh_input_val
 
@@ -93,12 +90,15 @@ The Eh_input_val can be initialized to be one of:
           function defined in file, FILENAME.
 
 \param input_str An initialization string for the Eh_input_val
+\param err       Location of a GError to indicate and error (or NULL)
 
-\return A new (initialized) Eh_input_val
+\return A new (initialized) Eh_input_val, or NULL if an error occured
 */
-Eh_input_val eh_input_val_set( const char *input_str )
+Eh_input_val eh_input_val_set( const char *input_str , GError** err )
 {
-   Eh_input_val val = eh_input_val_new();
+   Eh_input_val val = NULL;
+
+   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
 
    eh_require( input_str );
 
@@ -109,11 +109,14 @@ Eh_input_val eh_input_val_set( const char *input_str )
    //---
    if ( strchr( input_str , '=' ) == NULL )
    {
+      val = eh_input_val_new();
+
       val->type = EH_INPUT_VAL_SCALAR;
       val->val = g_ascii_strtod( input_str , NULL );
    }
    else
    {
+      GError* tmp_error = NULL;
       char **equal_split = g_strsplit( input_str , "=" , 2 );
 
       if (    g_ascii_strcasecmp( equal_split[0] , "FILE" ) == 0 
@@ -121,74 +124,105 @@ Eh_input_val eh_input_val_set( const char *input_str )
       {
          double** data;
          gint n_rows, n_cols;
-         GError* error;
+         Eh_input_val_type type;
+         gchar* file;
 
          if ( g_ascii_strcasecmp( equal_split[0] , "FILE" ) == 0 )
-            val->type = EH_INPUT_VAL_FILE;
+            type = EH_INPUT_VAL_FILE;
          else
-            val->type = EH_INPUT_VAL_RAND_USER;
+            type = EH_INPUT_VAL_RAND_USER;
 
-         val->file = g_strdup( equal_split[1] );
+         file = g_strdup( equal_split[1] );
 
-         data = eh_dlm_read_swap( val->file      ,
-                                  ";,"           ,
-                                  &n_rows        ,
-                                  &n_cols        ,
-                                  &error );
+         data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &tmp_error );
 
-         if ( !error )
+         if ( !tmp_error )
          {
-            if ( n_rows<2 )
-               eh_error( "Expecting at least two columns of data: %s" ,
-                         val->file );
-            if ( n_rows>2 )
+            if ( n_rows!=2 )
+               g_set_error( &tmp_error ,
+                            EH_INPUT_VAL_ERROR ,
+                            EH_INPUT_VAL_ERROR_NOT_TWO_COLUMNS ,
+                            "%s: Input file does not contain 2 columns (found %d)\n" ,
+                            file , n_rows );
+            else if ( !eh_dbl_array_is_monotonic_up( data[0] , n_cols ) )
+               g_set_error( &tmp_error ,
+                            EH_INPUT_VAL_ERROR ,
+                            EH_INPUT_VAL_ERROR_X_NOT_MONOTONIC ,
+                            "%s: The first column must be monotonically increasing\n" ,
+                            file , n_rows );
+            else if (    type == EH_INPUT_VAL_RAND_USER
+                      && !eh_dbl_array_is_monotonic_up( data[1] , n_cols ) )
+               g_set_error( &tmp_error ,
+                            EH_INPUT_VAL_ERROR ,
+                            EH_INPUT_VAL_ERROR_F_NOT_MONOTONIC ,
+                            "%s: The second column must be monotonically increasing\n" ,
+                            file , n_rows );
+            else if (    type == EH_INPUT_VAL_RAND_USER
+                      && !(data[1][0]<=0 && data[1][n_cols-1]>=1. ) )
+               g_set_error( &tmp_error ,
+                            EH_INPUT_VAL_ERROR ,
+                            EH_INPUT_VAL_ERROR_BAD_F_RANGE ,
+                            "%s: CDF data must range from 0 to 1 (found [%f,%f]).\n" ,
+                            file , data[1][0] , data[1][n_cols-1] );
+            else
             {
-               eh_warning( "Expecting two columns of data: %s" , val->file );
-               eh_warning( "%d were found.  Ignoring excess columns." , n_rows );
+               val = eh_input_val_new();
+
+               val->type = type;
+               val->file = file;
+               val->len = n_cols;
+               val->x   = g_memdup( data[0] , sizeof(double)*n_cols );
+               val->y   = g_memdup( data[1] , sizeof(double)*n_cols );
             }
-
-            val->len = n_cols;
-            val->x   = g_memdup( data[0] , sizeof(double)*n_cols );
-            val->y   = g_memdup( data[1] , sizeof(double)*n_cols );
-
-            eh_free_2( data );
          }
-         else
-            eh_error( "Unable to open input file: %s" , error->message );
 
+         eh_free_2( data );
       }
       else if (    g_ascii_strcasecmp( equal_split[0] , "UNIFORM" ) == 0 
                 || g_ascii_strcasecmp( equal_split[0] , "NORMAL"  ) == 0 
                 || g_ascii_strcasecmp( equal_split[0] , "WEIBULL" ) == 0 )
       {
-         char **comma_split = g_strsplit( equal_split[1] , "," , 2 );
+         char** comma_split = g_strsplit( equal_split[1] , "," , -1 );
+         gint   n_vals      = g_strv_length( comma_split );
 
-         val->data[0] = g_ascii_strtod( comma_split[0] , NULL );
-         val->data[1] = g_ascii_strtod( comma_split[1] , NULL );
-
-         g_strfreev( comma_split );
-
-         if      ( g_ascii_strcasecmp( equal_split[0] , "UNIFORM" ) == 0 )
-            val->type = EH_INPUT_VAL_RAND_UNIFORM;
-         else if ( g_ascii_strcasecmp( equal_split[0] , "NORMAL"  ) == 0 )
-            val->type = EH_INPUT_VAL_RAND_NORMAL;
-         else if ( g_ascii_strcasecmp( equal_split[0] , "WEIBULL" ) == 0 )
-            val->type = EH_INPUT_VAL_RAND_WEIBULL;
+         if ( n_vals != 2 )
+            g_set_error( &tmp_error ,
+                         EH_INPUT_VAL_ERROR ,
+                         EH_INPUT_VAL_ERROR_NOT_TWO_DIST_VALS ,
+                         "%s: Two values are required to define a distribution (found %d)." ,
+                         equal_split[1], n_vals );
          else
-            eh_require_not_reached();
+         {
+            val = eh_input_val_new();
+
+            val->data[0] = g_ascii_strtod( comma_split[0] , NULL );
+            val->data[1] = g_ascii_strtod( comma_split[1] , NULL );
+
+            if      ( g_ascii_strcasecmp( equal_split[0] , "UNIFORM" ) == 0 )
+               val->type = EH_INPUT_VAL_RAND_UNIFORM;
+            else if ( g_ascii_strcasecmp( equal_split[0] , "NORMAL"  ) == 0 )
+               val->type = EH_INPUT_VAL_RAND_NORMAL;
+            else if ( g_ascii_strcasecmp( equal_split[0] , "WEIBULL" ) == 0 )
+               val->type = EH_INPUT_VAL_RAND_WEIBULL;
+            else
+               eh_require_not_reached();
+
+         }
+         g_strfreev( comma_split );
       }
       else
       {
-         eh_error( "Bad key value.  Must be one of "
-                   "UNIFORM, "
-                   "NORMAL, "
-                   "WEIBULL, "
-                   "USER, "
-                   "FILE" );
-         eh_require_not_reached();
+         g_set_error( &tmp_error ,
+                      EH_INPUT_VAL_ERROR ,
+                      EH_INPUT_VAL_ERROR_BAD_DIST_KEY ,
+                      "%s: Bad input val key (valid keys are %s).\n" ,
+                      equal_split[0] , "Uniform, Normal, Weibull, User, and File" );
       }
 
       g_strfreev( equal_split );
+
+      if ( tmp_error )
+         g_propagate_error( err , tmp_error );
    }
    
    return val;

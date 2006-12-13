@@ -44,6 +44,7 @@
 #include "eh_data_record.h"
 #include "eh_input_val.h"
 #include "eh_types.h"
+#include "eh_dlm_file.h"
 
 #define E_BADVAL (G_MAXFLOAT)
 #define E_NOVAL  (G_MAXFLOAT)
@@ -245,6 +246,7 @@
 #define eh_upper_bound( val , high ) ( val = ((val)>(high))?(high):(val) )
 #define eh_clamp( val , low , high ) \
    ( val = ((val)<(low))?(low):(((val)>(high))?(high):(val)) )
+#define EH_SWAP_PTR( a , b ) { void* t=(b); (b)=(a); (a)=t; }
 #define swap_int( a , b ) { int temp=b; b=a; a=temp; }
 #define swap_dbl( a , b ) { double temp=b; b=a; a=temp; }
 #define swap_dbl_vec( x , i , j ) { double temp=x[i]; x[i]=x[j]; x[j]=temp; }
@@ -267,7 +269,7 @@ typedef gboolean (*Populate_func)( double , double , gpointer );
 #endif
 typedef gboolean (*Eh_test_func)( void );
 
-/** A series of (x,y) pairsA
+/** A series of (x,y) pairs
 
 \deprecated Don't use this anymore.  Try Eh_dbl_grid instead.
 */
@@ -778,47 +780,5 @@ gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FI
 #define eh_fwrite_int32_swap(p,s,n,f) ( eh_fwrite_int32_to_le(p,s,n,f) )
 
 #endif
-
-gchar*     eh_dlm_prepare                ( const gchar* file ,
-                                           GError** err );
-double**   eh_dlm_read                   ( const gchar* file ,
-                                           gchar* delims     ,
-                                           gint* n_rows      ,
-                                           gint* n_cols      ,
-                                           GError** error );
-double**   eh_dlm_read_swap              ( const gchar* file ,
-                                           gchar* delims     ,
-                                           gint* n_rows      ,
-                                           gint* n_cols      ,
-                                           GError** error );
-double***  eh_dlm_read_full              ( const gchar* file ,
-                                           gchar* delims     ,
-                                           gint** n_rows     ,
-                                           gint** n_cols     ,
-                                           gchar*** rec_data ,
-                                           gint max_records  ,
-                                           GError** err );
-double**   eh_dlm_read_data              ( gchar* str        ,
-                                           gchar* delims     ,
-                                           gint* n_rows      ,
-                                           gint* n_cols      ,
-                                           GError** err );
-gint       eh_dlm_find_n_cols            ( gchar* content , gchar* delims );
-gint       eh_dlm_find_n_rows            ( gchar* content , gint delim );
-gint       eh_str_count_chr              ( gchar* str , gchar* end , gint delim );
-
-void       eh_dlm_remove_empty_lines     ( gchar* content );
-void       eh_str_remove_to_eol_comments ( gchar* content , gchar* com_start );
-void       eh_str_remove_c_style_comments( gchar* content );
-void       eh_str_remove_comments        ( gchar* content         ,
-                                           const gchar* start_str ,
-                                           const gchar* end_str   ,
-                                           gchar*** comments );
-gchar**    eh_dlm_split_records          ( gchar* str             ,
-                                           const gchar* start_str ,
-                                           const gchar* end_str   ,
-                                           gchar*** rec_data );
-gchar**    eh_strv_append                ( gchar*** str_l ,
-                                           gchar* new_str );
 
 #endif /* utils.h is included */

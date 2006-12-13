@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <glib.h>
-#include <utils.h>
+#include "utils.h"
 
 /*
  *	convert n to characters in s
@@ -91,16 +91,19 @@ float **matrix(long nrl, long nrh, long ncl, long nch)
 
 	/* allocate pointers to rows */
 //	m=(float **) malloc((size_t)((nrow+NR_END)*sizeof(float*)));
-        m = (float**)eh_malloc( ((size_t)(nrow+NR_END)*sizeof(float*)) ,
-                                NULL , __FILE__ , __LINE__ );
+//        m = (float**)eh_malloc( ((size_t)(nrow+NR_END)*sizeof(float*)) ,
+//                                NULL , __FILE__ , __LINE__ );
+        m = eh_new( float* , nrow+NR_END );
 	if (!m) eh_error("allocation failure 1 in matrix()");
 	m += NR_END;
 	m -= nrl;
 
 	/* allocate rows and set pointers to them */
 //	m[nrl] = (float *) malloc((size_t)((nrow*ncol+NR_END)*sizeof(float)));
-        m[nrl] = (float*)eh_malloc( ((size_t)(nrow*ncol+NR_END)*sizeof(float)) ,
-                                    NULL , __FILE__ , __LINE__ );
+//        m[nrl] = (float*)eh_malloc( ((size_t)(nrow*ncol+NR_END)*sizeof(float)) ,
+//                                    NULL , __FILE__ , __LINE__ );
+        m[nrl] = eh_new( float , nrow*ncol+NR_END );
+
 	if (!m[nrl]) eh_error("allocation failure 2 in matrix()");
 	m[nrl] += NR_END;
 	m[nrl] -= ncl;
@@ -134,24 +137,29 @@ float ***f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh)
 
 	/* allocate pointers to pointers to rows */
 //	t=(float ***) malloc((size_t)((nrow+NR_END)*sizeof(float**)));
-        t = (float***)eh_malloc( ((size_t)(nrow+NR_END)*sizeof(float***)) ,
-                                 NULL , __FILE__ , __LINE__ );
+//        t = (float***)eh_malloc( ((size_t)(nrow+NR_END)*sizeof(float***)) ,
+//                                 NULL , __FILE__ , __LINE__ );
+        t = eh_new( float** , nrow+NR_END );
 	if (!t) eh_error("allocation failure 1 in f3tensor()");
 	t += NR_END;
 	t -= nrl;
 
 	/* allocate pointers to rows and set pointers to them */
 //	t[nrl]=(float **) malloc((size_t)((nrow*ncol+NR_END)*sizeof(float*)));
-        t[nrl]=(float**)eh_malloc(((size_t)(nrow*ncol+NR_END)*sizeof(float*)) ,
-                                  NULL , __FILE__ , __LINE__ );
+//        t[nrl]=(float**)eh_malloc(((size_t)(nrow*ncol+NR_END)*sizeof(float*)) ,
+//                                  NULL , __FILE__ , __LINE__ );
+        t[nrl]=eh_new( float* , nrow*ncol+NR_END );
+
 	if (!t[nrl]) eh_error("allocation failure 2 in f3tensor()");
 	t[nrl] += NR_END;
 	t[nrl] -= ncl;
 
 	/* allocate rows and set pointers to them */
 //	t[nrl][ncl]=(float *) malloc((size_t)((nrow*ncol*ndep+NR_END)*sizeof(float)));
-        t[nrl][ncl]=(float*)eh_malloc(((size_t)(nrow*ncol*ndep+NR_END)*sizeof(float)) ,
-                                  NULL , __FILE__ , __LINE__ );
+//        t[nrl][ncl]=(float*)eh_malloc(((size_t)(nrow*ncol*ndep+NR_END)*sizeof(float)) ,
+//                                  NULL , __FILE__ , __LINE__ );
+        t[nrl][ncl]=eh_new( float , nrow*ncol*ndep+NR_END );
+
 	if (!t[nrl][ncl]) eh_error("allocation failure 3 in f3tensor()");
 	t[nrl][ncl] += NR_END;
 	t[nrl][ncl] -= ndl;

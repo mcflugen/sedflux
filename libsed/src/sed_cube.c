@@ -48,6 +48,12 @@ CLASS ( Sed_cube )
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 };
 
+GQuark
+sed_cube_error_quark( void )
+{
+   return g_quark_from_static_string( "sed-cube-error-quark" );
+}
+
 gboolean is_sedflux_3d( void )
 {
    if ( strcasecmp( g_get_application_name( ) , "sedflux3d" )==0 )
@@ -171,12 +177,19 @@ sed_cube_new_from_file( gchar* file )
          gssize i, j;
          Sed_column this_col;
          Eh_dbl_grid grid;
+         GError* err = NULL;
 
          /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
          if ( is_sedflux_3d() )
             grid = sed_get_floor_2d_grid( bathy_file , x_res , y_res );
          else
-            grid = sed_get_floor_1d_grid( bathy_file , x_res , y_res );
+            grid = sed_get_floor_1d_grid( bathy_file , x_res , y_res , &err );
+
+         if ( err )
+         {
+            fprintf( stderr , "Unable to read bathymetry: %s" , err->message );
+            eh_exit(-1);
+         }
 
          /* Create the cube. */
          p = sed_cube_new( eh_grid_n_x(grid) , eh_grid_n_y(grid) );
@@ -2361,67 +2374,87 @@ Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y )
    return grid;
 }
 
-Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy )
+Eh_dbl_grid
+sed_get_floor_1d_grid( const char *file , double dx , double dy , GError **err )
 {
    Eh_dbl_grid grid = NULL;
 
+   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
+
    //---
-   // Scan the data file.
-   // The should only be one record.  If there is more, we'll just ignore them.
+   // Scan the data file.  The should only be one record.  If there
+   // are more, we'll just ignore them.
    //---
    eh_debug( "Scan the bathymetry file" );
    {
       double** data;
-      double *y, *z;
-      GError* error;
-      gint n, n_rows, n_cols;
+      GError* tmp_err = NULL;
+      gint n_rows, n_cols;
 
-      data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &error );
+      data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &tmp_err );
 
-      if ( error )
-         eh_error( "Unable to read bathymetry file: %s" , error->message );
-
-      if ( n_rows<2 )
-         eh_error( "Bathymetry file must contain two columns of data" );
-
-      if ( n_rows>2 )
+      if ( tmp_err )
+         g_propagate_error( err , tmp_err );
+      else if ( n_rows!=2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
+            "%s: Bathymetry file does not contain 2 columns (found %d)\n" ,
+            file , n_rows );
+      else if ( n_cols<2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_INSUFFICIENT_DATA ,
+            "%s: Bathymetry file contains only one data point\n" ,
+            file );
+      else if ( !eh_dbl_array_is_monotonic_up( data[0] , n_cols ) )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+            "%s: The position data must be monotonically increasing.\n" ,
+            file );
+      else if ( data[0][0]>0 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_DATA_BAD_RANGE ,
+            "%s: Insufficient range in position data.\n" ,
+            file );
+      else
       {
-         eh_warning( "Bathymetry file should contain two columns of data" );
-         eh_warning( "%d were found.  Ignoring extra columns." , n_rows );
-      }
+         double *y, *z;
+         gint n;
 
-      //---
-      // The cross-shore positions will be the first row, and the depths the
-      // second row (in the file they are listed in columns).
-      // They should both be the same length.  We don't bother checking.
-      //---
-      y = data[0];
-      z = data[1];
-      n = n_cols;
+         //---
+         // The cross-shore positions will be the first row, and the depths the
+         // second row (in the file they are listed in columns).
+         // They should both be the same length.  We don't bother checking.
+         //---
+         y = data[0];
+         z = data[1];
+         n = n_cols;
 
-      //---
-      // Make sure the cross-shore distances are monotonically increasing.
-      //---
-      if ( !eh_dbl_array_is_monotonic_up( y , n ) )
-         eh_error( "The position data must be monotonically increasing." );
+         //---
+         // Interpolate the data from the file to an equally spaced grid.
+         //---
+         eh_debug( "Interpolate to a uniform grid" );
+         {
+            gssize n_y = (y[n-1]-y[0]) / dy;
+            grid = eh_grid_new( double , 1 , n_y );
+            eh_grid_set_y_lin( grid , y[0] , dy );
 
+            interpolate( y , z , n , eh_grid_y(grid) , eh_grid_data_start(grid) , n_y );
+         }
 
-      //---
-      // Interpolate the data from the file to an equally spaced grid.
-      //---
-      eh_debug( "Interpolate to a uniform grid" );
-      {
-         gssize n_y = (y[n-1]-y[0]) / dy;
-         grid = eh_grid_new( double , 1 , n_y );
-         eh_grid_set_y_lin( grid , y[0] , dy );
-
-         interpolate( y , z , n , eh_grid_y(grid) , eh_grid_data_start(grid) , n_y );
       }
 
       eh_free_2( data );
 
+      if ( tmp_err!=NULL )
+         g_propagate_error( err , tmp_err );
+
       eh_debug( "done." );
    }
+
 
    return grid;
 }
@@ -2430,63 +2463,131 @@ Eh_dbl_grid sed_get_floor_1d_grid( const char *file , double dx , double dy )
 
 Eh_sequence *sed_get_floor_sequence_2( const char *file ,
                                        double *y_i      ,
-                                       gssize n_yi )
+                                       gssize n_yi      ,
+                                       GError** error )
 {
-   Eh_sequence *grid_seq = NULL;
-   Eh_data_record* all_records;
+   Eh_sequence* grid_seq = NULL;
+   gint*        n_rows   = NULL;
+   gint*        n_cols   = NULL;
+   gchar**      data     = NULL;
+   GError*      err      = NULL;
+   double***    all_records;
 
-   all_records = eh_data_record_scan_file( file , "," , EH_FAST_DIM_COL , TRUE );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   all_records = eh_dlm_read_full_swap( file  , "," , &n_rows , &n_cols ,
+                                        &data , -1  , &err );
 
    if ( all_records )
    {
-      double *y, *z;
-      double t;
-      gssize len;
-      Eh_dbl_grid this_grid;
-      Eh_data_record* this_rec;
+      gint i;
+      gint n_recs = g_strv_length( (gchar**)all_records );
+      Eh_symbol_table tab;
+      double* t = eh_new( double , n_recs );
 
-      grid_seq = eh_create_sequence( );
-
-      for ( this_rec=all_records ; *this_rec ; this_rec++ )
+      /* Read the time keys */
+      for ( i=0 ; i<n_recs && err==NULL ; i++ )
       {
+         tab = eh_str_parse_key_value( data[i] , ":" , "\n" );
 
-         t = eh_symbol_table_dbl_value( eh_data_record_table( *this_rec ) , S_KEY_SUBSIDENCE_TIME );
-
-         y   = eh_data_record_row ( *this_rec , 0 );
-         z   = eh_data_record_row ( *this_rec , 1 );
-         len = eh_data_record_size( *this_rec , 1 );
-
-         this_grid = eh_grid_new( double , 1 , n_yi );
-         g_memmove( eh_grid_y(this_grid) , y_i , n_yi*sizeof(double) );
-
-         interpolate( y                    , z                             , len ,
-                      eh_grid_y(this_grid) , eh_grid_data_start(this_grid) , eh_grid_n_y(this_grid) );
-
-         eh_add_to_sequence( grid_seq , t , this_grid );
-
-         eh_data_record_destroy( *this_rec );
-      }
-   }
-
-   eh_free( all_records );
-
-   //---
-   // Ensure that the sequence is nonotonically increasing.
-   //---
-   if ( grid_seq )
-   {
-      gssize n;
-      for ( n=1 ; n<grid_seq->len ; n++ )
-      {
-         if ( !(grid_seq->t[n-1] < grid_seq->t[n]) )
+         if ( tab && eh_symbol_table_has_label( tab , S_KEY_SUBSIDENCE_TIME ) )
+            t[i] = eh_symbol_table_dbl_value( tab , S_KEY_SUBSIDENCE_TIME );
+         else
          {
-            eh_message( "The grid sequence must be monotonically increasing." );
-            eh_message( "Frame %d has a key of %f." , n-1 , grid_seq->t[n-1]  );
-            eh_message( "Frame %d has a key of %f." , n   , grid_seq->t[n]    );
-            eh_error  ( "Error reading grid sequence from file: %s." , file   );
+            g_set_error( &err ,
+                         SED_CUBE_ERROR ,
+                         SED_CUBE_ERROR_NO_TIME_LABEL , 
+                         "Time label not found "
+                         "for record %d in %s" , i+1 , file );
+         }
+
+         tab = eh_symbol_table_destroy( tab );
+      }
+
+      /* and make sure they're monotonically increasing */
+      if ( err==NULL && !eh_dbl_array_is_monotonic_up(t,n_recs ) )
+      {
+         g_set_error( &err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+            "%s: The grid sequence must be monotonically increasing.\n" ,
+            file );
+      }
+
+      for ( i=0 ; i<n_recs && err==NULL ; i++ )
+      {
+         /* Make sure there are only two columns of data in the file */
+         if ( n_rows[i]!=2 )
+         {
+            g_set_error( &err ,
+               SED_CUBE_ERROR ,
+               SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
+               "%s: Record number %d does not contain 2 columns (found %d)\n" ,
+               file , i+1 , n_rows[i] );
+         }
+         /* and that there are at least two data points */
+         else if ( n_cols[i]<2 )
+         {
+            g_set_error( &err ,
+               SED_CUBE_ERROR ,
+               SED_CUBE_ERROR_INSUFFICIENT_DATA ,
+               "%s: Record number %d contains only one data point\n" ,
+               file , i+1 );
          }
       }
+
+      /* Read the data for each record of the sequence */
+      if ( err==NULL )
+      {
+         Eh_dbl_grid     this_grid;
+         double*         y;
+         double*         z;
+
+         grid_seq = eh_create_sequence( );
+
+         for ( i=0 ; i<n_recs && err==NULL ; i++ )
+         {
+            y   = (all_records[i])[0];
+            z   = (all_records[i])[1];
+
+            if ( !eh_dbl_array_is_monotonic_up(y,n_cols[i] ) )
+               g_set_error( &err ,
+                  SED_CUBE_ERROR ,
+                  SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
+                  "%s (record %d): Position data not monotonically increasing.\n" ,
+                  file , i+1 );
+            else if ( y[0]>y_i[0] || y[n_cols[i]-1]<y_i[n_yi-1] )
+               g_set_error( &err ,
+                  SED_CUBE_ERROR ,
+                  SED_CUBE_ERROR_DATA_BAD_RANGE ,
+                  "%s (record %d): Insufficient range in position data.\n" ,
+                  file , i+1 );
+            else
+            {
+               this_grid = eh_grid_new( double , 1 , n_yi );
+               g_memmove( eh_grid_y(this_grid) , y_i , n_yi*sizeof(double) );
+
+               interpolate( y , z , n_cols[i] ,
+                            eh_grid_y(this_grid) , eh_grid_data_start(this_grid) , eh_grid_n_y(this_grid) );
+
+               eh_add_to_sequence( grid_seq , t[i] , this_grid );
+            }
+         }
+      }
+
+      eh_free( t );
+
+      for ( i=0 ; i<n_recs ; i++ )
+         eh_free_2( all_records[i] );
    }
+
+   if ( err!=NULL )
+      g_propagate_error( error , err );
+
+   g_strfreev( data );
+   eh_free( n_rows      );
+   eh_free( n_cols      );
+   eh_free( all_records );
 
    return grid_seq;
 }

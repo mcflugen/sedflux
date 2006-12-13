@@ -44,7 +44,8 @@ gboolean plume3d( Plume_inputs *plume_const , Plume_river river       ,
 gboolean compare_river(Plume_river *r1,Plume_river *r2,int n_grains);
 int copy_river(Plume_river *r1,Plume_river *r2,int n_grains);
 
-Sed_process_info run_plume( gpointer ptr , Sed_cube prof )
+Sed_process_info
+run_plume( gpointer ptr , Sed_cube prof )
 {
    Plume_t *data=(Plume_t*)ptr;
    Plume_sediment *sediment_data;
@@ -330,15 +331,18 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
 }
 
 #define S_KEY_CONCENTRATION    "background ocean concentration"
-#define S_KEY_CURRENT_VELOCITY "velocity of coastal current"
+#define S_KEY_CURRENT_VEL      "velocity of coastal current"
 #define S_KEY_WIDTH            "maximum plume width"
 #define S_KEY_X_SHORE_NODES    "number of grid nodes in cross-shore"
 #define S_KEY_RIVER_NODES      "number of grid nodes in river mouth"
 
-gboolean init_plume( Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_plume( Eh_symbol_table tab , gpointer ptr )
 {
    Plume_t *data=(Plume_t*)ptr;
-   if ( symbol_table == NULL )
+   GError* err = NULL;
+
+   if ( tab == NULL )
    {
       eh_input_val_destroy( data->current_velocity );
       data->initialized = FALSE;
@@ -346,16 +350,20 @@ gboolean init_plume( Eh_symbol_table symbol_table,gpointer ptr)
    }
 
    if ( is_sedflux_3d() )
-      data->current_velocity = eh_input_val_set( eh_symbol_table_lookup(
-                                                    symbol_table ,
-                                                    S_KEY_CURRENT_VELOCITY ) );
+   {
+      if ( (data->current_velocity = eh_symbol_table_input_value(tab,S_KEY_CURRENT_VEL ,&err)) == NULL )
+      {
+         fprintf( stderr , "Unable to read input values: %s" , err->message );
+         eh_exit(-1);
+      }
+   }
    else
-      data->current_velocity = eh_input_val_set( "0.0" );
+      data->current_velocity = eh_input_val_set( "0.0" , NULL );
 
-   data->ocean_concentration = eh_symbol_table_dbl_value( symbol_table , S_KEY_CONCENTRATION );
-   data->plume_width         = eh_symbol_table_dbl_value( symbol_table , S_KEY_WIDTH         );
-   data->ndx                 = eh_symbol_table_int_value( symbol_table , S_KEY_X_SHORE_NODES );
-   data->ndy                 = eh_symbol_table_int_value( symbol_table , S_KEY_RIVER_NODES   );
+   data->ocean_concentration = eh_symbol_table_dbl_value( tab , S_KEY_CONCENTRATION );
+   data->plume_width         = eh_symbol_table_dbl_value( tab , S_KEY_WIDTH         );
+   data->ndx                 = eh_symbol_table_int_value( tab , S_KEY_X_SHORE_NODES );
+   data->ndy                 = eh_symbol_table_int_value( tab , S_KEY_RIVER_NODES   );
 
    data->plume_width *= 1000.;
 

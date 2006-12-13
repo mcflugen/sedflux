@@ -18,7 +18,8 @@ libutils_la_SOURCES    = eh_input_val.c \
                          eh_num.c \
                          machcon.c \
                          eh_mem.c \
-                         eh_project.c
+                         eh_project.c \
+                         eh_dlm_file.c
 
 include_HEADERS        = utils.h \
                          eh_rand.h \
@@ -38,7 +39,8 @@ include_HEADERS        = utils.h \
                          eh_symbol_table.h \
                          eh_data_record.h \
                          eh_types.h \
-                         eh_input_val.h
+                         eh_input_val.h \
+                         eh_dlm_file.h
 
 bin_PROGRAMS           = test
 test_SOURCES           = test.c

@@ -76,6 +76,7 @@ gchar* eh_project_get_info_val( Eh_project p , const gchar* key )
    gchar* value;
 
    // If the key doesn't exist, return NULL.
+   // NOTE: value is a copy and so needs to be freed.
    value = g_key_file_get_value( p->info_file , group_name , key , NULL );
 
    eh_free( group_name );
@@ -90,6 +91,7 @@ Eh_project eh_project_set_info_val( Eh_project p     ,
    char* group_name = construct_project_group_name( p );
 
    // If the key doesn't exist, a new one is created.
+   // NOTE: a copy is added
    g_key_file_set_value( p->info_file , group_name , key , value );
 
    eh_free( group_name );
@@ -146,8 +148,14 @@ Eh_project eh_set_project_dir( Eh_project proj , const char* dir_name )
    if ( !dir_name )
       dir_name = ".";
 
-   proj->working_dir_name = g_strdup( dir_name );
-   proj->working_dir = g_dir_open( dir_name , 0 , &error );
+   if ( proj->working_dir_name )
+      eh_free( proj->working_dir_name );
+   if ( proj->working_dir )
+      g_dir_close( proj->working_dir );
+
+   proj->working_dir_name = g_strdup  ( dir_name );
+   proj->working_dir      = g_dir_open( dir_name , 0 , &error );
+
    if ( error )
    {
       if (    ( DONT_ASK || eh_input_boolean( "Ok to create directory?" , TRUE ) )
@@ -329,11 +337,15 @@ Eh_project eh_load_project( gchar* info_file )
 
 Eh_project eh_destroy_project( Eh_project proj )
 {
-   if ( proj->working_dir )
-      g_dir_close( proj->working_dir );
-   eh_free( proj->working_dir_name );
-   g_key_file_free( proj->info_file );
-   eh_free( proj );
+   if ( proj )
+   {
+      if ( proj->working_dir )
+         g_dir_close( proj->working_dir );
+      eh_free( proj->working_dir_name );
+      g_key_file_free( proj->info_file );
+      eh_free( proj->name );
+      eh_free( proj );
+   }
 
    return NULL;
 }

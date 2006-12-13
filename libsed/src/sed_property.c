@@ -216,14 +216,13 @@ double sed_property_measure( Sed_property p , Sed_cell c , ... )
 
 Sed_property sed_property_destroy( Sed_property p )
 {
-
    if ( p )
    {
       eh_free( p->name );
       eh_free( p->ext  );
-      p = eh_free( p );
+      eh_free( p );
    }
 
-   return p;
+   return NULL;
 }
 

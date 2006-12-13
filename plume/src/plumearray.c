@@ -70,7 +70,7 @@
 #include "plumeinput.h"
 #include "plumevars.h"
 #include <stdlib.h>
-#include <utils.h>
+#include "utils.h"
 
 //---
 // outputs:
