@@ -760,24 +760,48 @@ gboolean eh_input_boolean( char *msg , gboolean default_val );
 gssize       eh_pointer_list_length ( gpointer* x );
 
 #if G_BYTE_ORDER==G_LITTLE_ENDIAN
-gssize eh_fwrite_dbl_to_be  ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fwrite_int32_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
 
-#define eh_fwrite_dbl_to_le(p,s,n,f) ( fwrite(p,s,n,f) )
-#define eh_fwrite_int_to_le(p,s,n,f) ( fwrite(p,s,n,f) )
+gssize eh_fwrite_int32_to_be ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fwrite_int64_to_be ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fread_int32_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
 
-#define eh_fwrite_dbl_swap(p,s,n,f) ( eh_fwrite_dbl_to_be(p,s,n,f) )
-#define eh_fwrite_int32_swap(p,s,n,f) ( eh_fwrite_int32_to_be(p,s,n,f) )
+#define eh_fwrite_dbl_to_be    ( eh_fwrite_int64_to_be  )
+#define eh_fwrite_flt_to_be    ( eh_fwrite_int32_to_be  )
+#define eh_fread_dbl_from_be   ( eh_fread_int64_from_be )
+#define eh_fread_flt_from_be   ( eh_fread_int32_from_be )
+
+#define eh_fwrite_int32_swap   ( eh_fwrite_int32_to_be  )
+#define eh_fwrite_int64_swap   ( eh_fwrite_int64_to_be  )
+#define eh_fread_int32_swap    ( eh_fread_int32_from_be )
+#define eh_fread_int64_swap    ( eh_fread_int64_from_be )
+
+#define eh_fread_flt_swap      ( eh_fread_int32_from_be )
+#define eh_fread_dbl_swap      ( eh_fread_int64_from_be )
+#define eh_fwrite_flt_swap     ( eh_fwrite_int32_to_be )
+#define eh_fwrite_dbl_swap     ( eh_fwrite_int64_to_be )
 
 #else
-gssize eh_fwrite_dbl_to_le  ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
 
-#define eh_fwrite_dbl_to_be(p,s,n,f) ( fwrite(p,s,n,f) )
-#define eh_fwrite_int_to_be(p,s,n,f) ( fwrite(p,s,n,f) )
+gssize eh_fwrite_int32_to_le ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fwrite_int64_to_le ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
 
-#define eh_fwrite_dbl_swap(p,s,n,f) ( eh_fwrite_dbl_to_le(p,s,n,f) )
-#define eh_fwrite_int32_swap(p,s,n,f) ( eh_fwrite_int32_to_le(p,s,n,f) )
+#define eh_fwrite_dbl_to_le    ( eh_fwrite_int64_to_le  )
+#define eh_fwrite_flt_to_le    ( eh_fwrite_int32_to_le  )
+#define eh_fread_dbl_from_le   ( eh_fread_int64_from_le )
+#define eh_fread_flt_from_le   ( eh_fread_int32_from_le )
+
+#define eh_fwrite_int32_swap   ( eh_fwrite_int32_to_le  )
+#define eh_fwrite_int64_swap   ( eh_fwrite_int64_to_le  )
+#define eh_fread_int32_swap    ( eh_fread_int32_from_le )
+#define eh_fread_int64_swap    ( eh_fread_int64_from_le )
+
+#define eh_fread_flt_swap      ( eh_fread_int32_from_le )
+#define eh_fread_dbl_swap      ( eh_fread_int64_from_le )
+#define eh_fwrite_flt_swap     ( eh_fwrite_int32_to_le )
+#define eh_fwrite_dbl_swap     ( eh_fwrite_int64_to_le )
 
 #endif
 

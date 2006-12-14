@@ -93,6 +93,7 @@ void           sed_process_init           ( Sed_process a    , Eh_symbol_table s
 GList*         sed_process_scan           ( Eh_key_file k    , Sed_process p );
 gssize         sed_process_fprint         ( FILE* fp         , Sed_process p );
 gssize         sed_process_queue_fprint   ( FILE* fp         , Sed_process_queue q );
+gssize         sed_process_queue_summary  ( FILE* fp         , Sed_process_queue q );
 gssize         sed_process_queue_size     ( Sed_process_queue q );
 gssize         sed_process_queue_n_active ( Sed_process_queue q );
 gssize         sed_process_queue_n_absent ( Sed_process_queue q );
@@ -107,6 +108,7 @@ gboolean       sed_process_name_is_same   ( Sed_process a , Sed_process b );
 gboolean       sed_process_is_active      ( Sed_process p );
 
 gssize         sed_process_fprint_info( FILE* fp , Sed_process p );
+gssize         sed_process_summary    ( FILE* fp , Sed_process p );
 gboolean       sed_process_error      ( Sed_process p );
 
 int            sed_process_queue_check       ( Sed_process_queue , const gchar* );

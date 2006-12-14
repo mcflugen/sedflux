@@ -99,6 +99,8 @@ int main( int argc , char *argv[] )
    else
       eh_exit(-1);
 
+   eh_exit(1);
+
    return 1;
 }
 
@@ -262,6 +264,8 @@ int run_sedflux(int argc, char *argv[])
 
          sed_process_queue_run_at_end( q , prof );
 
+         sed_process_queue_summary( stdout , q );
+
          sed_process_queue_destroy( q     );
          sed_epoch_destroy        ( epoch );
          sed_cube_free_river      ( prof  );
@@ -286,10 +290,7 @@ int run_sedflux(int argc, char *argv[])
    eh_free   ( run_desc     );
    g_strfreev( active_procs );
 
-   eh_exit(0);
-
-   eh_require_not_reached();
-   return -1;
+   return 1;
 }
 
 void

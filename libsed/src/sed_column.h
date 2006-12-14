@@ -34,8 +34,11 @@
 # define DATADIR "/usr/local/share"
 #endif
 
-#define SED_COLUMN_TEST_FILE_BE DATADIR "/ew/sed_column-be.bin"
-#define SED_COLUMN_TEST_FILE_LE DATADIR "/ew/sed_column-le.bin"
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+#define SED_COLUMN_TEST_FILE DATADIR "/ew/sed_column-be.bin"
+#else
+#define SED_COLUMN_TEST_FILE DATADIR "/ew/sed_column-le.bin"
+#endif
 
 #include "sed_sediment.h"
 #include "sed_cell.h"

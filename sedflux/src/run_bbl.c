@@ -92,14 +92,12 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
 
    if ( data->src_seq )
    {
-eh_message( "START" );
       info.mass_added =
          add_sediment_from_external_source( prof            ,
                                             data->src_seq   ,
                                             data->last_year ,
                                             sed_cube_age_in_years(prof) );
       data->last_year = sed_cube_age_in_years( prof );
-eh_message( "START" );
    }
 
    n_rivers = sed_cube_number_of_rivers( prof );

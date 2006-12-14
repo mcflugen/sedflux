@@ -325,7 +325,7 @@ START_TEST ( test_sed_column_add_cell_small )
    
    fail_unless( fabs( t - 30. ) < 1e-12                      , "Added thickness should be returned" );
    fail_unless( sed_column_len(c)==31                        , "Column not resized correctly" );
-   fail_unless( fabs( sed_column_mass(c)-mass_in ) < 1e-12   , "Column mass should match cell mass" );
+   fail_unless( eh_compare_dbl( sed_column_mass(c),mass_in,1e-12 ) , "Column mass should match cell mass" );
    fail_unless( fabs( sed_column_thickness(c)-30.25) < 1e-12 , "Column thickness should match added thickness" );
 
    sed_cell_destroy( s );
@@ -387,7 +387,7 @@ START_TEST ( test_sed_column_append_cell )
    
    fail_unless( fabs( t - 128. ) < 1e-12                     , "Added thickness should be returned" );
    fail_unless( sed_column_len(c)==2                         , "Column not resized correctly" );
-   fail_unless( fabs( sed_column_mass(c)-mass_in )   < 1e-12 , "Column mass should match cell mass" );
+   fail_unless( eh_compare_dbl( sed_column_mass(c),mass_in,1e-12 ) , "Column mass should match cell mass" );
    fail_unless( fabs( sed_column_thickness(c)-128.5) < 1e-12 , "Column thickness should match added thickness" );
 
    sed_cell_destroy( s );
@@ -1313,10 +1313,7 @@ START_TEST ( test_sed_column_write )
       char* data_0 = eh_new( char , n_bytes );
       char* data_1 = eh_new( char , n_bytes );
 
-      if ( G_BYTE_ORDER==G_BIG_ENDIAN )
-         fp = fopen( SED_COLUMN_TEST_FILE_BE , "rb" );
-      else
-         fp = fopen( SED_COLUMN_TEST_FILE_LE , "rb" );
+      fp = fopen( SED_COLUMN_TEST_FILE , "rb" );
 
       fread( data_0 , sizeof(char) , n_bytes , fp     );
       fread( data_1 , sizeof(char) , n_bytes , fp_tmp );
@@ -1336,7 +1333,7 @@ END_TEST
 
 START_TEST ( test_sed_column_read )
 {
-   FILE* fp = eh_fopen( SED_COLUMN_TEST_FILE_BE , "rb" );
+   FILE* fp = eh_fopen( SED_COLUMN_TEST_FILE , "rb" );
    Sed_column c;
 
    c = sed_column_read( fp );
@@ -1861,8 +1858,8 @@ Suite *sed_column_suite( void )
    tcase_add_test( test_case_limits , test_sed_column_top_null );
    tcase_add_test( test_case_limits , test_sed_column_top_empty );
 
-//   tcase_add_test( test_case_io , test_sed_column_write );
-//   tcase_add_test( test_case_io , test_sed_column_read  );
+   tcase_add_test( test_case_io , test_sed_column_write );
+   tcase_add_test( test_case_io , test_sed_column_read  );
 
    return s;
 }

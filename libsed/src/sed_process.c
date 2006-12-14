@@ -32,6 +32,10 @@ typedef struct
    double mass_after;
    double mass_total_added;
    double mass_total_lost;
+
+   GTimer* timer;
+   double  secs;
+   gulong  u_secs;
 }
 Sed_real_process_info;
 
@@ -390,7 +394,11 @@ Sed_process sed_process_create( const char *name ,
    p->info->mass_total_lost  = 0.;
    p->info->error            = FALSE;
 
-   if ( TRACK_MASS_BALANCE && !info_fp_is_set )
+   p->info->timer            = g_timer_new();
+   p->info->secs             = 0.;
+   p->info->u_secs           = 0;
+
+   if ( g_getenv("SED_TRACK_MASS")  && !info_fp_is_set )
    {
       info_fp_is_set = TRUE;
       info_fp = eh_fopen( "mass_balance.txt" , "w" );
@@ -425,6 +433,10 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
                  (SED_MAX_LOG_FILES+1)*sizeof( FILE* ) );
       g_memmove( d->info , s->info , sizeof(Sed_real_process_info) );
 
+      d->info->timer  = g_timer_new();
+      d->info->secs   = s->info->secs;
+      d->info->u_secs = s->info->u_secs;
+
       d->active   = s->active;
       d->logging  = s->logging;
       d->interval = s->interval;
@@ -444,6 +456,8 @@ Sed_process sed_process_destroy( Sed_process p )
    {
       sed_process_clean( p );
       g_array_free(p->next_event,TRUE);
+
+      g_timer_destroy( p->info->timer );
 
       eh_free( p->info      );
       eh_free( p->log_files );
@@ -529,8 +543,12 @@ sed_process_run_at_end( Sed_process a , Sed_cube p )
 
 gboolean sed_process_run_now( Sed_process a , Sed_cube p )
 {
+   Sed_process_info info;
    char *log_name;
    gboolean rtn_val=TRUE;
+   gulong u_secs;
+
+   g_timer_start( a->info->timer );
 
    if ( a->logging )
       log_name = a->name;
@@ -541,7 +559,6 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
    if ( g_getenv("SED_TRACK_MASS") )
    {
       double mass_before = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
-      Sed_process_info info;
 
       info = a->f_run(a->data,p);
 
@@ -551,6 +568,7 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
 
       a->info->mass_before       = mass_before;
       a->info->mass_after        = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
+
       a->info->mass_total_added += info.mass_added;
       a->info->mass_total_lost  += info.mass_lost;
 
@@ -563,9 +581,17 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
       }
    }
    else
-      a->f_run(a->data,p);
+   {
+      info = a->f_run(a->data,p);
+
+      a->info->mass_total_added += info.mass_added;
+      a->info->mass_total_lost  += info.mass_lost;
+   }
 
    eh_reset_log(DEFAULT_LOG);
+
+   a->info->secs   += g_timer_elapsed( a->info->timer , &u_secs );
+   a->info->u_secs += u_secs;
 
    return rtn_val;
 }
@@ -687,6 +713,28 @@ gssize sed_process_fprint( FILE *fp , Sed_process p )
       n += fprintf( fp,"logging       = %s\n" , logging_str );
    }
 
+   return n;
+}
+
+gssize
+sed_process_queue_summary( FILE* fp , Sed_process_queue q )
+{
+   gssize n = 0;
+   if ( q )
+   {
+      __Sed_process_link* link;
+      GList* this_link;
+      GList* this_obj;
+
+      n += fprintf( fp , "             Name | Mass Added | Mass Removed | Time\n" );
+
+      for ( this_link=q->l ; this_link ; this_link=this_link->next )
+      {
+         link = this_link->data;
+         for ( this_obj=link->obj_list ; this_obj ; this_obj=this_obj->next )
+            n += sed_process_summary( fp , this_obj->data );
+      }
+   }
    return n;
 }
 
@@ -899,6 +947,23 @@ gboolean sed_process_is_active( Sed_process p )
 {
    eh_return_val_if_fail( p!=NULL , FALSE );
    return p->active;
+}
+
+gssize
+sed_process_summary( FILE* fp , Sed_process p )
+{
+   gint n = 0;
+   if ( fp && p )
+   {
+      double t = p->info->secs + p->info->u_secs/1.e6;
+
+      n += fprintf( fp , "%18s | %10.3g | %10.3g | %10g\n" ,
+                    p->name ,
+                    p->info->mass_total_added ,
+                    p->info->mass_total_lost ,
+                    t );
+   }
+   return n;
 }
 
 gssize sed_process_fprint_info( FILE* fp , Sed_process p )

@@ -3020,21 +3020,42 @@ gssize eh_pointer_list_length( gpointer* x )
 
 #if G_BYTE_ORDER==G_LITTLE_ENDIAN
 
-gssize eh_fwrite_dbl_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gssize eh_fread_int32_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
 {
    gssize n = 0;
 
-   eh_require( size==sizeof(guint64) );
+   eh_require( size==sizeof(gint32) );
 
    if ( ptr && stream )
    {
       gssize i;
-      guint64 i_val;
+      gint32 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
       {
-         i_val = GUINT64_TO_BE( ((guint64*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(double) , 1 , stream );
+         n += fread( &i_val , sizeof(gint32) , 1 , stream );
+         ((gint32*)ptr)[i] = GINT32_TO_BE( i_val );
+      }
+   }
+
+   return n;
+}
+
+gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+{
+   gssize n = 0;
+
+   eh_require( size==sizeof(gint64) );
+
+   if ( ptr && stream )
+   {
+      gssize i;
+      gint64 i_val;
+
+      for ( i=0 ; i<nitems ; i++ )
+      {
+         n += fread( &i_val , sizeof(gint64) , 1 , stream );
+         ((gint64*)ptr)[i] = GINT64_TO_BE( i_val );
       }
    }
 
@@ -3062,23 +3083,65 @@ gssize eh_fwrite_int32_to_be( const void *ptr , gssize size , gssize nitems , FI
    return n;
 }
 
-#else
-
-gssize eh_fwrite_dbl_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gssize eh_fwrite_int64_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
 {
    gssize n = 0;
 
-   eh_require( size==sizeof(guint64) );
+   eh_require( size==sizeof(gint64) );
 
    if ( ptr && stream )
    {
       gssize i;
-      guint64 i_val;
+      gint64 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
       {
-         i_val = GUINT64_TO_LE( ((guint64*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(double) , 1 , stream );
+         i_val = GINT64_TO_BE( ((gint64*)(ptr))[i] );
+         n += fwrite( &i_val , sizeof(gint64) , 1 , stream );
+      }
+   }
+
+   return n;
+}
+
+#else
+
+gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+{
+   gssize n = 0;
+
+   eh_require( size==sizeof(gint32) );
+
+   if ( ptr && stream )
+   {
+      gssize i;
+      gint32 i_val;
+
+      for ( i=0 ; i<nitems ; i++ )
+      {
+         n += fread( &i_val , sizeof(gint32) , 1 , stream );
+         ((gint32*)ptr)[i] = GINT32_TO_LE( i_val );
+      }
+   }
+
+   return n;
+}
+
+gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+{
+   gssize n = 0;
+
+   eh_require( size==sizeof(gint64) );
+
+   if ( ptr && stream )
+   {
+      gssize i;
+      gint64 i_val;
+
+      for ( i=0 ; i<nitems ; i++ )
+      {
+         n += fread( &i_val , sizeof(gint64) , 1 , stream );
+         ((gint64*)ptr)[i] = GINT64_TO_LE( i_val );
       }
    }
 
@@ -3100,6 +3163,27 @@ gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FI
       {
          i_val = GINT32_TO_LE( ((gint32*)(ptr))[i] );
          n += fwrite( &i_val , sizeof(gint32) , 1 , stream );
+      }
+   }
+
+   return n;
+}
+
+gssize eh_fwrite_int64_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+{
+   gssize n = 0;
+
+   eh_require( size==sizeof(gint64) );
+
+   if ( ptr && stream )
+   {
+      gssize i;
+      gint64 i_val;
+
+      for ( i=0 ; i<nitems ; i++ )
+      {
+         i_val = GINT64_TO_LE( ((gint64*)(ptr))[i] );
+         n += fwrite( &i_val , sizeof(gint64) , 1 , stream );
       }
    }
 

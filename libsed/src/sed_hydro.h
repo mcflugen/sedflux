@@ -72,8 +72,10 @@ typedef Hydro_header* (*Hydro_read_header_func)(Sed_hydro_file);
 typedef Sed_hydro (*Hydro_read_record_func)(Sed_hydro_file);
 typedef double (*Hydro_get_val_func)(Sed_hydro);
 
-Hydro_header* sed_hydro_read_header( FILE *fp );
-Sed_hydro     sed_hydro_read_record( FILE *fp , int n_grains );
+Hydro_header* sed_hydro_read_header                ( FILE *fp );
+Hydro_header* sed_hydro_read_header_from_byte_order( FILE *fp , gint order );
+Sed_hydro     sed_hydro_read_record                ( FILE *fp , int n_grains );
+Sed_hydro     sed_hydro_read_record_from_byte_order( FILE *fp , int n_grains , gint order );
 
 void          sed_hydro_fprint_default_inline_file( FILE *fp );
 gssize        sed_hydro_fprint( FILE* fp , Sed_hydro rec );

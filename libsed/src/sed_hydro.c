@@ -31,7 +31,7 @@ CLASS ( Sed_hydro )
    double depth;
    double bedload;
    double *conc;
-   int    n_grains;
+   gint32 n_grains;
    double duration;
 };
 
@@ -69,47 +69,49 @@ Sed_hydro     _hydro_read_hydrotrend_record_buffer( Sed_hydro_file fp );
 Hydro_header*
 sed_hydro_read_header( FILE *fp )
 {
+   return sed_hydro_read_header_from_byte_order( fp , G_BYTE_ORDER );
+}
+
+Hydro_header*
+sed_hydro_read_header_from_byte_order( FILE *fp , gint order )
+{
    Hydro_header *hdr = NULL;
 
    if ( fp )
    {
-      gint comment_bytes;
-      gboolean error = FALSE;
+      gint n;
+      gssize (*fread_int)(void*,size_t,size_t,FILE*);
+
+      if ( order==G_BYTE_ORDER )
+         fread_int = fread;
+      else
+         fread_int = eh_fread_int32_swap;
    
       hdr = eh_new( Hydro_header , 1 );
 
-      fread( &comment_bytes , sizeof(int) , 1 , fp );
-      if ( comment_bytes < 0 || comment_bytes>2048 )
-         error = TRUE;
-
-      if ( !error )
+      if ( fread_int( &n , sizeof(int)  , 1 , fp )==1 && (n>=0 && n<2048 ) )
       {
-         hdr->comment = eh_new0( unsigned char , comment_bytes+1 );
-         fread(hdr->comment,sizeof(char),comment_bytes,fp);
+         hdr->comment = eh_new( char , n+1 );
+         fread( hdr->comment , sizeof(char) , n , fp );
+         hdr->comment[n] = '\0';
 
-         fread(&(hdr->n_grains),sizeof(int),1,fp);
-         fread(&(hdr->n_seasons),sizeof(int),1,fp);
-         fread(&(hdr->n_samples),sizeof(int),1,fp);
-
-         if ( hdr->n_grains <=0 || hdr->n_seasons<=0 || hdr->n_samples <=0 )
-            error = TRUE;
+         if (    fread_int( &(hdr->n_grains ) , sizeof(int)  , 1 , fp )!=1 || hdr->n_grains <=0
+              || fread_int( &(hdr->n_seasons) , sizeof(int)  , 1 , fp )!=1 || hdr->n_seasons<=0
+              || fread_int( &(hdr->n_samples) , sizeof(int)  , 1 , fp )!=1 || hdr->n_samples<=0 )
+         {
+            eh_message( "Trouble reading hydrotrend header." );
+            eh_message( "Is the byte of the hydrotrend file the same as that" );
+            eh_message( "on the machine you are running sedflux?" );
+            eh_message( "The byte order of your system is %s" ,
+                        (G_BYTE_ORDER==G_BIG_ENDIAN)?"big-endian":"little-endian" );
+            eh_error( "Could not read hydrotrend file." );
+         }
       }
 
-      if ( error )
-      {
-         eh_message( "Trouble reading hydrotrend header." );
-         eh_message( "Is the byte of the hydrotrend file the same as that" );
-         eh_message( "on the machine you are running sedflux?" );
-         eh_message( "The byte order of your system is %s" ,
-                     (G_BYTE_ORDER==G_BIG_ENDIAN)?"big-endian":"little-endian" );
-         eh_error( "Could not read hydrotrend file." );
-      }
    }
 
    return hdr;
 }
-
-#define HYDRO_FLOATS
 
 /** Read one record from a HydroTrend file.
 
@@ -119,51 +121,76 @@ sed_hydro_read_header( FILE *fp )
 \return A newly-created Sed_hydro.  Use sed_hydro_destroy to free.
 */
 Sed_hydro
-sed_hydro_read_record( FILE *fp , int n_grains )
+sed_hydro_read_record( FILE* fp , int n_grains )
 {
-#ifdef HYDRO_FLOATS
+   return sed_hydro_read_record_from_byte_order( fp , n_grains , G_BYTE_ORDER );
+}
+
+Sed_hydro
+sed_hydro_read_record_from_byte_order( FILE *fp , int n_grains , gint order )
+{
    int n;
-   float fval;
-#endif
+   float* fval = eh_new( float , 4+n_grains );
+   Sed_hydro rec = NULL;
 
-   Sed_hydro rec = sed_hydro_new( n_grains );
-
-#ifdef HYDRO_FLOATS
-   if ( fread(&fval,sizeof(float),1,fp)==1 )
-   {
-      rec->velocity=fval;
-      fread(&fval,sizeof(float),1,fp); rec->width=fval;
-      fread(&fval,sizeof(float),1,fp); rec->depth=fval;
-      fread(&fval,sizeof(float),1,fp); rec->bedload=fval;
-      rec->n_grains = n_grains;
-      for (n=0 ; n<n_grains ; n++)
-      {
-         fread(&fval,sizeof(float),1,fp);
-         rec->conc[n] = fval;
-      }
-   }
-#else
-   /* Read velocity, width, depth, and bedload.
-   */
-   if ( fread(rec,sizeof(double),4,fp) == 4 )
-   {
-      rec->n_grains = n_grains;
-      /* Read suspended load concentrations.
-      */
-      fread(rec->conc,sizeof(double),n_grains,fp);
-   }
-
-#endif
-
+   if ( order==G_BYTE_ORDER )
+      n = fread            ( fval , sizeof(float) , 4+n_grains , fp );
    else
+      n = eh_fread_flt_swap( fval , sizeof(float) , 4+n_grains , fp );
+
+   if ( n==4+n_grains )
    {
-      rec = sed_hydro_destroy(rec);
+      gint i;
+      rec = sed_hydro_new( n_grains );
+
+      rec->velocity = fval[0];
+      rec->width    = fval[1];
+      rec->depth    = fval[2];
+      rec->bedload  = fval[3];
+
+      rec->n_grains = n_grains;
+      for (i=0 ; i<n_grains ; i++)
+         rec->conc[i] = fval[i+n_grains];
    }
+
+   eh_free( fval );
 
    return rec;
 }
 
-#undef HYDRO_FLOATS
+gssize
+sed_hydro_write_record( FILE *fp , Sed_hydro rec , gint order )
+{
+   return sed_hydro_write_record_to_byte_order( fp , rec , G_BYTE_ORDER );
+}
+
+gssize
+sed_hydro_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order )
+{
+   gssize n;
+
+   if ( rec )
+   {
+      gint i;
+      float* fval = eh_new( float , 4+rec->n_grains );
+
+      fval[0] = rec->velocity;
+      fval[1] = rec->width;
+      fval[2] = rec->depth;
+      fval[3] = rec->bedload;
+
+      for (i=0 ; i<rec->n_grains ; i++)
+         fval[4+i] = rec->conc[i];
+
+      if ( order==G_BYTE_ORDER )
+         n = fwrite            ( fval , sizeof(float) , 4+rec->n_grains , fp );
+      else
+         n = eh_fwrite_flt_swap( fval , sizeof(float) , 4+rec->n_grains , fp );
+
+      eh_free( fval );
+   }
+   return n;
+}
 
 void
 sed_hydro_fprint_default_inline_file( FILE *fp )
@@ -500,16 +527,40 @@ Sed_hydro* sed_hydro_array_destroy( Sed_hydro* arr )
    return NULL;
 }
 
-gssize sed_hydro_write( FILE *fp , Sed_hydro a )
+gssize sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
 {
-   gssize n=0;
+   gssize n = 0;
 
-   eh_return_val_if_fail( a , 0 );
-
-   n += fwrite( a       , sizeof(*a)     , 1           , fp );
-   n += fwrite( a->conc , sizeof(double) , a->n_grains , fp );
+   if ( a && fp )
+   {
+      if ( order == G_BYTE_ORDER )
+      {
+         n += fwrite( &(a->velocity) , sizeof(double) , 1 , fp );
+         n += fwrite( &(a->width   ) , sizeof(double) , 1 , fp );
+         n += fwrite( &(a->depth   ) , sizeof(double) , 1 , fp );
+         n += fwrite( &(a->bedload ) , sizeof(double) , 1 , fp );
+         n += fwrite( &(a->n_grains) , sizeof(int)    , 1 , fp );
+         n += fwrite(   a->conc      , sizeof(double) , a->n_grains , fp );
+         n += fwrite( &(a->duration) , sizeof(double) , 1 , fp );
+      }
+      else
+      {
+         n += eh_fwrite_dbl_swap  ( &(a->velocity) , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(a->width   ) , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(a->depth   ) , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(a->bedload ) , sizeof(double) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(a->n_grains) , sizeof(gint32) , 1 , fp );
+         n += eh_fwrite_dbl_swap  (   a->conc      , sizeof(double) , a->n_grains , fp );
+         n += eh_fwrite_dbl_swap  ( &(a->duration) , sizeof(double) , 1 , fp );
+      }
+   }
 
    return n;
+}
+
+gssize sed_hydro_write( FILE *fp , Sed_hydro a )
+{
+   return sed_hydro_write_to_byte_order(fp,a,G_BYTE_ORDER);
 }
 
 Sed_hydro sed_hydro_read( FILE *fp )
