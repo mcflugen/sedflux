@@ -77,10 +77,118 @@ gboolean   check_process_files         ( Sed_epoch_queue e_list , gchar** active
 
 Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** );
 
+static GStaticMutex sim_time_mutex = G_STATIC_MUTEX_INIT;
+static double sim_time;
+static gint   epoch;
+
+typedef enum
+{
+   EH_STATUS_BAR_RUNNING ,
+   EH_STATUS_BAR_PAUSED  ,
+   EH_STATUS_BAR_STOPPED ,
+}
+Eh_status_bar_status;
+
+typedef struct
+{
+   double*  cur;
+   double*  end;
+   GThread* t;
+   GTimer*  timer;
+   Eh_status_bar_status status;
+}
+Eh_status_bar;
+
+Eh_status_bar* eh_status_bar_new( double* cur , double* end );
+Eh_status_bar* eh_status_bar_stop( Eh_status_bar* b );
+Eh_status_bar* eh_status_bar_pause( Eh_status_bar* b );
+Eh_status_bar* eh_status_bar_destroy( Eh_status_bar* b );
+
+gpointer print_status( gpointer data );
+
+Eh_status_bar* eh_status_bar_new( double* cur , double* end )
+{
+   Eh_status_bar* status_bar = eh_new( Eh_status_bar , 1 );
+
+   status_bar->cur    = cur;
+   status_bar->end    = end;
+   status_bar->status = EH_STATUS_BAR_RUNNING;
+   status_bar->timer  = g_timer_new();
+   status_bar->t      = g_thread_create( print_status , status_bar , TRUE , NULL );
+
+   return status_bar;
+}
+
+Eh_status_bar* eh_status_bar_stop( Eh_status_bar* b )
+{
+   b->status = EH_STATUS_BAR_STOPPED;
+   return b;
+}
+
+Eh_status_bar* eh_status_bar_pause( Eh_status_bar* b )
+{
+   b->status = EH_STATUS_BAR_PAUSED;
+   return b;
+}
+
+Eh_status_bar* eh_status_bar_destroy( Eh_status_bar* b )
+{
+   eh_status_bar_stop( b );
+   g_thread_join( b->t );
+
+   g_timer_destroy( b->timer );
+   eh_free( b );
+
+   return NULL;
+}
+
+gpointer print_status( gpointer data )
+{
+   Eh_status_bar* b = (Eh_status_bar*)data;
+   double t, eta;
+   gchar* status_bar[] = { "." , "o" , "0" , "O" , NULL };
+   gchar** p = status_bar;
+
+   fprintf( stderr , "\n" );
+   fprintf( stderr , " Current        | Elapsed |   ETA   \n" );
+   do
+   {
+
+      t   = g_timer_elapsed(b->timer,NULL)/60.;
+      eta = t / *(b->cur) * ( *(b->end) - *(b->cur) );
+
+      if ( *p==NULL )
+         p = status_bar;
+
+      if ( b->status==EH_STATUS_BAR_RUNNING )
+      {
+         if ( eta<1 )
+            eta *= 60.;
+
+         fprintf( stderr , " %7.2f (%3.0f%%) | %7.2f | %7.2f" ,
+                  *(b->cur) , *(b->cur) / *(b->end)*100. , t , eta );
+         fprintf( stderr , "   (%s)" , *p );
+
+         fprintf( stderr , "          \r" );
+      }
+
+      p++;
+
+      g_usleep( 100000 );
+
+   }
+   while ( b->status!=EH_STATUS_BAR_STOPPED );
+
+   fprintf( stderr , "\n" );
+
+   return data;
+}
+
 int main( int argc , char *argv[] )
 {
    char *program_name;
 
+   g_thread_init(NULL);
    eh_init_glib();
 
    program_name = g_path_get_basename( argv[0] );
@@ -97,7 +205,7 @@ int main( int argc , char *argv[] )
       run_sedflux( argc , argv );
    }
    else
-      eh_exit(-1);
+      eh_require_not_reached();
 
    eh_exit(1);
 
@@ -218,8 +326,6 @@ int run_sedflux(int argc, char *argv[])
       sed_epoch_queue_fprint( stdout , list );
    }
 
-   print_header( stdout );
-
    eh_debug( "Checking consistancy of processes in epoch file." );
    if ( !check_process_files( list , active_procs )!=0 && warn )
       eh_exit(-1);
@@ -231,6 +337,9 @@ int run_sedflux(int argc, char *argv[])
       double            n_years;
       double            time_step;
       Sed_process_queue q;
+      Eh_status_bar*    bar;
+
+      bar = eh_status_bar_new( &year , &n_years );
 
       for ( epoch = sed_epoch_queue_pop( list ) ;
             epoch && !__quit_signal             ;
@@ -248,7 +357,7 @@ int run_sedflux(int argc, char *argv[])
                year <= n_years && !__quit_signal ;
                year += sed_cube_time_step(prof) )
          {
-            print_time( stdout , sed_epoch_number(epoch) , year );
+            //print_time( stdout , sed_epoch_number(epoch) , year );
 
             sed_process_queue_run( q , prof );
 
@@ -271,9 +380,8 @@ int run_sedflux(int argc, char *argv[])
          sed_cube_free_river      ( prof  );
       }
 
+      eh_status_bar_destroy( bar );
    }
-   
-   print_footer(stdout);
    
    sed_epoch_queue_destroy( list );
 
@@ -387,8 +495,15 @@ void print_header(FILE *fp)
 
 void print_time(FILE *fp, int epoch_no, double year)
 {
-   fprintf( fp , "%.2f years (epoch %2d)\r" , year , epoch_no );
-   fflush( fp );
+//   fprintf( fp , "%.2f years (epoch %2d)\r" , year , epoch_no );
+//   fflush( fp );
+
+   g_static_mutex_lock( &sim_time_mutex );
+
+   sim_time = year;
+   epoch    = epoch_no;
+
+   g_static_mutex_unlock( &sim_time_mutex );
 
    return;
 }

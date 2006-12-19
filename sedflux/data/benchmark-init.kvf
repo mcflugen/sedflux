@@ -4,7 +4,7 @@ vertical resolution:    .01
 x resolution:           100000
 y resolution:           100
 bathymetry file:        sample-bathy.csv
-sediment file:          sample-sediment.csv
+sediment file:          sample-sediment.kvf
 
 [ epoch ]
 epoch number:           1

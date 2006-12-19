@@ -29,13 +29,13 @@ PKG_PROG_PKG_CONFIG([0.20])
 ###
 ### Check for the required version of GLIB-2.0
 ###
-PKG_CHECK_MODULES(GLIB,[glib-2.0 >= glib_required_version])
+#PKG_CHECK_MODULES(GLIB,[glib-2.0 >= glib_required_version])
 
-#AM_PATH_GLIB_2_0( glib_required_version , :,
-#   AC_MSG_ERROR([
-#*** GLIB glib_required_version or better is required. The latest version of
-#*** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
-#  gobject gmodule-no-export gthread)
+AM_PATH_GLIB_2_0( glib_required_version , :,
+   AC_MSG_ERROR([
+*** GLIB glib_required_version or better is required. The latest version of
+*** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
+  gobject gmodule-no-export gthread)
 
 DOXYGEN_VERSION="not installed"
 CHECK_VERSION="not installed"
