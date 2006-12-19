@@ -582,7 +582,7 @@ for each type of sediment).  Each groups contains a key-value pairs describing t
 sediment type.
 
 An example group:
-\dontinclude test.sediment
+\dontinclude sediment.kvf
 \skip start of the first group
 \until rest of the groups
 This is the start of the next group.

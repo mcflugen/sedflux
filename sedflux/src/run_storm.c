@@ -461,8 +461,8 @@ if ( sed_ocean_storm_wave_height(this_storm)>100. )
 
 /** Initialize a storm process.
 
-@param symbol_table  A pointer to a Symbol_table.
-@param ptr           A pointer to user data
+@param tab   A pointer to a Symbol_table.
+@param ptr   A pointer to user data
 
 @return TRUE if no problems were encountered.  FALSE otherwise.
 */

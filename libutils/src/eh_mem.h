@@ -21,7 +21,7 @@
 #define win_assert( exp ) if ( !(exp) ) { assert_error; } else
 void API_ENTRY report_win_assert( char *file_name , int line_no );
 
-#define USE_MY_VTABLE
+#undef USE_MY_VTABLE
 
 #if defined( USE_MY_VTABLE )
 gpointer API_ENTRY eh_malloc   ( gsize w_size        , Class_Desc desc ,

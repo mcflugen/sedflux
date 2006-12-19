@@ -26,7 +26,7 @@
 #include "sed_sedflux.h"
 #include "compaction.h"
 
-#undef WITH_THREADS
+#define WITH_THREADS
 
 #define N_THREADS 5
 
@@ -53,8 +53,6 @@ Sed_process_info run_compaction(gpointer ptr, Sed_cube p)
       data->initialized = TRUE;
    }
 
-   eh_message( "mass in  = %f" , sed_cube_mass(p) );
-
 #if !defined(WITH_THREADS)
 
    {
@@ -77,25 +75,24 @@ Sed_process_info run_compaction(gpointer ptr, Sed_cube p)
                                         TRUE                   ,
                                         &error );
 
-      eh_require( error==NULL )
-
-      int *queue;
-      gssize len = sed_cube_size(p);
-
-      queue = eh_new( int , len );
-      for ( i=0 ; i<len ; i++ )
+      eh_require( error==NULL );
       {
-         queue[i] = i;
-         g_thread_pool_push( compact_pool , &(queue[i]) , &error );
-         eh_require( error==NULL );
+         int *queue;
+         gssize len = sed_cube_size(p);
+
+         queue = eh_new( int , len );
+         for ( i=0 ; i<len ; i++ )
+         {
+            queue[i] = i;
+            g_thread_pool_push( compact_pool , &(queue[i]) , &error );
+            eh_require( error==NULL );
+         }
+         g_thread_pool_free( compact_pool , FALSE , TRUE );
+         eh_free( queue );
       }
-      g_thread_pool_free( compact_pool , FALSE , TRUE );
-      eh_free( queue );
    }
 
 #endif
-
-   eh_message( "mass out = %f" , sed_cube_mass(p) );
 
    return info;
 }
