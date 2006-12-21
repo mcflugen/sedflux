@@ -26,7 +26,114 @@
 
 #include <math.h>
 
-void subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_load , int j_load )
+#define N_THREADS 5
+
+typedef struct
+{
+   Eh_dbl_grid w;
+   double      v_0;
+   double      eet;
+   double      y;
+   gint        id;
+}
+Subside_data;
+
+void subside_helper( gpointer data , gpointer v_0 );
+
+/* Calculate a deflection grid
+
+\param w   Grid of deflections.
+\param v_0 Grid of loads.
+\param eet Effective elastic thickness.
+\parma y   Young's modulus
+
+*/
+void
+subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
+{
+   eh_require( w   );
+   eh_require( v_0 );
+
+   if ( !g_thread_supported() ) g_thread_init(NULL);
+#define WITH_THREADS
+#ifndef WITH_THREADS
+   if ( w && v_0 )
+   {
+      gssize i, j;
+      double load;
+      gssize n_x = eh_grid_n_x( v_0 );
+      gssize n_y = eh_grid_n_y( v_0 );
+   
+      for ( i=0 ; i<n_x ; i++ )
+         for ( j=0 ; j<n_y ; j++ )
+         {
+            load = eh_dbl_grid_val( v_0 , i , j );
+            if ( fabs(load) > 1e-3 )
+               subside_point_load( w , load , eet , y , i , j );
+         }
+   }
+#else
+   if ( w && v_0 )
+   {
+      GThreadPool* pool;
+
+      pool = g_thread_pool_new( subside_helper , NULL , N_THREADS , TRUE , NULL );
+
+      eh_require( pool );
+      {
+         Subside_data* queue = NULL;
+         gssize len = eh_grid_n_el( v_0 );
+         gssize id, n, n_jobs;
+         double load;
+
+         queue = eh_new( Subside_data , len );
+         for ( id=0,n=0 ; id<len ; id++ )
+         {
+            load = eh_dbl_grid_data( v_0 )[0][id];
+            if ( fabs(load) > 1e-3 )
+            {
+               queue[n].w   = eh_grid_dup( w );
+               eh_dbl_grid_set( queue[n].w , 0. );
+
+               queue[n].v_0 = load;
+               queue[n].id  = id;
+               queue[n].eet = eet;
+               queue[n].y   = y;
+
+               g_thread_pool_push( pool , &(queue[n]) , NULL );
+
+               n++;
+            }
+         }
+         g_thread_pool_free( pool , FALSE , TRUE );
+         n_jobs = n;
+
+         for ( n=0 ; n<n_jobs ; n++ )
+         {
+            eh_dbl_grid_add( w , queue[n].w );
+            eh_grid_destroy( queue[n].w , TRUE );
+         }
+         eh_free( queue );
+      }
+   }
+#endif
+
+   return;
+}
+
+void subside_helper( gpointer d , gpointer g )
+{
+   Subside_data* data = (Subside_data*)d;
+   Eh_ind_2      sub  = eh_grid_id_to_sub( eh_grid_n_y(data->w) , data->id );
+   double        load = data->v_0;
+
+   subside_point_load( data->w , load , data->eet , data->y , sub.i , sub.j );
+
+   return;
+}
+
+void
+subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_load , int j_load )
 {
    double alpha;
    double x_0, y_0;

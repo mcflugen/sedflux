@@ -65,7 +65,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
    else
    {
       x_reduction = 1;
-      y_reduction = .1;
+      y_reduction = .2;
    }
 
    if ( is_sedflux_3d() )
@@ -170,6 +170,23 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
          // Skip the subsidence if there is no load change.  However, the load
          // can now be less than zero.
          //---
+         {
+            Eh_dbl_grid v_0 = eh_grid_dup( this_load_small );
+            double eet = data->eet;
+            double y   = data->youngs_modulus;
+
+            eh_dbl_grid_subtract( v_0 , last_load_small );
+
+            subside_grid_load( this_dw_small , v_0 , eet , y );
+
+            if ( !is_sedflux_3d() )
+            {
+               double half_load = this_half_load - data->last_half_load;
+               subside_half_plane_load( this_dw_small , half_load , eet , y );
+            }
+            eh_grid_destroy( v_0 , TRUE );
+         }
+/*
          eh_debug( "Calculate the isostatic subsidence" );
          {
             gssize i, j;
@@ -193,7 +210,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
             }
 
          }
-   
+*/
          //---
          // Save the current load.
          //---

@@ -82,6 +82,7 @@ gboolean    eh_grid_is_compatible    ( Eh_grid g_1     , Eh_grid g_2            
 void        eh_grid_foreach          ( Eh_grid g       , GFunc func    , gpointer user_data );
 
 Eh_dbl_grid eh_dbl_grid_add          ( Eh_dbl_grid g_1 , Eh_dbl_grid g_2                    );
+Eh_dbl_grid eh_dbl_grid_subtract     ( Eh_dbl_grid g_1 , Eh_dbl_grid g_2                    );
 double      eh_dbl_grid_sum          ( Eh_dbl_grid g                                        );
 double      eh_dbl_grid_sum_bad_val  ( Eh_dbl_grid g   , double bad_val                     );
 Eh_dbl_grid eh_dbl_grid_set          ( Eh_dbl_grid g   , double val                         );

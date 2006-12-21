@@ -549,6 +549,21 @@ gboolean eh_grid_is_compatible( Eh_grid g_1 , Eh_grid g_2 )
 }
 
 
+Eh_dbl_grid eh_dbl_grid_subtract( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 )
+{
+   gssize i;
+   double* g_1_data = eh_grid_data_start(g_1);
+   double* g_2_data = eh_grid_data_start(g_2);
+   gssize n_i = g_1->n_x*g_1->n_y;
+
+   eh_require( eh_grid_is_compatible( g_1 , g_2 ) );
+
+   for ( i=0 ; i<n_i ; i++ )
+      g_1_data[i] -= g_2_data[i];
+
+   return g_1;
+}
+
 Eh_dbl_grid eh_dbl_grid_add( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 )
 {
    gssize i;
