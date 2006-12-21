@@ -2374,6 +2374,63 @@ Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y )
    return grid;
 }
 
+double**
+sed_scan_sea_level_curve( const char* file , gint* len , GError** err )
+{
+   double** data = NULL;
+
+   eh_return_val_if_fail( file , NULL );
+   eh_return_val_if_fail( len  , NULL );
+
+   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
+
+   eh_debug( "Scan the sea-level ile" );
+   {
+      GError* tmp_err = NULL;
+      gint n_rows;
+
+      data = eh_dlm_read_swap( file , ";," , &n_rows , len , &tmp_err );
+
+      if ( tmp_err )
+         g_propagate_error( err , tmp_err );
+      else if ( n_rows!=2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
+            "%s: Sea-level curve doesn not contain 2 columns (found %d)\n" ,
+            file , n_rows );
+      else if ( *len<2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_INSUFFICIENT_DATA ,
+            "%s: Sea-level curve contains only one data point\n" ,
+            file );
+      else if ( !eh_dbl_array_is_monotonic_up( data[0] , *len ) )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+            "%s: The time data must be monotonically increasing.\n" ,
+            file );
+      else if ( data[0][0]>0 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_DATA_BAD_RANGE ,
+            "%s: Insufficient range in time data.\n" ,
+            file );
+
+      if ( tmp_err!=NULL )
+      {
+         g_propagate_error( err , tmp_err );
+
+         eh_free_2( data );
+         data = NULL;
+      }
+
+   }
+
+   return data;
+}
+
 Eh_dbl_grid
 sed_get_floor_1d_grid( const char *file , double dx , double dy , GError **err )
 {

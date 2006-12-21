@@ -284,6 +284,7 @@ Eh_dbl_grid sed_get_floor_1d_grid( const char *file ,
                                    double dx        ,
                                    double dy        ,
                                    GError** err );
+double**    sed_scan_sea_level_curve( const char* file , gint* len , GError** err );
 Eh_dbl_grid sed_get_floor_2d_grid( const char *file , double dx , double dy );
 Eh_sequence *sed_get_floor_sequence_2( const char *file ,
                                        double *y        ,

@@ -29,9 +29,10 @@
 #include "utils.h"
 #include "sed_sedflux.h"
 #include "measuring_station.h"
-
+/*
 int write_measurement_header( FILE *fp , 
                               Met_station_t *measuring_station_const );
+*/
 
 Sed_process_info run_met_station(gpointer ptr,Sed_cube prof)
 {
@@ -175,7 +176,7 @@ gboolean load_measuring_station_data( gpointer ptr , FILE *fp )
 
    return FALSE;
 }
-
+/*
 int write_measurement_header( FILE *fp , 
                               Met_station_t *measuring_station_const )
 {
@@ -203,4 +204,5 @@ int write_measurement_header( FILE *fp ,
    }
    return 0;
 }
+*/
 

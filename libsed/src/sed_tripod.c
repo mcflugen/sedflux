@@ -468,6 +468,7 @@ Sed_tripod_header sed_tripod_header_new( Sed_measurement x )
    h->x                = sed_measurement_dup( x );
    h->from_river_mouth = FALSE;
    h->pos              = g_array_new( FALSE , FALSE , sizeof(Eh_pt_2) );
+   h->parameter        = NULL;
 
    return h;
 }

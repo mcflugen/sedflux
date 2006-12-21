@@ -3254,6 +3254,7 @@ gpointer print_status( gpointer data )
 {
    Eh_status_bar* b = (Eh_status_bar*)data;
    double t, eta;
+   double t_min, t_sec, eta_min,eta_sec;
    gchar* status_bar[] = { "." , "o" , "0" , "O" , NULL };
    gchar** p = status_bar;
 
@@ -3264,7 +3265,7 @@ gpointer print_status( gpointer data )
 
    for ( ; !eh_status_bar_is_stopped(b) ; )
    {
-      t   = g_timer_elapsed(b->timer,NULL)/60.;
+      t   = g_timer_elapsed(b->timer,NULL);
       eta = t / *(b->cur) * ( *(b->end) - *(b->cur) );
 
       if ( *p==NULL )
@@ -3272,13 +3273,13 @@ gpointer print_status( gpointer data )
 
       if ( b->status==EH_STATUS_BAR_RUNNING )
       {
-         if ( eta<1 )
-            eta *= 60.;
-         if ( t<1 )
-            t   *= 60.;
+         t_min   = t / 60;
+         t_sec   = fmod( t , 60. );
+         eta_min = eta / 60;
+         eta_sec = fmod( eta , 60. );
 
-         fprintf( stderr , " %7.2f (%3.0f%%) | %7.2f | %7.2f" ,
-                  *(b->cur) , *(b->cur) / *(b->end)*100. , t , eta );
+         fprintf( stderr , " %7g (%3.0f%%) | %4.0f:%2.0f | %4.0f:%2.0f" ,
+                  *(b->cur) , *(b->cur) / *(b->end)*100. , t_min , t_sec , eta_min , eta_sec );
          fprintf( stderr , "   (%s)" , *p );
 
          fprintf( stderr , "          \r" );

@@ -51,8 +51,16 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
    if ( !data->initialized )
    {
       gint len;
+      GError* err = NULL;
 
-      data->sea_level   = read_sea_level_curve( data->filename , &len );
+      data->sea_level   = sed_scan_sea_level_curve( data->filename , &len , &err );
+
+      if ( err )
+      {
+         fprintf( stderr , "Error reading sea level file: %s\n" , err->message );
+         eh_exit(-1);
+      }
+
       data->len         = len;
       data->start_year  = sed_cube_age_in_years(prof);
       data->initialized = TRUE;
@@ -161,38 +169,5 @@ double get_sea_level(double** sea_level, gint len , double year)
    }
 
    return new_sea_level;
-}
-
-double** read_sea_level_curve(char *filename , gint* len )
-{
-   double** data;
-   Eh_data_record sea_level_curve;
-
-   eh_require( filename );
-
-   {
-      gint i, j;
-      gint n_rows;
-      double** tmp_data;
-      GError* error = NULL;
-
-      tmp_data = eh_dlm_read_swap( filename , ",;" , &n_rows , len , &error);
-
-      if ( error )
-         eh_error( "Unable to read file: %s\n" , error->message );
-
-      if ( n_rows < 2 )
-         eh_error( "Sea level file must contain two columns of data" );
-
-      if ( n_rows > 2 )
-      {
-         eh_warning( "Sea-level file should contain only two columns of data" );
-         eh_warning( "%d were found.  Extra columns ignored" , n_rows );
-      }
-      
-      eh_free_2( tmp_data );
-   }
-
-   return data;
 }
 
