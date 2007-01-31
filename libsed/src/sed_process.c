@@ -546,7 +546,7 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
    Sed_process_info info;
    char *log_name;
    gboolean rtn_val=TRUE;
-   gulong u_secs;
+   gulong u_secs = 0;
 
    g_timer_start( a->info->timer );
 
@@ -590,7 +590,7 @@ gboolean sed_process_run_now( Sed_process a , Sed_cube p )
 
    eh_reset_log(DEFAULT_LOG);
 
-   a->info->secs   += g_timer_elapsed( a->info->timer , &u_secs );
+   a->info->secs   += g_timer_elapsed( a->info->timer , NULL );
    a->info->u_secs += u_secs;
 
    return rtn_val;
@@ -956,12 +956,13 @@ sed_process_summary( FILE* fp , Sed_process p )
    if ( fp && p )
    {
       double t = p->info->secs + p->info->u_secs/1.e6;
+      gchar str[2048];
 
-      n += fprintf( fp , "%18s | %10.3g | %10.3g | %10g\n" ,
+      n += fprintf( fp , "%18s | %10.3g | %10.3g | %s\n" ,
                     p->name ,
                     p->info->mass_total_added ,
                     p->info->mass_total_lost ,
-                    t );
+                    eh_render_time_str(t,str) );
    }
    return n;
 }

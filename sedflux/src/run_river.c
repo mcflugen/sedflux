@@ -32,10 +32,6 @@
 Sed_process_info run_river(gpointer ptr,Sed_cube prof)
 {
    River_t *data=(River_t*)ptr;
-   int i;
-   double dt, volume, volume_to_remove, mass_removed;
-   double susp_mass, bedload_mass, init_susp_mass, init_bedload_mass;
-   Sed_river *new_river;
    Sed_hydro river_data;
    Sed_process_info info = SED_EMPTY_INFO;
    
@@ -51,50 +47,40 @@ Sed_process_info run_river(gpointer ptr,Sed_cube prof)
 
    if ( !data->initialized )
    {
-      data->fp_river = sed_hydro_file_new( data->filename , data->type , TRUE );
-
-      new_river = sed_create_river( sed_sediment_env_size() , NULL );
-      new_river->river_name = g_strdup( data->river_name );
-
-      // the hinge point is defined in the avulsion process.
-      new_river->hinge->x     = 0;
-      new_river->hinge->y     = 0;
-      new_river->hinge->angle = M_PI_2;
-
-      sed_cube_add_river( prof , new_river );
-      data->this_river = sed_cube_river_list( prof );
-
-      data->total_mass = 0;
+      data->total_mass            = 0;
       data->total_mass_from_river = 0;
-      data->initialized = TRUE;
+      data->fp_river              = sed_hydro_file_new( data->filename , data->type , TRUE );
+      data->this_river            = sed_river_new( data->river_name );
+
+      sed_cube_add_river( prof , data->this_river );
+
+      data->initialized           = TRUE;
    }
 
    river_data = sed_hydro_file_read_record( data->fp_river );
 
    if ( river_data )
    {
-      Sed_hydro hydro_data;
-
-      sed_cube_set_river_data( prof , data->this_river , river_data );
-
-      hydro_data = sed_cube_river_data( prof , data->this_river );
+      gint i;
+      double dt, volume, volume_to_remove, mass_removed;
+      double susp_mass, bedload_mass, init_susp_mass, init_bedload_mass;
 
       //---
       // Set the cube time step to be that of the river.
       //---
       if ( data->type & (HYDRO_USE_BUFFER|HYDRO_INLINE) )
          sed_cube_set_time_step( prof , 
-                                 sed_hydro_duration_in_seconds(hydro_data)/S_SECONDS_PER_YEAR );
+                                 sed_hydro_duration_in_seconds(river_data)/S_SECONDS_PER_YEAR );
       dt = sed_cube_time_step_in_seconds( prof );
 
       //---
       // Keep a running total of the sediment mass added from the river.
       // This exludes erosion/deposition within the river.
       //---
-      data->total_mass_from_river += sed_hydro_total_load( hydro_data );
+      data->total_mass_from_river += sed_hydro_total_load( river_data );
 
-      init_susp_mass         = sed_hydro_suspended_flux( hydro_data )*dt;
-      init_bedload_mass      = sed_hydro_bedload       ( hydro_data )*dt;
+      init_susp_mass         = sed_hydro_suspended_flux( river_data )*dt;
+      init_bedload_mass      = sed_hydro_bedload       ( river_data )*dt;
 
       //---
       // Add any eroded sediment to the river.
@@ -102,7 +88,7 @@ Sed_process_info run_river(gpointer ptr,Sed_cube prof)
       volume = sed_cube_x_res( prof )
              * sed_cube_y_res( prof )
              * sed_cell_thickness( sed_cube_to_add(prof) );
-      sed_hydro_add_cell( hydro_data , sed_cube_to_add(prof) , volume );
+      sed_hydro_add_cell( river_data , sed_cube_to_add(prof) , volume );
       sed_cell_clear( sed_cube_to_add(prof) );
 
       //---
@@ -111,23 +97,25 @@ Sed_process_info run_river(gpointer ptr,Sed_cube prof)
       volume_to_remove = sed_cube_x_res( prof )
                        * sed_cube_y_res( prof )
                        * sed_cell_thickness( sed_cube_to_remove(prof) );
-      sed_hydro_subtract_cell( hydro_data , sed_cube_to_remove(prof) , volume_to_remove );
+      sed_hydro_subtract_cell( river_data , sed_cube_to_remove(prof) , volume_to_remove );
       sed_cell_clear( sed_cube_to_remove(prof) );
 
-      susp_mass         = sed_hydro_suspended_flux( hydro_data )*dt;
-      bedload_mass      = sed_hydro_bedload       ( hydro_data )*dt;
+      susp_mass         = sed_hydro_suspended_flux( river_data )*dt;
+      bedload_mass      = sed_hydro_bedload       ( river_data )*dt;
       data->total_mass += susp_mass + bedload_mass;
 
       mass_removed     = susp_mass+bedload_mass - (init_susp_mass+init_bedload_mass);
 
+      sed_river_set_hydro( data->this_river , river_data );
+
       eh_message( "time         : %f" , sed_cube_age_in_years(prof) );
       eh_message( "duration     : %f" , sed_cube_time_step_in_years(prof) );
-      eh_message( "velocity     : %f" , sed_hydro_velocity(hydro_data) );
-      eh_message( "width        : %f" , sed_hydro_width   (hydro_data) );
-      eh_message( "depth        : %f" , sed_hydro_depth   (hydro_data) );
-      eh_message( "bedload      : %f" , sed_hydro_bedload (hydro_data) );
-      for ( i=0 ; i<sed_hydro_size(hydro_data) ; i++ )
-         eh_message( "conc[%d]      : %f" , i , sed_hydro_nth_concentration(hydro_data,i) );
+      eh_message( "velocity     : %f" , sed_hydro_velocity(river_data) );
+      eh_message( "width        : %f" , sed_hydro_width   (river_data) );
+      eh_message( "depth        : %f" , sed_hydro_depth   (river_data) );
+      eh_message( "bedload      : %f" , sed_hydro_bedload (river_data) );
+      for ( i=0 ; i<sed_hydro_size(river_data) ; i++ )
+         eh_message( "conc[%d]      : %f" , i , sed_hydro_nth_concentration(river_data,i) );
       eh_message( "eroded sediment added (m^3): %g"        , volume );
       eh_message( "sediment removed (kg): %g"              , mass_removed );
       eh_message( "suspended mass (kg): %g"                , susp_mass );

@@ -1,4 +1,4 @@
-/*! \page install_sec Installation
+/*! \page install_sec Installing
 
 \section Prerequisites
 

@@ -59,9 +59,8 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    Sed_cell bed_load_cell;
    Eh_dbl_grid fraction_grid;
    Eh_pt_2 *river_mouth;
-   Sed_river *this_river;
+   Sed_riv this_river;
    Sed_cell_grid in_suspension;
-   Sed_hydro river_data;
    Bed_load_data bed_load_data;
    Sed_process_info info = SED_EMPTY_INFO;
 
@@ -80,7 +79,6 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    }
 
    this_river    = sed_cube_river_by_name( prof , data->river_name );
-   river_data    = this_river->data;
    in_suspension = sed_cube_in_suspension( prof , sed_cube_river_id(prof,this_river) );
 
    if ( is_sedflux_3d() )
@@ -96,8 +94,8 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    {
       river_mouth->x /= sed_cube_x_res( prof );
       river_mouth->y /= sed_cube_y_res( prof );
-      river_mouth->x -= this_river->x_ind;
-      river_mouth->y -= this_river->y_ind;
+      river_mouth->x -= sed_river_mouth(this_river).i;
+      river_mouth->y -= sed_river_mouth(this_river).j;
    }
    else
    {
@@ -115,9 +113,9 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    bed_load_data.dx        = sed_cube_x_res( prof );
    bed_load_data.dy        = sed_cube_y_res( prof );
    bed_load_data.r_max     = data->bed_load_dump_length;
-   bed_load_data.min_angle = sed_get_river_angle( this_river )
+   bed_load_data.min_angle = sed_river_angle( this_river )
                            - bed_load_spreading_angle;
-   bed_load_data.max_angle = sed_get_river_angle( this_river )
+   bed_load_data.max_angle = sed_river_angle( this_river )
                            + bed_load_spreading_angle;
    //---
    // Create a grid to hold the bed load.  The river mouth will be at i=0,
@@ -170,7 +168,7 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    area      = eh_dbl_grid_sum( fraction_grid )
              * sed_cube_x_res( prof )
              * sed_cube_y_res( prof );
-   volume    = (sed_hydro_bedload(river_data)*S_SECONDS_PER_DAY)
+   volume    = (sed_river_bedload(this_river)*S_SECONDS_PER_DAY)
              * sed_cube_time_step_in_days( prof )
              / sed_cell_density_0( bed_load_cell );
    thickness = volume / area;
@@ -198,11 +196,11 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
          }
       }
 
-   info.mass_added = sed_hydro_bedload( river_data )
+   info.mass_added = sed_river_bedload( this_river )
                    * sed_cube_time_step_in_seconds( prof );
    info.mass_lost  = 0.;
 
-   input_mass = sed_hydro_bedload( river_data )
+   input_mass = sed_river_bedload( this_river )
               * sed_cube_time_step_in_seconds( prof );
    add_mass   = area*thickness*sed_cell_density_0( bed_load_cell );
 
@@ -210,9 +208,9 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    eh_message( "bedload input (kg): %g" , input_mass );
    eh_message( "bedload added (kg): %g" , add_mass );
 
-   eh_grid_destroy( fraction_grid , TRUE );
+   eh_grid_destroy ( fraction_grid , TRUE );
    sed_cell_destroy( bed_load_cell );
-   eh_free( river_mouth );
+   eh_free         ( river_mouth );
 
    return info;
 }

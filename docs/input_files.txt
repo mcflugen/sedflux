@@ -22,7 +22,7 @@ for a description.
 
 */
 
-/** \page sub_sec_key_file The Sedflux Key-File
+/** \page sub_sec_key_file Sedflux Key-File
 
 Many of the (ascii) input files for sedflux are of a common format.  I'll
 often refer to them as sedflux key-files.  They are plain text files that

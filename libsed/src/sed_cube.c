@@ -247,7 +247,7 @@ Sed_cube sed_cube_free( Sed_cube s , gboolean free_data )
          sed_cube_destroy_in_suspension( list->data );
 
       for ( list=s->river ; list ; list=list->next )
-         sed_destroy_river( list->data );
+         sed_river_destroy( list->data );
 
       sed_cell_destroy( s->erode  );
       sed_cell_destroy( s->remove );
@@ -269,7 +269,7 @@ Sed_cube sed_cube_free_river( Sed_cube p )
    {
       GList *list;
       for ( list=p->river ; list ; list=list->next )
-         sed_destroy_river( list->data );
+         sed_river_destroy( list->data );
       p->river = NULL;
    }
    return p;
@@ -454,7 +454,7 @@ Sed_column sed_cube_col_ij( const Sed_cube s , gssize i , gssize j )
    eh_require( i>=0 );
    eh_require( j>=0 );
    eh_require( i<sed_cube_n_x(s) );
-   eh_require( j<sed_cube_n_y(s) );
+   eh_require( sed_cube_id(s,i,j)<sed_cube_size(s) );
 
    return s->col[i][j];
 }
@@ -707,23 +707,24 @@ Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index )
    return sed_cube_grid( s , S_LOAD_FUNC , index );
 }
 
-Sed_river *sed_cube_river_by_name( Sed_cube s , const char *name )
+Sed_riv
+sed_cube_river_by_name( Sed_cube s , const char *name )
 {
-   Sed_river* the_river = NULL;
+   Sed_riv the_river = NULL;
 
    if ( s )
    {
       GList *found;
       found = g_list_find_custom( s->river ,
                                   name     ,
-                                  (GCompareFunc)&sed_cmp_river_name );
+                                  (GCompareFunc)&sed_river_name_cmp );
       if ( found )
-         the_river = (Sed_river*)(found->data);
+         the_river = (Sed_riv)(found->data);
    }
 
    return the_river;
 }
-
+/*
 gint sed_cmp_river_name( Sed_river *this_river , const char *name )
 {
    if ( this_river->river_name )
@@ -731,14 +732,17 @@ gint sed_cmp_river_name( Sed_river *this_river , const char *name )
    else
       return -1;
 }
-
+*/
+/*
 Sed_river *sed_cube_river( Sed_cube s , gssize n )
 {
    eh_return_val_if_fail( s!=NULL , NULL );
    return g_list_nth_data( s->river , n );
 }
+*/
 
-gssize sed_cube_river_id( Sed_cube s , Sed_river* river )
+gssize
+sed_cube_river_id( Sed_cube s , Sed_riv river )
 {
    return g_list_index( s->river , river );
 }
@@ -1259,18 +1263,25 @@ Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double 
    return s;
 }
 
-Sed_cube sed_cube_set_nth_river( Sed_cube s , gssize n , Sed_river *new_river )
+Sed_cube
+sed_cube_set_nth_river( Sed_cube s , gssize n , Sed_riv new_river )
 {
-   eh_require( s )
+   eh_require( s );
+
+   if ( s )
    {
-      Sed_river *nth = g_list_nth( s->river , n )->data;
-      memcpy( nth , new_river , sizeof(Sed_river) );
+      GList* node = g_list_nth( s->river , n );
+
+      eh_require( node );
+
+      sed_river_copy( node->data , new_river );
    }
    return s;
 }
 
-Eh_pt_2 *sed_cube_river_mouth_position( Sed_cube s ,
-                                        Sed_river *this_river )
+Eh_pt_2*
+sed_cube_river_mouth_position( Sed_cube s ,
+                               Sed_riv this_river )
 {
    Eh_pt_2 *river_mouth_pos;
 
@@ -1278,18 +1289,20 @@ Eh_pt_2 *sed_cube_river_mouth_position( Sed_cube s ,
    eh_require( this_river );
 
    {
+      Eh_ind_2 mouth_pos = sed_river_mouth( this_river );
+      Eh_ind_2 hinge_pos = sed_river_hinge( this_river );
       Eh_polygon_2 shore_cell = eh_get_rectangle_polygon(
                                    eh_create_pt_2(
-                                      (this_river->x_ind+.5)*sed_cube_x_res( s ) ,
-                                      (this_river->y_ind+.5)*sed_cube_y_res( s ) ) ,
-                                   sed_cube_x_res( s )                             ,
+                                      (mouth_pos.i+.5)*sed_cube_x_res( s )   ,
+                                      (mouth_pos.j+.5)*sed_cube_y_res( s ) ) ,
+                                   sed_cube_x_res( s )                       ,
                                    sed_cube_y_res( s ) );
       GList *river_end = eh_find_polygon_crossings( 
                             eh_create_pt_2(
-                               (this_river->hinge->x+.5)*sed_cube_x_res( s ) ,
-                               (this_river->hinge->y+.5)*sed_cube_y_res( s ) ) ,
-                            this_river->hinge->angle                           ,
-                            shore_cell                                         ,
+                               (hinge_pos.i+.5)*sed_cube_x_res( s )   ,
+                               (hinge_pos.j+.5)*sed_cube_y_res( s ) ) ,
+                            sed_river_angle(this_river)               ,
+                            shore_cell                                ,
                             POLYGON_IN_CROSSINGS ); 
 
       if ( river_end && (g_list_length( river_end ) == 1) )
@@ -1307,11 +1320,13 @@ Eh_pt_2 *sed_cube_river_mouth_position( Sed_cube s ,
    return river_mouth_pos;
 }
 
+/*
 Sed_hydro sed_cube_river_data( Sed_cube s , GList *this_river )
 {
    return ((Sed_river*)(this_river->data))->data;
 }
-
+*/
+/*
 Sed_cube sed_cube_set_river_data( Sed_cube s        ,
                                   GList *this_river ,
                                   Sed_hydro new_river_data )
@@ -1320,6 +1335,7 @@ Sed_cube sed_cube_set_river_data( Sed_cube s        ,
    sed_hydro_copy( this_hydro_rec , new_river_data );
    return s;
 }
+*/
 
 Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list )
 {
@@ -1327,13 +1343,14 @@ Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list )
    return s;
 }
 
-Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *new_river )
+Sed_cube
+sed_cube_add_river( Sed_cube s , Sed_riv new_river )
 {
    Sed_cell_grid new_grid;
 
-   new_grid = sed_cube_create_in_suspension( s );
+   new_grid         = sed_cube_create_in_suspension( s );
 
-   s->river = g_list_prepend( s->river , new_river );
+   s->river         = g_list_prepend( s->river         , new_river );
    s->in_suspension = g_list_prepend( s->in_suspension , new_grid );
 
    return s;
@@ -1350,11 +1367,19 @@ Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no )
    return s;
 }
 
+Sed_riv
+sed_cube_nth_river( Sed_cube s , gint n )
+{
+   return g_list_nth( s->river , n )->data;
+}
+
+/*
 void sed_cube_set_nth_river_data( Sed_cube s , int n , Sed_hydro new_data )
 {
    Sed_river *nth = g_list_nth( s->river , n )->data;
    sed_hydro_copy( nth->data , new_data );
 }
+*/
 
 Sed_cube sed_cube_set_name( Sed_cube s , char *name )
 {
@@ -1467,6 +1492,7 @@ Sed_cube sed_cube_increment_age( Sed_cube s )
    return sed_cube_adjust_age( s , sed_cube_time_step(s) );
 }
 
+/*
 Sed_hydro sed_cube_nth_river_data( Sed_cube s , int n )
 {
    Sed_hydro hydro_data = NULL;
@@ -1477,6 +1503,7 @@ Sed_hydro sed_cube_nth_river_data( Sed_cube s , int n )
    }
    return hydro_data;
 }
+*/
 /*
 Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *river )
 {
@@ -1969,37 +1996,38 @@ GTree *sed_create_shore_tree( GList *shore )
    return tree;
 }
 
-Sed_river *sed_cube_find_river_mouth( Sed_cube c , Sed_river *this_river )
+Sed_riv
+sed_cube_find_river_mouth( Sed_cube c , Sed_riv this_river )
 {
    Eh_ind_2 hinge_pos;
    Eh_ind_2 *new_pos;
    double hinge_angle;
 
-   hinge_pos     = eh_ind_2_create( this_river->hinge->x ,
-                                    this_river->hinge->y );
-   hinge_angle   = this_river->hinge->angle;
+   hinge_pos     = sed_river_hinge( this_river );
+   hinge_angle   = sed_river_angle( this_river );
 
    new_pos       = sed_find_river_mouth( c , &hinge_pos , hinge_angle );
 
-   this_river->x_ind = new_pos->i;
-   this_river->y_ind = new_pos->j;
+   sed_river_set_mouth( this_river , new_pos->i , new_pos->j );
 
    eh_free( new_pos );
 
    return this_river;
 }
 
-GList *sed_cube_find_river_path( Sed_cube c          ,
-                                 Eh_ind_2 *hinge_pos ,
-                                 double angle )
+GList*
+sed_cube_find_river_path( Sed_cube c          ,
+                          Eh_ind_2 *hinge_pos ,
+                          double angle )
 {
    GList *river = sed_cube_find_line_path( c , hinge_pos , angle );
    return river;
 }
 
-Eh_ind_2 *sed_find_river_mouth( Sed_cube c          ,
-                                Eh_ind_2 *hinge_pos ,
-                                double angle )
+Eh_ind_2*
+sed_find_river_mouth( Sed_cube c          ,
+                      Eh_ind_2 *hinge_pos ,
+                      double angle )
 {
    GList *this_link;
    Eh_ind_2 *ans;
@@ -2104,6 +2132,16 @@ Eh_pt_2 get_path_entrance_pos( Eh_pt_2 exit_pos , double dx , double dy )
 {
    Eh_pt_2 entrance_pos = exit_pos;
 
+   if      ( eh_compare_dbl( exit_pos.x , 0. , 1e-12 ) )
+      entrance_pos.x = dx;
+   else if ( eh_compare_dbl( exit_pos.x , dx , 1e-12 ) )
+      entrance_pos.x = 0;
+
+   if      ( eh_compare_dbl( exit_pos.y , 0. , 1e-12 ) )
+      entrance_pos.y = dy;
+   else if ( eh_compare_dbl( exit_pos.y , dy , 1e-12 ) )
+      entrance_pos.y = 0;
+/*
    if ( fabs(exit_pos.x) < 1e-5 )
       entrance_pos.x = dx;
    else if ( fabs(exit_pos.x-dx) < 1e-5 )
@@ -2113,6 +2151,7 @@ Eh_pt_2 get_path_entrance_pos( Eh_pt_2 exit_pos , double dx , double dy )
       entrance_pos.y = dy;
    else if ( fabs(exit_pos.y-dy) < 1e-5 )
       entrance_pos.y = 0;
+*/
 
    return entrance_pos;
 }
@@ -2121,6 +2160,17 @@ Eh_ind_2 get_shift_from_exit_pos( Eh_pt_2 exit_pos , double dx , double dy )
 {
    Eh_ind_2 shift = { 0 , 0 };
 
+   if      ( eh_compare_dbl( exit_pos.x , 0. , 1e-12 ) )
+      shift.i = -1;
+   else if ( eh_compare_dbl( exit_pos.x , dx , 1e-12 ) )
+      shift.i = 1;
+
+   if      ( eh_compare_dbl( exit_pos.y , 0. , 1e-12 ) )
+      shift.j = -1;
+   else if ( eh_compare_dbl( exit_pos.y , dy , 1e-12 ) )
+      shift.j = 1;
+
+/*
    if ( fabs(exit_pos.x) < 1e-5 )
       shift.i = -1;
    else if ( fabs(exit_pos.x-dx) < 1e-5 )
@@ -2130,17 +2180,16 @@ Eh_ind_2 get_shift_from_exit_pos( Eh_pt_2 exit_pos , double dx , double dy )
       shift.j = -1;
    else if ( fabs(exit_pos.y-dy) < 1e-5 )
       shift.j = 1;
-
+*/
    return shift;
 }
 
 gssize *sed_cube_river_path_id( Sed_cube c   ,
-                                GList *river ,
+                                Sed_riv river ,
                                 gboolean down_stream )
 {
-   Eh_ind_2 hinge = eh_ind_2_create( ((Sed_river*)(river->data))->hinge->x ,
-                                     ((Sed_river*)(river->data))->hinge->y );
-   double angle = sed_get_river_angle( river->data );
+   Eh_ind_2 hinge = sed_river_hinge( river );
+   double   angle = sed_river_angle( river );
    GList *path, *this_link;
    gssize i, n_y;
    gssize *path_id;
@@ -2166,21 +2215,23 @@ gssize *sed_cube_river_path_id( Sed_cube c   ,
    return path_id;
 }
 
-GList *sed_cube_river_path( Sed_cube c , GList *river )
+GList*
+sed_cube_river_path( Sed_cube c , Sed_riv river )
 {
-   Eh_ind_2 hinge = eh_ind_2_create( ((Sed_river*)(river->data))->hinge->x ,
-                                     ((Sed_river*)(river->data))->hinge->y );
-   double angle = sed_get_river_angle( river->data );
+   Eh_ind_2 hinge = sed_river_hinge( river );
+   double   angle = sed_river_angle( river );
 
    return sed_cube_find_line_path( c , &hinge , angle );
 }
 
-GList *sed_cube_find_line_path( Sed_cube c          ,
-                                Eh_ind_2 *hinge_pos ,
-                                double angle )
+GList*
+sed_cube_find_line_path( Sed_cube c          ,
+                         Eh_ind_2 *hinge_pos ,
+                         double angle )
 {
-   int i, j;
    GList *river_path=NULL;
+   int n, i, j;
+   int max_iter;
    Eh_ind_2 river_pos;
    Eh_ind_2 shift;
    Eh_pt_2 pos_in_cell;
@@ -2202,13 +2253,18 @@ GList *sed_cube_find_line_path( Sed_cube c          ,
    if ( sed_column_is_below( c->col[i][j] , c->sea_level ) )
       return river_path;
 
-   while (     is_in_domain( c->n_x , c->n_y , i , j )
-           &&  sed_column_is_above( c->col[i][j] , c->sea_level-1e-3 ) )
-   {
-      pos_in_cell = get_path_exit_pos( pos_in_cell , angle , c->dx , c->dy );
+   max_iter = c->n_x*c->n_y+1;
 
-      shift = get_shift_from_exit_pos( pos_in_cell , c->dx , c->dy );
-      pos_in_cell = get_path_entrance_pos( pos_in_cell , c->dx , c->dy );
+   for ( n=0 ;
+            is_in_domain( c->n_x , c->n_y , i , j )
+         && sed_column_is_above( c->col[i][j] , c->sea_level-1e-3 )
+         && n<max_iter ;
+         n++ )
+   {
+      pos_in_cell = get_path_exit_pos      ( pos_in_cell , angle , c->dx , c->dy );
+
+      shift       = get_shift_from_exit_pos( pos_in_cell , c->dx , c->dy );
+      pos_in_cell = get_path_entrance_pos  ( pos_in_cell , c->dx , c->dy );
 
       i += shift.i;
       j += shift.j;
@@ -2220,8 +2276,10 @@ GList *sed_cube_find_line_path( Sed_cube c          ,
          river_path = g_list_prepend( river_path ,
                                       eh_ind_2_dup( &river_pos , NULL ) );
       }
-
    }
+
+   if ( n==max_iter )
+      eh_require_not_reached();
 
    return river_path;
 }
@@ -2244,7 +2302,7 @@ int is_river_mouth( Eh_ind_2 *shore_pos , Sed_hinge_pt* dir )
    else
       return 0;
 }
-
+/*
 Sed_river *sed_create_river( int n_grains , Eh_ind_2 *pos )
 {
    Sed_river *river = eh_new( Sed_river , 1 );
@@ -2267,7 +2325,8 @@ Sed_river *sed_create_river( int n_grains , Eh_ind_2 *pos )
 
    return river;
 }
-
+*/
+/*
 Sed_river *sed_copy_river( Sed_river *dest , Sed_river *source )
 {
    if ( !dest )
@@ -2282,12 +2341,14 @@ Sed_river *sed_copy_river( Sed_river *dest , Sed_river *source )
 
    return dest;
 }
-
+*/
+/*
 Sed_river *sed_dup_river( Sed_river *source )
 {
    return sed_copy_river( NULL , source );
 }
-
+*/
+/*
 void sed_dump_river( FILE *fp , Sed_river *river )
 {
    int len = strlen( river->river_name );
@@ -2300,7 +2361,8 @@ void sed_dump_river( FILE *fp , Sed_river *river )
    fwrite( &len              , sizeof(int)          , 1   , fp );
    fwrite( river->river_name , sizeof(char)         , len , fp );
 }
-
+*/
+/*
 Sed_river *sed_load_river( FILE *fp )
 {
    int len;
@@ -2314,7 +2376,8 @@ Sed_river *sed_load_river( FILE *fp )
 
    return river;
 }
-
+*/
+/*
 void sed_destroy_river( Sed_river *river )
 {
    if ( river )
@@ -2324,18 +2387,22 @@ void sed_destroy_river( Sed_river *river )
       eh_free( river );
    }
 }
-
+*/
+/*
 double sed_get_river_angle( Sed_river *river )
 {
    return river->hinge->angle;
 }
-
+*/
+/*
 double sed_cube_river_angle( Sed_cube c , GList *river )
 {
    return sed_get_river_angle( (Sed_river*)(river->data) );
 }
+*/
 
-Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y )
+Eh_dbl_grid
+sed_get_floor_3_default( int floor_type , int n_x , int n_y )
 {
    int i, j;
    int dy = 100;
@@ -2651,86 +2718,120 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
 
 Eh_sequence *sed_get_floor_sequence_3( const char *file ,
                                        double dx        ,
-                                       double dy )
+                                       double dy        ,
+                                       GError** error )
 {
-   Eh_dbl_grid grid;
-   Eh_sequence *grid_seq;
+   Eh_dbl_grid  grid     = NULL;
+   Eh_sequence* grid_seq = NULL;
    FILE *fp;
    int i, n, n_elem;
    size_t start, end;
    gint n_x, n_y, n_t;
    double t;
+   GError* tmp_err = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    //---
    // Open the sequence file.
    //---
-   fp = fopen( file , "rb" );
-   if ( !fp )
-      eh_error( "could not open file : %s" , file );
+   fp = eh_fopen_error( file , "rb" , &tmp_err );
 
-   //---
-   // The number of columns and rows are listed first as an int (32).
-   //---
-   fread( &n_y , sizeof(gint32) , 1 , fp );
-   fread( &n_x , sizeof(gint32) , 1 , fp );
-
-   //---
-   // Calculate the number of rows in the file based on the number of columns
-   // and the file size.  If this is not a whole number, something is wrong.
-   //---
-   start = ftell( fp );
-   fseek( fp , 0 , SEEK_END );
-   end = ftell( fp );
-   fseek( fp , start , SEEK_SET );
-
-   n_elem = (end-start)/sizeof(double);
-   n_t    = n_elem/(n_x*n_y+1);
-
-   if ( (n_x*n_y+1)*n_t != n_elem )
+   if ( !tmp_err )
    {
-      eh_message( "%s: this file appears to have been truncated. " , file );
-      eh_message( "%s: reading %d records. " , file , n_t );
-      eh_message( "%s: discarding the final %d records. " ,
-                  file , n_elem-n_t*(n_x*n_y+1) );
-   }
 
-   //---
-   // Read the sequence of grids.  A frame of a sequence consists of a key
-   // followed by a square grid.  Each key is a double and each grid is a
-   // series of doubles.  All grids are the same size that is given by the
-   // first to elements in the file as two (32 bit) ints.
-   //---
-   grid_seq = eh_create_sequence( );
+      //---
+      // The number of columns and rows are listed first as an int (32).
+      //---
+      fread( &n_y , sizeof(gint32) , 1 , fp );
+      fread( &n_x , sizeof(gint32) , 1 , fp );
 
-   for ( n=0 ; n<n_t ;  n++ )
-   {
-      fread( &t , sizeof(double) , 1 , fp );
-
-      grid = eh_grid_new( double , n_x , n_y );
-
-      fread( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
-
-      for ( i=0 ; i<n_x ; i++ )
-         eh_grid_x(grid)[i] = i*dx;
-
-      for ( i=0 ; i<n_y ; i++ )
-         eh_grid_y(grid)[i] = i*dy;
-
-      eh_add_to_sequence( grid_seq , t , grid );
-   }
-
-   //---
-   // Ensure that the sequence is nonotonically increasing.
-   //---
-   for ( n=1 ; n<grid_seq->len ; n++ )
-   {
-      if ( !(grid_seq->t[n-1] < grid_seq->t[n]) )
+      if ( n_x<=0 || n_y<=0 )
       {
-         eh_message( "The grid sequence must be monotonically increasing." );
-         eh_message( "Frame %d has a key of %f." , n-1 , grid_seq->t[n-1]  );
-         eh_message( "Frame %d has a key of %f." , n   , grid_seq->t[n]    );
-         eh_error  ( "Error reading grid sequence from file: %s." , file   );
+         g_set_error( &tmp_err ,
+                      SED_CUBE_ERROR ,
+                      SED_CUBE_ERROR_BAD_GRID_DIMENSION , 
+                      "Bad grid dimension (n_x=%d, n_y=%d)" , n_x , n_y );
       }
+   }
+
+   if ( !tmp_err )
+   {
+
+      //---
+      // Calculate the number of rows in the file based on the number of columns
+      // and the file size.  If this is not a whole number, something is wrong.
+      //---
+      start = ftell( fp );
+      fseek( fp , 0 , SEEK_END );
+      end = ftell( fp );
+      fseek( fp , start , SEEK_SET );
+
+      n_elem = (end-start)/sizeof(double);
+      n_t    = n_elem/(n_x*n_y+1);
+
+      if ( (n_x*n_y+1)*n_t != n_elem )
+      {
+         g_set_error( &tmp_err ,
+                      SED_CUBE_ERROR ,
+                      SED_CUBE_ERROR_TRUNCATED_FILE , 
+                      "Sequence file is truncated (%d complete records found)", n_t );
+      }
+   }
+
+   if ( !tmp_err )
+   {
+      //---
+      // Read the sequence of grids.  A frame of a sequence consists of a key
+      // followed by a square grid.  Each key is a double and each grid is a
+      // series of doubles.  All grids are the same size that is given by the
+      // first to elements in the file as two (32 bit) ints.
+      //---
+      grid_seq = eh_create_sequence( );
+
+      for ( n=0 ; n<n_t ;  n++ )
+      {
+         fread( &t , sizeof(double) , 1 , fp );
+
+         grid = eh_grid_new( double , n_x , n_y );
+
+         fread( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
+
+         for ( i=0 ; i<n_x ; i++ )
+            eh_grid_x(grid)[i] = i*dx;
+
+         for ( i=0 ; i<n_y ; i++ )
+            eh_grid_y(grid)[i] = i*dy;
+
+         eh_add_to_sequence( grid_seq , t , grid );
+      }
+
+      //---
+      // Ensure that the sequence is monotonically increasing.
+      //---
+      for ( n=1 ; n<grid_seq->len && !tmp_err ; n++ )
+      {
+         if ( !(grid_seq->t[n-1] < grid_seq->t[n]) )
+         {
+            g_set_error( &tmp_err ,
+                         SED_CUBE_ERROR ,
+                         SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+                         "Grid sequence not monotonically increasing (t[%d]=%f, t[%d]=%f)\n" ,
+                         n-1 , grid_seq->t[n-1], n , grid_seq->t[n] );
+         }
+      }
+   }
+
+   if ( tmp_err )
+   {
+      if ( grid_seq )
+      {
+         for ( i=0 ; i<grid_seq->len ; i++ )
+            eh_grid_destroy( grid_seq->data[i] , TRUE );
+         eh_destroy_sequence( grid_seq , FALSE );
+         grid_seq = NULL;
+      }
+      g_propagate_error( error , tmp_err );
    }
 
    fclose( fp );
@@ -2796,6 +2897,7 @@ Eh_dbl_grid sed_get_floor_2d_grid( const char *file , double dx , double dy )
    return grid;
 }
 
+/*
 void sed_avulse_river( Sed_river *river , Sed_cube c )
 {
    double last_angle, angle;
@@ -2822,7 +2924,16 @@ void sed_avulse_river( Sed_river *river , Sed_cube c )
 
    river = sed_cube_find_river_mouth( c , river );
 }
+*/
 
+Sed_cube
+sed_cube_foreach_river( Sed_cube c , GFunc func , gpointer user_data )
+{
+   g_list_foreach( c->river , func , user_data );
+   return c;
+}
+
+/*
 void avulse_river_helper( Sed_river *this_river , Sed_cube c );
 
 Sed_cube sed_cube_avulse_all_rivers( Sed_cube c )
@@ -2835,8 +2946,9 @@ void avulse_river_helper( Sed_river *this_river , Sed_cube c )
 {
    sed_avulse_river( this_river , c );
 }
+*/
 
-void find_river_mouth_helper( Sed_river *this_river , Sed_cube c );
+void find_river_mouth_helper( Sed_riv this_river , Sed_cube c );
 
 Sed_cube sed_cube_find_all_river_mouths( Sed_cube c )
 {
@@ -2844,7 +2956,7 @@ Sed_cube sed_cube_find_all_river_mouths( Sed_cube c )
    return c;
 }
 
-void find_river_mouth_helper( Sed_river *this_river , Sed_cube c )
+void find_river_mouth_helper( Sed_riv this_river , Sed_cube c )
 {
    sed_cube_find_river_mouth( c , this_river );
 }
@@ -2901,7 +3013,7 @@ gssize sed_cube_write( FILE *fp , const Sed_cube p )
 
       // Dump the river mouths.
       for ( list=p->river ; list ; list=list->next )
-         sed_dump_river( fp , list->data );
+         sed_river_fwrite( fp , list->data );
 
       // Dump the suspension grids.
       for ( list=p->in_suspension ; list ; list=list->next )
@@ -2926,7 +3038,7 @@ Sed_cube sed_cube_read( FILE *fp )
       gssize i, j;
       gssize len;
       GList *list;
-      Sed_river *this_river;
+      Sed_riv this_river;
       Eh_grid this_grid;
 
       //---
@@ -2957,7 +3069,8 @@ Sed_cube sed_cube_read( FILE *fp )
       fread( &len , sizeof(int) , 1 , fp );
       for ( i=0 ; i<len ; i++ )
       {
-         this_river = sed_load_river( fp );
+         this_river = sed_river_new( NULL );
+         sed_river_fread( fp , this_river );
          sed_cube_add_river( p , this_river );
       }
 
@@ -3275,4 +3388,32 @@ sed_cube_fprint( FILE* fp , Sed_cube c )
 
    return n;
 }
+
+Sed_cell
+sed_cube_to_cell( Sed_cube c , Sed_cell d )
+{
+
+   if ( c )
+   {
+      gint i;
+      gint len     = sed_cube_size(c);
+      Sed_cell top = sed_cell_new_env();
+
+      if ( !d )
+         d = sed_cell_new_env();
+
+      sed_cell_clear( d );
+
+      for ( i=0 ; i<len ; i++ )
+      {
+         sed_column_top( sed_cube_col(c,i) , sed_cube_thickness(c,0,i) , top );
+         sed_cell_add( d , top );
+      }
+
+      sed_cell_destroy( top );
+   }
+
+   return d;
+}
+
 

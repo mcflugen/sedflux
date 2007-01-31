@@ -18,27 +18,29 @@
 //
 //---
 
-#if !defined(AVULSION_H)
-# define AVULSION_H
+#if !defined(RUN_AVULSION_H)
+# define RUN_AVULSION_H
 
 # include "utils.h"
 # include "sed_sedflux.h"
 
 typedef struct
 {
-   gboolean initialized;
+   gboolean     initialized;
    Eh_input_val std_dev;
    Eh_input_val min_angle;
    Eh_input_val max_angle;
    Eh_input_val f_remain;
-   double last_angle;
-
-   char *river_name;
-   Sed_hinge_pt *hinge;
+   GRand*       rand;
+   guint32      rand_seed;
+   gboolean     reset_angle;
+   gint         hinge_i;
+   gint         hinge_j;
+   char*        river_name;
 }
 Avulsion_t;
 
-Sed_process_info run_avulsion(gpointer,Sed_cube);
-gboolean init_avulsion(Eh_symbol_table,gpointer);
+Sed_process_info run_avulsion  ( gpointer        , Sed_cube );
+gboolean         init_avulsion ( Eh_symbol_table , gpointer );
 
 #endif

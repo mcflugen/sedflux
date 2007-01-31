@@ -5,6 +5,7 @@ This manual is divided into the following sections:
 - \subpage download_sec
 - \subpage install_sec
 - \subpage run_sec
+- \subpage modules_sec
 - \subpage prog_sec
 - \subpage input_files_sec
 

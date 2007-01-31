@@ -77,6 +77,40 @@ START_TEST ( test_sequence_2 )
 }
 END_TEST
 
+START_TEST ( test_cube_to_cell )
+{
+   Sed_cube p = sed_cube_new( 25 , 50 );
+   Sed_cell dest;
+   double cube_mass, cell_mass;
+
+   sed_cube_set_x_res( p , 1. );
+   sed_cube_set_y_res( p , 1. );
+   sed_cube_set_z_res( p , 1. );
+
+   {
+      Sed_cell c = sed_cell_new_env( );
+      gint i;
+
+      sed_cell_set_equal_fraction( c );
+      sed_cell_resize( c , 1. );
+
+      for ( i=0 ; i<sed_cube_size(p) ; i++ )
+         sed_column_add_cell( sed_cube_col(p,i) , c );
+
+      sed_cell_destroy( c );
+   }
+
+   dest = sed_cube_to_cell( p , NULL );
+
+   cell_mass = sed_cell_mass( dest );
+   cube_mass = sed_cube_mass( p    );
+
+   fail_unless( eh_compare_dbl(cube_mass,cell_mass,1e-12) , "Mass balance error" );
+
+   sed_cube_destroy( p );
+}
+END_TEST
+
 Suite *sed_cube_suite( void )
 {
    Suite *s = suite_create( "Sed_cube" );
@@ -87,6 +121,7 @@ Suite *sed_cube_suite( void )
    tcase_add_test( test_case_core , test_sed_cube_new      );
    tcase_add_test( test_case_core , test_sed_cube_destroy  );
    tcase_add_test( test_case_core , test_sequence_2        );
+   tcase_add_test( test_case_core , test_cube_to_cell      );
 
    return s;
 }

@@ -480,6 +480,8 @@ Eh_date_t;
 void eh_init_glib( void );
 void eh_exit( int code );
 
+gint eh_fprint_version_info( FILE* fp , const gchar* prog , gint maj , gint min , gint micro );
+
 gboolean is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j );
 #if defined( OLD_NDGRID )
 Eh_grid_id eh_grid_sub_to_id( gssize n_i , gssize i , gssize j );
@@ -551,6 +553,7 @@ FILE *openFileCat(const char*,const char *,const char *);
 FILE *eh_fopen(const char *,const char *);
 FILE *eh_open_file( const char * , const char * );
 FILE *eh_open_temp_file( const char *template , char **name_used );
+FILE *eh_fopen_error(const char *,const char *,GError**);
 gboolean eh_is_readable_file( const char* );
 gboolean eh_is_writable_file( const char* );
 gboolean eh_try_open( const char* file );
@@ -646,6 +649,7 @@ double    eh_get_fuzzy_dbl_norm ( double mean , double std );
 gint32    eh_get_fuzzy_int      ( gint32 min  , gint32 max );
 
 double*   eh_linspace( double min , double max , gssize n );
+gssize*   eh_id_array( gssize i_0 , gssize i_1 , gssize* n );
 double*   eh_uniform_array( double x1 , double x2 , double dx , gssize* n );
 double*   eh_dbl_array_linspace( double* x , gssize n_x , double x_0 , double dx );
 gboolean  eh_dbl_array_is_monotonic( double* x , gssize len );
@@ -830,5 +834,9 @@ Eh_status_bar* eh_status_bar_stop      ( Eh_status_bar* b );
 gboolean       eh_status_bar_is_stopped( Eh_status_bar* b );
 Eh_status_bar* eh_status_bar_pause     ( Eh_status_bar* b );
 Eh_status_bar* eh_status_bar_destroy   ( Eh_status_bar* b );
+
+gchar* eh_render_time_str( double sec , gchar* str );
+
+gboolean eh_check_to_s( gboolean assert , const gchar* str , gchar*** str_list );
 
 #endif /* utils.h is included */

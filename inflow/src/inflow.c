@@ -26,13 +26,6 @@
 #include "sed_sedflux.h"
 #include "utils.h"
 
-//#define RHO_RIVER_WATER (1000.)
-#define RHO_RIVER_WATER sed_rho_fresh_water()
-
-#if defined(INFLOW_STANDALONE) || defined(INFLOW_DEBUG)
-FILE *fpout_;
-#endif
-
 /** inflow turbidity current model.
 
 A steady state turbidity current model based on the Mulder model.
@@ -64,27 +57,32 @@ sediment budget and seafloor impact).  Sedimentology, v. 44, pp. 305-326.
                      water without any sediment.
 @param rho_flow      density of the flow (kg/m^3).  This is the river water
                      plus the sediment.
-@param consts        some constants that are required by the turbidity current
+@param c             some constants that are required by the turbidity current
                      model.
-@param deposit       2d array for storing the deposition rates for each node.
+@param deposited     2d array for storing the deposition rates for each node.
+                     The fast dimension is over grid node number and the slow
+                     dimension is over grain type.
+@param eroded        2d array for storing the erosion rates for each node.
                      The fast dimension is over grid node number and the slow
                      dimension is over grain type.
 @param fpout         The output file
 
-@return 0 on success and -1 if a problem is found.
+@return TRUE on success and FALSE if a problem is found.
 
 */
 
-int inflow( double day , double x[] , double slope[] , double width[] ,
-   int n_nodes , double dx , double x_dep , double river_width ,
-   double river_vel , double river_depth , double dc , double *gzF0 ,
-   double *grain_dia, double *lambda, double *rho_sed, double *rho_grain,
-   int n_grains, double rho_rw, double rho_flow, Inflow_t consts, double **deposit , FILE *fpout )
+gboolean
+inflow( double day        , double x[]         , double slope[]  , double width[] ,
+        int n_nodes       , double dx          , double x_dep    , double river_width ,
+        double river_vel  , double river_depth , double dc       , double *gzF0 ,
+        double *grain_dia , double *lambda     , double *rho_sed , double *rho_grain,
+        int n_grains      , double rho_rw      , double rho_flow , Inflow_const_st* c ,
+        double **deposited, double** eroded    , FILE *fpout )
 {
    double **save_data;
 
-   void inflow_get_phe ( gpointer query_data , gpointer profile_data );
-   void sedflux_get_phe( gpointer query_data , gpointer profile_data );
+//   void inflow_get_phe ( gpointer query_data , gpointer profile_data );
+//   void sedflux_get_phe( gpointer query_data , gpointer profile_data );
 
    // Node parameters.
    double q, q0, J, J0, conc, conc0;
@@ -106,27 +104,16 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
    double depth=0, max_depth=0;
    int i, n;
    gpointer profile_data;
-   I_phe_query_t phe_query;
-#if defined(INFLOW_STANDALONE)
-   gboolean standalone=FALSE;
-#endif
+   Inflow_phe_query_st phe_query;
 
-#if defined(INFLOW_STANDALONE)
-   standalone = TRUE;
-#endif
-   
-   Ea     = consts.Ea;
-   Eb     = consts.Eb;
-   sua    = consts.sua;
-   sub    = consts.sub;
-   Cd     = consts.Cd;
-   tanPhi = consts.tanPhi;
-   mu     = consts.mu;
-   rhoSW  = consts.rhoSW;
-
-#ifdef INFLOW_DEBUG
-   fpout = stderr;
-#endif
+   Ea     = c->e_a;
+   Eb     = c->e_b;
+   sua    = c->sua;
+   sub    = c->sub;
+   Cd     = c->c_drag;
+   tanPhi = c->tan_phi;
+   mu     = c->mu_water;
+   rhoSW  = c->rho_sea_water;
 
    if ( fpout )
       save_data = eh_new_2( double , 13 , n_nodes );
@@ -255,7 +242,7 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
                fwrite( save_data[n] , n_nodes , sizeof(double) , fpout );
             eh_free_2(save_data);
          }
-         return -1;         
+         return FALSE;         
       }
 /*
       q = q0;
@@ -282,16 +269,14 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
       // will be constant over the run.  For the version in SEDFLUX,
       // we'll have to write a routine to average the top 'erosion'
       // bins.
-      profile_data = consts.get_phe_data;
+      phe_query.x           = x[i];
+      phe_query.dx          = dx;
+      phe_query.erode_depth = erosion;
+      phe_query.phe         = phe;
 
-      EH_STRUCT_MEMBER( I_phe_query_t , &phe_query , x           ) = x[i];
-      EH_STRUCT_MEMBER( I_phe_query_t , &phe_query , dx          ) = dx;
-      EH_STRUCT_MEMBER( I_phe_query_t , &phe_query , erode_depth ) = erosion;
-      EH_STRUCT_MEMBER( I_phe_query_t , &phe_query , phe         ) = phe;
+      (*(c->get_phe))( &phe_query , c->get_phe_data );
 
-      (*(consts.get_phe))( (gpointer)&phe_query , profile_data );
-
-      erosion = EH_STRUCT_MEMBER( I_phe_query_t , &phe_query , erode_depth );
+      erosion = phe_query.erode_depth;
 
 // Find the maximum grain diameter that has a concentration greater than .01.
       for (n=0,max_grain_dia=0.;n<n_grains;n++)
@@ -317,7 +302,7 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
       for (n=0;n<n_grains;n++)
       {
          // Rate of erosion (m^2/s).
-         fEro[n] = erosion*phe[n]/DAY*width[i];
+         fEro[n] = erosion*phe[n]*S_DAYS_PER_SECOND*width[i];
 
          // Deposition rate (m^2/s).
          // NOTE: we have divided the deposition rates by 10 to account
@@ -343,13 +328,18 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
          // Deposit thickness.  Convert the deposit sediment to the appropriate
          // porosity.  The erosion part is given in meters of bottom sediment
          // eroded and so is already at the correct porosity.
+/*
 #if defined(INFLOW_STANDALONE)
          deposit[n][i] = -(fDep[n]*rho_grain[n]/rho_sed[n]+fEro[n])*day/width[i];
 #else
          deposit[n][i] = -(fDep[n]*rho_grain[n]/rho_sed[n])*day/width[i];
 #endif
-         mass += -fDep[n]*rho_grain[n]*dx;
-         masseroded += fEro[n]*rho_grain[n]*dx;
+*/
+         deposited[n][i] = -(fDep[n]*rho_grain[n]/rho_sed[n])*day/width[i];
+         eroded   [n][i] = -(fEro[n])*day/width[i];
+
+         mass       += -fDep[n]*rho_grain[n]*dx;
+         masseroded +=  fEro[n]*rho_grain[n]*dx;
       }
 
       // Get new grain size fractions in the flow.
@@ -434,6 +424,6 @@ int inflow( double day , double x[] , double slope[] , double width[] ,
    eh_free( gzF         );
    eh_free( Cgrain_init );
 
-   return 0;
+   return TRUE;
 }
  

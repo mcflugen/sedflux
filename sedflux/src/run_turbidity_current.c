@@ -80,51 +80,22 @@
 #define DEFAULT_PHEBOTTOM   (0.2) 
 
 void sed_get_phe   ( gpointer user_data , gpointer bathy_data );
-void sed_remove    ( gpointer user_data , gpointer bathy_data );
-void sed_add       ( gpointer user_data , gpointer bathy_data );
-void sed_get_depth ( gpointer user_data , gpointer bathy_data );
 
 Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
 {
-   Turbidity_t *data=(Turbidity_t*)ptr; 
-   Sed_process_info info = SED_EMPTY_INFO;
-   double get_equivalent_diameter( double real_diameter );
-   Sed_cell flow, deposit_cell;
-   double init_h, init_u, init_c, init_q, init_w;
-   double *fraction, *bulk_density, *grain_size, *lambda, *grain_density;
-   double rho_fluid, rho_flow;
-   double flow_age, volume_of_sediment, day=DAY_IN_SECONDS, flow_duration;
-   double *deposit_at_x, *slope;
-   int i, ind, n_nodes, n, n_grains;
-   int n_nodes0, start;
-   long seed;
-   pos_t *bathy, *bathy0;
-   double *width, dx;
-   double n_days;
-   Sed_cube fail;
-   gboolean ok;
-   
-   // specific to sakura
-   double dt;
-   double basin_len;
-   double Dstar, Wstar, Rden;
-   double *stv, *rey;
-   double *phe_bot;
-   double out_time;
-#ifdef WITH_SAKURA
-   Sakura_t sakura_const;
-#endif
-
-   // specific to inflow
-   double x_dep;
-   Inflow_t inflow_const;
+   Turbidity_t*     data          = (Turbidity_t*)ptr; 
+   Sed_process_info info          = SED_EMPTY_INFO;
+   Sed_cube         fail;
+   Inflow_const_st  inflow_const;
+   gssize           ind_start;
+   Sed_cell         flow_cell;
+   Sed_hydro        flow;
 
    // Clean up process.
    if ( p == NULL )
    {
       if ( data->initialized )
       {
-         eh_free_2( data->deposit );
          data->initialized = FALSE;
       }
       return SED_EMPTY_INFO;
@@ -133,16 +104,6 @@ Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
    // Initialize process.
    if ( !data->initialized )
    {
-      int max_n_nodes = (sed_cube_n_y(p)+1)
-                      * sed_cube_y_res(p)
-                      / TURBIDITY_CURRENT_GRID_SPACING;
-      gssize n_grains = sed_sediment_env_size();
-      data->n_x = n_grains;
-      data->n_y = max_n_nodes;
-      data->deposit = eh_new_2( double , n_grains , max_n_nodes );
-      for ( n=0 ; n<n_grains ; n++ )
-         for ( i=0 ; i<max_n_nodes ; i++ )
-            data->deposit[n][i] = 0.;
       data->initialized = TRUE;
    }
    
@@ -155,260 +116,34 @@ Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
    fail = data->failure;
 
    // Transfer over the (inflow) turbidity current flow constants.
-   inflow_const.Ea            = data->E_a;
-   inflow_const.Eb            = data->E_b;
-   inflow_const.sua           = data->sua;
-   inflow_const.sub           = data->sub;
-   inflow_const.Cd            = data->C_d;
-   inflow_const.tanPhi        = data->tan_phi;
-   inflow_const.mu            = data->mu;
-   inflow_const.rhoSW         = data->rhoSW;
-   inflow_const.channelLength = data->channel_length;
-   inflow_const.channelWidth  = data->channel_width;
-
-   // Transfer over the (sakura) turbidity current flow constants.
-#ifdef WITH_SAKURA
-   sakura_const.Ea            = data->E_a;
-   sakura_const.Eb            = data->E_b;
-   sakura_const.sua           = data->sua;
-   sakura_const.sub           = data->sub;
-   sakura_const.Cd            = data->C_d;
-   sakura_const.tanPhi        = data->tan_phi;
-   sakura_const.mu            = data->mu;
-   sakura_const.rhoSW         = data->rhoSW;
-   sakura_const.channelLength = data->channel_length;
-   sakura_const.channelWidth  = data->channel_width;
-   sakura_const.rhoRW         = DENSITY_OF_WATER;
-#endif
-
-   dx       = TURBIDITY_CURRENT_GRID_SPACING;
-   dt       = TURBIDITY_CURRENT_TIME_INTERVAL;
-   n_grains = sed_sediment_env_size();
+   inflow_const.e_a             = data->E_a;
+   inflow_const.e_b             = data->E_b;
+   inflow_const.sua             = data->sua;
+   inflow_const.sub             = data->sub;
+   inflow_const.c_drag          = data->C_d;
+   inflow_const.tan_phi         = data->tan_phi;
+   inflow_const.mu_water        = data->mu;
+   inflow_const.rho_sea_water   = data->rhoSW;
+   inflow_const.rho_river_water = data->rhoSW;
+   inflow_const.channel_len     = data->channel_length;
+   inflow_const.channel_width   = data->channel_width;
 
    // Start the flow at the end of the failure.
-   start    = (int)( sed_cube_col_y( fail,sed_cube_n_y(fail)-1 ) );
-   n_nodes0 = sed_cube_n_y(p) - start;
-   n_nodes  = (int)((sed_cube_n_y(p)-(start+1))*sed_cube_y_res(p)/dx);
-   basin_len = n_nodes * dx;
+   ind_start    = (int)( sed_cube_col_y( fail,sed_cube_n_y(fail)-1 ) );
 
    // Average the failure into one cell.
-   {
-      Sed_cell top  = sed_cell_new_env( );
-
-      flow = sed_cell_new_env( );
-      for ( i=0 ; i<sed_cube_n_y(fail) ; i++ )
-      {
-         sed_column_top( sed_cube_col(fail,i) , sed_cube_thickness(fail,0,i) , top );
-         sed_cell_add( flow , top );
-      }
-      flow_age = sed_cell_age( flow );
-
-      sed_cell_destroy( top );
-   }
+   flow_cell = sed_cube_to_cell( fail , NULL );
 
    // initial flow conditions.
-   init_u = TURBIDITY_CURRENT_INITIAL_VELOCITY;
-   init_h = TURBIDITY_CURRENT_INITIAL_HEIGHT;
-   init_w = TURBIDITY_CURRENT_INITIAL_WIDTH;
-   init_c = TURBIDITY_CURRENT_INITIAL_CONCENTRATION;
-   init_q = init_u*init_h*init_w;
+   flow = inflow_flood_from_cell( flow_cell , sed_cube_x_res(p)*sed_cube_y_res(p) );
 
-   fraction      = sed_cell_copy_fraction( NULL     , flow );
-   bulk_density  = sed_sediment_property ( NULL     , &sed_type_rho_sat );
-   lambda        = sed_sediment_property ( NULL     , &sed_type_lambda_in_per_seconds );
-   grain_size    = sed_sediment_property ( NULL     , &sed_type_grain_size_in_meters );
-   grain_density = eh_dbl_array_new_set  ( n_grains , TURBIDITY_CURRENT_GRAIN_DENSITY );
+   sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , inflow_const );
 
-   for ( n=0 ; n<n_grains ; n++ )
-      grain_size[n] = get_equivalent_diameter( grain_size[n] );
-
-   rho_fluid = TURBIDITY_CURRENT_INITIAL_FLUID_DENSITY;
-   rho_flow  = init_c*(TURBIDITY_CURRENT_GRAIN_DENSITY-rho_fluid)+rho_fluid;
-   volume_of_sediment  = sed_cell_size_0( flow )
-                       * sed_cube_y_res(p)
-                       * sed_cube_x_res(p);
-   volume_of_sediment *= sed_cell_density( flow )
-                       / TURBIDITY_CURRENT_GRAIN_DENSITY;
-
-   // the number of days the flow will last
-   n_days = volume_of_sediment/( init_c*init_q )/day;
-
-   // bathymetry.
-   bathy  = createPosVec( n_nodes );
-   bathy0 = createPosVec( n_nodes0 );
-   width  = eh_new( double , n_nodes );
-   for ( i=0 ; i<n_nodes0 ; i++ )
-   {
-      bathy0->x[i] = (i+start)*sed_cube_y_res(p);
-      bathy0->y[i] = -sed_cube_water_depth(p,0,i+start);
-   }
-   bathy->x[0] = bathy0->x[0] + 0.5*dx;
-   for ( i=1 ; i<bathy->size ; i++ )
-      bathy->x[i] = bathy->x[i-1] + TURBIDITY_CURRENT_GRID_SPACING;
-   interpolate( bathy0->x , bathy0->y , n_nodes0 ,
-                bathy->x  , bathy->y  , n_nodes );
-
-#ifdef WITH_SAKURA
-   width[0] = sakura_const.channelWidth;
-#endif
-   for ( i=1 ; i<n_nodes ; i++ )
-   {
-      if ( bathy->x[i]-bathy->x[0] < inflow_const.channelLength )
-         width[i] = inflow_const.channelWidth;
-      else
-      {
-         width[i] = width[i-1]
-                  + tan( TURBIDITY_CURRENT_SPREADING_ANGLE*M_PI/180. )
-                    * ( bathy->x[i]-bathy->x[i-1] );
-         if ( width[i] > sed_cube_x_res(p) )
-            width[i] = sed_cube_x_res(p);
-      }
-   }
-
-   x_dep        = TURBIDITY_CURRENT_NO_DEPOSIT_LENGTH;
-   deposit_at_x = eh_new( double , n_grains );
-
-   // INITIALIZE settling velocity
-#ifdef WITH_SAKURA
-   stv = eh_new0( double , n_grains );
-   rey = eh_new0( double , n_grains );
-   for ( i=0; i<n_grains ; i++ )
-   {
-        Rden  = grain_density[i] / sakura_const.rhoRW;
-        Dstar = G * Rden * pow( grain_size[i], 3.0 )/ pow(sakura_const.mu,2.0);
-        Wstar = - 3.76715 + (1.92944 * log10(Dstar)) - 0.09815 * pow(log10(Dstar), 2.0)
-                - 0.00575 * pow(log10(Dstar), 3.0) +0.00056 * pow(log10(Dstar), 4.0);
-        Wstar = pow(10.0, Wstar);
-        stv[i] = pow(Rden * G * sakura_const.mu * Wstar, 0.33333);
-        rey[i] = sqrt(Rden * G * pow(grain_size[i], 3.0))/sakura_const.mu;
-   } 
-#endif
-
-   // set up the data for the get_phe function.
-//   get_phe_data.prof    = p;
-//   get_phe_data.dx      = dx;
-   inflow_const.get_phe_data   = (gpointer)p;
-   inflow_const.get_depth_data = (gpointer)p;
-   inflow_const.remove_data    = (gpointer)p;
-   inflow_const.add_data       = (gpointer)p;
-   inflow_const.get_phe        = (Sed_query_func)&sed_get_phe;
-   inflow_const.get_depth      = (Sed_query_func)&sed_get_depth;
-   inflow_const.remove         = (Sed_query_func)&sed_remove;
-   inflow_const.add            = (Sed_query_func)&sed_add;
-
-   eh_message( "time                 : %f" , sed_cube_age_in_years(p) );
-   eh_message( "flow_duration (days) : %f" , n_days                   );
-   eh_message( "mass                 : %f" , sed_cube_mass(p)         );
-
-   while ( volume_of_sediment > 0 )
-   {
-      // determine the initial flow parameters.
-      init_h   = TURBIDITY_CURRENT_INITIAL_HEIGHT;
-      init_w   = TURBIDITY_CURRENT_INITIAL_WIDTH;
-      init_u   = TURBIDITY_CURRENT_INITIAL_VELOCITY
-               + TURBIDITY_CURRENT_VELOCITY_RANGE*eh_ran2(&seed);
-      init_c   = TURBIDITY_CURRENT_INITIAL_CONCENTRATION
-               + TURBIDITY_CURRENT_CONCENTRATION_RANGE*eh_ran2(&seed);
-      init_q   = init_u*init_h*init_w;
-      rho_flow = init_c*(TURBIDITY_CURRENT_GRAIN_DENSITY-rho_fluid)+rho_fluid;
-
-#ifndef WITH_SAKURA
-data->algorithm = TURBIDITY_CURRENT_ALGORITHM_INFLOW;
-#endif
-      if ( data->algorithm == TURBIDITY_CURRENT_ALGORITHM_INFLOW )
-      {
-         if ( volume_of_sediment < init_q*init_c*day )
-            flow_duration = volume_of_sediment/init_q/init_c;
-         else
-            flow_duration = day;
-         volume_of_sediment -= init_q*init_c*day;
-      }
-      else
-         volume_of_sediment = 0;
-
-      // Update the bathymetry.
-      for (i=0;i<n_nodes0;i++)
-         bathy0->y[i] = -sed_cube_water_depth(p,0,i+start);
-      interpolate( bathy0->x , bathy0->y , n_nodes0 ,
-                   bathy->x  , bathy->y  , n_nodes );
-      slope = derivative( *bathy );
-
-      // Run the flow.
-#ifdef WITH_SAKURA
-      if ( data->algorithm == TURBIDITY_CURRENT_ALGORITHM_SAKURA )
-         ok = sakura( dx            , dt            , basin_len     ,
-                      n_nodes       , n_grains      , bathy->x      ,
-                      bathy->y      , width         , &init_u       ,
-                      &init_c       , lambda        , stv           ,
-                      rey           , grain_density , init_h        ,
-                      flow_duration , x_dep         , fraction      ,
-                      phe_bot       , bulk_density  , out_time      ,
-                      sakura_const  , data->deposit , NULL );
-      else
-#endif
-         ok = inflow( flow_duration , bathy->x  , slope        , width         ,
-                      n_nodes       , dx        , x_dep        , init_w        ,
-                      init_u        , init_h    , init_q       , fraction      ,
-                      grain_size    , lambda    , bulk_density , grain_density ,
-                      n_grains      , rho_fluid , rho_flow     , inflow_const  ,
-                      data->deposit , NULL );
-
-      if ( ok )
-      {
-         // Spread the deposit from just over the channel width to the entire
-         // basin width.
-         for ( n=0 ; n<n_grains ; n++ )
-            for ( i=0 ; i<n_nodes ; i++ )
-               data->deposit[n][i] *= width[i]
-                                    / sed_cube_x_res(p)
-                                    * TURBIDITY_CURRENT_GRID_SPACING
-                                    / sed_cube_y_res(p);
-
-         // Add the sediment to the profile.
-         deposit_cell = sed_cell_new_env( );
-         for ( i=0 ; i<n_nodes ; i++ )
-         {
-            for ( n=0 ; n<n_grains ; n++ )
-               deposit_at_x[n] = data->deposit[n][i];
-            ind = (int)(bathy->x[i]/sed_cube_y_res(p));
-            if ( ind < sed_cube_n_y(p) )
-            {
-               sed_cell_clear( deposit_cell );
-               sed_cell_set_age( deposit_cell , flow_age );
-               sed_cell_set_facies( deposit_cell , S_FACIES_TURBIDITE );
-               sed_cell_add_amount( deposit_cell , deposit_at_x );
-               sed_column_add_cell( sed_cube_col(p,ind) , deposit_cell );
-            }
-         }
-         sed_cell_destroy( deposit_cell );
-      }
-      else
-      {
-         // Pretend like nothing happened.  Put the failed sediment where
-         // it began.
-         sed_cube_add(p,fail);
-      }
-
-      eh_free( slope );
-
-   }
-
-   eh_free( stv           );
-   eh_free( rey           );
-   eh_free( deposit_at_x  );
-   eh_free( fraction      );
-   eh_free( bulk_density  );
-   eh_free( grain_density );
-   eh_free( grain_size    );
-   eh_free( lambda        );
-   eh_free( width         );
-
-   sed_cell_destroy( flow );
-   destroyPosVec( bathy0 );
-   destroyPosVec( bathy  );
+   sed_cell_destroy( flow_cell );
 
    return info;
 }
+
 #undef HYPERPYCNAL
 #if defined( HYPERPYCNAL )
 Sed_process_info run_hyperpycnal( gpointer ptr , Sed_cube p )
@@ -1014,7 +749,7 @@ more sediment than is actually present.
 
 void sed_get_phe( gpointer data , gpointer p )
 {
-   Sed_cube prof = (Sed_cube)p;
+   Sed_cube prof  = (Sed_cube)p;
    double dx      = EH_STRUCT_MEMBER( Sed_phe_query_t , data , dx          );
    double x       = EH_STRUCT_MEMBER( Sed_phe_query_t , data , x           );
    double depth   = EH_STRUCT_MEMBER( Sed_phe_query_t , data , erode_depth );

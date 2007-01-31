@@ -263,6 +263,7 @@ gssize   sed_type_write  ( FILE* fp , Sed_type t );
 Sed_type sed_type_read   ( FILE* fp );
 Sed_type sed_type_init   ( Eh_symbol_table t );
 gboolean sed_type_is_same( Sed_type t_1 , Sed_type t_2 );
+gboolean sed_type_is_same_size( Sed_type t_1 , Sed_type t_2 );
 
 double sed_gravity                 ( void            );
 double sed_gravity_units           ( Sed_units units );

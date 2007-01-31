@@ -8,6 +8,31 @@
 
 new_handle( Eh_key_file );
 
+typedef enum
+{
+   EH_ARG_DBL      ,
+   EH_ARG_DARRAY   ,
+   EH_ARG_FILENAME ,
+}
+Eh_arg_type;
+
+typedef struct {
+   const gchar*  label;
+   Eh_arg_type   arg;
+   gpointer      arg_data;
+   gint*         arg_data_len;
+}
+Eh_key_file_entry;
+
+typedef enum
+{
+   EH_KEY_FILE_ERROR_ARRAY_LEN_MISMATCH ,
+   EH_KEY_FILE_ERROR_MISSING_ENTRY
+}
+Eh_key_file_error;
+
+#define EH_KEY_FILE_ERROR eh_key_file_error_quark()
+
 Eh_key_file   eh_key_file_new              ( void );
 Eh_key_file   eh_key_file_destroy          ( Eh_key_file f );
 gboolean      eh_key_file_has_group        ( Eh_key_file f           ,
@@ -42,6 +67,10 @@ gboolean*     eh_key_file_get_bool_values  ( Eh_key_file f           ,
 double        eh_key_file_get_dbl_value    ( Eh_key_file f ,
                                              const gchar* group_name ,
                                              const gchar* key );
+double*       eh_key_file_get_dbl_array( Eh_key_file f           ,
+                                             const gchar* group_name ,
+                                             const gchar* key        ,
+                                             gssize* len );
 double*       eh_key_file_get_dbl_values   ( Eh_key_file f           ,
                                              const gchar* group_name ,
                                              const gchar* key );
@@ -58,6 +87,13 @@ Eh_symbol_table eh_key_file_get_symbol_table ( Eh_key_file f           ,
 Eh_symbol_table* eh_key_file_get_symbol_tables( Eh_key_file f          ,
                                               const gchar* group_name );
 Eh_key_file   eh_key_file_scan              ( const char* file );
+gint          eh_key_file_scan_from_template( const gchar* file       ,
+                                              const gchar* group_name ,
+                                              Eh_key_file_entry* t    ,
+                                              GError** error );
+gssize        eh_key_file_fprint_template   ( FILE* fp                ,
+                                              const gchar* group_name ,
+                                              Eh_key_file_entry entry[] );
 Eh_symbol_table eh_key_file_scan_for        ( const gchar* file      ,
                                               const gchar* name      ,
                                               Eh_symbol_table tab );

@@ -53,6 +53,13 @@ CLASS ( Sed_hydro_file )
    Hydro_read_header_func read_hdr;
 };
 
+GQuark
+sed_hydro_error_quark( void )
+{
+   return g_quark_from_static_string( "sed-hydro-error-quark" );
+}
+
+
 //Hydro_header* _hydro_read_inline_header           ( Sed_hydro_file fp );
 Sed_hydro     _hydro_read_inline_record           ( Sed_hydro_file fp );
 Hydro_header* _hydro_read_hydrotrend_header       ( Sed_hydro_file fp );
@@ -208,6 +215,7 @@ sed_hydro_fprint( FILE* fp , Sed_hydro rec )
 
    eh_return_val_if_fail( rec , 0 );
 
+   if ( fp && rec )
    {
       gssize i;
       n += fprintf( fp , "duration (day)         : %f\n" , rec->duration );
@@ -251,35 +259,54 @@ sed_hydro_init( char *file )
 /** Scan the hydro records from a file.
 
 \param file    The name of the file to scan
+\param error   A return location for errors.
 
 \return A NULL-terminated array of Sed_hydro's.
 */
 Sed_hydro*
-sed_hydro_scan( const gchar* file )
+sed_hydro_scan( const gchar* file , GError** error )
 {
    Sed_hydro* hydro_arr = NULL;
+
+   eh_require( error==NULL || *error==NULL );
 
    if ( !file )
       file = SED_HYDRO_TEST_INLINE_FILE;
 
    {
-      gint i;
-      gchar* name_used = g_strdup( file );
-      Eh_key_file key_file = eh_key_file_scan( name_used );
+      gint            i;
       Eh_symbol_table group;
+      gchar*          name_used = g_strdup( file );
+      Eh_key_file     key_file  = eh_key_file_scan( name_used );
+      GError*         tmp_err   = NULL;
 
-
-      hydro_arr = eh_new( Sed_hydro , eh_key_file_size(key_file)+1 );
+      hydro_arr = eh_new0( Sed_hydro , eh_key_file_size(key_file)+1 );
 
       for ( group = eh_key_file_pop_group( key_file ), i=0 ;
-            group ;
+            group && !tmp_err ;
             group = eh_key_file_pop_group( key_file ), i++ )
       {
-         hydro_arr[i] = sed_hydro_new_from_table( group );
+         hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
+
+         if ( !tmp_err )
+            sed_hydro_check( hydro_arr[i] , &tmp_err );
 
          eh_symbol_table_destroy( group );
       }
       hydro_arr[i] = NULL;
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+
+         for ( i=0 ; hydro_arr[i] ; i++ )
+            sed_hydro_destroy( hydro_arr[i] );
+         eh_free( hydro_arr );
+         hydro_arr = NULL;
+      }
+
+      eh_free( name_used );
+      eh_key_file_destroy( key_file );
    }
 
    return hydro_arr;
@@ -287,7 +314,7 @@ sed_hydro_scan( const gchar* file )
 
 #define SED_HYDRO_LABEL_DURATION        "Duration"
 #define SED_HYDRO_LABEL_BEDLOAD         "Bedload"
-#define SED_HYDRO_LABEL_SUSPENDED_CONC  "Suspended load concentrations"
+#define SED_HYDRO_LABEL_SUSPENDED_CONC  "Suspended load concentration"
 #define SED_HYDRO_LABEL_VELOCITY        "Velocity"
 #define SED_HYDRO_LABEL_WIDTH           "Width"
 #define SED_HYDRO_LABEL_DEPTH           "Depth"
@@ -307,14 +334,17 @@ static gchar* required_labels[] =
 
 /** Create a Sed_hydro, initializing it with a symbol table
 
-\param t   An Eh_symbol_table with the initialization data.
+\param t        An Eh_symbol_table with the initialization data.
+\param error    A return location for errors.
 
 \return A newly-created Sed_hydro.
 */
 Sed_hydro
-sed_hydro_new_from_table( Eh_symbol_table t )
+sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
 {
    Sed_hydro r = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    if ( t )
    {
@@ -338,11 +368,57 @@ sed_hydro_new_from_table( Eh_symbol_table t )
          eh_free( c );
       }
       else
-         eh_error( "Required labels not found" );
+      {
+         g_set_error( error ,
+                      SED_HYDRO_ERROR ,
+                      SED_HYDRO_ERROR_MISSING_LABEL ,
+                      "Missing labels in hydro file\n" );
+      }
    }
 
    return r;
 }
+
+gboolean
+sed_hydro_check( Sed_hydro a , GError** err )
+{
+   gboolean is_ok = TRUE;
+
+   eh_return_val_if_fail( err==NULL || *err==NULL , FALSE );
+   eh_return_val_if_fail( a                       , TRUE  );
+
+   if ( a )
+   {
+      gchar** err_s = NULL;
+
+      eh_check_to_s( sed_hydro_width   (a)>0.  , "River width > 0"    , &err_s );
+      eh_check_to_s( sed_hydro_depth   (a)>0.  , "River depth > 0"    , &err_s );
+      eh_check_to_s( sed_hydro_velocity(a)>0.  , "River velocity > 0" , &err_s );
+      eh_check_to_s( sed_hydro_bedload (a)>=0. , "Bedload flux > 0"   , &err_s );
+      eh_check_to_s( sed_hydro_duration(a)>0.  , "Duration > 0"       , &err_s );
+      eh_check_to_s( eh_dbl_array_each_ge( 0.  , a->conc , a->n_grains ) ,
+                                                 "Suspended load concentration > 0" , &err_s );
+
+      if ( err_s )
+      {
+         gchar* str = g_strjoinv( "\n" , err_s );
+
+         is_ok = FALSE;
+
+         g_set_error( err ,
+                      SED_HYDRO_ERROR ,
+                      SED_HYDRO_ERROR_BAD_PARAMETER ,
+                      "%s" , str );
+
+         eh_free( str );
+         g_strfreev( err_s );
+      }
+
+   }
+
+   return is_ok;
+}
+
 /*
 Sed_hydro
 sed_hydro_scan( FILE *fp )
@@ -576,7 +652,7 @@ Sed_hydro sed_hydro_read( FILE *fp )
 
 /** Copy the sdiment concentration from a Sed_hydro
 
-@param dest A poiter to the location to put the concentration (of NULL)
+@param dest A poiter to the location to put the concentration (or NULL)
 @param a    A Sed_hydro containing the concentrations to copy.
 
 @return A pointer to the copied data
@@ -597,6 +673,50 @@ double sed_hydro_nth_concentration( Sed_hydro a , gssize n )
    eh_return_val_if_fail( n<a->n_grains , 0. );
 
    return a->conc[n];
+}
+
+/** The fluid density including suspended sediment
+
+\param a     A Sed_hydro
+\param rho   Density of the fluid without sediment
+
+\return The density of the fluid (kg/m^3)    
+*/
+double
+sed_hydro_flow_density( Sed_hydro a , double rho )
+{
+   return sed_hydro_suspended_concentration( a ) + rho;
+}
+
+double*
+sed_hydro_fraction( Sed_hydro a )
+{
+   double* f = NULL;
+
+   eh_return_val_if_fail( a , NULL );
+
+   if ( a )
+   {
+      double total_c = sed_hydro_suspended_concentration(a);
+
+      f = sed_hydro_copy_concentration( NULL , a );
+      if ( total_c > 0. )
+         eh_dbl_array_mult( f , sed_hydro_size(a) , 1./total_c );
+      else
+         eh_dbl_array_mult( f , sed_hydro_size(a) , 0. );
+   }
+
+   return f;
+}
+
+double
+sed_hydro_nth_fraction( Sed_hydro a , gssize n )
+{
+   eh_return_val_if_fail( a             , 0. );
+   eh_return_val_if_fail( n>=0          , 0. );
+   eh_return_val_if_fail( n<a->n_grains , 0. );
+
+   return a->conc[n] / sed_hydro_suspended_concentration(a);
 }
 
 double sed_hydro_suspended_concentration( Sed_hydro a )
@@ -674,6 +794,21 @@ Sed_hydro sed_hydro_set_nth_concentration( Sed_hydro a , gssize n , double val )
 
    a->conc[n] = val;
 
+   return a;
+}
+
+Sed_hydro
+sed_hydro_adjust_mass( Sed_hydro a , double f )
+{
+   if ( a )
+   {
+      gint n;
+      gint len = sed_hydro_size(a);
+      eh_lower_bound( f , 0. );
+      for ( n=0 ; n<len ; n++ )
+         a->conc[n] *= f;
+      a->bedload *= f;
+   }
    return a;
 }
 
@@ -1212,7 +1347,7 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
    else
    {
       /* Fill the buffer with all the records from the file */
-      fp->buf_set = sed_hydro_scan( fp->file );
+      fp->buf_set = sed_hydro_scan( fp->file , NULL );
       fp->buf_cur = fp->buf_set;
 
       rec = sed_hydro_dup( *(fp->buf_cur) );

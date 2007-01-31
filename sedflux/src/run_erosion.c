@@ -68,8 +68,9 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
    double get_linear_height(double,linearProf_t);
    double get_paola_diffusion( Sed_hydro river_data , double basin_width ,
                                double time_fraction     , int river_type );
-   int i, i_river;
-   int n_grains;
+   gint n_grains, n_rivers;
+   Sed_riv this_river;
+   int i, i_river, n;
    double k_land;
    double x, dx, width, dt;
    double river_height, height, eroded_height;
@@ -81,7 +82,6 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
    linearProf_t linear_const;
    Sed_hydro river_data;
    Sed_cube river_profile;
-   GList *this_river;
    gssize *river_path;
    Sed_process_info info = SED_EMPTY_INFO;
 
@@ -100,8 +100,13 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
    }
 
    n_grains = sed_sediment_env_size();
+   n_rivers = sed_cube_number_of_rivers( p );
 
-   for ( this_river=sed_cube_river_list(p) ; this_river ; this_river=this_river->next )
+//   for ( this_river=sed_cube_river_list(p) ; this_river ; this_river=this_river->next )
+
+   for ( n=0,this_river = sed_cube_nth_river(p,n) ;
+         n<n_rivers ;
+         n++,this_river = sed_cube_nth_river(p,n) )
    {
       river_path = sed_cube_river_path_id( p , this_river , TRUE );
    
@@ -115,7 +120,8 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
 
       eh_free( river_path );
    
-      river_data    = ((Sed_river*)(this_river->data))->data;
+//      river_data    = ((Sed_river*)(this_river->data))->data;
+      river_data = sed_river_hydro( this_river );
 
       if ( data->method == EROSION_DIFFUSION )
       {
@@ -230,6 +236,9 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
          sed_cell_destroy( total  );
          eh_free( eroded_fraction );
       }
+
+      sed_river_set_hydro( this_river , river_data );
+      sed_hydro_destroy  ( river_data );
 
       sed_cube_free( river_profile , FALSE );
    }

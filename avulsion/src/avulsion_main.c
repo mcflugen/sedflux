@@ -25,33 +25,154 @@
 #include "sed_sedflux.h"
 #include "avulsion.h"
 
-static char *help_msg[] =
+static double   init_angle = 90.;
+static double   min_angle  = 0.;
+static double   max_angle  = 180.;
+static double   std_dev    = 1.;
+static gint     seed       = 0;
+static gint     n_times    = 100;
+static gint     verbose    = 0;
+static gboolean version    = FALSE;
+static gboolean header     = FALSE;
+
+static gboolean lite       = FALSE;
+
+static double   eps        = 5.;
+static double   alpha      = 45.;
+static gint     n_i        = 100;
+static gint     n_j        = 100;
+static gint     n_rivers   = 1;
+static gchar*   in_file    = NULL;
+static gchar*   out_type_s = NULL;
+
+static GOptionEntry entries[] =
 {
-" avulsion - create a family of avulsing streams.      ",
-"                                                      ",
-" parameters :                                         ",
-"                                                      ",
-"  dev     : the standard deviation to use in the      ",
-"          : avulsion routine. [1]                     ",
-"                                                      ",
-"  n       : the number of streams to model. [1]       ",
-"                                                      ",
-"  len     : the number of time steps to run the model ",
-"          : for. [1]                                  ",
-"                                                      ",
-"  eps     : the minimum angle between streams before  ",
-"          : they merge (in degrees). [5]              ",
-"                                                      ",
-"  a       : the maximum angle (in degrees) allowed    ",
-"          : between adjacent streams before a new     ",
-"          : stream is created. [45]                   ",
-"                                                      ",
-"  verbose : be verbose. [off]                         ",
-"                                                      ",
-"  help    : print this help message and exit. [off]   ",
-"                                                      ",
-NULL
+   { "n-times" , 'n' , 0 , G_OPTION_ARG_INT    , &n_times    , "Number of iterations"      , "N" } ,
+   { "std-dev" , 's' , 0 , G_OPTION_ARG_DOUBLE , &std_dev    , "Standard deviation (degs)" , "SIGMA" } ,
+   { "min"     , 'l' , 0 , G_OPTION_ARG_DOUBLE , &min_angle  , "Minimum angle (degs)"      , "MIN" } ,
+   { "max"     , 'h' , 0 , G_OPTION_ARG_DOUBLE , &max_angle  , "Maximum angle (degs)"      , "MAX" } ,
+   { "start"   , 'i' , 0 , G_OPTION_ARG_DOUBLE , &init_angle , "Starting angle (degs)"     , "ANGLE" } ,
+   { "seed"    , 'd' , 0 , G_OPTION_ARG_INT    , &seed       , "Seed for RNG"              , "SEED" } ,
+   { "verbose" , 'V' , 0 , G_OPTION_ARG_INT    , &verbose    , "Verbosity level"           , "N" } ,
+   { "version" , 'v' , 0 , G_OPTION_ARG_NONE   , &version    , "Version number"            , NULL } ,
+   { "header"  , 'H' , 0 , G_OPTION_ARG_NONE   , &header     , "Print a header"            , NULL } ,
+
+   { "lite"    , 'L' , 0 , G_OPTION_ARG_NONE   , &lite       , "Run the lite version"      , NULL } ,
+
+   { "eps"     , 'e' , 0 , G_OPTION_ARG_DOUBLE , &eps        , "River join angle (degs)"   , "ANGLE" } ,
+   { "alpha"   , 'a' , 0 , G_OPTION_ARG_DOUBLE , &alpha      , "River split angle (degs)"  , "ANGLE" } ,
+   { "nx"      , 'x' , 0 , G_OPTION_ARG_INT    , &n_i        , "Number of rows"            , "N" } ,
+   { "ny"      , 'y' , 0 , G_OPTION_ARG_INT    , &n_j        , "Number of columns"         , "N" } ,
+   { "n-rivers", 'r' , 0 , G_OPTION_ARG_INT    , &n_rivers   , "Number of rivers"          , "N" } ,
+   { "river-file", 'f' , 0 , G_OPTION_ARG_FILENAME , &in_file   , "River file"          , "<file>" } ,
+   { "out-type", 't' , 0 , G_OPTION_ARG_STRING , &out_type_s , "Type of output file"       , "<out-key>" } ,
+
+   { NULL }
 };
+
+int avulsion_lite( void );
+int avulsion_full( void );
+
+typedef enum
+{
+   AVULSION_OUTPUT_ANGLES,
+   AVULSION_OUTPUT_DEPTHS
+}
+Avulsion_out_type;
+
+Avulsion_out_type output_type;
+
+int main( int argc , char *argv[] )
+{
+   GError* error = NULL;
+   GOptionContext* context = g_option_context_new( "Run random walk avulsion model" );
+   gchar** command_line = eh_new0( gchar* , argc );
+   gint i;
+
+   for ( i=1 ; i<argc ; i++ )
+      command_line[i-1] = g_strdup( argv[i] );
+
+   g_thread_init(NULL);
+
+   g_option_context_add_main_entries( context , entries , NULL );
+
+   if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+      eh_error( "Error parsing command line arguments: %s" , error->message );
+
+   if ( version )
+   {
+      eh_fprint_version_info( stdout ,
+                              AVULSION_PROGRAM_NAME ,
+                              AVULSION_MAJOR_VERSION , 
+                              AVULSION_MINOR_VERSION , 
+                              AVULSION_MICRO_VERSION );
+      exit(0);
+   }
+
+   eh_set_verbosity_level( verbose );
+
+   min_angle  *= S_RADS_PER_DEGREE;
+   max_angle  *= S_RADS_PER_DEGREE;
+   init_angle *= S_RADS_PER_DEGREE;
+   std_dev    *= S_RADS_PER_DEGREE;
+   eps        *= S_RADS_PER_DEGREE;
+   alpha      *= S_RADS_PER_DEGREE;
+
+   if ( out_type_s )
+   {
+      if      ( g_ascii_strcasecmp(out_type_s,"ANGLE")==0 )
+         output_type = AVULSION_OUTPUT_ANGLES;
+      else if ( g_ascii_strcasecmp(out_type_s,"DEPTH")==0 )
+         output_type = AVULSION_OUTPUT_DEPTHS;
+      else
+         eh_require_not_reached();
+   }
+   else
+      output_type = AVULSION_OUTPUT_ANGLES;
+
+   if ( header )
+   {
+      gint i;
+      fprintf( stdout , "# Minimum angle      = %f\n" , min_angle/S_RADS_PER_DEGREE );
+      fprintf( stdout , "# Maximum angle      = %f\n" , max_angle/S_RADS_PER_DEGREE );
+      fprintf( stdout , "# Standard deviation = %f\n" , std_dev/S_RADS_PER_DEGREE   );
+      fprintf( stdout , "# Command line       = %s\n" , g_strjoinv( " " , command_line ) );
+   }
+
+   if ( lite )
+      avulsion_lite( );
+   else
+      avulsion_full( );
+
+   g_strfreev( command_line );
+
+   return 0;
+}
+
+int
+avulsion_lite( void )
+{
+   {
+      gint n;
+      double angle = init_angle;
+      GRand* rand = (seed==0)?g_rand_new():g_rand_new_with_seed(seed);
+      double m;
+
+      m = 2.*G_PI/(max_angle-min_angle);
+
+      std_dev *= m;
+
+      for ( n=0 ; n<n_times ; n++ )
+      {
+         angle = avulsion( rand , angle , std_dev );
+         fprintf( stdout , "%f\n" , (angle/m+.5*(min_angle+max_angle))*S_DEGREES_PER_RAD );
+      }
+
+      g_rand_free( rand );
+   }
+
+   return 0;
+}
 
 typedef struct
 {
@@ -71,52 +192,22 @@ void avulse_stream( stream_st *stream , gpointer data );
 int sort_streams_by_angle( stream_st *s1 , stream_st *s2 );
 int sort_streams_by_discharge( stream_st *s1 , stream_st *s2 );
 int sort_streams_by_id( stream_st *s1 , stream_st *s2 );
-void combine_rivers( Sed_river *r_1 , Sed_river *r_2 );
+void combine_rivers( Sed_riv r_1 , Sed_riv r_2 );
 
 void sed_merge_all_rivers( Sed_cube c , double eps );
 GList *merge_rivers( GList *rivers , double eps );
-int sort_rivers_by_angle( Sed_river *r_1 , Sed_river *r_2 );
-int sort_rivers_by_discharge( Sed_river *r_1 , Sed_river *r_2 );
-void combine_river_discharge( Sed_river *r_1 , Sed_river *r_2 );
-Sed_river *split_river_discharge( Sed_river *r_1 , Sed_river *r_2 );
+int sort_rivers_by_angle( Sed_riv r_1 , Sed_riv r_2 );
+int sort_rivers_by_discharge( Sed_riv r_1 , Sed_riv r_2 );
+void combine_river_discharge( Sed_riv r_1 , Sed_riv r_2 );
+Sed_riv split_river_discharge( Sed_riv r_1 , Sed_riv r_2 );
 void sed_split_all_rivers( Sed_cube c , double alpha );
 GList *create_rivers( GList *rivers , double alpha );
 void deposit_sediment_at_river_mouth( Sed_cube c );
 
-int main( int argc , char *argv[] )
+int avulsion_full( )
 {
-   int i, j;
-   int n_i, n_j;
-   int n_rivers, n_steps;
-   double d_theta;
-   Eh_args *args;
-   double stddev, eps, alpha;
-   gboolean verbose;
    Sed_cube cube;
-   Sed_river *new_river;
-   Eh_dbl_grid bathy_grid;
-   Eh_ind_2 hinge_point;
-   Sed_hydro* hydro_data;
   
-   args = eh_opts_init(argc,argv);
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit(-1);
-
-   stddev    = eh_get_opt_dbl ( args , "dev" , 1.    );
-   eps       = eh_get_opt_dbl ( args , "eps" , 5.    );
-   alpha     = eh_get_opt_dbl ( args , "a"   , 45.   );
-   n_i       = eh_get_opt_int ( args , "ni"  , 100.  );
-   n_j       = eh_get_opt_int ( args , "nj"  , 100.  );
-   n_rivers  = eh_get_opt_int ( args , "n"   , 1     );
-   n_steps   = eh_get_opt_int ( args , "len" , 1     );
-   verbose   = eh_get_opt_bool( args , "v"   , FALSE );
-
-   if ( verbose )
-      eh_print_all_opts( args , "avulsion" , stderr );
-
-   eps   *= M_PI/180.;
-   alpha *= M_PI/180.;
-
    {
       Sed_sediment sediment_type = sed_sediment_scan( SED_SEDIMENT_TEST_FILE );
 
@@ -125,66 +216,94 @@ int main( int argc , char *argv[] )
       sed_sediment_destroy( sediment_type );
    }
 
-   bathy_grid    = sed_get_floor_3_default( 1 , n_i , n_j );
-   hydro_data    = sed_hydro_scan( NULL );
-   cube          = sed_cube_new( eh_grid_n_x(bathy_grid) ,
-                                 eh_grid_n_y(bathy_grid) );
-   sed_cube_set_dz( cube , 1. );
-   sed_cube_set_bathy( cube , bathy_grid );
-
-   hinge_point.i = eh_grid_n_x(bathy_grid)/2;
-   hinge_point.j = 0;
-
-   d_theta = M_PI/n_rivers;
-   for ( i=0 ; i<n_rivers ; i++ )
    {
-      new_river                = sed_create_river( sed_sediment_env_size() ,
-                                                   &hinge_point );
-if ( i==0 )
-{
-      new_river->hinge->angle     = d_theta*(i+1);
-      new_river->hinge->x         = hinge_point.i;
-      new_river->hinge->y         = hinge_point.j;
-      new_river->hinge->min_angle = 0;
-      new_river->hinge->max_angle = M_PI;
-      new_river->hinge->std_dev   = .05;
-}
-else
-{
-      new_river->hinge->angle     = 0;
-      new_river->hinge->x         = 0;
-      new_river->hinge->y         = eh_grid_n_y(bathy_grid)/2;
-      new_river->hinge->min_angle = -M_PI/2;
-      new_river->hinge->max_angle =  M_PI/2;
-      new_river->hinge->std_dev   = .1;
-}
+      Eh_dbl_grid bathy_grid = sed_get_floor_3_default( 1 , n_i , n_j );
 
-      sed_hydro_copy( new_river->data , hydro_data[0] );
-      sed_cube_add_river( cube , new_river );
+      cube = sed_cube_new( eh_grid_n_x(bathy_grid) ,
+                           eh_grid_n_y(bathy_grid) );
+      sed_cube_set_dz   ( cube , 1. );
+      sed_cube_set_bathy( cube , bathy_grid );
+   
+      eh_grid_destroy( bathy_grid , TRUE );
    }
 
-   for ( j=0 ; j<n_steps ; j++ )
    {
-      sed_cube_avulse_all_rivers( cube );
+      gint i;
+      Avulsion_st* data;
+      Sed_riv new_river;
+      double     d_theta    = G_PI/n_rivers;
+      Sed_hydro* hydro_data = sed_hydro_scan( NULL , NULL );
+      double**   river_data = NULL;
+
+      if ( in_file )
+      {
+         gint n_rows, n_cols;
+
+         river_data = eh_dlm_read( in_file , ",;" , &n_rows , &n_cols , NULL );
+
+         eh_require( n_cols==3 );
+         n_rivers = n_rows;
+      }
+      else
+      {
+         river_data = eh_new_2( double , n_rivers , 3 );
+         for ( i=0 ; i<n_rivers ; i++ )
+         {
+            river_data[i][0] = 0.;
+            river_data[i][1] = 180.;
+            river_data[i][2] = std_dev*S_DEGREES_PER_RAD;
+         }
+      }
+
+      for ( i=0 ; i<n_rivers ; i++ )
+      {
+         min_angle = river_data[i][0]*S_RADS_PER_DEGREE;
+         max_angle = river_data[i][1]*S_RADS_PER_DEGREE;
+         std_dev   = river_data[i][2]*S_RADS_PER_DEGREE;
+
+         data = avulsion_new( (seed==0)?g_rand_new():g_rand_new_with_seed(seed) , std_dev );
+
+         new_river = sed_river_new( NULL );
+
+         sed_river_set_angle      ( new_river , .5*(min_angle+max_angle) );
+         sed_river_set_angle_limit( new_river , min_angle , max_angle );
+         sed_river_set_hinge      ( new_river , sed_cube_n_x(cube)/2 , 0 );
+         sed_river_set_hydro      ( new_river , hydro_data[0] );
+         sed_river_set_avulsion   ( new_river , data );
+         sed_cube_add_river       ( cube      , new_river );
+      }
+
+      eh_free_2( river_data );
+   }
+
+   {
+      gint i, n;
+      double t=0, t_end=n_times;
+      Eh_status_bar* sb = eh_status_bar_new( &t , &t_end );
+
+      for ( n=0 ; n<n_times ; n++,t++ )
+      {
+         sed_cube_avulse_all_rivers( cube );
 /*
-      sed_merge_all_rivers ( cube , eps );
-      sed_split_all_rivers( cube , alpha );
+         sed_merge_all_rivers ( cube , eps );
+         sed_split_all_rivers( cube , alpha );
 */
+         if ( output_type==AVULSION_OUTPUT_ANGLES )
+         {
+            for ( i=0 ; i<n_rivers ; i++ )
+               fprintf( stdout , "%f " , sed_river_angle( sed_cube_nth_river( cube,i ) )*S_DEGREES_PER_RAD );
+            fprintf( stdout , "\n" );
+         }
 
-      deposit_sediment_at_river_mouth( cube );
+         deposit_sediment_at_river_mouth( cube );
+      }
+
+      eh_status_bar_destroy(sb);
    }
 
+   if ( output_type==AVULSION_OUTPUT_DEPTHS )
    {
-      Sed_property p           = sed_property_new( "grain" );
-      Sed_property_file sed_fp = sed_property_file_new( "test.grain" , p , NULL );
-
-      sed_property_file_write( sed_fp , cube );
-
-      sed_property_file_destroy( sed_fp );
-      sed_property_destroy     ( p      );
-   }
-
-   {
+/*
       Sed_measurement x = sed_measurement_new( "depth" );
       Sed_tripod met_fp = sed_tripod_new( "test.depth" , x , NULL );
 
@@ -192,6 +311,17 @@ else
 
       sed_tripod_destroy( met_fp );
       sed_measurement_destroy( x );
+*/
+      gint i,j;
+      gint top_i = sed_cube_n_x(cube);
+      gint top_j = sed_cube_n_y(cube)-1;
+
+      for ( i=0 ; i<top_i ; i++ )
+      {
+         for ( j=0 ; j<top_j ; j++ )
+            fprintf( stdout , "%f " , sed_cube_water_depth(cube,i,j) );
+         fprintf( stdout , "%f\n" , sed_cube_water_depth(cube,i,j) );
+      }
    }
 
    sed_sediment_unset_env();
@@ -199,16 +329,16 @@ else
    return 0;
 }
 
-void deposit_sediment_helper( Sed_river *this_river , Sed_cube c );
+void deposit_sediment_helper( Sed_riv this_river , Sed_cube c );
 
 void deposit_sediment_at_river_mouth( Sed_cube c )
 {
    g_list_foreach( sed_cube_river_list(c) , (GFunc)&deposit_sediment_helper , c );
 }
 
-void deposit_sediment_helper( Sed_river *this_river , Sed_cube c )
+void deposit_sediment_helper( Sed_riv this_river , Sed_cube c )
 {
-   int i, j;
+   Eh_ind_2 mouth_pos;
    Sed_cell deposit_cell;
 
    {
@@ -227,11 +357,16 @@ void deposit_sediment_helper( Sed_river *this_river , Sed_cube c )
 
    this_river = sed_cube_find_river_mouth( c , this_river );
 
-   i = this_river->x_ind;
-   j = this_river->y_ind;
+   mouth_pos = sed_river_mouth( this_river );
 
-   if ( sed_cube_is_in_domain( c , i , j ) )
-      sed_column_add_cell( sed_cube_col_ij(c,i,j) , deposit_cell );
+   if ( sed_cube_is_in_domain( c , mouth_pos.i , mouth_pos.j ) )
+   {
+      double depth = sed_column_water_depth(sed_cube_col_ij(c,mouth_pos.i,mouth_pos.j));
+
+      if ( depth<sed_cell_size(deposit_cell) )
+         sed_cell_resize( deposit_cell , depth );
+      sed_column_add_cell( sed_cube_col_ij(c,mouth_pos.i,mouth_pos.j) , deposit_cell );
+   }
 
    sed_cell_destroy( deposit_cell );
 }
@@ -244,7 +379,7 @@ void sed_merge_all_rivers( Sed_cube c , double eps )
 GList *merge_rivers( GList *rivers , double eps )
 {
    double d_theta;
-   Sed_river *this_river, *last_river;
+   Sed_riv this_river, last_river;
    GList *this_link, *last_link;
 
    rivers = g_list_sort( rivers , (GCompareFunc)&sort_rivers_by_angle );
@@ -256,8 +391,8 @@ GList *merge_rivers( GList *rivers , double eps )
       this_river = this_link->data;
       last_river = last_link->data;
 
-      d_theta = this_river->hinge->angle
-              - last_river->hinge->angle;
+      d_theta = sed_river_angle(this_river)
+              - sed_river_angle(last_river);
       if ( d_theta < eps )
       {
          if ( sort_rivers_by_discharge( this_river , last_river ) > 0 )
@@ -276,20 +411,20 @@ GList *merge_rivers( GList *rivers , double eps )
    return rivers;
 }
 
-int sort_rivers_by_angle( Sed_river *r_1 , Sed_river *r_2 )
+int sort_rivers_by_angle( Sed_riv r_1 , Sed_riv r_2 )
 {
-   if ( r_1->hinge->angle > r_2->hinge->angle )
+   if ( sed_river_angle(r_1) > sed_river_angle(r_2) )
       return 1;
-   else if ( r_1->hinge->angle < r_2->hinge->angle )
+   else if ( sed_river_angle(r_1) < sed_river_angle(r_2) )
       return -1;
    else
       return 0;
 }
 
-int sort_rivers_by_discharge( Sed_river *r_1 , Sed_river *r_2 )
+int sort_rivers_by_discharge( Sed_riv r_1 , Sed_riv r_2 )
 {
-   double q_1 = sed_hydro_water_flux(r_1->data);
-   double q_2 = sed_hydro_water_flux(r_2->data);
+   double q_1 = sed_river_water_flux(r_1);
+   double q_2 = sed_river_water_flux(r_2);
 
    if ( q_1 > q_2 )
       return 1;
@@ -309,60 +444,45 @@ int sort_streams_by_id( stream_st *s1 , stream_st *s2 )
       return 0;
 }
 
-void combine_river_discharge( Sed_river *r_1 , Sed_river *r_2 )
+void combine_river_discharge( Sed_riv r_1 , Sed_riv r_2 )
 {
-   Sed_hydro rec_1;
-   Sed_hydro rec_2;
    double total_q;
 
    eh_require( r_1!=NULL );
    eh_require( r_2!=NULL );
 
-   rec_1 = r_1->data;
-   rec_2 = r_2->data;
+   total_q = sed_river_water_flux( r_1 ) 
+           + sed_river_water_flux( r_2 );
 
-   total_q = sed_hydro_water_flux( rec_1 ) 
-           + sed_hydro_water_flux( rec_2 );
-
-   sed_hydro_set_width( rec_1 ,   total_q
-                                / ( sed_hydro_velocity(rec_1)*sed_hydro_depth(rec_1) ) );
+   sed_river_set_width( r_1 ,   total_q
+                              / ( sed_river_velocity(r_1)*sed_river_depth(r_1) ) );
 
 }
 
-Sed_river *split_river_discharge( Sed_river *r_1 , Sed_river *r_2 )
+Sed_riv split_river_discharge( Sed_riv r_1 , Sed_riv r_2 )
 {
    double q_1, q_2;
    double f=.25;
-   Sed_river *new_river;
-   Sed_hydro rec_1, rec_2, new_rec;
+   Sed_riv new_river;
 
    eh_require( r_1!=NULL );
    eh_require( r_2!=NULL );
 
-   rec_1 = r_1->data;
-   rec_2 = r_2->data;
+   q_1 = sed_river_water_flux( r_1 );
+   q_2 = sed_river_water_flux( r_2 );
 
-   q_1 = sed_hydro_water_flux( rec_1 );
-   q_2 = sed_hydro_water_flux( rec_2 );
+   new_river = sed_river_dup( r_1 );
 
-   new_river = sed_dup_river( r_1 );
+   sed_river_set_angle   ( new_river , .5*( sed_river_angle   (r_1) + sed_river_angle   (r_2) ) );
+   sed_river_set_velocity( new_river , .5*( sed_river_velocity(r_1) + sed_river_velocity(r_2) ) );
+   sed_river_set_depth   ( new_river , .5*( sed_river_depth   (r_1) + sed_river_depth   (r_2) ) );
+   sed_river_set_bedload ( new_river , .5*( sed_river_bedload (r_1) + sed_river_bedload (r_2) ) );
+   sed_river_set_width   ( new_river , f*( q_1+q_2 )
+                                     / (   sed_river_velocity( new_river )
+                                         * sed_river_depth   ( new_river ) ) );
 
-   new_river->hinge->angle = ( r_1->hinge->angle + r_2->hinge->angle ) / 2.;
-
-   new_rec = new_river->data;
-
-   sed_hydro_set_velocity( new_rec , .5*(   sed_hydro_velocity(rec_1)
-                                          + sed_hydro_velocity(rec_2) ) );
-   sed_hydro_set_depth   ( new_rec , .5*(   sed_hydro_depth(rec_1)
-                                          + sed_hydro_depth(rec_2) ) );
-   sed_hydro_set_bedload ( new_rec , .5*(   sed_hydro_bedload(rec_1)
-                                          + sed_hydro_bedload(rec_2) ) );
-   sed_hydro_set_width   ( new_rec , f*( q_1+q_2 )
-                                     / (   sed_hydro_velocity( new_rec )
-                                         * sed_hydro_depth   ( new_rec ) ) );
-
-   sed_hydro_set_width( rec_1 , sed_hydro_width(rec_1)*(1.-f) );
-   sed_hydro_set_width( rec_2 , sed_hydro_width(rec_2)*(1.-f) );
+   sed_river_set_width( r_1 , sed_river_width(r_1)*(1.-f) );
+   sed_river_set_width( r_2 , sed_river_width(r_2)*(1.-f) );
 
    return new_river;
 }
@@ -376,18 +496,18 @@ GList *create_rivers( GList *rivers , double alpha )
 {
    double d_theta;
    GList *this_link, *last_link;
-   Sed_river *left_wall, *right_wall;
-   Sed_river *this_river, *last_river, *new_river;
+   Sed_riv left_wall, right_wall;
+   Sed_riv this_river, last_river, new_river;
 
    rivers = g_list_sort( rivers , (GCompareFunc)&sort_rivers_by_angle );
 
-   left_wall  = sed_dup_river( g_list_first( rivers )->data );
-   left_wall->hinge->angle  = M_PI;
-   sed_hydro_set_width( left_wall->data , 0. );
+   left_wall  = sed_river_dup( g_list_first( rivers )->data );
+   sed_river_set_angle( left_wall , G_PI );
+   sed_river_set_width( left_wall , 0.   );
 
-   right_wall  = sed_dup_river( g_list_last( rivers )->data );
-   right_wall->hinge->angle  = 0.;
-   sed_hydro_set_width( right_wall->data , 0. );
+   right_wall  = sed_river_dup( g_list_last( rivers )->data );
+   sed_river_set_angle( right_wall , 0. );
+   sed_river_set_width( right_wall , 0. );
 
    rivers = g_list_insert_sorted( rivers     ,
                                   left_wall  ,
@@ -403,7 +523,7 @@ GList *create_rivers( GList *rivers , double alpha )
       this_river = this_link->data;
       last_river = last_link->data;
 
-      d_theta = this_river->hinge->angle - last_river->hinge->angle;
+      d_theta = sed_river_angle(this_river) - sed_river_angle(last_river);
 
       if ( d_theta > alpha )
       {
@@ -419,8 +539,8 @@ GList *create_rivers( GList *rivers , double alpha )
    rivers = g_list_remove( rivers , left_wall  );
    rivers = g_list_remove( rivers , right_wall );
 
-   sed_destroy_river( left_wall  );
-   sed_destroy_river( right_wall );
+   sed_river_destroy( left_wall  );
+   sed_river_destroy( right_wall );
 
    return rivers;
 }

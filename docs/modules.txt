@@ -1,0 +1,42 @@
+/*! \page modules_sec Modules
+
+\section sed_modules Sedflux Modules
+
+Many of the process modules in sedflux-2.0 can be run as standalone programs.
+
+Standalone programs are:
+- \subpage sub_sec_inflow
+
+*/
+
+/** \page sub_sec_inflow Inflow
+
+\section input_sec   Step 1: Setting up the input files
+
+To run inflow, you will need three input files:
+- a parameter file
+- a flood file
+- a bathymetry file
+The inflow distribution provides sample input files in the share directory.
+The sample files are inflow_param.kvf, inflow_flood.kvf, and inflow_bathy.csv.
+
+\subsection parameter_file_sec Parameter file
+
+
+\subsection flood_file_sec Flood file
+The flood file specifies the flow conditions at the start of the turbidity
+current (or hyperpycnal flow).  The format of the file is that of a
+\subpage sub_sec_key_file .  Each group specifies the conditions for an
+event.  For example:
+\include inflow_flood.kvf
+
+\subsection bathy_file_sec Bathymetry file
+
+The bathymetry file is a comma delimited text file that describes the
+bathymetry over which the turbidity current will be run.  The file contains
+three columns: position, elevation, and width (all in meters).  inflow
+interpolates between these points to match the grid spacing specified in
+the parameter file.
+
+*/
+

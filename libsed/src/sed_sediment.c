@@ -433,6 +433,9 @@ Sed_type sed_type_new( )
 {
    Sed_type t;
    NEW_OBJECT( Sed_type , t );
+
+   memset( t , 0 , sizeof(Sed_type) );
+
    return t;
 }
 
@@ -582,7 +585,7 @@ for each type of sediment).  Each groups contains a key-value pairs describing t
 sediment type.
 
 An example group:
-\dontinclude sediment.kvf
+\dontinclude sample-sediment.kvf
 \skip start of the first group
 \until rest of the groups
 This is the start of the next group.
@@ -692,6 +695,22 @@ gboolean sed_type_is_same( Sed_type t_1 , Sed_type t_2 )
            && fabs( t_1->c_v       - t_2->c_v       ) < 1e-12
            && fabs( t_1->c         - t_2->c         ) < 1e-12
            && fabs( t_1->w_s       - t_2->w_s       ) < 1e-12;
+   }
+
+   return same;
+}
+
+gboolean
+sed_type_is_same_size( Sed_type t_1 , Sed_type t_2 )
+{
+   gboolean same = TRUE;
+
+   eh_require( t_1 );
+   eh_require( t_2 );
+
+   if ( t_1!=t_2 )
+   {
+      same = fabs( t_1->gz - t_2->gz ) < 1e-12;
    }
 
    return same;

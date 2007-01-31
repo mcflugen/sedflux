@@ -21,7 +21,33 @@
 #if !defined(AVULSION_H)
 #define AVULSION_H
 
-double avulsion( double last_angle , double standard_deviation );
+#include <glib.h>
+#include "sed_sedflux.h"
+
+#define AVULSION_PROGRAM_NAME  "avlusion"
+#define AVULSION_MAJOR_VERSION (1)
+#define AVULSION_MINOR_VERSION (0)
+#define AVULSION_MICRO_VERSION (0)
+
+typedef struct
+{
+   GRand* rand;
+   double std_dev;
+}
+Avulsion_st;
+
+#define AVULSION_DATA avulsion_data_struct_quark()
+
+GQuark       avulsion_data_struct_quark  ( void );
+double       avulsion                    ( GRand* rand , double last_angle , double std_dev );
+Avulsion_st* avulsion_new                ( GRand* rand , double std_dev );
+Avulsion_st* avulsion_destroy            ( Avulsion_st* data );
+
+Sed_riv      sed_river_avulse            ( Sed_riv r  );
+Sed_riv      sed_river_set_avulsion      ( Sed_riv r , Avulsion_st* data );
+Avulsion_st* sed_river_avulsion          ( Sed_riv r );
+Sed_cube     sed_cube_avulse_river       ( Sed_cube c , Sed_riv r );
+Sed_cube     sed_cube_avulse_all_rivers  ( Sed_cube c );
 
 #endif
 

@@ -13,16 +13,20 @@ bin_PROGRAMS              = read_hydro \
                             sed2binary \
                             read_usgs \
                             create_hydro \
-                            sedwheeler
+                            sedwheeler \
+                            sedflux-make-bathy \
+                            sedflux-make-sequence
 
-read_hydro_SOURCES        = read_hydro.c
-sedrescale_SOURCES        = sedrescale.c
-getfloor_SOURCES          = getfloor.c
-sedextract_SOURCES        = sedextract.c
-sed2binary_SOURCES        = sed2binary.c
-read_usgs_SOURCES         = read_usgs.c
-create_hydro_SOURCES      = create_hydro.c
-sedwheeler_SOURCES        = sedwheeler.c
+read_hydro_SOURCES            = read_hydro.c
+sedrescale_SOURCES            = sedrescale.c
+getfloor_SOURCES              = getfloor.c
+sedextract_SOURCES            = sedextract.c
+sed2binary_SOURCES            = sed2binary.c
+read_usgs_SOURCES             = read_usgs.c
+create_hydro_SOURCES          = create_hydro.c
+sedwheeler_SOURCES            = sedwheeler.c
+sedflux_make_bathy_SOURCES    = sedflux-make-bathy.c
+sedflux_make_sequence_SOURCES = sedflux-make-sequence.c
 
 LDADD                     = -lglib-2.0
 

@@ -57,7 +57,7 @@ run_plume( gpointer ptr , Sed_cube prof )
    Plume_inputs plume_const;
    Eh_dbl_grid *plume_deposit_grid;
    Sed_cell_grid in_suspension;
-   Sed_river *this_river;
+   Sed_riv this_river;
    Sed_process_info info = SED_EMPTY_INFO;
 
    if ( prof == NULL )
@@ -158,9 +158,9 @@ run_plume( gpointer ptr , Sed_cube prof )
                             sed_cube_y_res(prof) );
       }
 
-      this_river = sed_cube_river( prof , river_no );
+      this_river = sed_cube_nth_river( prof , river_no );
 
-      hydro_data = this_river->data;
+      hydro_data = sed_river_hydro( this_river );
    
       // copy the river discharge data.
       river_data.Cs = sed_hydro_copy_concentration( NULL , hydro_data );
@@ -177,8 +177,8 @@ run_plume( gpointer ptr , Sed_cube prof )
 //      river_data.rma = 0.;
 
       river_data.rdirection = sed_cube_slope_dir( prof              ,
-                                                  this_river->x_ind ,
-                                                  this_river->y_ind );
+                                                  sed_river_hinge(this_river).i ,
+                                                  sed_river_hinge(this_river).j );
 
       eh_note_block( "Setting river direction to zero" , TRUE )
       {
@@ -186,7 +186,7 @@ run_plume( gpointer ptr , Sed_cube prof )
       }
 
       river_data.rma        = river_data.rdirection
-                            - sed_get_river_angle( this_river );
+                            - sed_river_angle( this_river );
       if ( !is_sedflux_3d() )
       {
          river_data.rdirection = M_PI_2;

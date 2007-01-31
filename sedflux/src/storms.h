@@ -28,19 +28,14 @@ typedef struct
 {
    gboolean initialized;
 
-//   double average_storm;
-//   double variance;
-//   double storm_length;
    double last_k;
    double last_time;
    double alpha, beta;
    double fraction;   
    gboolean average_non_events;
-//   unsigned int seed;
-//   char state[256];
    GRand *rand;
    Eh_input_val wave_height;
-   long rand_seed;
+   guint32 rand_seed;
 }
 Storm_t;
 

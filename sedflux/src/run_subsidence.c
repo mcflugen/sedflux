@@ -67,6 +67,7 @@ Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
 
    if ( !data->initialized )
    {
+      GError* err = NULL;
 //      data->subsidence_grid = sed_get_floor_3( data->filename         ,
 //                                               sed_cube_x_res( prof ) ,
 //                                               sed_cube_y_res( prof ) );
@@ -76,13 +77,19 @@ Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
          data->subsidence_seq  = sed_get_floor_sequence_3(
                                     data->filename ,
                                     sed_cube_x_res( prof ) ,
-                                    sed_cube_y_res( prof ) );
+                                    sed_cube_y_res( prof ) ,
+                                    &err );
       else
          data->subsidence_seq  = sed_get_floor_sequence_2(
                                     data->filename     ,
                                     y                  ,
-                                    sed_cube_n_y(prof) , NULL );
+                                    sed_cube_n_y(prof) ,
+                                    &err );
+
       eh_free( y );
+
+      if ( err )
+         eh_error( "Unable to read subsidence file: %s" , err->message );
 
       data->last_year = sed_cube_age_in_years(prof);
       data->initialized = TRUE;

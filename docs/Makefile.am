@@ -10,7 +10,8 @@ DOC_FILES        = \
                    installation.txt \
                    main_page.txt \
                    programming.txt \
-                   running.txt
+                   running.txt \
+                   modules.txt
 
 EXTRA_DIST       = \
                    $(DOC_FILES) \

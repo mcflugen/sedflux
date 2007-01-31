@@ -60,6 +60,28 @@ void eh_exit( int code )
    exit( code );
 }
 
+gchar* brief_copyleft_msg[] =
+{
+"Copywrite (C) 2006 Eric Hutton." ,
+"This is free software; see the source for copying conditions.  This is NO" ,
+"warranty;  not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE." ,
+NULL
+};
+
+gint eh_fprint_version_info( FILE* fp          ,
+                             const gchar* prog ,
+                             gint maj          ,
+                             gint min          ,
+                             gint micro )
+{
+   fprintf( fp , "%s %d.%d.%d\n" , prog , maj , min , micro );
+
+   fprintf( fp , "Written by Eric Hutton <eric.hutton@colorado.edu>.\n" );
+   fprintf( fp , "\n" );
+
+   eh_print_message( fp , brief_copyleft_msg );
+}
+
 /** Test if the index to a cell is within a square domain.
 
 @param n_i The number of i elements in the domain.
@@ -521,6 +543,81 @@ FILE *eh_fopen(const char *filename, const char *type)
       fp = NULL;
    }
 
+   return fp;
+}
+
+#include <errno.h>
+
+FILE* eh_fopen_error( const char* file , const char* type , GError** error )
+{
+   FILE* fp = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   fp = fopen( file , type );
+   if ( !fp && error )
+   {
+      GFileError file_error = g_file_error_from_errno( errno );
+      gchar*     err_str    = NULL;
+
+      switch ( file_error )
+      {
+         case G_FILE_ERROR_EXIST:
+            err_str = g_strdup( "Operation not permitted" ); break;
+         case G_FILE_ERROR_ISDIR:
+            err_str = g_strdup( "File is a directory" ); break;
+         case G_FILE_ERROR_ACCES:
+            err_str = g_strdup( "Permission denied" ); break;
+         case G_FILE_ERROR_NAMETOOLONG:
+            err_str = g_strdup( "Filename too long" ); break;
+         case G_FILE_ERROR_NOENT:
+            err_str = g_strdup( "No such file or directory" ); break;
+         case G_FILE_ERROR_NOTDIR:
+            err_str = g_strdup( "Not a directory" ); break;
+         case G_FILE_ERROR_NXIO:
+            err_str = g_strdup( "No such device or address" ); break;
+         case G_FILE_ERROR_NODEV:
+            err_str = g_strdup( "No such device" ); break;
+         case G_FILE_ERROR_ROFS:
+            err_str = g_strdup( "Read-only file system" ); break;
+         case G_FILE_ERROR_TXTBSY:
+            err_str = g_strdup( "Text file busy" ); break;
+         case G_FILE_ERROR_FAULT:
+            err_str = g_strdup( "Pointer to bad memory" ); break;
+         case G_FILE_ERROR_LOOP:
+            err_str = g_strdup( "Too many levels of symbolic links" ); break;
+         case G_FILE_ERROR_NOSPC:
+            err_str = g_strdup( "No space left on device" ); break;
+         case G_FILE_ERROR_NOMEM:
+            err_str = g_strdup( "No memory available" ); break;
+         case G_FILE_ERROR_MFILE:
+            err_str = g_strdup( "The current process has too many open files" ); break;
+         case G_FILE_ERROR_NFILE:
+            err_str = g_strdup( "The entire system has too many open files" ); break;
+         case G_FILE_ERROR_BADF:
+            err_str = g_strdup( "Bad file descriptor" ); break;
+         case G_FILE_ERROR_INVAL:
+            err_str = g_strdup( "Invalid argument" ); break;
+         case G_FILE_ERROR_PIPE:
+            err_str = g_strdup( "Broken pipe" ); break;
+         case G_FILE_ERROR_AGAIN:
+            err_str = g_strdup( "Resource temporarily unavailable" ); break;
+         case G_FILE_ERROR_INTR:
+            err_str = g_strdup( "Interrupted function call" ); break;
+         case G_FILE_ERROR_IO:
+            err_str = g_strdup( "Input/output error" ); break;
+         case G_FILE_ERROR_PERM:
+            err_str = g_strdup( "Output not permitted" ); break;
+         case G_FILE_ERROR_NOSYS:
+            err_str = g_strdup( "Function not implemented" ); break;
+         case G_FILE_ERROR_FAILED:
+            err_str = g_strdup( "Error unknown" ); break;
+      }
+
+      g_set_error( error , G_FILE_ERROR , file_error , "%s: %s" , file , err_str );
+
+      eh_free( err_str );
+   }
    return fp;
 }
 
@@ -1552,6 +1649,36 @@ double *eh_linspace( double x1 , double x2 , gssize n )
    }
 
    return x;
+}
+
+gssize*
+eh_id_array( gssize i_0 , gssize i_1 , gssize* n )
+{
+   gssize* id = NULL;
+
+   eh_require( i_1>=i_0 );
+
+   if ( i_1>=i_0 )
+   {
+      gint i;
+      gint len = i_1 - i_0 + 1;
+
+      id = eh_new( gssize , len+1 );
+
+      for ( i=0 ; i<len ; i++ )
+         id[i] = i_0+i;
+      id[len] = -1;
+
+      if ( n )
+         *n = len;
+   }
+   else
+   {
+      if ( n )
+         *n = 0;
+   }
+
+   return id;
 }
 
 double *eh_uniform_array( double x1 , double x2 , double dx , gssize* n )
@@ -3254,14 +3381,14 @@ gpointer print_status( gpointer data )
 {
    Eh_status_bar* b = (Eh_status_bar*)data;
    double t, eta;
-   double t_min, t_sec, eta_min,eta_sec;
+   gchar t_str[2048], eta_str[2048];
    gchar* status_bar[] = { "." , "o" , "0" , "O" , NULL };
    gchar** p = status_bar;
 
    fprintf( stderr , "\n" );
-   fprintf( stderr , " Current        | Elapsed |   ETA   \n" );
+   fprintf( stderr , " Current        |   Elapsed   |     ETA     \n" );
 
-   for ( ; *(b->cur)<=0 ; );
+   for ( ; *(b->cur)<=0 && !eh_status_bar_is_stopped(b) ; );
 
    for ( ; !eh_status_bar_is_stopped(b) ; )
    {
@@ -3273,15 +3400,13 @@ gpointer print_status( gpointer data )
 
       if ( b->status==EH_STATUS_BAR_RUNNING )
       {
-         t_min   = t / 60;
-         t_sec   = fmod( t , 60. );
-         eta_min = eta / 60;
-         eta_sec = fmod( eta , 60. );
+         eh_render_time_str( t   , t_str   );
+         eh_render_time_str( eta , eta_str );
 
-         fprintf( stderr , " %7g (%3.0f%%) | %4.0f:%2.0f | %4.0f:%2.0f" ,
-                  *(b->cur) , *(b->cur) / *(b->end)*100. , t_min , t_sec , eta_min , eta_sec );
+         fprintf( stderr , " %7g (%3.0f%%) | %s | %s" ,
+                  *(b->cur) , *(b->cur) / *(b->end)*100. , t_str , eta_str );
+
          fprintf( stderr , "   (%s)" , *p );
-
          fprintf( stderr , "          \r" );
       }
 
@@ -3292,9 +3417,38 @@ gpointer print_status( gpointer data )
 
    fprintf( stderr , "\n" );
 
-   fprintf( stderr , "Elapsed time: %f\n" , g_timer_elapsed( b->timer , NULL ) );
+   fprintf( stderr , "Elapsed time: %s\n" ,
+            eh_render_time_str(g_timer_elapsed(b->timer,NULL),t_str) );
 
    return data;
+}
+
+#define EH_SECONDS_PER_DAY    ( 86400. )
+#define EH_SECONDS_PER_HOUR   ( 3600. )
+#define EH_SECONDS_PER_MINUTE ( 60. )
+
+gchar* eh_render_time_str( double sec , gchar* str )
+{
+   gint d = sec / (gint)EH_SECONDS_PER_DAY;
+   gint h = sec / (gint)EH_SECONDS_PER_HOUR;
+   gint m = sec / (gint)EH_SECONDS_PER_MINUTE;
+   gint s = fmod( sec , 60. );
+
+   sprintf( str , "%02d:%02d:%02d:%02d\0" , d , h , m , s );
+
+   return str;
+}
+
+gboolean
+eh_check_to_s( gboolean assert , const gchar* str , gchar*** str_list )
+{
+   if ( !assert )
+   {
+      if ( str_list )
+         eh_strv_append( str_list , g_strconcat( "FAILED: " , str , NULL ) );
+   }
+
+   return assert;
 }
 
 

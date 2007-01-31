@@ -438,13 +438,13 @@ double sed_measure_cube_river_mouth( Sed_cube p , gssize i , gssize j )
    {
       gssize len = sed_cube_number_of_rivers( p );
       gssize n;
-      Sed_river* this_river;
+      Sed_riv this_river;
       gboolean found=FALSE;
 
       for ( n=0 ; n<len && !found ; n++ )
       {
-         this_river = sed_cube_river( p , n );
-         if ( this_river->x_ind==i && this_river->y_ind==j )
+         this_river = sed_cube_nth_river( p , n );
+         if ( sed_river_mouth_is( this_river , i , j ) )
             found = TRUE;
       }
 
@@ -510,9 +510,9 @@ gssize sed_tripod_header_fprint( FILE* fp , Sed_tripod_header h )
 
       g_snprintf( program_str , 2048 , "%s %s.%s.%s" ,
                   PROGRAM_NAME          ,
-                  PROGRAM_MAJOR_VERSION ,
-                  PROGRAM_MINOR_VERSION ,
-                  PROGRAM_MICRO_VERSION );
+                  SED_MAJOR_VERSION_S ,
+                  SED_MINOR_VERSION_S ,
+                  SED_MICRO_VERSION_S );
 
       n += fprintf( fp , "SEDFLUX tripod file version: %s\n"   , program_str );
       n += fprintf( fp , "Creation date: %s\n"                 , date_str );

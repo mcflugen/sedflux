@@ -145,7 +145,7 @@ END_TEST
 
 START_TEST ( test_sed_hydro_init )
 {
-   Sed_hydro* a = sed_hydro_scan( NULL );
+   Sed_hydro* a = sed_hydro_scan( NULL , NULL );
    Sed_hydro  b = sed_hydro_new( 4 );
 
    sed_hydro_set_duration( b , 365. );
@@ -177,8 +177,8 @@ END_TEST
 
 START_TEST ( test_sed_hydro_init_file )
 {
-   Sed_hydro* a = sed_hydro_scan( NULL );
-   Sed_hydro* b = sed_hydro_scan( SED_HYDRO_TEST_INLINE_FILE );
+   Sed_hydro* a = sed_hydro_scan( NULL , NULL );
+   Sed_hydro* b = sed_hydro_scan( SED_HYDRO_TEST_INLINE_FILE , NULL );
 
    fail_unless( sed_hydro_is_same(b[0],a[0]) , "Record not scanned properly" );
 

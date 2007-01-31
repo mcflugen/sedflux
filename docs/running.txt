@@ -32,7 +32,7 @@ name of the initialization file.
 
 \note
 Windows note: most likely you will not be using command line arguments and
-so will have to enter the project directoy and initialization file by hand.
+so will have to enter the project directory and initialization file by hand.
 in this case, to specify a directory on another filesystem, begin the path
 with the drive letter followed by a colon.  as an example,
 \code

@@ -21,72 +21,80 @@
 #ifndef INFLOW_IS_INCLUDED
 # define INFLOW_IS_INCLUDED
 
-#ifndef DAY
-# define DAY (86400.)
-#endif
 
-#define TURBIDITY_CURRENT_DEFAULT_EA                (0.00153)
-#define TURBIDITY_CURRENT_DEFAULT_EB                (0.00204)
-#define TURBIDITY_CURRENT_DEFAULT_SUA               (400.)
-#define TURBIDITY_CURRENT_DEFAULT_SUB               (2.0)
-#define TURBIDITY_CURRENT_DEFAULT_CD                (0.004)
-#define TURBIDITY_CURRENT_DEFAULT_TAN_PHI           (0.36397023426620)
-#define TURBIDITY_CURRENT_DEFAULT_MU                (1.3e-6)
-#define TURBIDITY_CURRENT_DEFAULT_DENSITY_SEA_WATER (1028.)
-#define TURBIDITY_CURRENT_DEFAULT_CHANNEL_WIDTH     (100.0)
-#define TURBIDITY_CURRENT_DEFAULT_CHANNEL_LENGTH    (30000.0)
-
+/*
+// Old defaults.
+#define INFLOW_DEFAULT_SUA                      (400.)
+#define INFLOW_DEFAULT_SUB                      (2.0)
+#define INFLOW_DEFAULT_EA                (0.00153)
+#define INFLOW_DEFAULT_EB                (0.00204)
+#define INFLOW_DEFAULT_CD                (0.004)
+#define INFLOW_DEFAULT_TAN_PHI           (0.36397023426620)
+#define INFLOW_DEFAULT_MU                (1.3e-6)
+#define INFLOW_DEFAULT_DENSITY_SEA_WATER (1028.)
+#define INFLOW_DEFAULT_CHANNEL_WIDTH     (100.0)
+#define INFLOW_DEFAULT_CHANNEL_LENGTH    (30000.0)
+*/
+#include <stdio.h>
 #include <glib.h>
+#include "sed_sedflux.h"
 
-typedef void (*Sed_query_func) ( gpointer user_data , gpointer data );
+#include "datadir_path.h"
+#if !defined( DATADIR )
+# define DATADIR "/usr/local/share"
+#endif
+#define INFLOW_TEST_PARAM_FILE DATADIR "/ew/inflow_param.kvf"
+#define INFLOW_TEST_BATHY_FILE DATADIR "/ew/inflow_bathy.csv"
+#define INFLOW_TEST_FLOOD_FILE DATADIR "/ew/inflow_flood.kvf"
+
+typedef enum
+{
+   INFLOW_ERROR_BAD_PARAMETER
+}
+Inflow_error;
+
+#define INFLOW_ERROR inflow_error_quark()
 
 typedef struct
 {
-   double Ea;
-   double Eb;
+   double x;            //< Position to query
+   double dx;           //< Grid spacing
+   double erode_depth;  //< Burial depth to query
+   double *phe;         //< Fraction of each grain size
+}
+Inflow_phe_query_st;
+
+typedef void (*Inflow_query_func) ( Inflow_phe_query_st* data , gpointer user_data );
+
+typedef struct
+{
+   double e_a;
+   double e_b;
    double sua;
    double sub;
-   double Cd;
-   double tanPhi;
-   double mu;
-   double rhoSW;
-   double channelWidth;
-   double channelLength;
+   double c_drag;
+   double tan_phi;
+   double mu_water;
+   double rho_river_water;
+   double rho_sea_water;
+   double channel_width;
+   double channel_len;
+   double dep_start;
 
-   gpointer get_phe_data;
-   gpointer get_depth_data;
-   gpointer remove_data;
-   gpointer add_data;
-   Sed_query_func get_phe;
-   Sed_query_func get_depth;
-   Sed_query_func remove;
-   Sed_query_func add;
+   Inflow_query_func get_phe;
+   gpointer          get_phe_data;
 }
-Inflow_t;
+Inflow_const_st;
 
-typedef struct
-{
-   double *phe_bottom;
-   int n_grains;
-}
-I_bottom_t;
+gboolean inflow( double day       , double x[]        , double slopeX[]  ,
+                 double wX[]      , int nNodes        , double dx        , 
+                 double xDep      , double riverWidth , double u0        ,
+                 double h0        , double dc         , double *gzF      ,
+                 double *grainDia , double *lambda    , double *rhoSed   ,
+                 double *rhoGrain , int nGrains       , double rho0      ,
+                 double rhoF0     , Inflow_const_st* c, double **deposit ,
+                 double** eroded  , FILE *fpout );
+Sed_hydro inflow_flood_from_cell( Sed_cell c , double area );
 
-typedef struct
-{
-   double x;
-   double dx;
-   double erode_depth;
-   double *phe;
-}
-I_phe_query_t;
-
-int inflow( double day       , double x[]        , double slopeX[]  ,
-            double wX[]      , int nNodes        , double dx        , 
-            double xDep      , double riverWidth , double u0        ,
-            double h0        , double dc         , double *gzF      ,
-            double *grainDia , double *lambda    , double *rhoSed   ,
-            double *rhoGrain , int nGrains       , double rho0      ,
-            double rhoF0     , Inflow_t consts   , double **deposit ,
-            FILE *fpout );
 
 #endif /* inflow.h is included */

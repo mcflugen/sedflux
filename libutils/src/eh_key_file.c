@@ -7,6 +7,12 @@ CLASS( Eh_key_file )
    GList*      l; //< A list of the groups in the order they appear in the file
 };
 
+GQuark
+eh_key_file_error_quark( void )
+{
+   return g_quark_from_static_string( "eh-key-file-error-quark" );
+}
+
 /** \brief Destroy each symbol table in a list.
 
 A helper function that destroys each Eh_symbol_table in a GList, as well as
@@ -458,12 +464,60 @@ double eh_key_file_get_dbl_value( Eh_key_file f ,
                                   const gchar* group_name ,
                                   const gchar* key )
 {
+   double ans;
    gchar* str = eh_key_file_get_value(f,group_name,key);
-   double ans = g_strtod( str , NULL );
+
+   if ( str )
+      ans = g_strtod( str , NULL );
+   else
+      ans = eh_nan();
 
    eh_free( str );
 
    return ans;
+}
+
+/** Find a key in a key-file and convert its value to a double array
+
+\param f             An Eh_key_file
+\param group_name    The name of a key-file group
+\param key           The name of a key within the group
+\param len           Location to store the array length
+
+\return The value converted to a double array.
+*/
+double*
+eh_key_file_get_dbl_array( Eh_key_file f           ,
+                           const gchar* group_name ,
+                           const gchar* key        ,
+                           gssize* len )
+{
+   double* d_array = NULL;
+
+   eh_require( key        );
+   eh_require( group_name );
+   eh_require( len        );
+
+   if ( f )
+   {
+      gchar*  str       = eh_key_file_get_value( f , group_name , key );
+      gchar** str_array = g_strsplit_set( str , ",;" , -1 );
+
+      *len = g_strv_length( str_array );
+
+      if ( *len > 0 )
+      {
+         gint i;
+         d_array = eh_new( double , *len );
+         for ( i=0 ; i<*len ; i++ )
+            d_array[i] = g_strtod( str_array[i] , NULL );
+      }
+
+      eh_free( str );
+      g_strfreev( str_array );
+   }
+
+   return d_array;
 }
 
 /** Find all values of a key in a key-file and convert them to double
@@ -672,6 +726,143 @@ Eh_key_file eh_key_file_scan( const char* file )
       eh_close_scanner( s );
    }
    return f;
+}
+
+gint
+eh_key_file_scan_from_template( const gchar* file       ,
+                                const gchar* group_name ,
+                                Eh_key_file_entry t[]   ,
+                                GError** error )
+{
+   gint n_entries = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
+
+   if ( file )
+   {
+      GError*     tmp_error       = NULL;
+      Eh_key_file f               = NULL;
+      gchar**     missing_entries = NULL;
+      gint*       len;
+      gint        i;
+
+      for ( n_entries=0 ; t[n_entries].label ; n_entries++ );
+
+      for ( i=0 ; i<n_entries ; i++ )
+         if ( t[i].arg == EH_ARG_DARRAY )
+         {
+            eh_require( t[i].arg_data_len );
+            eh_return_val_if_fail( t[i].arg_data_len , 0 );
+
+            *(t[i].arg_data_len) = 0;
+         }
+
+      len = eh_new( gint , n_entries );
+
+      f = eh_key_file_scan( file );
+
+      for ( i=0 ; i<n_entries && !tmp_error ; i++ )
+      {
+         if ( eh_key_file_has_key( f , group_name , t[i].label ) )
+         {
+            switch ( t[i].arg )
+            {
+               case EH_ARG_DBL:
+                  *(double* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
+                  break;
+               case EH_ARG_DARRAY:
+                  *(double**)(t[i].arg_data) = eh_key_file_get_dbl_array( f , group_name , t[i].label , &(len[i]) );
+
+                  if ( *(t[i].arg_data_len)==0 || *(t[i].arg_data_len)==len[i] )
+                     *(t[i].arg_data_len) = len[i];
+                  else
+                     g_set_error( &tmp_error ,
+                                  EH_KEY_FILE_ERROR ,
+                                  EH_KEY_FILE_ERROR_ARRAY_LEN_MISMATCH ,
+                                  "%s: Array length mismatch (%d!=%d): %s\n" ,
+                                  file , len[i] , t[i].arg_data_len , t[i].label );
+
+                  break;
+               case EH_ARG_FILENAME:
+                  *(gchar**)(t[i].arg_data)  = eh_key_file_get_value( f , group_name , t[i].label );
+                  break;
+            }
+         }
+         else
+            eh_strv_append( &missing_entries , g_strconcat(file , ": Missing required entry: " , t[i].label , NULL ) );
+
+      }
+
+      if ( !tmp_error && missing_entries )
+      {
+         gchar* missing_list = g_strjoinv( "\n" , missing_entries );
+
+         g_set_error( &tmp_error ,
+                      EH_KEY_FILE_ERROR ,
+                      EH_KEY_FILE_ERROR_MISSING_ENTRY ,
+                      "%s\n" , missing_list );
+
+         eh_free( missing_list );
+      }
+
+      if ( tmp_error )
+         g_propagate_error( error , tmp_error );
+
+      g_strfreev( missing_entries );
+      eh_free( len );
+
+      eh_key_file_destroy( f );
+   }
+
+   return n_entries;
+}
+
+gssize
+eh_key_file_fprint_template( FILE* fp                ,
+                             const gchar* group_name ,
+                             Eh_key_file_entry entry[] )
+{
+   gint n = 0;
+
+   if ( fp )
+   {
+      gint        n_entries;
+      gint        max_len = 0;
+      gchar*      pad;
+      gint        i;
+
+      for ( n_entries=0 ; entry[n_entries].label ; n_entries++ );
+
+      for ( i=0 ; i<n_entries ; i++ )
+         if ( strlen( entry[i].label ) > max_len )
+            max_len = strlen( entry[i].label );
+
+      pad = g_strnfill( max_len , ' ' );
+
+      fprintf( fp , "[ %s ]" , group_name );
+
+      for ( i=0 ; i<n_entries ; i++ )
+      {
+         n += fprintf( fp , "%s :%s" , entry[i].label , pad + strlen( entry[i].label ) );
+
+         switch ( entry[i].arg )
+         {
+            case EH_ARG_DBL:
+               n += fprintf( fp , "%s\n" , "<double-scalar>" );
+               break;
+            case EH_ARG_DARRAY:
+               n += fprintf( fp , "%s\n" , "<double-array>" );
+               break;
+            case EH_ARG_FILENAME:
+               n += fprintf( fp , "%s\n" , "<filename>" );
+               break;
+         }
+      }
+
+      eh_free( pad );
+   }
+
+   return n;
 }
 
 /** Scan a file for a particular key-file group

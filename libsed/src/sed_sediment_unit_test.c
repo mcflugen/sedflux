@@ -39,10 +39,11 @@ START_TEST ( test_sed_type_copy )
 
       sed_type_set_grain_size( t_1 , 1945 );
       sed_type_set_grain_size( t_2 , 1973 );
+
       temp = sed_type_copy( t_1 , t_2 );
 
-      fail_unless( sed_type_is_same(t_1,t_2) , "Type not copied correctly" );
-      fail_unless( temp==t_1                 , "Destination should be returned" );
+      fail_unless( sed_type_is_same_size(t_1,t_2) , "Type not copied correctly" );
+      fail_unless( temp==t_1                      , "Destination should be returned" );
 
       sed_type_destroy( t_1 );
       sed_type_destroy( t_2 );
@@ -55,8 +56,8 @@ START_TEST ( test_sed_type_copy )
       sed_type_set_grain_size( t_1 , 1945 );
       t_2 = sed_type_copy( NULL , t_1 );
 
-      fail_unless( sed_type_is_same(t_1,t_2) , "NULL destination should duplicate" );
-      fail_if    ( t_2==t_1                  , "Should make a copy" );
+      fail_unless( sed_type_is_same_size(t_1,t_2) , "NULL destination should duplicate" );
+      fail_if    ( t_2==t_1                       , "Should make a copy" );
 
       sed_type_destroy( t_1 );
       sed_type_destroy( t_2 );

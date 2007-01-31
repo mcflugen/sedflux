@@ -957,9 +957,9 @@ double eh_round( double val , double rnd )
 
 /** Find the equivalent angle between -PI and PI
 
-@param angle An angle (in radians)
+\param angle An angle (in radians)
 
-@return An angle between -PI and PI
+\return An angle between -PI and PI
 */
 double eh_reduce_angle( double angle )
 {
@@ -1419,6 +1419,70 @@ double* eh_dbl_array_new_set( gssize n , double val )
    return x;
 }
 
+double*
+eh_dbl_array_dup( double* s , gssize n )
+{
+   return eh_dbl_array_copy( NULL , s , n );
+}
+
+double*
+eh_dbl_array_copy( double* d , double* s , gssize n )
+{
+   if ( s )
+   {
+      if ( !d )
+         d = eh_dbl_array_new( n );
+
+      g_memmove( d , s , sizeof(double)*n );
+   }
+
+   return d;
+}
+
+double*
+eh_dbl_array_rebin( double* s , gssize n , double bin_size , gint* d_len )
+{
+   double* d = NULL;
+
+   eh_require( bin_size>=1. );
+
+   if      ( eh_compare_dbl( bin_size , 1. , 1e-12 ) )
+   {
+      d = eh_dbl_array_dup( s , n );
+      if ( d_len )
+         *d_len = n;
+   }
+   else if ( s )
+   {
+      gint   len   = ceil ( n / bin_size );
+      gint   top_i = floor( n / bin_size );
+      gint   i;
+      double x;
+
+      d = eh_new( double , len );
+
+      for ( i=0,x=0 ; i<top_i ; i++,x+=bin_size )
+      {
+         d[i]  = eh_dbl_array_sum( s+(gint)x , (gint)(x+bin_size - (gint)x ) );
+         d[i] -= (x          - (gint)(x)         )*s[(gint)(x)         ];
+         d[i] += (x+bin_size - (gint)(x+bin_size))*s[(gint)(x+bin_size)];
+      }
+
+      if ( len!=top_i )
+      {
+         gint n_bins = n - (gint)x;
+
+         d[i]  = eh_dbl_array_sum( s+(gint)x , n_bins );
+         d[i] -= (x - (gint)(x) )*s[(gint)(x)         ];
+      }
+
+      if ( d_len )
+         *d_len = len;
+   }
+
+   return d;
+}
+
 gssize eh_dbl_array_min_ind( const double* x , gssize n )
 {
    gssize ind = -1;
@@ -1574,6 +1638,25 @@ double* eh_dbl_array_add_scalar( double* x , gssize n , double a )
    return x;
 }
 
+double*
+eh_dbl_array_add_each( double* d , gssize n , double* s )
+{
+   eh_require( d );
+   eh_require( s );
+
+#if !defined( ENABLE_BLAS )
+   if ( d && s )
+   {
+      gint i;
+      for ( i=0 ; i<n ; i++ )
+         d[i] += s[i];
+   }
+#else
+   cblas_daxpy( n , 1. , s , 1 , d , 1 );
+#endif
+   return d;
+}
+
 double* eh_dbl_array_add( double* dest , double* src , gssize n )
 {
    eh_require( dest );
@@ -1604,6 +1687,21 @@ double* eh_dbl_array_mult( double* x , gsize n , double a )
 #else
    cblas_dscal( n , a , x , 1 );
 #endif
+   return x;
+}
+
+double*
+eh_dbl_array_mult_each( double* x , gssize n , double* y )
+{
+   eh_require( x );
+   eh_require( y );
+
+   if ( x && y )
+   {
+      gssize i;
+      for ( i=0 ; i<n ; i++ )
+         x[i] *= y[i];
+   }
    return x;
 }
 
@@ -1940,6 +2038,55 @@ gboolean eh_dbl_array_compare( double *x , double *y , gssize len , double eps )
    }
 
    return is_same;
+}
+
+gboolean
+eh_dbl_array_cmp_ge( double* x , double* y , gssize len )
+{
+   gboolean is_ge = TRUE;
+
+   if ( x && y && ( x!=y ) )
+   {
+      gint i;
+      for ( i=0 ; i<len && is_ge ; i++ )
+         is_ge = is_ge && ( x[i] >= y[i] );
+   }
+   else
+      is_ge = FALSE;
+
+   return is_ge;
+}
+
+gboolean
+eh_dbl_array_each_ge( double val , double *x , gssize len )
+{
+   gboolean is_ge = TRUE;
+
+   eh_return_val_if_fail( x , FALSE );
+
+   {
+      gint i;
+      for ( i=0 ; i<len && is_ge ; i++ )
+         is_ge = is_ge && ( x[i] >= val );
+   }
+
+   return is_ge;
+}
+
+gboolean
+eh_dbl_array_each_le( double val , double *x , gssize len )
+{
+   gboolean is_le = TRUE;
+
+   eh_return_val_if_fail( x , FALSE );
+
+   {
+      gint i;
+      for ( i=0 ; i<len && is_le ; i++ )
+         is_le = is_le && ( x[i] <= val );
+   }
+
+   return is_le;
 }
 
 gboolean eh_dbl_array_is_monotonic_up( double *x , gsize n )

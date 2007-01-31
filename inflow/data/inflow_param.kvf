@@ -1,11 +1,12 @@
-Length of basin (km):                              50
+[ INFLOW ]
+Length of basin (km):                              100
 Bin spacing (m):                                   10
-Density of seawater (kg/m^3):                      1028
+Density of sea water (kg/m^3):                      1028
 Density of river water (kg/m^3):                   1028
 Number of grain sizes:                             5
-Rate removal constant (1/day):                     25,   16.8,   9.0,   3.2,   2.4
+Removal rate constant (1/day):                     25,   16.8,   9.0,   3.2,   2.4
 Equivalent grain diameter (microns):               202,   105,   69,   25,  10
-Compoinent grain diameter (microns):               150,   50,   25,   5,   1
+Component grain diameter (microns):                150,   50,   25,   5,   1
 Fraction of each grain in river:                   0.0,      0.1,   0.2,   0.3,   0.4
 Fraction of flow occupied by each grain:           1,   1,  1,  1, 1.0
 Bulk density (kg/m^3):                             1850,   1600,   1400,   1300,   1200
@@ -21,7 +22,7 @@ Entrainment constant, Eb (-):                      0.0204
 Coefficient of drag (-):                           0.004
 Angle of internal friction (degrees):              20
 Kinematic viscosity of clear water (*1e-6m*m/s):   1.3
-Read in flood data:                                file
+Flood data file:                                   file
 
 
 

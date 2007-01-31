@@ -59,13 +59,14 @@
 // #define           S_PROPERTY_VELOCITY
 
 #define PROGRAM_NAME "sedflux"
-#define PROGRAM_MAJOR_VERSION "2"
-#define PROGRAM_MINOR_VERSION "0"
-#define PROGRAM_MICRO_VERSION "15"
+#define SED_MAJOR_VERSION_S "2"
+#define SED_MINOR_VERSION_S "0"
+#define SED_MICRO_VERSION_S "16"
+#define SED_VERSION_S SED_MAJOR_VERSION_S"."SED_MINOR_VERSION_S"."SED_MICRO_VERSION_S
 
 #define S_MAJOR_VERSION (2)
 #define S_MINOR_VERSION (0)
-#define S_MICRO_VERSION (15)
+#define S_MICRO_VERSION (16)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \
@@ -80,7 +81,8 @@
 #define S_SECONDS_PER_YEAR  (31536000.)
 #define S_DAYS_PER_YEAR     (365.)
 #define S_YEARS_PER_DAY     (0.00273972602740)
-#define S_RADS_PER_DEGREE   (3.14159/180.)
+#define S_RADS_PER_DEGREE   (0.0174532925199433)
+#define S_DEGREES_PER_RAD   (57.2957795130823)
 
 #define S_GRAVITY           (9.81)          // Acceleration due to gravity (m/s/s)
 #define S_RHO_SEA_WATER     (1030.)         // Density of sea water (kg/m^3)

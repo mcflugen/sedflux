@@ -11,11 +11,11 @@ pseudoplume_SOURCES      = pseudoplume.c
 include_HEADERS          = inflow.h
 
 lib_LTLIBRARIES          = libinflow.la
-libinflow_la_SOURCES     = inflow.c
+libinflow_la_SOURCES     = inflow.c inflow_io.c inflow_sedflux_interface.c
 
 LDADD                    = -lglib-2.0
 
-inflow_SOURCES           = inflow_main.c inflow.c
+inflow_SOURCES           = inflow_main.c inflow.c inflow_io.c inflow_local.h
 inflow_CFLAGS            = -DINFLOW_STANDALONE
 inflow_LDADD             = -lglib-2.0
 

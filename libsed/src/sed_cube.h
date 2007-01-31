@@ -30,6 +30,7 @@
 #include "sed_const.h"
 #include "sed_hydro.h"
 #include "sed_wave.h"
+#include "sed_river.h"
 
 typedef enum
 {
@@ -38,7 +39,10 @@ typedef enum
    SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
    SED_CUBE_ERROR_INSUFFICIENT_DATA ,
    SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
-   SED_CUBE_ERROR_DATA_BAD_RANGE
+   SED_CUBE_ERROR_DATA_BAD_RANGE ,
+
+   SED_CUBE_ERROR_BAD_GRID_DIMENSION ,
+   SED_CUBE_ERROR_TRUNCATED_FILE
 }
 Sed_cube_error;
 
@@ -63,6 +67,7 @@ Sed_hinge_pt;
 /**
    Describe a river.
 */
+/*
 typedef struct
 {
    Sed_hydro data;      ///< The hydrological characteristics of the river
@@ -72,6 +77,7 @@ typedef struct
    char *river_name;    ///< The name of the river
 }
 Sed_river;
+*/
 
 new_handle( Sed_cube );
 
@@ -175,15 +181,15 @@ double sed_cube_mass_in_suspension( const Sed_cube p );
 Sed_cube sed_cube_set_sea_level( Sed_cube s , double new_sea_level );
 Sed_cube sed_cube_set_base_height( Sed_cube s , gssize i , gssize j , double height );
 Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double dz );
-Sed_cube sed_cube_set_nth_river( Sed_cube s , gssize n , Sed_river *river );
-Eh_pt_2 *sed_cube_river_mouth_position( Sed_cube s ,
-                                            Sed_river *this_river );
-Sed_hydro sed_cube_river_data( Sed_cube s , GList *this_river );
-Sed_cube sed_cube_set_river_data( Sed_cube s       ,
+Sed_cube    sed_cube_set_nth_river             ( Sed_cube s , gssize n , Sed_riv river );
+Eh_pt_2*    sed_cube_river_mouth_position      ( Sed_cube s , Sed_riv this_river );
+Sed_hydro   sed_cube_river_data( Sed_cube s , GList *this_river );
+/*
+Sed_cube    sed_cube_set_river_data( Sed_cube s       ,
                               GList *this_river ,
                               Sed_hydro new_data );
+*/
 Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list ) G_GNUC_DEPRECATED;
-//Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *new_river );
 Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no );
 
 Sed_cube sed_cube_set_name( Sed_cube s , char *name );
@@ -205,20 +211,22 @@ Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index );
 Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index );
 Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index );
 
-Sed_river *sed_cube_river_by_name( Sed_cube s , const char *name );
-gint sed_cmp_river_name( Sed_river *this_river , const char *name );
-Sed_river *sed_cube_river( Sed_cube s , gssize n );
-gssize sed_cube_river_id( Sed_cube s , Sed_river* river );
+Sed_riv       sed_cube_river_by_name   ( Sed_cube s , const char *name );
+Sed_riv       sed_cube_nth_river       ( Sed_cube s , gssize n );
+gssize        sed_cube_river_id        ( Sed_cube s , Sed_riv river );
+
 Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no );
 GList* sed_cube_river_list( Sed_cube s );
 gssize sed_cube_number_of_rivers( Sed_cube s );
-Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *river );
+Sed_cube      sed_cube_add_river       ( Sed_cube s , Sed_riv river );
 
 Sed_cube sed_load_cube( FILE *fp );
 gssize sed_cube_column_id( const Sed_cube c , double x , double y );
 void sed_set_shore( Sed_cube s );
 GList *sed_cube_find_shore_line( Sed_cube s , Eh_ind_2 *pos );
-Sed_river *sed_cube_find_river_mouth( Sed_cube c , Sed_river *this_river );
+
+Sed_riv       sed_cube_find_river_mouth( Sed_cube c , Sed_riv this_river );
+
 GList *sed_find_next_shore( GList *shore_list ,
                             Sed_cube s       ,
                             Eh_ind_2 *pos     ,
@@ -246,10 +254,8 @@ Eh_ind_2 sed_shift_index_over_edge( gssize i , gssize j , int edge );
 
 
 GTree *sed_create_shore_tree( GList *shore );
-Sed_river *sed_find_cube_river_mouth( Sed_cube c , Sed_river *this_river );
-gssize *sed_cube_river_path_id( Sed_cube c  ,
-                                GList *river ,
-                                gboolean down_stream );
+gssize* sed_cube_river_path_id( Sed_cube c , Sed_riv river , gboolean down_stream );
+GList*  sed_cube_river_path   ( Sed_cube c , Sed_riv river );
 GList *sed_find_river_path( Sed_cube c         ,
                             Eh_ind_2 *hinge_pos ,
                             double angle );
@@ -271,12 +277,6 @@ GList *sed_cube_find_line_path( Sed_cube c         ,
                                 Eh_ind_2 *hinge_pos ,
                                 double angle );
 
-Sed_river *sed_create_river( int n_grains , Eh_ind_2 *pos );
-Sed_river *sed_dup_river( Sed_river *river );
-Sed_river *sed_copy_river( Sed_river *dest , Sed_river *source );
-Sed_river *sed_dup_river( Sed_river *source );
-void sed_destroy_river( Sed_river *river );
-double sed_get_river_angle( Sed_river *river );
 double sed_cube_river_angle( Sed_cube c , GList *river );
 
 Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y );
@@ -292,9 +292,9 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
                                        GError** err );
 Eh_sequence *sed_get_floor_sequence_3( const char *file ,
                                        double dx        ,
-                                       double dy );
+                                       double dy        ,
+                                       GError** error );
 
-void sed_avulse_river( Sed_river *river , Sed_cube c );
 Sed_cube sed_cube_avulse_all_rivers( Sed_cube c );
 
 Sed_cube sed_cube_find_all_river_mouths( Sed_cube c );
@@ -315,5 +315,8 @@ gboolean sed_cube_is_in_domain_id( Sed_cube p , gssize id );
 gboolean sed_cube_is_1d( Sed_cube p );
 
 gssize   sed_cube_fprint( FILE* fp , Sed_cube c );
+
+Sed_cell sed_cube_to_cell( Sed_cube c , Sed_cell d );
+
 #endif
 

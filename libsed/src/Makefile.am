@@ -15,6 +15,7 @@ libsedflux_la_SOURCES    = \
                            sed_process.c \
                            sed_property.c \
                            sed_property_file.c \
+                           sed_river.c \
                            sed_sediment.c \
                            sed_tripod.c \
                            sed_wave.c
@@ -29,6 +30,7 @@ include_HEADERS          = \
                            sed_process.h \
                            sed_property.h \
                            sed_property_file.h \
+                           sed_river.h \
                            sed_sedflux.h \
                            sed_sediment.h \
                            sed_tripod.h \
@@ -51,6 +53,7 @@ libsed_unit_test_SOURCES = \
                            sed_wave_unit_test.c \
                            sed_column_unit_test.c \
                            sed_cube_unit_test.c \
+                           sed_river_unit_test.c \
                            sed_sediment_unit_test.c \
                            sed_hydro_unit_test.c
 

@@ -39,5 +39,6 @@
 #include "sed_property_file.h"
 #include "sed_process.h"
 #include "sed_epoch.h"
+#include "sed_river.h"
 
 #endif

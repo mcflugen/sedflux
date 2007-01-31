@@ -171,9 +171,42 @@ void eh_reset_log(const char *log_file)
 
 static GLogLevelFlags eh_ignore_log_level = 0;
 
-void eh_set_ignore_log_level( GLogLevelFlags ignore )
+void
+eh_set_ignore_log_level( GLogLevelFlags ignore )
 {
    eh_ignore_log_level |= ignore;
+}
+
+GLogLevelFlags
+eh_set_verbosity_level( gint verbosity )
+{
+   GLogLevelFlags ignore = 0;
+
+   if ( verbosity<0 )
+      verbosity = 0;
+
+   if ( verbosity>6 )
+      verbosity = 6;
+
+   switch ( verbosity )
+   {
+      case 0:
+         ignore |= G_LOG_LEVEL_ERROR;
+      case 1:
+         ignore |= G_LOG_LEVEL_CRITICAL;
+      case 2:
+         ignore |= G_LOG_LEVEL_WARNING;
+      case 3:
+         ignore |= G_LOG_LEVEL_MESSAGE;
+      case 4:
+         ignore |= G_LOG_LEVEL_INFO;
+      case 5:
+         ignore |= G_LOG_LEVEL_DEBUG;
+   }
+
+   eh_set_ignore_log_level( ignore );
+
+   return ignore;
 }
 
 void eh_logger( const gchar *log_domain ,

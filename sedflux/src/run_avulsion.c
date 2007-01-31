@@ -26,21 +26,23 @@
 #include "utils.h"
 #include "sed_sedflux.h"
 #include "avulsion.h"
+#include "run_avulsion.h"
+#include "avulsion.h"
 #include "processes.h"
 
 Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 {
-   Avulsion_t *data=(Avulsion_t*)ptr;
-   Sed_river *this_river;
-   double fraction, angle;
-   int n;
+   Avulsion_t*      data = (Avulsion_t*)ptr;
    Sed_process_info info = SED_EMPTY_INFO;
+   Sed_riv          this_river;
 
    if ( prof == NULL )
    {
       if ( data->initialized )
       {
-         data->last_angle = 0.;
+         g_rand_free( data->rand );
+         data->rand        = NULL;
+         data->reset_angle = TRUE;
          data->initialized = FALSE;
       }
       return info;
@@ -48,17 +50,10 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 
    if ( !data->initialized )
    {
-      data->hinge->min_angle = eh_input_val_eval(
-                                  data->min_angle ,
-                                  sed_cube_age_in_years( prof ) );
-      data->hinge->max_angle = eh_input_val_eval(
-                                  data->max_angle ,
-                                  sed_cube_age_in_years( prof ) );
-      data->hinge->angle     = (   data->hinge->min_angle
-                                 + data->hinge->max_angle )
-                             / 2. * S_RADS_PER_DEGREE;
-      data->last_angle       = data->hinge->angle;
-
+      sed_river_set_avulsion( sed_cube_river_by_name(prof,data->river_name) ,
+                              avulsion_new(NULL,0.) );
+      data->rand = (data->rand_seed>0)?g_rand_new_with_seed( data->rand_seed ):g_rand_new();
+      data->reset_angle = TRUE;
       data->initialized = TRUE;
    }
 
@@ -66,67 +61,44 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 
    if ( this_river )
    {
-      data->hinge->std_dev   = eh_input_val_eval(
-                                  data->std_dev ,
-                                  sed_cube_age_in_years( prof ) );
-      data->hinge->min_angle = eh_input_val_eval(
-                                  data->min_angle ,
-                                  sed_cube_age_in_years( prof ) );
-      data->hinge->max_angle = eh_input_val_eval(
-                                  data->max_angle ,
-                                  sed_cube_age_in_years( prof ) );
-      fraction               = eh_input_val_eval(
-                                  data->f_remain ,
-                                  sed_cube_age_in_years( prof ) );
+      double       time      = sed_cube_age_in_years( prof );
+      double       fraction  = eh_input_val_eval( data->f_remain  , time    );
+      double       std_dev   = eh_input_val_eval( data->std_dev   , time    )*S_RADS_PER_DEGREE;
+      double       min_angle = eh_input_val_eval( data->min_angle , time    )*S_RADS_PER_DEGREE;
+      double       max_angle = eh_input_val_eval( data->max_angle , time    )*S_RADS_PER_DEGREE;
 
-      if ( eh_isnan( fraction ) )
+      sed_river_avulsion( this_river )->std_dev = std_dev;
+      sed_river_avulsion( this_river )->rand    = data->rand;
+
+      eh_require( max_angle>min_angle );
+      eh_require( fraction>=0.        );
+      eh_require( fraction<=1.        );
+      eh_require( !eh_isnan(fraction) );
+
+      if ( data->reset_angle )
       {
-         fraction = 1.;
-         eh_warning( "fraction is NaN.  Setting to 1." );
-      }
-      eh_clamp( fraction , 0. , 1. );
-
-      this_river->hinge->std_dev   = data->hinge->std_dev;
-      this_river->hinge->angle     = data->last_angle;
-      this_river->hinge->min_angle = data->hinge->min_angle*S_RADS_PER_DEGREE;
-      this_river->hinge->max_angle = data->hinge->max_angle*S_RADS_PER_DEGREE;
-      this_river->hinge->x         = data->hinge->x;
-      this_river->hinge->y         = data->hinge->y;
-
-      sed_avulse_river( this_river , prof );
-
-      angle                    = sed_get_river_angle( this_river );
-      data->last_angle         = angle;
-      this_river->hinge->angle = eh_reduce_angle( data->last_angle );
-
-      eh_message( "time         : %f" , sed_cube_age_in_years(prof)       );
-      eh_message( "river name   : %s" , data->river_name                  );
-      eh_message( "minimum angle: %f" , data->hinge->min_angle            );
-      eh_message( "maximum angle: %f" , data->hinge->max_angle            );
-      eh_message( "angle        : %f" , sed_get_river_angle( this_river )
-                                        / S_RADS_PER_DEGREE               );
-      eh_message( "position (x) : %d" , this_river->x_ind                 );
-      eh_message( "position (y) : %d" , this_river->y_ind                 );
-      eh_message( "fraction     : %f" , fraction                          );
-
-/*
-      if ( !is_sedflux_3d() )
-         angle -= G_PI/2.;
-
-      fraction = exp( -angle*angle );
-
-*/
-      if ( !is_sedflux_3d() )
-      {
-         gssize n_grains = sed_hydro_size( this_river->data );
-         Sed_hydro this_data = this_river->data;
-         for ( n=0;n<n_grains-1;n++)
-            sed_hydro_set_nth_concentration( this_data , n ,
-                                             sed_hydro_nth_concentration(this_data,n)*fraction );
-         sed_hydro_set_bedload( this_data , sed_hydro_bedload(this_data)*fraction);
+         data->reset_angle = FALSE;
+         sed_river_set_angle( this_river , .5*(max_angle+min_angle) );
       }
 
-//      eh_message( "fraction     : %f" , fraction                          );
+      sed_river_set_angle_limit( this_river , min_angle     , max_angle     );
+      sed_river_set_hinge      ( this_river , data->hinge_i , data->hinge_j );
+
+      sed_cube_avulse_river( prof , this_river );
+
+      eh_message( "time         : %f" , sed_cube_age_in_years (prof)           );
+      eh_message( "river name   : %s" , data->river_name                       );
+      eh_message( "minimum angle: %f" , sed_river_min_angle   ( this_river )   );
+      eh_message( "maximum angle: %f" , sed_river_max_angle   ( this_river )   );
+      eh_message( "angle        : %f" , sed_river_angle_to_deg( this_river )   );
+      eh_message( "position (x) : %d" , sed_river_mouth       ( this_river ).i );
+      eh_message( "position (y) : %d" , sed_river_mouth       ( this_river ).j );
+      eh_message( "fraction     : %f" , fraction                               );
+
+      if ( !is_sedflux_3d() )
+      {
+         sed_river_adjust_mass( this_river , fraction  );
+      }
    }
 
    return info;
@@ -148,6 +120,8 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 /// Fraction of total sediment to be placed within this profile
 /// (2D-sedflux only)
 #define S_KEY_FRACTION    "fraction of sediment remaining in plane"
+/// Seed for the avulsion random number generator
+#define S_KEY_SEED        "seed for random number generator"
 /* @} */
 
 gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
@@ -162,7 +136,6 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
       eh_input_val_destroy( data->max_angle );
       eh_input_val_destroy( data->std_dev   );
       eh_input_val_destroy( data->f_remain  );
-      eh_free( data->hinge );
       eh_free( data->river_name );
       data->initialized = FALSE;
       return TRUE;
@@ -177,7 +150,7 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
       eh_exit(-1);
    }
 
-   data->hinge = eh_new( Sed_hinge_pt , 1 );
+   data->rand_seed = eh_symbol_table_int_value( tab , S_KEY_SEED );
 
    data->river_name = eh_symbol_table_value( tab , S_KEY_RIVER_NAME );
 
@@ -188,19 +161,21 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
 
    if ( hinge_point[0] && hinge_point[1] )
    {
-      data->hinge->x = strtoul( hinge_point[0] , NULL , 10 );
-      data->hinge->y = strtoul( hinge_point[1] , NULL , 10 );
+      data->hinge_i = strtoul( hinge_point[0] , NULL , 10 );
+      data->hinge_j = strtoul( hinge_point[1] , NULL , 10 );
    }
    else
       eh_error( "An x-y pair is required for the hinge point." );
 
    if ( !is_sedflux_3d() )
    {
-      data->hinge->x = 0;
-      data->hinge->y = 0;
+      data->hinge_i = 0;
+      data->hinge_j = 0;
    }
 
    g_strfreev( hinge_point );
+
+   data->reset_angle = TRUE;
 
    return TRUE;
 }

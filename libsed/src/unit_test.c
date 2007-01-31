@@ -23,6 +23,7 @@ int main( void )
    n += test_sed_column();
    n += test_sed_cube();
    n += test_sed_sediment();
+   n += test_sed_river();
 
    sed_sediment_unset_env();
 

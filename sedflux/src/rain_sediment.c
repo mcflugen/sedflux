@@ -42,7 +42,7 @@ double get_tidal_level( double t , double tidal_range , double tidal_period );
 
 int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
 {
-   gssize i, i_river, j_river;
+   gssize i;
    double time_step, time_left;
    double time_elapsed=0.;
    double fraction;
@@ -53,7 +53,8 @@ int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
    Sed_cell **deposit;
    Sed_cell_grid in_suspension;
    Sed_cell erode_cell;
-   Sed_river *this_river;
+   Sed_riv this_river;
+   Eh_ind_2 mouth_pos;
    int error=0;
 
    in_suspension = sed_cube_in_suspension( p , river_no );
@@ -64,12 +65,11 @@ int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
    tidal_period  = time_step;
    sea_level     = sed_cube_sea_level( p );
 
-   this_river = sed_cube_river( p , river_no );
+   this_river = sed_cube_nth_river( p , river_no );
    this_river = sed_cube_find_river_mouth( p , this_river );
-   i_river    = this_river->x_ind;
-   j_river    = this_river->y_ind;
+   mouth_pos  = sed_river_mouth( this_river );
 
-   if ( sed_cube_water_depth( p , i_river , j_river ) < 0 )
+   if ( sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) < 0 )
       return error;
 
    deposit = eh_new_2( Sed_cell , sed_cube_n_x(p) , sed_cube_n_y(p) );
@@ -79,11 +79,11 @@ int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
 
    // Add sediment to profile.  Start depositing at the river mouth.
    while (    time_left>1e-3
-           && sed_cube_is_in_domain( p , i_river , j_river ) 
-           && sed_cube_water_depth( p , i_river , j_river ) > 0 )
+           && sed_cube_is_in_domain( p , mouth_pos.i , mouth_pos.j ) 
+           && sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) > 0 )
    {
       // The water depth at the river mouth.
-      depth = sed_cube_water_depth( p , i_river , j_river )+1e-5;
+      depth = sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j )+1e-5;
 
       // The fraction of the water column that is going to get filled.
       fraction = depth
@@ -122,8 +122,7 @@ int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
       sed_cube_set_sea_level( p , sea_level+dz );
       this_river = sed_cube_find_river_mouth( p , this_river );
 
-      i_river = this_river->x_ind;
-      j_river = this_river->y_ind;
+      mouth_pos = sed_river_mouth( this_river );
    }
 
    sed_cube_set_sea_level( p , sea_level );
@@ -142,28 +141,27 @@ Sed_cell **construct_deposit_array_3( Sed_cube p         ,
                                       int river_no )
 {
    int i, j;
-   int i_river, j_river;
    double deposit_amount;
    double erode_amount;
    double remain_amount;
    double water_depth;
    Sed_cell erode_cell;
    Sed_cell_grid in_suspension;
-   Sed_river *this_river;
+   Sed_riv this_river;
+   Eh_ind_2 mouth_pos;
 
    in_suspension = sed_cube_in_suspension( p , river_no );
-   this_river    = sed_cube_river( p , river_no );
+   this_river    = sed_cube_nth_river( p , river_no );
    erode_cell    = sed_cell_new_env( );
 
-   i_river = this_river->x_ind;
-   j_river = this_river->y_ind;
+   mouth_pos = sed_river_mouth( this_river );
 
    for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
    {
       for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
       {
          deposit_amount = sed_cell_thickness(
-                             sed_cell_grid_val(in_suspension,i-i_river,j-j_river) )
+                             sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) )
                         * fraction;
    
          //---
@@ -181,19 +179,19 @@ Sed_cell **construct_deposit_array_3( Sed_cube p         ,
             deposit_amount = water_depth + 1e-5;
    
             sed_cell_copy( erode_cell ,
-                           sed_cell_grid_val(in_suspension,i-i_river,j-j_river) );
+                           sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) );
             sed_cell_resize( erode_cell , erode_amount );
 //            sed_add_cell_to_cell( p->erode , erode_cell , sed_size( p->sed ) );
    
          }
          remain_amount = sed_cell_thickness(
-                            sed_cell_grid_val(in_suspension,i-i_river,j-j_river) )
+                            sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) )
                        - deposit_amount;
    
          sed_cell_copy   ( deposit[i][j] ,
-                           sed_cell_grid_val(in_suspension,i-i_river,j-j_river) );
+                           sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) );
          sed_cell_resize ( deposit[i][j] , deposit_amount );
-         sed_cell_resize ( sed_cell_grid_val(in_suspension,i-i_river,j-j_river) ,
+         sed_cell_resize ( sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) ,
                            remain_amount );
          sed_cell_set_age( deposit[i][j] , sed_cube_age( p ) );
 

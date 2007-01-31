@@ -66,7 +66,6 @@ int __cpr_signal  = 0; //< signal to indicate that the user wishes to create a c
 
 gchar*     get_file_name_interactively ( gchar**      , gchar** );
 char*      eh_get_input_val            ( FILE* fp     , char *msg    , char *default_str );
-void       print_version_info          ( void );
 void       print_choices               ( int );
 void       print_header                ( FILE* fp);
 void       print_time                  ( FILE* fp     , int epoch_no , double year );
@@ -152,7 +151,6 @@ int run_sedflux(int argc, char *argv[])
    eh_require( argv )
    {
       Eh_project      proj    = eh_create_project( "sedflux" );
-      GLogLevelFlags  ignore  = 0;
       GError*         error   = NULL;
       GOptionContext* context = g_option_context_new( "Run basin filling model sedflux-2.0" );
 
@@ -163,27 +161,15 @@ int run_sedflux(int argc, char *argv[])
 
       if ( version )
       {
-         print_version_info( );
+         eh_fprint_version_info( stdout          ,
+                                 PROGRAM_NAME    ,
+                                 S_MAJOR_VERSION ,
+                                 S_MINOR_VERSION ,
+                                 S_MICRO_VERSION );
          exit(0);
       }
 
-      switch (verbose)
-      {
-         case 0:
-            ignore |= G_LOG_LEVEL_ERROR;
-         case 1:
-            ignore |= G_LOG_LEVEL_CRITICAL;
-         case 2:
-            ignore |= G_LOG_LEVEL_WARNING;
-         case 3:
-            ignore |= G_LOG_LEVEL_MESSAGE;
-         case 4:
-            ignore |= G_LOG_LEVEL_INFO;
-         case 5:
-            ignore |= G_LOG_LEVEL_DEBUG;
-      }
-
-      eh_set_ignore_log_level( ignore );
+      eh_set_verbosity_level( verbose );
 
       if ( !init_file )
          get_file_name_interactively( &working_dir , &init_file );
@@ -199,8 +185,11 @@ int run_sedflux(int argc, char *argv[])
             active_procs = just_rng_procs;
       }
 
+      eh_debug( "Set project directory" );
       eh_set_project_dir        ( proj , working_dir );
+      eh_debug( "Fill sedflux info file" );
       fill_sedflux_info_file    ( proj , argc , argv , run_desc );
+      eh_debug( "Write sedflux info file" );
       eh_write_project_info_file( proj );
 
       eh_free              ( working_dir );
@@ -214,7 +203,6 @@ int run_sedflux(int argc, char *argv[])
    {
       prof = sed_cube_new_from_file( init_file );
       list = sed_epoch_queue_new   ( init_file );
-
    }
 
    if ( summary )
@@ -296,18 +284,6 @@ int run_sedflux(int argc, char *argv[])
    return 1;
 }
 
-void
-print_version_info( void )
-{
-   g_print( "%s %d.%d.%d\n" , PROGRAM_NAME , 
-                              S_MAJOR_VERSION ,
-                              S_MINOR_VERSION ,
-                              S_MICRO_VERSION );
-   g_print( "Written by Eric Hutton <huttone@colorado.edu>.\n" );
-   g_print( "\n" );
-   eh_print_message( stdout , brief_copyleft_msg );
-}
-
 gchar *get_file_name_interactively( gchar **working_dir , gchar **in_file )
 {
    char *dir       = eh_new( char , 2048 );
@@ -322,10 +298,11 @@ gchar *get_file_name_interactively( gchar **working_dir , gchar **in_file )
    if ( is_sedflux_3d() )
       fprintf( stderr , "3d" );
 
-   fprintf( stderr , " version %s.%s.%s \n" ,
-            PROGRAM_MAJOR_VERSION ,
-            PROGRAM_MINOR_VERSION ,
-            PROGRAM_MICRO_VERSION );
+   eh_fprint_version_info( stderr          ,
+                           PROGRAM_NAME    ,
+                           S_MAJOR_VERSION ,
+                           S_MINOR_VERSION ,
+                           S_MICRO_VERSION );
    fprintf( stderr , "---\n" );
 
    cur_dir = g_get_current_dir();
@@ -377,12 +354,11 @@ void print_header(FILE *fp)
    time_t sedflux_start_time;
    sedflux_start_time = time(&sedflux_start_time);
 
-   fprintf( fp ,
-            "%s %s.%s.%s\n" ,
-            PROGRAM_NAME ,
-            PROGRAM_MAJOR_VERSION ,
-            PROGRAM_MINOR_VERSION ,
-            PROGRAM_MICRO_VERSION );
+   eh_fprint_version_info( fp              ,
+                           PROGRAM_NAME    ,
+                           S_MAJOR_VERSION ,
+                           S_MINOR_VERSION ,
+                           S_MICRO_VERSION );
    fprintf( fp , "Start time is %s\n" , ctime(&sedflux_start_time) );
 
    return;
@@ -496,9 +472,7 @@ Eh_project fill_sedflux_info_file( Eh_project p , int argc , char* argv[] , gcha
    //---
    eh_require( p )
    {
-      char *version_str = g_strconcat( PROGRAM_MAJOR_VERSION , "." ,
-                                       PROGRAM_MINOR_VERSION , "." ,
-                                       PROGRAM_MICRO_VERSION , NULL );
+      gchar* version_str = g_strdup( SED_VERSION_S );
 
       eh_project_add_info_val( p , "VERSION" , version_str );
 

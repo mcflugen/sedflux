@@ -232,11 +232,9 @@ gssize sed_property_file_header_fprint( FILE *fp , Sed_property_file_header hdr 
 
       n += fprintf( fp , "--- header ---\n" );
 
-      g_snprintf( program_str , 2048 , "%s %s.%s.%s" ,
+      g_snprintf( program_str , 2048 , "%s %s" ,
                   PROGRAM_NAME          ,
-                  PROGRAM_MAJOR_VERSION ,
-                  PROGRAM_MINOR_VERSION ,
-                  PROGRAM_MICRO_VERSION );
+                  SED_VERSION_S );
 
       n += fprintf( fp , "SEDFLUX property file version: %s\n" , program_str );
       n += fprintf( fp , "Creation date: %s\n"                 , date_str );

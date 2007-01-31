@@ -68,7 +68,8 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
          if ( is_sedflux_3d() )
             data->src_seq  = sed_get_floor_sequence_3( data->src_file         ,
                                                        sed_cube_x_res( prof ) ,
-                                                       sed_cube_y_res( prof ) );
+                                                       sed_cube_y_res( prof ) , 
+                                                       &err );
          else
             data->src_seq  = sed_get_floor_sequence_2( data->src_file ,
                                                        y              ,
@@ -76,10 +77,7 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
                                                        &err );
 
          if ( err )
-         {
-            fprintf( stderr , "Unable to read subsidence sequence file: %s\n" , err->message );
-            eh_exit(-1);
-         }
+            eh_error( "Unable to read subsidence sequence file: %s\n" , err->message );
       }
       else
          data->src_seq = NULL;

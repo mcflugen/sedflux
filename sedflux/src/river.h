@@ -28,19 +28,18 @@ typedef struct
 {
    gboolean initialized;
 
-   Sed_hydro_file fp_river;
-   char *filename;
-   int type;
-   int location;
-   double total_mass;
-   double total_mass_from_river;
-   GList  *this_river;
-
-   char *river_name;
+   Sed_hydro_file   fp_river;
+   char*            filename;
+   int              type;
+   int              location;
+   double           total_mass;
+   double           total_mass_from_river;
+   Sed_riv          this_river;
+   char*            river_name;
 }
 River_t;
 
-Sed_process_info run_river(gpointer,Sed_cube);
-gboolean init_river(Eh_symbol_table,gpointer);
+Sed_process_info  run_river   ( gpointer        , Sed_cube );
+gboolean          init_river  ( Eh_symbol_table , gpointer );
 
 #endif

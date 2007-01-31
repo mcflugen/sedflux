@@ -78,6 +78,7 @@ void eh_redirect_log(const char *log_file1,const char *log_file2);
 #endif
 
 void eh_set_ignore_log_level( GLogLevelFlags ignore );
+GLogLevelFlags eh_set_verbosity_level( gint verbosity );
 void eh_logger( const gchar *log_domain ,
                 GLogLevelFlags log_level ,
                 const gchar *message ,

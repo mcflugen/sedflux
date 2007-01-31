@@ -719,6 +719,63 @@ START_TEST ( test_running_mean )
 }
 END_TEST
 
+START_TEST ( test_rebin )
+{
+   double* s = eh_dbl_array_new( 100 );
+   double* d;
+   gint    len;
+
+   eh_dbl_array_set( s , 100 , 1. );
+   d = eh_dbl_array_rebin( s , 100 , 2. , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( len==50 );
+   fail_unless( eh_compare_dbl(eh_dbl_array_sum(d,len),100,1e-12) );
+
+   eh_free( d );
+
+   d = eh_dbl_array_rebin( s , 100 , 1.25 , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( len==80 );
+   fail_unless( eh_compare_dbl(eh_dbl_array_sum(d,len),100,1e-12) );
+
+   eh_free( d );
+
+   d = eh_dbl_array_rebin( s , 100 , sqrt(2) , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( len==71 );
+   fail_unless( eh_compare_dbl(eh_dbl_array_sum(d,len),100,1e-12) );
+
+   eh_free( d );
+
+   d = eh_dbl_array_rebin( s , 100 , 1. , &len );
+   
+   fail_unless( d!=NULL );
+   fail_if    ( d==s );
+   fail_unless( len==100 );
+   fail_unless( eh_dbl_array_compare(s,d,100,1e-12) );
+
+   d = eh_dbl_array_rebin( s , 100 , 1. , NULL );
+   
+   fail_unless( d!=NULL );
+   fail_unless( eh_dbl_array_compare(s,d,100,1e-12) );
+
+   eh_free( d );
+   eh_free( s );
+
+   s = eh_linspace( 1 , 100 , 100 );
+   d = eh_dbl_array_rebin( s , 100 , G_PI , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( eh_compare_dbl( eh_dbl_array_sum(s,100) , eh_dbl_array_sum(d,len) , 1e-12 ) );
+
+   eh_free( d );
+
+}
+END_TEST
+
 START_TEST ( test_convolve )
 {
    gssize len_x = 32;
@@ -766,6 +823,7 @@ Suite* num_suite( void )
    tcase_add_test( test_case_core , test_factorial );
    tcase_add_test( test_case_core , test_convolve );
    tcase_add_test( test_case_core , test_running_mean );
+   tcase_add_test( test_case_core , test_rebin );
 
    tcase_add_test( test_case_gamma , test_gamma_p      );
    tcase_add_test( test_case_gamma , test_gamma_q      );

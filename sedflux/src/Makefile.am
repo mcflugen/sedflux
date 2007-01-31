@@ -1,6 +1,7 @@
 INCLUDES                 = -I$(top_srcdir)/libutils/src \
                            -I$(top_srcdir)/libsed/src \
                            -I$(top_srcdir)/sakura/src \
+                           -I$(top_srcdir)/avulsion/src \
                            -I$(top_srcdir)/diffusion/src \
                            -I$(top_srcdir)/subside/src \
                            -I$(top_srcdir)/xshore/src \
@@ -17,6 +18,7 @@ INCLUDES                 = -I$(top_srcdir)/libutils/src \
 AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
                            $(top_builddir)/libsed/src/libsedflux.la \
                            $(top_builddir)/sakura/src/libsakura.la \
+                           $(top_builddir)/avulsion/src/libavulsion.la \
                            $(top_builddir)/diffusion/src/libdiffusion.la \
                            $(top_builddir)/subside/src/libsubside.la \
                            $(top_builddir)/xshore/src/libxshore.la \
@@ -81,7 +83,7 @@ noinst_HEADERS            = cpr.h \
                             storms.h \
                             processes.h \
                             turbidity_current.h \
-                            avulsion.h \
+                            run_avulsion.h \
                             failure_proc.h \
                             compaction.h \
                             erosion.h \
@@ -96,7 +98,7 @@ install-exec-local:
 	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
 	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
 	fi 
-	ln -f -s $(DESTDIR)$(bindir)/sedlfux $(DESTDIR)$(bindir)/sedflux3d
+	ln -f -s $(DESTDIR)$(bindir)/sedflux $(DESTDIR)$(bindir)/sedflux3d
 
 uninstall-local:
 	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \

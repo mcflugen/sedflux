@@ -1461,9 +1461,10 @@ is passed as the destination cell, a new cell is created to hold the sediment.
 
 @see sed_remove_top_from_column , sed_get_top_from_column.
 */
-Sed_cell sed_column_extract_top( Sed_column col ,
-                                 double t       ,
-                                 Sed_cell dest )
+Sed_cell
+sed_column_extract_top( Sed_column col ,
+                        double t       ,
+                        Sed_cell dest )
 {
    return sed_column_extract_top_fill( col , t , NULL , dest );
 }
@@ -1610,12 +1611,13 @@ Sed_cell sed_column_separate_top( Sed_column col  ,
                                   double f[]      ,
                                   Sed_cell rem_cell )
 {
-   Sed_cell lag_cell;
-   lag_cell = sed_cell_new( sed_sediment_env_size() );
-   sed_column_extract_top( col , t , lag_cell );
-   sed_cell_separate_fraction( lag_cell , f , rem_cell );
-   sed_column_add_cell( col , lag_cell );
-   sed_cell_destroy( lag_cell );
+   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_size() );
+
+   sed_column_extract_top    ( col      , t        , lag_cell );
+   sed_cell_separate_fraction( lag_cell , f        , rem_cell );
+   sed_column_add_cell       ( col      , lag_cell            );
+   sed_cell_destroy          ( lag_cell                       );
+
    return rem_cell;
 }
 
@@ -1624,13 +1626,12 @@ Sed_cell sed_column_separate_top_amounts( Sed_column col ,
                                           double t[]     ,
                                           Sed_cell rem_cell )
 {
-   Sed_cell lag_cell;
+   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_size() );
 
-   lag_cell = sed_cell_new( sed_sediment_env_size() );
-   sed_column_extract_top( col , total_t , lag_cell );
-   sed_cell_separate_amount( lag_cell , t , rem_cell );
-   sed_column_add_cell( col , lag_cell );
-   sed_cell_destroy( lag_cell );
+   sed_column_extract_top  ( col      , total_t  , lag_cell );
+   sed_cell_separate_amount( lag_cell , t        , rem_cell );
+   sed_column_add_cell     ( col      , lag_cell            );
+   sed_cell_destroy        ( lag_cell );
 
    return rem_cell;
 }

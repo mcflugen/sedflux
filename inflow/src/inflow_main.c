@@ -25,54 +25,183 @@
 #include <unistd.h>
 #include <string.h>
 #include "inflow.h"
+#include "inflow_local.h"
 #include "sed_sedflux.h"
 #include "utils.h"
 
-/*** Self Documentation ***/
-static char *help_msg[] =
+// Command line arguments
+static gint     verbose    = 0;
+static gboolean version    = FALSE;
+static gboolean debug      = FALSE;
+static gdouble  day        = 1.;
+static gdouble  angle      = 14.;
+static gchar*   in_file    = NULL;
+static gchar*   out_file   = NULL;
+static gchar*   bathy_file = NULL;
+static gchar*   flood_file = NULL;
+static gchar*   data_file  = NULL;
+
+static GOptionEntry entries[] =
 {
-"                                                                             ",
-" inflow [options] [parameters]  [filein]                                     ",
-"  run a turbidity current.                                                   ",
-"                                                                             ",
-" Options                                                                     ",
-"  -o outfile  - send output to outfile instead of stdout. [stdout]           ",
-"  -v          - be verbose. [off]                                            ",
-"  -h          - print this help message.                                     ",
-"                                                                             ",
-" Parameters                                                                  ",
-"  -pday=value - set the length of a day to be value fraction of 24 hrs. [1]  ",
-"  -pangle=value - set the spreading angle of the flow (degrees). [14]        ",
-"                                                                             ",
-"  -fin        - input parameter file. [stdin]                                ",
-"  -fflood     - input flood data file. [inflow.flood]                        ",
-"  -fbathy     - input bathymetry file. [inflow.bathy]                        ",
-"  -fdata      - output data file. [inflow.data]                              ",
-"  -fout       - output deposit file. [stdout]                                ",
-NULL
+   { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &in_file    , "Initialization file" , "<file>" } ,
+   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &out_file   , "Output file"         , "<file>" } ,
+   { "bathy-file" , 'b' , 0 , G_OPTION_ARG_FILENAME , &bathy_file , "Bathymetry file"     , "<file>" } ,
+   { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &flood_file , "Flood file"          , "<file>" } ,
+   { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &data_file  , "Data file"           , "<file>" } ,
+   { "angle"      , 'a' , 0 , G_OPTION_ARG_DOUBLE   , &angle      , "Spreading angle"     , "DEG"    } ,
+   { "verbose"    , 'V' , 0 , G_OPTION_ARG_INT      , &verbose    , "Verbosity level"     , "n"      } ,
+   { "version"    , 'v' , 0 , G_OPTION_ARG_NONE     , &version    , "Version number"      , NULL     } ,
+   { "debug"      , 'b' , 0 , G_OPTION_ARG_NONE     , &debug      , "Write debug messages", NULL     } ,
+   { NULL }
 };
 
-#ifndef M_PI
-# define M_PI		3.14159265358979323846
-#endif
+void
+inflow_run_flood( Inflow_bathy_st* b    ,
+                  Inflow_flood_st* f    ,
+                  Inflow_sediment_st* s ,
+                  Inflow_const_st* c    ,
+                  double** deposit_in_m )
+{
+   gint n, i;
+   FILE* fp_debug = g_getenv("INFLOW_DEBUG")?stderr:NULL;
+   double t       = 0.;
+   double dt      = S_SECONDS_PER_DAY;
+   double total_t = f->duration;
+   double** deposition = eh_new_2( double , s->n_grains , b->len );
+   double** erosion    = eh_new_2( double , s->n_grains , b->len );
 
-#ifdef OLDWAY
-extern double *pheBottom_;
-extern FILE *fpout_;
-#endif
+   for ( t=0 ; t<total_t ; t+=dt )
+   {
+      if ( t+dt > total_t )
+         dt = total_t-t;
 
-#define DEFAULT_DAY_LENGTH           1
-#define DEFAULT_SPREADING_ANGLE      (14.)
-#define DEFAULT_VERBOSE              0
-#define DEFAULT_DATA_FILE_NAME       "inflow.data"
-#define DEFAULT_BATHYMETRY_FILE_NAME "inflow.bathy"
-#define DEFAULT_FLOOD_FILE_NAME      "inflow.flood"
-#define DEFAULT_INPUT_FILE_NAME      "inflow.input"
+      f->duration = dt;
 
-void inflow_get_phe( gpointer phe , gpointer data );
+      inflow_wrapper( b , f , s , c , deposition , erosion );
+
+      inflow_update_bathy_data( b , deposition , erosion , s->n_grains );
+
+      for ( n=0 ; n<s->n_grains ; n++ )
+         for ( i=0 ; i<b->len ; i++ )
+            deposit_in_m[n][i] += deposition[n][i] - erosion[n][i];
+   }
+
+   eh_free_2( erosion    );
+   eh_free_2( deposition );
+}
+
+void inflow_set_width( Inflow_bathy_st* bathy_data ,
+                       double river_width          ,
+                       double spreading_angle );
 
 int main(int argc,char *argv[])
 {
+   gchar* program_name;
+   GOptionContext* context = g_option_context_new( "Run hyperpycnal flow model." );
+   GError* error = NULL;
+   double spreading_angle;
+   Eh_dbl_grid deposit;
+   Eh_dbl_grid total_deposit;
+   gint i;
+   gboolean mode_1d;
+   Inflow_param_st*    param;
+   Inflow_bathy_st*    bathy_data;
+   Inflow_flood_st**   flood_data;
+   Inflow_const_st*    const_data;
+   Inflow_sediment_st* sediment_data;
+
+   g_option_context_add_main_entries( context , entries , NULL );
+
+   if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+      eh_error( "Error parsing command line arguments: %s" , error->message );
+
+   day            *= S_SECONDS_PER_DAY;
+   spreading_angle = tan(angle*G_PI/180.);
+
+   if ( version )
+   {
+      eh_fprint_version_info( stdout , "inflow" , 0 , 9 , 0 );
+      eh_exit(0);
+   }
+
+   if ( debug )
+      g_setenv( "INFLOW_DEBUG" , "TRUE" , TRUE );
+
+   program_name = g_path_get_basename( argv[0] );
+   if ( strcasecmp( program_name , "inflow1d")==0 )
+   {
+      angle   = 0.;
+      mode_1d = TRUE;
+   }
+
+   if ( verbose )
+   {
+      if ( mode_1d )
+         eh_info( "Operating in 1D mode (ignoring width information)." );
+      else
+         eh_info( "Operating in 1.5D mode." );
+
+      eh_info( "Duration of flow (days)   : %f" , day*S_DAYS_PER_SECOND );
+      eh_info( "Spreading angle (degrees) : %f" , angle );
+   }
+
+   if (    ( param      = inflow_scan_parameter_file( in_file            , &error ) )==NULL
+        || ( flood_data = inflow_scan_flood_file    ( flood_file , param , &error ) )==NULL
+        || ( bathy_data = inflow_scan_bathy_file    ( bathy_file , param , &error ) )==NULL )
+      eh_error( "%s" , error->message );
+
+   const_data    = inflow_set_constant_data  ( param );
+   sediment_data = inflow_set_sediment_data  ( param );
+
+   deposit       = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
+   total_deposit = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
+
+   for ( i=0 ; flood_data[i] ; i++ )
+   {
+      inflow_set_width( bathy_data , flood_data[i]->width , spreading_angle );
+
+      inflow_run_flood( bathy_data , flood_data[i] , sediment_data , const_data ,
+                        eh_dbl_grid_data(deposit) );
+      eh_dbl_grid_add( total_deposit , deposit );
+   }
+
+   inflow_write_output( out_file , bathy_data , eh_dbl_grid_data(total_deposit) , sediment_data->n_grains );
+
+//   for ( n=0 ; n<n_grains ; n++ )
+//      fwrite( deposit[n] , n_nodes , sizeof(double) , fp_data );
+
+   eh_grid_destroy( total_deposit , TRUE );
+   eh_grid_destroy( deposit       , TRUE );
+
+   return 0;
+}
+
+void
+inflow_set_width( Inflow_bathy_st* bathy_data ,
+                  double river_width          ,
+                  double spreading_angle )
+{
+   gint   i;
+   double dx = bathy_data->x[1] - bathy_data->x[0];
+   double flow_width;
+
+   // Create a spreading angle.
+   bathy_data->width[0] = river_width;
+   for ( i=1 ; i<bathy_data->len ; i++ )
+   {
+      flow_width = bathy_data->width[i-1] + spreading_angle*dx;
+      if ( flow_width < bathy_data->width[i] )
+         bathy_data->width[i] = flow_width;
+      else
+         break;
+   }
+
+   return;
+}
+
+#if defined( OLD )
+{
+
    Eh_args *args;
    FILE *fp_in, *fp_out, *fp_flood, *fp_data;
    char *infile, *outfile, *bathyfile, *floodfile, *datafile;
@@ -93,39 +222,6 @@ int main(int argc,char *argv[])
    double angle, spreading_angle, flow_width;
    I_bottom_t get_phe_data;
    Inflow_t consts;
-   
-   args = eh_opts_init( argc , argv );
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit(-1);
-
-   verbose   = eh_get_opt_bool( args , "v"     , FALSE                        );
-   day       = eh_get_opt_dbl ( args , "day"   , DEFAULT_DAY_LENGTH           );
-   angle     = eh_get_opt_dbl ( args , "angle" , DEFAULT_SPREADING_ANGLE      );
-   infile    = eh_get_opt_str ( args , "in"    , DEFAULT_INPUT_FILE_NAME      );
-   outfile   = eh_get_opt_str ( args , "out"   , NULL                         );
-   bathyfile = eh_get_opt_str ( args , "bathy" , DEFAULT_BATHYMETRY_FILE_NAME );
-   floodfile = eh_get_opt_str ( args , "flood" , DEFAULT_FLOOD_FILE_NAME      );
-   datafile  = eh_get_opt_str ( args , "data"  , DEFAULT_DATA_FILE_NAME       );
-
-   day *= DAY;
-   spreading_angle = tan(angle*M_PI/180.);
-
-   if ( strcmp("inflow1d",g_basename(argv[0]))==0 )
-   {
-      angle = 0.;
-      mode_1d = TRUE;
-   }
-
-   if ( verbose )
-   {
-      if ( mode_1d )
-      {
-         fprintf(stderr,"inflow : --- operating in 1d mode ---\n");
-         fprintf(stderr,"inflow : all width information will be lost.\n");
-      }
-      fprintf(stderr,"inflow : duration of flow (days)   : %f\n",day/DAY);
-      fprintf(stderr,"inflow : spreading angle (degrees) : %f\n",angle);
-   }
 
 // read input parameters.
 
@@ -160,6 +256,7 @@ int main(int argc,char *argv[])
    read_double_vector( fp_in , equivalentHeight   , n_grains );
    read_double_vector( fp_in , bulkDensity        , n_grains );
    read_double_vector( fp_in , grainDensity       , n_grains );
+
    read_double_vector( fp_in , &depositionStart   , 1 );
    depositionStart *= 1000;
    read_double_vector( fp_in , &diameterBottom    , 1 );
@@ -248,13 +345,10 @@ int main(int argc,char *argv[])
       if ( river_width[i] > width[0] )
          g_error( "The river width is greater than the basin width." );
 
-   fp_data = eh_open_file( datafile , "w" );
-
    fwrite( &n_nodes , 1       , sizeof(int)    , fp_data );
    fwrite( x        , n_nodes , sizeof(double) , fp_data );
    fwrite( depth    , n_nodes , sizeof(double) , fp_data );
    fwrite( width    , n_nodes , sizeof(double) , fp_data );
-//   fpout_ = fp_data;
 
    get_phe_data.phe_bottom = phe_bottom;
    get_phe_data.n_grains   = n_grains;
@@ -279,7 +373,7 @@ int main(int argc,char *argv[])
       inflow( day                , x              , slope             ,
               width              , n_nodes        , dx                ,
               depositionStart    , river_width[i] , river_velocity[i] ,
-              river_depth[i]     , discharge[i]   , fraction          ,
+              river_depth[i]     , river_q[i]     , fraction          ,
               diameterEquivalent , lambda         , bulkDensity       ,
               grainDensity       , n_grains       , densityRiverWater ,
               densityFlow[i]     , consts         , deposit           ,
@@ -315,28 +409,5 @@ int main(int argc,char *argv[])
    
    return 0;
 }
-
-#ifdef OLDWAY
-/* pheBottom will be a global variable that is read as an input into the
-   standalone model.
-*/
-extern double *pheBottom_;
-
-double getPhe(double *phe,int n_grains)
-{
-   memcpy(phe,pheBottom_,sizeof(double)*n_grains);
-   return 0.;
-}
 #endif
-
-void inflow_get_phe( gpointer query_data , gpointer data )
-{
-   double *phe_out = EH_STRUCT_MEMBER( I_phe_query_t , query_data , phe );
-   double *phe_bottom = EH_STRUCT_MEMBER( I_bottom_t , data , phe_bottom );
-   int     n_grains   = EH_STRUCT_MEMBER( I_bottom_t , data , n_grains   );
-
-   memcpy( phe_out , phe_bottom , sizeof(double)*n_grains );
-
-   return;
-}
 

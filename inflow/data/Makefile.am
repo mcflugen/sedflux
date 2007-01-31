@@ -1,12 +1,12 @@
 .IGNORE:
 
 EXTRA_DIST =    \
-   inflow.input \
-   inflow.bathy \
-   inflow.flood
+   inflow_param.kvf    \
+   inflow_flood.kvf    \
+   inflow_bathy.csv
 
 pkgdata_DATA =  \
-   inflow.input \
-   inflow.bathy \
-   inflow.flood
+   inflow_param.kvf    \
+   inflow_flood.kvf    \
+   inflow_bathy.csv
 

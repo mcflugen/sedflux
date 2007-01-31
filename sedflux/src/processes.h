@@ -50,7 +50,7 @@
 # include "storms.h"
 # include "subsidence.h"
 # include "turbidity_current.h"
-# include "avulsion.h"
+# include "run_avulsion.h"
 
 /** Holds all of the processes for sedflux
 
