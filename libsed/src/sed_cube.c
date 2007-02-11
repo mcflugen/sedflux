@@ -54,12 +54,32 @@ sed_cube_error_quark( void )
    return g_quark_from_static_string( "sed-cube-error-quark" );
 }
 
-gboolean is_sedflux_3d( void )
+static Sedflux_mode __sedflux_mode = SEDFLUX_MODE_NOT_SET;
+
+void
+sed_mode_set( Sedflux_mode mode )
 {
-   if ( strcasecmp( g_get_application_name( ) , "sedflux3d" )==0 )
-      return TRUE;
-   else
-      return FALSE;
+   if (    __sedflux_mode == SEDFLUX_MODE_NOT_SET 
+        && mode           != SEDFLUX_MODE_NOT_SET )
+      __sedflux_mode = mode;
+}
+
+gboolean
+sed_mode_is( Sedflux_mode mode )
+{
+   return __sedflux_mode==mode;
+}
+
+gboolean
+sed_mode_is_2d( void )
+{
+   return __sedflux_mode==SEDFLUX_MODE_2D;
+}
+
+gboolean
+sed_mode_is_3d( void )
+{
+   return __sedflux_mode==SEDFLUX_MODE_3D;
 }
 
 #define DEFAULT_BINS (16)
@@ -145,7 +165,7 @@ Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y )
 #define SED_KEY_SEDIMENT_FILE  "sediment file"
 
 Sed_cube
-sed_cube_new_from_file( gchar* file )
+sed_cube_new_from_file( const gchar* file )
 {
    Sed_cube p = NULL;
 
@@ -180,7 +200,7 @@ sed_cube_new_from_file( gchar* file )
          GError* err = NULL;
 
          /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
-         if ( is_sedflux_3d() )
+         if ( sed_mode_is_3d( ) )
             grid = sed_get_floor_2d_grid( bathy_file , x_res , y_res );
          else
             grid = sed_get_floor_1d_grid( bathy_file , x_res , y_res , &err );

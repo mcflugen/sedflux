@@ -21,52 +21,15 @@
 #if !defined( SED_CONST_H )
 # define SED_CONST_H
 
-// Name : sedflux constants - some commonly used constants in the sedflux
-//        environment.
-//
-// Synopsis :
-//
-// #define           PROGRAM_NAME
-// #define           PROGRAM_MAJOR_VERSION
-// #define           PROGRAM_MINOR_VERSION
-// #define           S_MAJOR_VERSION
-// #define           S_MINOR_VERSION
-// #define           S_MICRO_VERSION
-// #define           S_CHECK_VERSION
-// #define           S_SECONDS_PER_HOUR
-// #define           S_SECONDS_PER_DAY
-// #define           S_SECONDS_PER_YEAR
-// #define           S_DAYS_PER_YEAR
-// #define           S_RADS_PER_DEGREE
-// #define           S_GRAVITY
-// #define           S_RHO_WATER
-// #define           S_RHO_GRAIN
-// #define           S_MU_WATER
-// #define           S_ETA_WATER
-// #define           S_GAMMA_WATER
-// #define           S_GAMMA_GRAIN
-// #define           S_VELOCITY_IN_WATER
-// #define           S_VELOCITY_IN_ROCK
-// #define           FRAC                             ( a )
-// #define           SWAP                             ( a,
-//                                                      b,
-//                                                      a_type )
-// #define           S_ADDBINS
-// #define           S_PROPERTY_BULK_DENSITY
-// #define           S_PROPERTY_GRAIN_SIZE
-// #define           S_PROPERTY_FACIES
-// #define           S_PROPERTY_AGE
-// #define           S_PROPERTY_VELOCITY
-
 #define PROGRAM_NAME "sedflux"
 #define SED_MAJOR_VERSION_S "2"
 #define SED_MINOR_VERSION_S "0"
-#define SED_MICRO_VERSION_S "22"
+#define SED_MICRO_VERSION_S "23"
 #define SED_VERSION_S SED_MAJOR_VERSION_S"."SED_MINOR_VERSION_S"."SED_MICRO_VERSION_S
 
 #define S_MAJOR_VERSION (2)
 #define S_MINOR_VERSION (0)
-#define S_MICRO_VERSION (22)
+#define S_MICRO_VERSION (23)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \

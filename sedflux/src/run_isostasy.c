@@ -57,7 +57,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
       return SED_EMPTY_INFO;
    }
 
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
    {
       x_reduction = .2;
       y_reduction = .2;
@@ -68,7 +68,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
       y_reduction = .2;
    }
 
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       C = sed_cube_x_res( prof )
         * sed_cube_y_res( prof )
         / x_reduction
@@ -179,7 +179,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
 
             subside_grid_load( this_dw_small , v_0 , eet , y );
 
-            if ( !is_sedflux_3d() )
+            if ( sed_mode_is_2d() )
             {
                double half_load = this_half_load - data->last_half_load;
                subside_half_plane_load( this_dw_small , half_load , eet , y );

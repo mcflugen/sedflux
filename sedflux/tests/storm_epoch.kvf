@@ -1,0 +1,30 @@
+/* For the benchmark test, deposit sediment from a file.
+   All other processes are off.  This is not intended to
+   be a test of sedflux, only how quickly the architecture
+   is working.
+*/
+[ bbl ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+algorithm (none|muds):                  none
+external sediment source file:		bench_input_be.seq
+/*
+[ storms ]
+active:                                      yes
+logging:                                     no
+repeat interval:                             always
+fraction of events to model:                 .001
+average non-events?:                         no
+wave height:                                 user=wave_h_dist.txt
+seed for random number generator:            1945
+*/
+[ storms ]
+active:                                      yes
+logging:                                     no
+repeat interval:                             always
+fraction of events to model:                 .001
+average non-events?:                         no
+wave height:                                 normal=3,.1
+seed for random number generator:            1945
+

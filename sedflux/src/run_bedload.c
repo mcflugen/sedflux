@@ -81,7 +81,7 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    this_river    = sed_cube_river_by_name( prof , data->river_name );
    in_suspension = sed_cube_in_suspension( prof , sed_cube_river_id(prof,this_river) );
 
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       river_mouth = sed_cube_river_mouth_position( prof , this_river );
    else
    {
@@ -130,7 +130,7 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    // Add the bed load into its grid.  The bed load is distributed evenly over
    // an arc.  The user defines the radius and interior angle of the arc.
    //---
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       eh_dbl_grid_populate( fraction_grid                      ,
                             (Populate_func)&bed_load_2d_domain ,
                             &bed_load_data );
@@ -173,7 +173,7 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
              / sed_cell_density_0( bed_load_cell );
    thickness = volume / area;
 
-   if ( !is_sedflux_3d() && data->bed_load_dump_length > sed_cube_x_res(prof) )
+   if ( sed_mode_is_2d() && data->bed_load_dump_length > sed_cube_x_res(prof) )
       thickness *= sed_cube_x_res(prof)/data->bed_load_dump_length;
 
    low_x  = eh_grid_low_x(fraction_grid);

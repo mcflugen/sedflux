@@ -88,8 +88,8 @@ double      eh_dbl_grid_sum_bad_val  ( Eh_dbl_grid g   , double bad_val         
 Eh_dbl_grid eh_dbl_grid_set          ( Eh_dbl_grid g   , double val                         );
 Eh_dbl_grid eh_dbl_grid_randomize    ( Eh_dbl_grid g );
 void        eh_dbl_grid_scalar_mult  ( Eh_dbl_grid g   , double val                         );
-void        eh_dbl_grid_rotate       ( Eh_dbl_grid g   , double angle  ,
-                                       gssize i_0      , gssize j_0                         );
+Eh_dbl_grid eh_dbl_grid_rotate       ( Eh_dbl_grid g   , double angle  ,
+                                       gssize i_0      , gssize j_0    , double* err        );
 Eh_dbl_grid eh_dbl_grid_reduce       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
 Eh_dbl_grid eh_dbl_grid_expand       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
 Eh_dbl_grid eh_dbl_grid_remesh       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );

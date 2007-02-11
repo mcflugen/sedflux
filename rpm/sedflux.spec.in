@@ -1,0 +1,38 @@
+Summary: A process-based basin filling model
+Name: sedflux
+Version: @VERSION@
+Release: 1
+Epoch: 1
+Source: http://instaar.colorado.edu/pub/ew/sedflux-%{version}.tar.gz
+Group: Development/Tools
+URL: http://instaar.colorado.edu/delta_force
+Prefix: %{_prefix}
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
+Packager: Eric Hutton <huttone@colorado.edu>
+
+%description
+sedflux is a super-cool numerical model.
+
+%prep
+%setup
+
+%build
+./configure --prefix %{_prefix}
+make
+
+%install
+rm -rf ${RPM_BUILD_ROOT}
+mkdir -p ${RPM_BUILD_ROOT}%{_prefix}
+make prefix=$RPM_BUILD_ROOT%{_prefix} install
+
+%clean
+rm -rf ${RPM_BUILD_ROOT}
+
+%files
+%defattr(-,root,root)
+%{_prefix}
+
+%changelog
+* Fri Feb 9 2007 Eric Hutton <huttone@colorado.edu>
+- First packaging.
+

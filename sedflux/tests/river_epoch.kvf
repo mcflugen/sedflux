@@ -1,0 +1,20 @@
+/* For the benchmark test, deposit sediment from a file.
+   All other processes are off.  This is not intended to
+   be a test of sedflux, only how quickly the architecture
+   is working.
+*/
+[ bbl ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+algorithm (none|muds):                  none
+external sediment source file:		none
+
+[ river ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+river values:                           season
+river file:                             bench_river.kvf
+river name:                             Ebro
+

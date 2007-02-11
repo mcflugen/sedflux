@@ -1440,7 +1440,96 @@ eh_dbl_array_copy( double* d , double* s , gssize n )
 }
 
 double*
-eh_dbl_array_rebin( double* s , gssize n , double bin_size , gint* d_len )
+eh_dbl_col_to_array( double* d , double* col , gint n , gssize offset )
+{
+   if ( col )
+   {
+      gint i;
+
+      if ( !d )
+         d = eh_dbl_array_new( n );
+
+      for ( i=0 ; i<n ; i++ )
+         d[i] = col[i*offset];
+   }
+   return d;
+}
+
+double*
+eh_dbl_array_to_col( double* d , double* s , gint n , gssize offset )
+{
+   if ( s )
+   {
+      gint i;
+
+      if ( !d )
+         d = eh_new( double , n*offset );
+
+      for ( i=0 ; i<n ; i++ )
+         d[i*offset] = s[i];
+   
+   }
+   return d;
+}
+
+gint
+eh_dbl_array_rebin_len( double* s , gssize n , double bin_size )
+{
+   gint len = 0;
+
+   if ( s )
+      len = ceil ( n / bin_size );
+
+   return len;
+}
+
+double*
+eh_dbl_array_rebin_smaller( double* s , gssize n , double bin_size , gint* d_len )
+{
+   double* d = NULL;
+
+   eh_require( bin_size<=1. );
+
+   if      ( eh_compare_dbl( bin_size , 1. , 1e-12 ) )
+   {
+      d = eh_dbl_array_dup( s , n );
+      if ( d_len )
+         *d_len = n;
+   }
+   else if ( s )
+   {
+      gint   len   = ceil ( n / bin_size );
+      gint   top_i = floor( n / bin_size );
+      gint   i, j;
+      double x;
+      double f;
+
+      d = eh_new( double , len );
+
+      f    = 1.-bin_size;
+      d[0] = bin_size*s[0];
+      for ( i=1,x=bin_size ; i<top_i ; i++,x+=bin_size )
+      {
+         j = (gint)(x+bin_size);
+         d[i]  = s[j-1]*f + s[j]*(bin_size-f);
+         f     = 1. - (bin_size-f);
+         f     = f - (gint)f;
+      }
+
+      if ( len!=top_i )
+      {
+         d[i] = s[n-1]*f;
+      }
+
+      if ( d_len )
+         *d_len = len;
+   }
+
+   return d;
+}
+
+double*
+eh_dbl_array_rebin_larger( double* s , gssize n , double bin_size , gint* d_len )
 {
    double* d = NULL;
 
@@ -1479,6 +1568,19 @@ eh_dbl_array_rebin( double* s , gssize n , double bin_size , gint* d_len )
       if ( d_len )
          *d_len = len;
    }
+
+   return d;
+}
+
+double*
+eh_dbl_array_rebin( double* s , gssize n , double bin_size , gint* d_len )
+{
+   double* d = NULL;
+
+   if ( bin_size<1. )
+      d = eh_dbl_array_rebin_smaller( s , n , bin_size , d_len );
+   else
+      d = eh_dbl_array_rebin_larger ( s , n , bin_size , d_len );
 
    return d;
 }

@@ -49,10 +49,13 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
    {
       if ( data->initialized )
       {
-         gint i;
-         for ( i=0 ; i<data->src_seq->len ; i++ )
-            eh_grid_destroy( data->src_seq->data[i] , TRUE );
-         eh_destroy_sequence( data->src_seq , FALSE );
+         if ( data->src_seq )
+         {
+            gint i;
+            for ( i=0 ; i<data->src_seq->len ; i++ )
+               eh_grid_destroy( data->src_seq->data[i] , TRUE );
+            eh_destroy_sequence( data->src_seq , FALSE );
+         }
          data->initialized = FALSE;
       }
       return SED_EMPTY_INFO;
@@ -65,7 +68,7 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
       if ( data->src_file )
       {
          GError* err = NULL;
-         if ( is_sedflux_3d() )
+         if ( sed_mode_is_3d() )
             data->src_seq  = sed_get_floor_sequence_3( data->src_file         ,
                                                        sed_cube_x_res( prof ) ,
                                                        sed_cube_y_res( prof ) , 
@@ -76,7 +79,7 @@ Sed_process_info run_bbl(gpointer ptr, Sed_cube prof)
                                                        sed_cube_n_y(prof) ,
                                                        &err );
 
-         if ( err )
+         if ( !(data->src_seq) )
             eh_error( "Unable to read subsidence sequence file: %s\n" , err->message );
       }
       else
@@ -159,7 +162,7 @@ gboolean init_bbl(Eh_symbol_table symbol_table,gpointer ptr)
       if ( strcasecmp( key , "MUDS" )==0 )
       {
          data->algorithm = BBL_ALGORITHM_MUDS;
-         if ( is_sedflux_3d() )
+         if ( sed_mode_is_3d() )
          {
             eh_warning( "Sedflux3D requires bbl algorithm to be 'NONE'." );
             data->algorithm = BBL_ALGORITHM_NONE;

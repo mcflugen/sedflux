@@ -73,7 +73,7 @@ Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
 //                                               sed_cube_y_res( prof ) );
       y = sed_cube_y( prof , NULL );
 
-      if ( is_sedflux_3d() )
+      if ( sed_mode_is_3d() )
          data->subsidence_seq  = sed_get_floor_sequence_3(
                                     data->filename ,
                                     sed_cube_x_res( prof ) ,
@@ -192,7 +192,7 @@ gboolean init_subsidence( Eh_symbol_table symbol_table,gpointer ptr)
    data->filename = eh_symbol_table_value( symbol_table , S_KEY_SUBSIDENCE_FILE );
 
    if ( !eh_try_open(data->filename) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    return TRUE;
 }

@@ -90,7 +90,7 @@ gboolean init_cpr( Eh_symbol_table symbol_table , gpointer ptr )
    data->output_dir = eh_symbol_table_value( symbol_table , S_KEY_DIR );
 
    if ( !try_dir( data->output_dir ) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    return TRUE;
 }

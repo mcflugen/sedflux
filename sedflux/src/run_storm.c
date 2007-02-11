@@ -415,8 +415,6 @@ run_storm(gpointer ptr,Sed_cube prof)
                      sed_ocean_storm_wave_length(this_storm) );
 
          this_time  += sed_ocean_storm_duration(this_storm)*S_YEARS_PER_DAY;
-if ( sed_ocean_storm_wave_height(this_storm)>100. )
-   eh_exit(0);
 
       }
 
@@ -482,7 +480,7 @@ init_storm( Eh_symbol_table tab , gpointer ptr )
    if ( (data->wave_height = eh_symbol_table_input_value(tab,S_KEY_WAVE_HEIGHT ,&err)) == NULL )
    {
       fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
    data->fraction           = eh_symbol_table_dbl_value ( tab , S_KEY_FRACTION        );

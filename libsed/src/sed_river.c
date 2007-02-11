@@ -495,7 +495,9 @@ sed_river_destroy( Sed_riv s )
       sed_hydro_destroy      ( s->data      );
       sed_river_destroy      ( s->l         );
       sed_river_destroy      ( s->r         );
-      g_datalist_clear       ( s->user_data );
+
+      if ( s->user_data )
+         g_datalist_clear( &(s->user_data) );
 
       eh_free( s );
    }

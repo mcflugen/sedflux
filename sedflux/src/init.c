@@ -41,9 +41,9 @@ static Sed_process_init_t process_list[] =
    { "tide"              , sizeof(Tide_t)         , init_tide          , run_tide        } , 
    { "sea level"         , sizeof(Sea_level_t)    , init_sea_level     , run_sea_level   } ,
    { "storms"            , sizeof(Storm_t)        , init_storm         , run_storm       } ,
-   { "avulsion"          , sizeof(Avulsion_t)     , init_avulsion      , run_avulsion    } ,
    { "erosion"           , sizeof(Erosion_t)      , init_erosion       , run_erosion     } ,
    { "river"             , sizeof(River_t)        , init_river         , run_river       } ,
+   { "avulsion"          , sizeof(Avulsion_t)     , init_avulsion      , run_avulsion    } ,
 
    /* A new process */
    { "new process"       , sizeof(New_process_t)  , init_new_process   , run_new_process } ,

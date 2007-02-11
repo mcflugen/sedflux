@@ -58,7 +58,7 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
       if ( err )
       {
          fprintf( stderr , "Error reading sea level file: %s\n" , err->message );
-         eh_exit(-1);
+         eh_exit( EXIT_FAILURE );
       }
 
       data->len         = len;
@@ -106,7 +106,7 @@ gboolean init_sea_level(Eh_symbol_table symbol_table,gpointer ptr)
    data->filename = eh_symbol_table_value( symbol_table, S_KEY_SEA_LEVEL_FILE );
 
    if ( !eh_try_open(data->filename) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    return TRUE;
 }

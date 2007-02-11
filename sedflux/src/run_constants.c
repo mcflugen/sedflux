@@ -112,7 +112,7 @@ init_constants( Eh_symbol_table tab , gpointer ptr )
         || (data->rho_mantle  = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_MANTLE,&err)  ) == NULL )
    {
       fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
    return TRUE;

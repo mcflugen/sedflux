@@ -95,11 +95,11 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
       eh_message( "position (y) : %d" , sed_river_mouth       ( this_river ).j );
       eh_message( "fraction     : %f" , fraction                               );
 
-      if ( !is_sedflux_3d() )
-      {
+      if ( sed_mode_is_2d() )
          sed_river_adjust_mass( this_river , fraction  );
-      }
    }
+   else
+      eh_require_not_reached();
 
    return info;
 }
@@ -147,7 +147,7 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
         || (data->max_angle = eh_symbol_table_input_value(tab,S_KEY_MAX_ANGLE,&err)) == NULL )
    {
       fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
    data->rand_seed = eh_symbol_table_int_value( tab , S_KEY_SEED );
@@ -167,7 +167,7 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
    else
       eh_error( "An x-y pair is required for the hinge point." );
 
-   if ( !is_sedflux_3d() )
+   if ( sed_mode_is_2d() )
    {
       data->hinge_i = 0;
       data->hinge_j = 0;

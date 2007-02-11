@@ -37,6 +37,7 @@
 #include "complex.h"
 #include "eh_num.h"
 #include "eh_opt_context.h"
+#include "eh_project.h"
 #include "eh_grid.h"
 #include "eh_ndgrid.h"
 #include "eh_key_file.h"
@@ -837,6 +838,8 @@ Eh_status_bar* eh_status_bar_destroy   ( Eh_status_bar* b );
 
 gchar* eh_render_time_str( double sec , gchar* str );
 
+gchar*   eh_render_command_str( int argc , char* argv[] );
 gboolean eh_check_to_s( gboolean assert , const gchar* str , gchar*** str_list );
+gchar*   eh_get_input_val( FILE *fp , char *msg , char *default_str );
 
 #endif /* utils.h is included */

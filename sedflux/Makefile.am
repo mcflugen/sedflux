@@ -1,2 +1,2 @@
-SUBDIRS = src mfiles data
+SUBDIRS = src mfiles data tests
 

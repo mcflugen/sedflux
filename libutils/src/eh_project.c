@@ -90,6 +90,8 @@ Eh_project eh_project_set_info_val( Eh_project p     ,
 {
    char* group_name = construct_project_group_name( p );
 
+   eh_require( value!=NULL );
+
    // If the key doesn't exist, a new one is created.
    // NOTE: a copy is added
    g_key_file_set_value( p->info_file , group_name , key , value );
@@ -99,9 +101,11 @@ Eh_project eh_project_set_info_val( Eh_project p     ,
    return p;
 }
 
-Eh_project eh_project_add_info_val( Eh_project p , char* key , char* val )
+Eh_project eh_project_add_info_val( Eh_project p , char* key , const gchar* val )
 {
    char* group_name = construct_project_group_name( p );
+
+   eh_require( val!=NULL );
 
    //---
    // If the key already exists, add the new value to the list.
@@ -203,6 +207,9 @@ Eh_project eh_set_project_current_time( Eh_project p )
       g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
       sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
 
+      eh_require( date_str!=NULL );
+      eh_require( time_str!=NULL );
+
       g_key_file_set_value( file , group_name , "CURRENT DATE"  , date_str );
       g_key_file_set_value( file , group_name , "CURRENT TIME"  , time_str );
 
@@ -242,6 +249,9 @@ Eh_project eh_fill_project_info( Eh_project p )
       g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
       sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
 
+      eh_require( date_str!=NULL );
+      eh_require( time_str!=NULL );
+
       g_key_file_set_value( file , group_name , "RUN START DATE"  , date_str );
       g_key_file_set_value( file , group_name , "RUN START TIME"  , time_str );
 
@@ -260,8 +270,10 @@ Eh_project eh_fill_project_info( Eh_project p )
    return p;
 }
 
-void eh_write_project_info_file( Eh_project proj )
+gint
+eh_write_project_info_file( Eh_project proj )
 {
+   gint n = 0;
    char* info_file = eh_project_info_file_full_name( proj );
 
    eh_require( info_file )
@@ -271,7 +283,7 @@ void eh_write_project_info_file( Eh_project proj )
       FILE *fp = eh_fopen( info_file , "w" );
 
       file_str = g_key_file_to_data( proj->info_file , &file_len , NULL );
-      fprintf( fp , "%s" , file_str );
+      n += fprintf( fp , "%s" , file_str );
 
       fclose( fp );
       eh_free( file_str );
@@ -279,7 +291,7 @@ void eh_write_project_info_file( Eh_project proj )
 
    eh_free( info_file );
 
-   return;
+   return n;
 }
 
 gboolean eh_read_project_info_file( Eh_project proj )

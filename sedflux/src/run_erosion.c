@@ -111,7 +111,7 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
       river_path = sed_cube_river_path_id( p , this_river , TRUE );
    
       river_profile = sed_cube_cols( p , river_path );
-      if ( is_sedflux_3d() )
+      if ( sed_mode_is_3d() )
       {
          sed_cube_set_x_res( river_profile , 1. );
          sed_cube_set_y_res( river_profile ,
@@ -128,7 +128,7 @@ Sed_process_info run_erosion( gpointer ptr , Sed_cube p )
          dt            = sed_cube_time_step_in_days( river_profile );
 //         time_fraction = 1e-1;
          time_fraction = 1e-0;
-         if ( is_sedflux_3d() )
+         if ( sed_mode_is_3d() )
             basin_width   = sed_cube_x_res( river_profile );
          else
             basin_width   = sed_cube_x_res( p );

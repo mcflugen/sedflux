@@ -110,7 +110,7 @@ Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
    //---
    // This module can only be run on a 1D profile.
    //---
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       return info;
 
    fail = data->failure;
@@ -208,7 +208,7 @@ Sed_process_info run_hyperpycnal( gpointer ptr , Sed_cube p )
    //---
    // This module can only be run on a 1D profile.
    //---
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       return info;
 
    // Check which river are hyperpycnal.

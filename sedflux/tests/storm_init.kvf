@@ -1,0 +1,14 @@
+[ global ]
+margin name:            Benchmark
+vertical resolution:    1
+x resolution:           1000
+y resolution:           1000
+bathymetry file:        bench_bathy_be.bin
+sediment file:          bench_sediment.kvf
+
+[ epoch ]
+number:           1
+duration:         100y
+time step:        1y
+process file:     storm_epoch.kvf
+

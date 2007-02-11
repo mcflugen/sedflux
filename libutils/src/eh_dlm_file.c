@@ -806,3 +806,46 @@ gchar* eh_str_remove_blocks( gchar* str , gchar** block_start , gchar** block_en
    return str;
 }
 
+gint
+eh_dlm_print_dbl_grid( const gchar* file , const gchar* delim , Eh_dbl_grid g , GError** error ) 
+{
+   gint n = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
+   eh_require( g     );
+
+   if ( g )
+   {
+      FILE* fp;
+      GError* tmp_err = NULL;
+
+      if ( file )
+         fp = eh_fopen_error( file , "w" , &tmp_err );
+      else
+         fp = stdout;
+
+      if ( fp )
+      {
+         gint i, j;
+         gint n_rows   = eh_grid_n_x( g );
+         gint top_col  = eh_grid_n_y( g )-1;
+         double** data = eh_dbl_grid_data( g );
+
+         if ( !delim )
+            delim = " ";
+
+         for ( i=0 ; i<n_rows ; i++ )
+         {
+            for ( j=0 ; j<top_col ; j++ )
+               n += fprintf( fp , "%f%s" , data[i][j] , delim );
+            n += fprintf( fp , "%f" , data[i][j] , delim );
+            n += fprintf( fp , "\n" );
+         }
+      }
+      else
+         g_propagate_error( error , tmp_err );
+   }
+
+   return n;
+}
+

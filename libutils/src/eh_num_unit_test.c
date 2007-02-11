@@ -773,6 +773,24 @@ START_TEST ( test_rebin )
 
    eh_free( d );
 
+   eh_dbl_array_set( s , 100 , 1. );
+   d = eh_dbl_array_rebin( s , 100 , .5*sqrt(2.) , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( len==142 );
+   fail_unless( eh_compare_dbl(eh_dbl_array_sum(d,len),100,1e-12) );
+
+   eh_free( d );
+
+   eh_dbl_array_set( s , 100 , 1. );
+   d = eh_dbl_array_rebin( s , 100 , .75 , &len );
+
+   fail_unless( d!=NULL );
+   fail_unless( len==134 );
+   fail_unless( eh_compare_dbl(eh_dbl_array_sum(d,len),100,1e-12) );
+
+   eh_free( d );
+
 }
 END_TEST
 

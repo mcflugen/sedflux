@@ -196,7 +196,7 @@ gboolean init_data_dump(Eh_symbol_table symbol_table,gpointer ptr)
    
 //   if ( !try_dir(data->output_dir) )
    if ( !eh_open_dir(data->output_dir) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    return TRUE;
 }

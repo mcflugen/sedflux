@@ -20,12 +20,12 @@ Eh_project eh_project_set_info_val        ( Eh_project p     ,
                                             const gchar* value             );
 Eh_project eh_project_add_info_val        ( Eh_project p ,
                                             char* key    ,
-                                            char* val                      );
+                                            const gchar* val                      );
 
 Eh_project eh_set_project_dir             ( Eh_project proj  ,
                                             const char* dir_name           );
 Eh_project eh_fill_project_info           ( Eh_project proj                );
-void       eh_write_project_info_file     ( Eh_project proj                );
+gint       eh_write_project_info_file     ( Eh_project proj                );
 gboolean   eh_read_project_info_file      ( Eh_project proj                );
 Eh_project eh_load_project                ( gchar* info_file               );
 Eh_project eh_destroy_project             ( Eh_project proj                );

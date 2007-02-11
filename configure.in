@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([ew],[2.0.16],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.23],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -198,15 +198,18 @@ AC_CONFIG_FILES([Makefile \
            subside/Makefile subside/src/Makefile \
            xshore/Makefile xshore/src/Makefile \
            sedflux/Makefile sedflux/src/Makefile sedflux/data/Makefile sedflux/mfiles/Makefile \
+              sedflux/tests/Makefile \
            hydrotrend/Makefile hydrotrend/src/Makefile \
               hydrotrend/data/Makefile hydrotrend/mfiles/Makefile \
            sedutils/Makefile sedutils/src/Makefile \
            inflow/src/runinflow \
            sakura/src/runsakura \
            sedflux/src/runsedflux \
-           sedflux/src/runsedflux-batch \
+           sedflux/src/sedflux-run-batch \
+           sedflux/tests/sedflux-run-test \
            docs/sedflux-doxyfile \
-           docs/Makefile])
+           docs/Makefile
+           rpm/Makefile rpm/sedflux.spec ])
 
 AC_OUTPUT
 

@@ -32,10 +32,15 @@ AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
                            $(top_builddir)/inflow/src/libinflow.la \
                            $(top_builddir)/plume/src/libplume.la
 
-bin_SCRIPTS               = runsedflux runsedflux-batch
+bin_SCRIPTS               = runsedflux sedflux-run-batch
 bin_PROGRAMS              = sedflux
+sedflux_LDADD             = -lsedflux-2.0 -lgthread-2.0 -lglib-2.0
 
-sedflux_SOURCES           = \
+lib_LTLIBRARIES           = libsedflux-2.0.la
+
+libsedflux_2_0_la_SOURCES = \
+                            sedflux_signal.c \
+                            sedflux_command_line.c \
                             run_constants.c \
                             run_squall.c \
                             run_cpr.c \
@@ -63,10 +68,16 @@ sedflux_SOURCES           = \
                             run_slump.c \
                             run_turbidity_current.c \
                             run_plume.c \
-                            main.c \
+                            sedflux.c \
                             init.c
 
-noinst_HEADERS            = cpr.h \
+sedflux_SOURCES           = main.c
+
+
+include_HEADERS           = sedflux.h
+
+noinst_HEADERS            = \
+                            cpr.h \
                             run_squall.h \
                             run_flow.h \
                             bbl.h \

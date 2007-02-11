@@ -39,7 +39,9 @@ Sed_process_info run_river(gpointer ptr,Sed_cube prof)
    {
       if ( data->initialized )
       {
+         eh_debug( "Destroy river file" );
          sed_hydro_file_destroy( data->fp_river );
+         eh_debug( "Done." );
          data->initialized = FALSE;
       }
       return SED_EMPTY_INFO;
@@ -182,11 +184,11 @@ gboolean init_river( Eh_symbol_table symbol_table , gpointer ptr )
    {
       eh_warning("unknown option -- %s\n",str);
       eh_warning("valid options are: 'season', 'hydrotrend', or 'event'.\n");
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
    if ( !eh_try_open(data->filename) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
 // River location.
    data->location = 0;

@@ -63,7 +63,7 @@ run_xshore( gpointer ptr , Sed_cube prof )
       data->initialized = TRUE;
    }
 
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
       return p_info;
    
    start_time      = data->last_time;
@@ -229,7 +229,7 @@ init_xshore( Eh_symbol_table tab , gpointer ptr )
    if ( (data->xshore_current = eh_symbol_table_input_value(tab,S_KEY_XSHORE_VEL ,&err)) == NULL )
    {
       fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
 

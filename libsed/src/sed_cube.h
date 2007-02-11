@@ -50,6 +50,19 @@ Sed_cube_error;
 
 GQuark sed_cube_error_quark( void );
 
+typedef enum
+{
+   SEDFLUX_MODE_3D ,
+   SEDFLUX_MODE_2D ,
+   SEDFLUX_MODE_NOT_SET
+}
+Sedflux_mode;
+
+void        sed_mode_set  ( Sedflux_mode mode );
+gboolean    sed_mode_is   ( Sedflux_mode mode );
+gboolean    sed_mode_is_2d( void );
+gboolean    sed_mode_is_3d( void );
+
 /**
    A structure to describe the hinge point of a stream
 */
@@ -94,10 +107,8 @@ typedef gboolean (*Sed_cube_func) ( const Sed_cube , gssize , gssize , gpointer 
 #define S_WATER_DEPTH_FUNC  (&sed_cube_water_depth)
 #define S_LOAD_FUNC         (&sed_cube_load)
 
-gboolean is_sedflux_3d( void );
-
 Sed_cube sed_cube_new( gssize n_x , gssize n_y );
-Sed_cube sed_cube_new_from_file( gchar* file );
+Sed_cube sed_cube_new_from_file( const gchar* file );
 Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y );
 Sed_cube sed_cube_free( Sed_cube c , gboolean free_data );
 Sed_cube sed_cube_free_river( Sed_cube p );

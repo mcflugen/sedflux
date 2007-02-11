@@ -1,0 +1,43 @@
+[ bbl ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+algorithm (none|muds):                  none
+external sediment source file:          none
+
+[ river ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+river values:                           season
+river file:                             bench_river.kvf
+river name:                             Ebro
+
+[ avulsion ]
+active:                                 yes
+logging:                                yes
+repeat interval:                        always
+standard deviation (deg):               25.
+minimum angle (deg):                    0
+maximum angle (deg):                    180
+hinge point:                            50,0
+fraction of sediment remaining in plane: 1.
+river name:                             Ebro
+
+[ 'bedload dumping' ]
+active:                                 yes
+logging:                                yes
+repeat interval:                        always
+distance to dump bedload (m):           5000
+ratio of flood plain to bedload rate:   0
+river name:                             Ebro
+
+['measuring station']
+active:                                 yes
+logging:                                no
+repeat interval:                        10y
+parameter to measure:                   elevation
+position wrt river mouth:               no
+position of station:                    all
+filename:                               elevation.bin
+

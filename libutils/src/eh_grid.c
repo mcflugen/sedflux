@@ -641,10 +641,12 @@ void eh_dbl_grid_scalar_mult( Eh_dbl_grid g , double scalar )
    }
 }
 
-void eh_dbl_grid_rotate( Eh_dbl_grid g , double angle , gssize i_0 , gssize j_0 )
+Eh_dbl_grid
+eh_dbl_grid_rotate( Eh_dbl_grid g , double angle , gssize i_0 , gssize j_0 , double* lost )
 {
-   eh_return_if_fail( g && angle!=0 )
+   if ( g && !eh_compare_dbl(angle,0.,1e-12) )
    {
+      double mass_error = 0;
       gssize i, j;
       gssize i_rotate, j_rotate;
       double r, alpha, new_angle;
@@ -675,14 +677,26 @@ void eh_dbl_grid_rotate( Eh_dbl_grid g , double angle , gssize i_0 , gssize j_0 
                j_rotate = eh_round( r*sin( new_angle ) , 1 )+j_0;
 
                if ( eh_grid_is_in_domain( temp , i_rotate , j_rotate ) )
-                  temp_data[i_rotate][j_rotate] = data[i][j];
+                  temp_data[i_rotate][j_rotate] += data[i][j];
 //                  temp->data[i_rotate][j_rotate] = g->data[i][j];
+               else
+                  mass_error += data[i][j];
             }
          }
+
+      if ( lost )
+         *lost = mass_error;
 
       eh_grid_copy_data( g , temp );
       eh_grid_destroy( temp , TRUE );
    }
+   else
+   {
+      if ( lost )
+         *lost = 0.;
+   }
+
+   return g;
 }
 
 Eh_dbl_grid eh_dbl_grid_reduce( Eh_dbl_grid g ,
@@ -947,6 +961,64 @@ Eh_grid sed_grid_sub( Eh_grid g , int i_0 , int j_0 , int n_x , int n_y )
 
    return sub;
 }
+/*
+void
+eh_dbl_grid_rebin( Eh_dbl_grid source , gint id_ul , gint id_lr , double dx , double dy )
+{
+   gssize i,j;
+   double **temp, *temp_source, *temp_dest;
+   gssize src_low_x=source->low_x, dest_low_x=dest->low_x;
+   gssize src_low_y=source->low_y, dest_low_y=dest->low_y;
+   double** dest_data = (double**)(dest->data);
+
+   eh_grid_reindex( source , 0 , 0 );
+   eh_grid_reindex( dest   , 0 , 0 );
+
+   temp    = eh_new( double* , source->n_x );
+   temp[0] = eh_new( double  , source->n_x*dest->n_y );
+   for ( i=1 ; i<source->n_x ; i++ )
+      temp[i] = temp[i-1] + dest->n_y;
+   temp_source = eh_new( double , source->n_x );
+   temp_dest   = eh_new( double , dest->n_x   );
+
+   dest_n_x = eh_dbl_array_rebin_len( src_n_x , dx );
+   dest_n_y = eh_dbl_array_rebin_len( src_n_y , dy );
+
+   dest = eh_grid_new( double , dest_n_x , dest_n_y );
+
+   for ( i=0 ; i<n_x ; i++ )
+   {
+      eh_dbl_array_rebin( dest->data[i] , source->data[i]+j_0 , n_y , dy , &temp_len );
+      if ( temp_len != dest_n_y )
+         eh_require_not_reached();
+   }
+
+   for ( j=0 ; j<dest_n_y ; j++ )
+   {
+      eh_dbl_col_to_array( temp_source , temp[0]+j , dest_n_x , dest_n_y );
+
+      temp_dest = eh_dbl_array_rebin( temp_source , n_x , dx , &temp_len );
+
+      if ( temp_len != dest_n_x )
+         eh_require_not_reached();
+
+      eh_dbl_array_to_col( dest_data[0]+j , temp_dest , dest_n_x , dest_n_y );
+
+      for ( i=0 ; i<dest_n_x ; i++ )
+         dest_data[i][j] = temp_dest[i];
+   }
+
+   eh_free( temp_dest   );
+   eh_free( temp_source );
+   eh_free( temp[0]     );
+   eh_free( temp        );
+
+   eh_grid_reindex( source , src_low_x  , src_low_y  );
+   eh_grid_reindex( dest   , dest_low_x , dest_low_y );
+
+   return;
+}
+*/
 
 void eh_dbl_grid_rebin( Eh_dbl_grid source , Eh_dbl_grid dest )
 {

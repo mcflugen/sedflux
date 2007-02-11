@@ -118,7 +118,7 @@ gboolean init_met_station(Eh_symbol_table symbol_table,gpointer ptr)
    data->filename = eh_symbol_table_value( symbol_table , S_KEY_FILENAME );
 
    if ( !eh_try_open( data->filename ) )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    return TRUE;
 }

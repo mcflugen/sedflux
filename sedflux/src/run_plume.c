@@ -141,15 +141,16 @@ run_plume( gpointer ptr , Sed_cube prof )
                                               2*sed_cube_n_y(prof) );
 
          eh_debug( "Setting x values" );
-/*
-         eh_grid_set_x_lin( plume_deposit_grid[n] ,
-                            - sed_cube_n_x(prof)*sed_cube_x_res( prof )
-                            + sed_cube_x_res( prof )*.5    ,
-                            sed_cube_x_res(prof) );
-*/
-         eh_grid_set_x_lin( plume_deposit_grid[n] ,
-                            -sed_cube_x_res(prof) ,
-                            sed_cube_x_res(prof) );
+
+         if ( sed_mode_is_3d() )
+            eh_grid_set_x_lin( plume_deposit_grid[n] ,
+                               - sed_cube_n_x(prof)*sed_cube_x_res( prof )
+                               + sed_cube_x_res( prof )*.5    ,
+                               sed_cube_x_res(prof) );
+         else
+            eh_grid_set_x_lin( plume_deposit_grid[n] ,
+                               -sed_cube_x_res(prof) ,
+                               sed_cube_x_res(prof) );
 
          eh_debug( "Setting y values" );
          eh_grid_set_y_lin( plume_deposit_grid[n] ,
@@ -187,7 +188,11 @@ run_plume( gpointer ptr , Sed_cube prof )
 
       river_data.rma        = river_data.rdirection
                             - sed_river_angle( this_river );
-      if ( !is_sedflux_3d() )
+
+      river_data.rdirection = sed_river_angle( this_river );
+      river_data.rma = 0.;
+
+      if ( sed_mode_is_2d() )
       {
          river_data.rdirection = M_PI_2;
          river_data.rma        = 0;
@@ -215,7 +220,7 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
            && plume_const.current_velocity != 0 )
          plume_const.current_velocity = plume_const.current_velocity<0?-.05:.05;
 
-      if ( !is_sedflux_3d() )
+      if ( sed_mode_is_2d() )
          plume_const.current_velocity = 0.;
 
       in_suspension = sed_cube_in_suspension( prof , river_no );
@@ -349,12 +354,12 @@ init_plume( Eh_symbol_table tab , gpointer ptr )
       return TRUE;
    }
 
-   if ( is_sedflux_3d() )
+   if ( sed_mode_is_3d() )
    {
       if ( (data->current_velocity = eh_symbol_table_input_value(tab,S_KEY_CURRENT_VEL ,&err)) == NULL )
       {
          fprintf( stderr , "Unable to read input values: %s" , err->message );
-         eh_exit(-1);
+         eh_exit( EXIT_FAILURE );
       }
    }
    else

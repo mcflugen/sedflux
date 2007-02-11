@@ -9,6 +9,7 @@ static double   x_res      = 1000.;
 static double   y_res      = 1000.;
 static gboolean big_endian    = FALSE;
 static gboolean little_endian = FALSE;
+static gboolean ascii         = FALSE;
 static gboolean version    = FALSE;
 static gint     verbosity  = 0;
 static gboolean debug      = FALSE;
@@ -23,6 +24,7 @@ GOptionEntry entries[] =
    { "y-res"         , 'Y' , 0 , G_OPTION_ARG_DOUBLE   , &y_res         , "Cell size in y-dimension (m)"  , "DY"     } ,
    { "big-endian"    , 'b' , 0 , G_OPTION_ARG_NONE     , &big_endian    , "Byte order is big endian"      , NULL     } ,
    { "little-endian" , 'l' , 0 , G_OPTION_ARG_NONE     , &little_endian , "Byte order is little endian"   , NULL     } ,
+   { "ascii"         , 'a' , 0 , G_OPTION_ARG_NONE     , &ascii         , "Space delimited ASCII output"  , NULL     } ,
    { "verbose"       , 'V' , 0 , G_OPTION_ARG_INT      , &verbosity     , "Verbosity level"               , "n"      } ,
    { "version"       , 'v' , 0 , G_OPTION_ARG_NONE     , &version       , "Version number"                , NULL     } ,
    { "debug"         , 'd' , 0 , G_OPTION_ARG_NONE     , &debug         , "Write debugging messages"      , NULL     } ,
@@ -69,8 +71,17 @@ int main( int argc , char* argv[] )
    eh_message( "x-dimension       : %d" , n_x   );
    eh_message( "y-dimension       : %d" , n_y   );
    eh_message( "Bathymetric slope : %f" , slope   );
-   eh_message( "Byte order        : %d" , byte_order==G_BIG_ENDIAN?"Big-endian":"Little-endian" );
-   eh_message( "Format            : %s" , "<32-bit-integer=N> <<64-bit-double*N> ... EOF>" );
+
+   if ( ascii )
+   {
+      eh_message( "Byte order        : %s" , "ASCII" );
+      eh_message( "Format            : %s" , "Space-delimited" );
+   }
+   else
+   {
+      eh_message( "Byte order        : %s" , byte_order==G_BIG_ENDIAN?"Big-endian":"Little-endian" );
+      eh_message( "Format            : %s" , "<32-bit-integer=N> <<64-bit-double*N> ... EOF>" );
+   }
 
    {
       gint i, j;
@@ -80,7 +91,9 @@ int main( int argc , char* argv[] )
          for ( j=0 ; j<n_y ; j++ )
             eh_dbl_grid_set_val( g , i , j , -slope*j*y_res );
 
-      if ( byte_order == G_BYTE_ORDER )
+      if      ( ascii )
+         eh_dbl_grid_fprintf( fp_out , "%f " , g );
+      else if ( byte_order == G_BYTE_ORDER )
       {
          fwrite( &n_y                  , sizeof(gint32) , 1       , fp_out );
          fwrite( eh_grid_data_start(g) , sizeof(double) , n_x*n_y , fp_out );

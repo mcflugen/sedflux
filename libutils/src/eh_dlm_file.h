@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include "eh_symbol_table.h"
+#include "eh_grid.h"
 
 double**   eh_dlm_read                   ( const gchar* file ,
                                            gchar* delims     ,
@@ -51,4 +52,9 @@ gchar*     eh_str_remove                 ( gchar* str   ,
 gchar*     eh_str_remove_blocks          ( gchar* str   ,
                                            gchar** block_start ,
                                            gchar** block_end );
+
+gint       eh_dlm_print_dbl_grid         ( const gchar* file  ,
+                                           const gchar* delim ,
+                                           Eh_dbl_grid g      ,
+                                           GError** error );
 #endif

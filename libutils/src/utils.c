@@ -40,7 +40,8 @@ void eh_init_glib( void )
 #endif
 }
 
-void eh_exit( int code )
+void
+eh_exit( int code )
 {
    fprintf( stderr , "Exiting program.  " );
 
@@ -3451,4 +3452,43 @@ eh_check_to_s( gboolean assert , const gchar* str , gchar*** str_list )
    return assert;
 }
 
+gchar*
+eh_render_command_str( int argc , char* argv[] )
+{
+   gchar* str = NULL;
+
+   eh_require( argv!=NULL );
+
+   if ( argv )
+   {
+      gint    i;
+      gchar** str_array = NULL;
+
+      for ( i=0 ; i<argc ; i++ )
+         eh_strv_append( &str_array , argv[i] );
+
+      str = g_strjoinv( " " , str_array );
+      
+      eh_free( str_array );
+   }
+
+   return str;
+}
+
+gchar*
+eh_get_input_val( FILE *fp , char *msg , char *default_str )
+{
+   char *str = eh_new( char , S_LINEMAX );
+
+   fprintf( stderr , "%s " , msg );
+   if ( default_str )
+      fprintf( stderr , "[%s] " , default_str );
+   fprintf( stderr , ": " );
+
+   fgets( str , S_LINEMAX , fp );
+   if ( default_str && strncmp( str , "\n" , 1 )==0 )
+      strcpy( str , default_str );
+   g_strstrip( str );
+   return str;
+}
 

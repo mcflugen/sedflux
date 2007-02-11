@@ -73,7 +73,7 @@ run_diffusion( gpointer ptr , Sed_cube prof )
       eh_message( "time                  : %f" ,
                   sed_cube_age_in_years(prof) );
 
-      if ( is_sedflux_3d() )
+      if ( sed_mode_is_3d() )
          lost = diffuse_sediment_2(
                    prof       , k_max , k_max                    ,
                    skin_depth , sed_cube_time_step_in_days(prof) ,
@@ -122,7 +122,7 @@ init_diffusion( Eh_symbol_table tab , gpointer ptr )
    if ( (data->k_max = eh_symbol_table_input_value(tab,S_KEY_K_MAX ,&err)) == NULL )
    {
       fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
    }
 
    data->skin_depth = eh_symbol_table_dbl_value( tab , S_KEY_SKIN_DEPTH );

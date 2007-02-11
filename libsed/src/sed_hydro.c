@@ -348,6 +348,8 @@ sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
 
    if ( t )
    {
+      GError* tmp_err = NULL;
+
       if ( eh_symbol_table_has_labels( t , required_labels ) )
       {
          gssize n_susp_grains;
@@ -369,10 +371,11 @@ sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
       }
       else
       {
-         g_set_error( error ,
+         g_set_error( &tmp_err ,
                       SED_HYDRO_ERROR ,
                       SED_HYDRO_ERROR_MISSING_LABEL ,
                       "Missing labels in hydro file\n" );
+         g_propagate_error( error , tmp_err );
       }
    }
 
@@ -1328,6 +1331,7 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
 {
    Sed_hydro rec = NULL;
 
+   eh_debug( "Read inline record" );
    /* Check if the buffer has already been set */
    if ( fp->buf_set )
    {
@@ -1335,9 +1339,10 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
       rec = sed_hydro_dup( *(fp->buf_cur) );
       fp->buf_cur++;
 
-      /* Rewind the buffer */
-      if ( fp->buf_cur == NULL )
+      /* Rewind the buffer (the buffer is NULL-terminated) */
+      if ( *(fp->buf_cur)==NULL )
       {
+         eh_debug( "Rewind the buffer" );
          if ( fp->wrap_is_on )
             fp->buf_cur = fp->buf_set;
          else
@@ -1346,8 +1351,13 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
    }
    else
    {
+      GError* error = NULL;
+
+      eh_debug( "Fill the buffer" );
       /* Fill the buffer with all the records from the file */
-      fp->buf_set = sed_hydro_scan( fp->file , NULL );
+      fp->buf_set = sed_hydro_scan( fp->file , &error );
+      if ( !fp->buf_set )
+         eh_error( "Error reading hydro file: %s" , error->message );
       fp->buf_cur = fp->buf_set;
 
       rec = sed_hydro_dup( *(fp->buf_cur) );

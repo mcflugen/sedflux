@@ -169,18 +169,25 @@ int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid 
                   * (eh_grid_x(deposit_grid[nn])[1] - eh_grid_x(deposit_grid[nn])[0])
                   * (eh_grid_y(deposit_grid[nn])[1] - eh_grid_y(deposit_grid[nn])[0]);
 
-/*
+
          if ( mass_out>0 && fabs( mass_out-mass_in )>1e-5 )
-            eh_scalar_mult_dbl_grid( deposit_grid[nn] , mass_in/mass_out );
+            eh_dbl_grid_scalar_mult( deposit_grid[nn] , mass_in/mass_out );
          else
             eh_require_not_reached();
-*/
+
       }
 
    }
 
-   for ( nn=0 ; nn<env->n_grains ; nn++ )
-      eh_dbl_grid_rotate( deposit_grid[nn] , shore_angle-M_PI_2 , i_0 , j_0 );
+   {
+      double mass_lost = 0;
+      double total     = 0;
+      for ( nn=0 ; nn<env->n_grains ; nn++ )
+      {
+         eh_dbl_grid_rotate( deposit_grid[nn] , shore_angle-M_PI_2 , i_0 , j_0 , &mass_lost );
+         total += mass_lost;
+      }
+   }
 
    eh_grid_destroy( plume_grid , TRUE );
 
