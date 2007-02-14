@@ -31,7 +31,7 @@ int main( int argc , char* argv[] )
    else
       eh_require_not_reached();
 
-   sed_sediment_set_env( sed_sediment_scan(SED_SEDIMENT_TEST_FILE) );
+   sed_sediment_set_env( sed_sediment_scan(SED_SEDIMENT_TEST_FILE,NULL) );
 
    {
       Sed_column c = sed_column_new( 5 );

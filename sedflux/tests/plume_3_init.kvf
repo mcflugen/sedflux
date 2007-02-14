@@ -3,7 +3,7 @@ margin name:            Benchmark
 vertical resolution:    1
 x resolution:           200
 y resolution:           200
-bathymetry file:        bench_bathy_be.bin
+bathymetry file:        bench_bathy.csv
 sediment file:          bench_sediment.kvf
 
 [ epoch ]

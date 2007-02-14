@@ -31,9 +31,6 @@
 #include "processes.h"
 #include "sedflux.h"
 
-gboolean          check_process_files         ( Sed_epoch_queue e_list , gchar** active );
-Sed_process_queue sedflux_create_process_queue( const gchar* file      , gchar** active );
-
 int
 main( int argc , char *argv[] )
 {
@@ -50,11 +47,11 @@ main( int argc , char *argv[] )
 
    /* Parse command line arguments */
    p = sedflux_parse_command_line( argc , argv , &error );
-   if ( !p )
-      eh_error( "Error parsing command line arguments: %s" , error->message );
+   eh_exit_on_error( error , "Error parsing command line arguments" );
 
    /* Create the project directory and check permissions */
    sedflux_setup_project_dir( &p->init_file , &p->working_dir , &error );
+   eh_exit_on_error( error , "Error setting up project directory" );
 
    sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
 

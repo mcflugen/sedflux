@@ -43,7 +43,8 @@ void            eh_data_record_interpolate_rows( Eh_data_record p     ,
 Eh_data_record* eh_data_record_scan_file       ( const char* file     ,
                                                  const char* delim    ,
                                                  int fast_dim         ,
-                                                 gboolean with_header );
+                                                 gboolean with_header ,
+                                                 GError** error );
 Eh_data_record  eh_data_record_scan            ( GScanner* s          ,
                                                  const char* delim    ,
                                                  int fast_dim         ,

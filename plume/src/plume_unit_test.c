@@ -284,10 +284,17 @@ Suite *sed_plume_suite( void )
 int main( void )
 {
    int n;
+   GError*      error    = NULL;
+   Sed_sediment this_sed = NULL;
 
    eh_init_glib();
 
-   sed_sediment_set_env( sed_sediment_scan( SED_SEDIMENT_TEST_FILE ) );
+   this_sed = sed_sediment_scan( SED_SEDIMENT_TEST_FILE , &error );
+
+   if ( !this_sed )
+      eh_error( "%s: Unable to scan sediment file: %s" , SED_SEDIMENT_TEST_FILE , error->message );
+
+   sed_sediment_set_env( this_sed );
 
    {
       Suite *s = sed_plume_suite();

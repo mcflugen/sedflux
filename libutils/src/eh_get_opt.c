@@ -90,7 +90,7 @@ Eh_symbol_table eh_get_opt_defaults( const char *prog_name )
 // try the .ehrc file in the user's home directory.
    rc_file  = g_strconcat( home_dir , "/" , ehrc , NULL );
    if ( eh_is_readable_file( rc_file ) )
-      home_defaults = eh_key_file_scan_for( rc_file , prog_name , NULL );
+      home_defaults = eh_key_file_scan_for( rc_file , prog_name , NULL , NULL );
    if ( !home_defaults )
       home_defaults = eh_symbol_table_new();
    eh_free(rc_file);
@@ -99,7 +99,7 @@ Eh_symbol_table eh_get_opt_defaults( const char *prog_name )
 // try the .ehrc file in the current directory.
    rc_file  = g_strconcat( cur_dir , "/" , ehrc , NULL );
    if ( eh_is_readable_file( rc_file ) )
-      dir_defaults = eh_key_file_scan_for( rc_file , prog_name , NULL );
+      dir_defaults = eh_key_file_scan_for( rc_file , prog_name , NULL , NULL );
    if ( !dir_defaults )
       dir_defaults = eh_symbol_table_new();
    eh_free(rc_file);

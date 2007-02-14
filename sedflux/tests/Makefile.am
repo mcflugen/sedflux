@@ -25,6 +25,7 @@ EXTRA_DIST      = \
                   storm_init.kvf \
                   bench_bathy_be.bin \
                   bench_bathy_le.bin \
+                  bench_bathy.csv \
                   bench_hydrotrend.dis \
                   bench_input_be.seq \
                   bench_river.kvf \
@@ -54,6 +55,7 @@ pkgdata_DATA    = \
                   storm_init.kvf \
                   bench_bathy_be.bin \
                   bench_bathy_le.bin \
+                  bench_bathy.csv \
                   bench_hydrotrend.dis \
                   bench_input_be.seq \
                   bench_river.kvf \

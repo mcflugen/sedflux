@@ -59,7 +59,7 @@ int main(int argc,char *argv[])
    for (i=0;i<n;i++)
       x[i] = dx*i;
 
-   sed_get_floor_vec(infile,x,n,d);
+   sed_get_floor_vec(infile,x,n,d,NULL);
 
    fwrite(d,n,sizeof(double),fpout);
 

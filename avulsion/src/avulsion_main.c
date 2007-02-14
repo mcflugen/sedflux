@@ -209,7 +209,11 @@ int avulsion_full( )
    Sed_cube cube;
   
    {
-      Sed_sediment sediment_type = sed_sediment_scan( SED_SEDIMENT_TEST_FILE );
+      GError*      error         = NULL;
+      Sed_sediment sediment_type = sed_sediment_scan( SED_SEDIMENT_TEST_FILE , &error );
+
+      if ( !sediment_type )
+         eh_error( "%s: Unable to read sediment file: %s" , SED_SEDIMENT_TEST_FILE , error->message);
 
       sed_sediment_set_env( sediment_type );
 
@@ -263,14 +267,14 @@ int avulsion_full( )
 
          data = avulsion_new( (seed==0)?g_rand_new():g_rand_new_with_seed(seed) , std_dev );
 
-         new_river = sed_river_new( NULL );
+         new_river = sed_river_new  ( NULL );
 
-         sed_river_set_angle      ( new_river , .5*(min_angle+max_angle) );
-         sed_river_set_angle_limit( new_river , min_angle , max_angle );
-         sed_river_set_hinge      ( new_river , sed_cube_n_x(cube)/2 , 0 );
-         sed_river_set_hydro      ( new_river , hydro_data[0] );
-         sed_river_set_avulsion   ( new_river , data );
-         sed_cube_add_river       ( cube      , new_river );
+         sed_river_set_angle        ( new_river , .5*(min_angle+max_angle) );
+         sed_river_set_angle_limit  ( new_river , min_angle , max_angle );
+         sed_river_set_hinge        ( new_river , sed_cube_n_x(cube)/2 , 0 );
+         sed_river_set_hydro        ( new_river , hydro_data[0] );
+         sed_river_set_avulsion_data( new_river , data );
+         sed_cube_add_river         ( cube      , new_river );
       }
 
       eh_free_2( river_data );

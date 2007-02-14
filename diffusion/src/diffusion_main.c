@@ -88,6 +88,7 @@ int main( int argc , char *argv[] )
    Sed_property_file sed_fp;
    Eh_args *args;
    Sed_property grain_size = sed_property_new( "grain" );
+   GError* error = NULL;
 
    test_2d();
 
@@ -113,10 +114,17 @@ int main( int argc , char *argv[] )
       g_array_append_val(x,val);
 
    // read in the bathymetry.
-   bathymetry = sed_get_floor( bathy_file , x );
+   bathymetry = sed_get_floor( bathy_file , x , &error );
+   if ( !bathymetry )
+      eh_error( "%s: Unable to read bathymetry file: %s" , bathy_file , error->message );
 
    // read in the type of sediment.
-   sediment_type = sed_sediment_scan( sediment_file );
+   sediment_type = sed_sediment_scan( sediment_file , &error );
+   if ( !sediment_type )
+      eh_error( "%s: Unable to read sediment file: %s" , sediment_file , error->message);
+   else
+      sed_sediment_set_env( sediment_type );
+
    n_grains = sed_sediment_n_types( sediment_type );
 
    // initialize the sediment profile.
@@ -181,8 +189,12 @@ int test_2d( void )
    Sed_cube cube;
    gssize n_x = 10;
    gssize n_y = 10;
+   GError* error = NULL;
 
-   sed      = sed_sediment_scan( NULL );
+   sed = sed_sediment_scan( NULL , &error );
+   if ( !sed )
+      eh_error( "(null): Unable to read sediment file: %s" , error->message);
+
    n_grains = sed_sediment_n_types( sed );
    sed_sediment_set_env( sed );
 

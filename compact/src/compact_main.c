@@ -141,7 +141,11 @@ int main(int argc, char *argv[])
 
    if ( ascii )
    {
-      Sed_sediment sed = sed_sediment_scan( sedfile );
+      GError*      error = NULL;
+      Sed_sediment sed   = sed_sediment_scan( sedfile , &error );
+
+      if ( !sed )
+         eh_error( "%s: Unable to read sediment file: %s" , sedfile , error->message);
 
       sed_sediment_set_env( sed );
 

@@ -149,6 +149,9 @@ sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** er
    if ( !(*init_file) )
       sedflux_get_file_name_interactively( working_dir , init_file );
 
+   if ( !(*working_dir) )
+      (*working_dir) = g_strdup( "." );
+
    /* Create the working directory */
    if ( g_mkdir_with_parents( *working_dir , 0 ) == -1 )
       g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_DIR , strerror(errno) );

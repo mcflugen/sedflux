@@ -31,7 +31,8 @@ long int _log_file_code_;
 
 #include <time.h>
 
-FILE *eh_open_log(const char *log_name)
+FILE*
+eh_open_log( const char *log_name )
 {
    FILE *fp = NULL;
    char *log_file_name;
@@ -71,9 +72,8 @@ FILE *eh_open_log(const char *log_name)
 
 //        fp = eh_open_log_file( log_file_name );
          fp = fopen( log_file_name , "w" );
-         fprintf( fp , "# Automatically generated log file\n");
-         fprintf( fp , "# %s" , ctime( &current_time ) );
-         fprintf( fp , "# log file code : %ld\n" , _log_file_code_ );
+         fprintf( fp , "# Creation data : %s"    , ctime( &current_time ) );
+         fprintf( fp , "# Log code      : %ld\n" , _log_file_code_ );
          fflush( fp );
          new_vec = g_ptr_array_new();
          g_ptr_array_add(new_vec,fp);
@@ -106,7 +106,7 @@ FILE *eh_open_log_file(const char *log_name)
    if ( !fp )
    {
       fprintf(stderr,"Could not open log file, %s\n",good_name);
-      abort();
+      eh_exit( EXIT_FAILURE );
    }
 
 //   eh_free(good_name);
@@ -209,10 +209,10 @@ eh_set_verbosity_level( gint verbosity )
    return ignore;
 }
 
-void eh_logger( const gchar *log_domain ,
-                GLogLevelFlags log_level ,
-                const gchar *message ,
-                gpointer user_data )
+void eh_logger( const gchar*   log_domain ,
+                GLogLevelFlags log_level  ,
+                const gchar*   message    ,
+                gpointer       user_data )
 {
    FILE **fp_list;
    gchar *log_label = NULL;
@@ -235,16 +235,15 @@ void eh_logger( const gchar *log_domain ,
    }
 
    if ( log_level & G_LOG_LEVEL_WARNING )
-      log_label = "WARNING";
+      log_label = "Warning";
    else if ( log_level & G_LOG_LEVEL_ERROR )
-      log_label = "ERROR";
+      log_label = "Error";
 
    for ( i=0 ; fp_list[i]!=NULL ; i++ )
    {
-      fprintf( fp_list[i] , "*** "              );
       if ( log_label )
-         fprintf( fp_list[i] , "%s *** " , log_label );
-      if ( log_domain )
+         fprintf( fp_list[i] , "%s: " , log_label );
+      if ( log_domain && !(log_level&EH_LOG_LEVEL_DATA) )
          fprintf( fp_list[i] , "%s: " , log_domain );
       fprintf( fp_list[i] , "%s\n" , message    );
 
@@ -252,7 +251,7 @@ void eh_logger( const gchar *log_domain ,
    }
 
    if ( is_fatal )
-      eh_exit(-1);
+      eh_exit( EXIT_FAILURE );
 
    if ( !(user_data && !(log_level & G_LOG_LEVEL_DEBUG)) )
       eh_free( fp_list );

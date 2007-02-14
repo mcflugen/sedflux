@@ -480,6 +480,7 @@ Eh_date_t;
 
 void eh_init_glib( void );
 void eh_exit( int code );
+void eh_exit_on_error( GError* error , const gchar* format , ... );
 
 gint eh_fprint_version_info( FILE* fp , const gchar* prog , gint maj , gint min , gint micro );
 
@@ -555,6 +556,8 @@ FILE *eh_fopen(const char *,const char *);
 FILE *eh_open_file( const char * , const char * );
 FILE *eh_open_temp_file( const char *template , char **name_used );
 FILE *eh_fopen_error(const char *,const char *,GError**);
+gchar* eh_render_file_error_str( gint err_no );
+gchar* eh_render_error_str( GError* error , const gchar* err_str );
 gboolean eh_is_readable_file( const char* );
 gboolean eh_is_writable_file( const char* );
 gboolean eh_try_open( const char* file );

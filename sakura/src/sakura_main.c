@@ -302,7 +302,7 @@ int main (void)
       gssize len;
       double* x_0 = eh_uniform_array( dx/2. , basin_len , dx , &len );
 
-      all_records = eh_data_record_scan_file( bathyfile , "," , EH_FAST_DIM_COL , FALSE );
+      all_records = eh_data_record_scan_file( bathyfile , "," , EH_FAST_DIM_COL , FALSE , NULL );
       eh_data_record_interpolate_rows( all_records[0] , 0 , x_0 , len );
 
       x     = eh_data_record_dup_row( all_records[0] , 0 );
@@ -418,7 +418,7 @@ int main (void)
       {
          gssize t_len;
          double* t_0 = eh_uniform_array( 0 , supplytime[i] , dt , &t_len );
-         Eh_data_record* all_records = eh_data_record_scan_file( discharge_filename , "," , EH_FAST_DIM_COL , FALSE );
+         Eh_data_record* all_records = eh_data_record_scan_file( discharge_filename , "," , EH_FAST_DIM_COL , FALSE , NULL );
 
          eh_data_record_interpolate_rows( all_records[0] , 0 , t_0 , t_len );
          t      = eh_data_record_dup_row( all_records[0] , 0 );

@@ -78,6 +78,7 @@ int main( int argc , char *argv[] )
    Sed_cell cell;
    Sed_cube p;
    Eh_args *args;
+   GError* error = NULL;
 
    //---
    // parse the command line options.
@@ -113,12 +114,16 @@ int main( int argc , char *argv[] )
    //---
    // read in the bathymetry.
    //---
-   bathymetry = sed_get_floor( bathy_file , x );
+   bathymetry = sed_get_floor( bathy_file , x , &error );
+   if ( !bathymetry )
+      eh_error( "%s: Unable to read bathymetry file: %s" , bathy_file , error->message );
 
    //---
    // read in the sediment type from a file.
    //---
-   sed = sed_sediment_scan( sed_file );
+   sed = sed_sediment_scan( sed_file , &error );
+   if ( !sed )
+      eh_error( "%s: Unable to scan sediment file: %s" , sed_file , error->message );
    n_grains = sed_sediment_n_types( sed );
 
    //---

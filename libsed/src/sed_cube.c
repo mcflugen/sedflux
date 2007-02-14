@@ -165,83 +165,100 @@ Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y )
 #define SED_KEY_SEDIMENT_FILE  "sediment file"
 
 Sed_cube
-sed_cube_new_from_file( const gchar* file )
+sed_cube_new_from_file( const gchar* file , GError** error )
 {
    Sed_cube p = NULL;
 
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    if ( file )
    {
-      gchar* name;
-      gchar* bathy_file;
-      gchar* sediment_file;
-      double x_res, y_res, z_res;
-      Eh_key_file key_file = eh_key_file_scan( file );
+      GError*     tmp_err  = NULL;
+      gchar*      name;
+      gchar*      bathy_file;
+      gchar*      sediment_file;
+      double      x_res, y_res, z_res;
 
-      /* Scan Sed_cube parameters from key-file */
-      name          = eh_key_file_get_value    ( key_file , "global" , SED_KEY_MARGIN_NAME );
-      z_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_V_RES );
-      x_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_X_RES );
-      y_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_Y_RES );
-      bathy_file    = eh_key_file_get_value    ( key_file , "global" , SED_KEY_BATHY_FILE );
-      sediment_file = eh_key_file_get_value    ( key_file , "global" , SED_KEY_SEDIMENT_FILE );
-
-      /* Scan in the sediment and set the environment. */
+      /* Scan the initialization file */
+      if ( !tmp_err )
       {
-         Sed_sediment sediment_type = sed_sediment_scan( sediment_file );
-         sed_sediment_set_env( sediment_type );
-         sed_sediment_destroy( sediment_type );
-      }
+         Eh_key_file key_file = eh_key_file_scan( file , &tmp_err );
 
-      /* Create the cube and set positions and elevations. */
-      {
-         gssize i, j;
-         Sed_column this_col;
-         Eh_dbl_grid grid;
-         GError* err = NULL;
-
-         /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
-         if ( sed_mode_is_3d( ) )
-            grid = sed_get_floor_2d_grid( bathy_file , x_res , y_res );
-         else
-            grid = sed_get_floor_1d_grid( bathy_file , x_res , y_res , &err );
-
-         if ( err )
+         if ( key_file )
          {
-            fprintf( stderr , "Unable to read bathymetry: %s" , err->message );
-            eh_exit(-1);
+            /* Scan Sed_cube parameters from key-file */
+            name          = eh_key_file_get_value    ( key_file , "global" , SED_KEY_MARGIN_NAME   );
+            z_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_V_RES         );
+            x_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_X_RES         );
+            y_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_Y_RES         );
+            bathy_file    = eh_key_file_get_value    ( key_file , "global" , SED_KEY_BATHY_FILE    );
+            sediment_file = eh_key_file_get_value    ( key_file , "global" , SED_KEY_SEDIMENT_FILE );
          }
 
-         /* Create the cube. */
-         p = sed_cube_new( eh_grid_n_x(grid) , eh_grid_n_y(grid) );
+         eh_key_file_destroy ( key_file );
+      }
 
-         /* Set column positions and elevations. */
-         for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
-            for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
-            {
-               this_col = sed_cube_col_ij(p,i,j);
+      /* Scan in the sediment and set the environment. */
+      if ( !tmp_err )
+      {
+         Sed_sediment sediment_type = sed_sediment_scan( sediment_file , &tmp_err );
 
-               sed_column_set_x_position ( this_col , eh_grid_x(grid)[i]        );
-               sed_column_set_y_position ( this_col , eh_grid_y(grid)[j]        );
+         if ( sediment_type )
+         {
+            sed_sediment_set_env( sediment_type );
+            sed_sediment_destroy( sediment_type );
+         }
+      }
 
-               sed_column_set_base_height( this_col , eh_dbl_grid_val(grid,i,j) );
-            }
+      /* Scan the bathymetry file */
+      if ( !tmp_err )
+      {
+         Eh_dbl_grid grid = NULL;
+
+         /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
+         grid = sed_bathy_grid_scan( bathy_file , x_res , y_res , &tmp_err );
+
+         if ( grid )
+         {
+            /* Create the cube and set positions and elevations. */
+            gssize i, j;
+            Sed_column this_col;
+
+            /* Create the cube. */
+            p = sed_cube_new( eh_grid_n_x(grid) , eh_grid_n_y(grid) );
+
+            /* Set column positions and elevations. */
+            for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
+               for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
+               {
+                  this_col = sed_cube_col_ij(p,i,j);
+
+                  sed_column_set_x_position ( this_col , eh_grid_x(grid)[i]        );
+                  sed_column_set_y_position ( this_col , eh_grid_y(grid)[j]        );
+
+                  sed_column_set_base_height( this_col , eh_dbl_grid_val(grid,i,j) );
+               }
+
+            /* Set cube resolutions. */
+            sed_cube_set_x_res( p , x_res );
+            sed_cube_set_y_res( p , y_res );
+            sed_cube_set_z_res( p , z_res );
+
+            /* Set cube name */
+            sed_cube_set_name( p , name );
+
+         }
 
          eh_grid_destroy     ( grid , TRUE   );
       }
 
-      /* Set cube resolutions. */
-      sed_cube_set_x_res( p , x_res );
-      sed_cube_set_y_res( p , y_res );
-      sed_cube_set_z_res( p , z_res );
-
-      /* Set cube name */
-      sed_cube_set_name( p , name );
+      if ( tmp_err )
+         g_propagate_error( error , tmp_err );
 
       /* Free resources */
       eh_free             ( name          );
       eh_free             ( bathy_file    );
       eh_free             ( sediment_file );
-      eh_key_file_destroy ( key_file      );
    }
 
    return p;
@@ -778,6 +795,28 @@ GList* sed_cube_river_list( Sed_cube s )
    return s->river;
 }
 
+gint
+sed_cube_n_branches( Sed_cube s )
+{
+   gint n = 0;
+   eh_return_val_if_fail( s!=NULL , 0 );
+   if ( s )
+   {
+      gint i;
+      gint n_rivers = sed_cube_n_rivers(s);
+      for ( i=0 ; i<n_rivers ; i++ )
+         n += sed_river_n_branches( g_list_nth_data(s->river,i) );
+   }
+   return n;
+}
+
+gint
+sed_cube_n_rivers( Sed_cube s )
+{
+   eh_return_val_if_fail( s!=NULL , 0 );
+   return g_list_length( s->river );
+}
+
 gssize sed_cube_number_of_rivers( Sed_cube s )
 {
    eh_return_val_if_fail( s!=NULL , 0 );
@@ -1236,9 +1275,9 @@ double sed_cube_mass_in_suspension( const Sed_cube p )
 
    if ( p )
    {
-      gssize i;
-      gssize n_rivers = sed_cube_number_of_rivers(p);
+      gssize        n_rivers = sed_cube_n_rivers(p);
       Sed_cell_grid in_suspension;
+      gssize        i;
 
       for ( i=0 ; i<n_rivers ; i++ )
       {
@@ -2518,91 +2557,6 @@ sed_scan_sea_level_curve( const char* file , gint* len , GError** err )
    return data;
 }
 
-Eh_dbl_grid
-sed_get_floor_1d_grid( const char *file , double dx , double dy , GError **err )
-{
-   Eh_dbl_grid grid = NULL;
-
-   eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
-
-   //---
-   // Scan the data file.  The should only be one record.  If there
-   // are more, we'll just ignore them.
-   //---
-   eh_debug( "Scan the bathymetry file" );
-   {
-      double** data;
-      GError* tmp_err = NULL;
-      gint n_rows, n_cols;
-
-      data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &tmp_err );
-
-      if ( tmp_err )
-         g_propagate_error( err , tmp_err );
-      else if ( n_rows!=2 )
-         g_set_error( &tmp_err ,
-            SED_CUBE_ERROR ,
-            SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
-            "%s: Bathymetry file does not contain 2 columns (found %d)\n" ,
-            file , n_rows );
-      else if ( n_cols<2 )
-         g_set_error( &tmp_err ,
-            SED_CUBE_ERROR ,
-            SED_CUBE_ERROR_INSUFFICIENT_DATA ,
-            "%s: Bathymetry file contains only one data point\n" ,
-            file );
-      else if ( !eh_dbl_array_is_monotonic_up( data[0] , n_cols ) )
-         g_set_error( &tmp_err ,
-            SED_CUBE_ERROR ,
-            SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
-            "%s: The position data must be monotonically increasing.\n" ,
-            file );
-      else if ( data[0][0]>0 )
-         g_set_error( &tmp_err ,
-            SED_CUBE_ERROR ,
-            SED_CUBE_ERROR_DATA_BAD_RANGE ,
-            "%s: Insufficient range in position data.\n" ,
-            file );
-      else
-      {
-         double *y, *z;
-         gint n;
-
-         //---
-         // The cross-shore positions will be the first row, and the depths the
-         // second row (in the file they are listed in columns).
-         // They should both be the same length.  We don't bother checking.
-         //---
-         y = data[0];
-         z = data[1];
-         n = n_cols;
-
-         //---
-         // Interpolate the data from the file to an equally spaced grid.
-         //---
-         eh_debug( "Interpolate to a uniform grid" );
-         {
-            gssize n_y = (y[n-1]-y[0]) / dy;
-            grid = eh_grid_new( double , 1 , n_y );
-            eh_grid_set_y_lin( grid , y[0] , dy );
-
-            interpolate( y , z , n , eh_grid_y(grid) , eh_grid_data_start(grid) , n_y );
-         }
-
-      }
-
-      eh_free_2( data );
-
-      if ( tmp_err!=NULL )
-         g_propagate_error( err , tmp_err );
-
-      eh_debug( "done." );
-   }
-
-
-   return grid;
-}
-
 #define S_KEY_SUBSIDENCE_TIME "time"
 
 Eh_sequence *sed_get_floor_sequence_2( const char *file ,
@@ -2859,60 +2813,225 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
    return grid_seq;
 }
 
-Eh_dbl_grid sed_get_floor_2d_grid( const char *file , double dx , double dy )
+Eh_dbl_grid
+sed_bathy_grid_scan( const char* file , double dx , double dy , GError** error )
 {
-   Eh_dbl_grid grid;
-   int i, n_elem;
-   gint32 n_x, n_y;
-   size_t start, end;
-   FILE *fp;
+   Eh_dbl_grid    g         = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   if      ( sed_mode_is_2d() )
+      g = sed_bathy_grid_scan_1d_ascii( file , dx , dy , error );
+   else if ( sed_mode_is_3d() )
+      g = sed_bathy_grid_scan_2d_ascii( file , dx , dy , error );
+   else
+      eh_require_not_reached();
+
+   return g;
+}
+
+Eh_dbl_grid
+sed_bathy_grid_scan_2d_ascii( const char *file , double dx , double dy , GError** error )
+{
+   gint        n_rows  = 0;
+   gint        n_cols  = 0;
+   double**    z       = NULL;
+   GError*     tmp_err = NULL;
+   Eh_dbl_grid grid    = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   z = eh_dlm_read( file , ",;" , &n_rows , &n_cols , &tmp_err );
+
+   if ( z )
+   {
+
+      if      ( n_rows<2 )
+         g_set_error( &tmp_err ,
+                      SED_CUBE_ERROR ,
+                      SED_CUBE_ERROR_TOO_FEW_ROWS ,
+                      "%s: sedflux-3d bathymetry needs more than 1 row\n" ,
+                      file );
+      else if ( n_cols<3 )
+         g_set_error( &tmp_err ,
+                      SED_CUBE_ERROR ,
+                      SED_CUBE_ERROR_TOO_FEW_COLUMNS ,
+                      "%s: sedflux-3d bathymetry needs more than 2 columns\n" ,
+                      file );
+      else
+      {
+         gint i;
+
+         grid = eh_dbl_grid_new_set( n_rows , n_cols , z );
+
+         for ( i=0 ; i<n_rows ; i++ )
+            eh_grid_x(grid)[i] = i*dx;
+         for ( i=0 ; i<n_cols ; i++ )
+            eh_grid_y(grid)[i] = i*dy;
+      }
+   }
+
+   if ( tmp_err )
+   {
+      grid = eh_grid_destroy( grid , TRUE );
+      g_propagate_error( error , tmp_err );
+   }
+
+   return grid;
+}
+
+Eh_dbl_grid
+sed_bathy_grid_scan_2d_binary( const char *file , double dx , double dy , GError** error )
+{
+   Eh_dbl_grid grid    = NULL;
+   GError*     tmp_err = NULL;
+   FILE*       fp;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    //---
    // Open the bathymetry file.
    //---
-   fp = fopen( file , "rb" );
-   if ( !fp )
-      eh_error( "could not open file : %s" , file );
+   fp = eh_fopen_error( file , "rb" , &tmp_err );
 
-   //---
-   // The number of columns is listed first as an int (32).
-   //---
-   fread( &n_y , sizeof(gint32) , 1 , fp );
-
-   //---
-   // Calculate the number of rows in the file based on the number of columns
-   // and the file size.  If this is not a whole number, something is wrong.
-   //---
-   start = ftell( fp );
-   fseek( fp , 0 , SEEK_END );
-   end = ftell( fp );
-   fseek( fp , start , SEEK_SET );
-
-   n_elem = (end-start)/sizeof(double);
-   n_x = n_elem/n_y;
-
-   if ( n_x*n_y != n_elem )
+   if ( fp )
    {
-      eh_message( "%s: this file appears to have been truncated. " , file );
-      eh_message( "%s: reading %d rows. " , file , n_x );
-      eh_message( "%s: discarding the final %d elements. " ,
-                  file , n_elem-n_x*n_y );
+      gint32 n_x, n_y;
+      gint n_elem;
+      size_t start, end;
+
+      //---
+      // The number of columns is listed first as an int (32).
+      //---
+      fread( &n_y , sizeof(gint32) , 1 , fp );
+
+      //---
+      // Calculate the number of rows in the file based on the number of columns
+      // and the file size.  If this is not a whole number, something is wrong.
+      //---
+      start = ftell( fp );
+      fseek( fp , 0 , SEEK_END );
+      end = ftell( fp );
+      fseek( fp , start , SEEK_SET );
+
+      n_elem = (end-start)/sizeof(double);
+      n_x = n_elem/n_y;
+
+      if ( n_x*n_y != n_elem )
+      {
+         g_set_error( &tmp_err ,
+                      SED_CUBE_ERROR ,
+                      SED_CUBE_ERROR_TRUNCATED_FILE , 
+                      "Bathymetry file is truncated: found %d values but expeced %d values (%d*%d)" ,
+                      n_elem , n_x*n_y , n_x , n_y );
+      }
+      else
+      {
+         gint i;
+         //---
+         // Read the grid data.
+         //---
+         grid = eh_grid_new( double , n_x , n_y );
+
+         fread( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
+
+         for ( i=0 ; i<n_x ; i++ )
+            eh_grid_x(grid)[i] = i*dx;
+
+         for ( i=0 ; i<n_y ; i++ )
+            eh_grid_y(grid)[i] = i*dy;
+      }
+
+      fclose( fp );
    }
 
+   if ( tmp_err )
+      g_propagate_error( error , tmp_err );
+      
+
+
+   return grid;
+}
+
+Eh_dbl_grid
+sed_bathy_grid_scan_1d_ascii( const char *file , double dx , double dy , GError** error )
+{
+   Eh_dbl_grid grid = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    //---
-   // Read the grid data.
+   // Scan the data file.  The should only be one record.  If there
+   // are more, we'll just ignore them.
    //---
-   grid = eh_grid_new( double , n_x , n_y );
+   eh_debug( "Scan the bathymetry file" );
+   {
+      double** data;
+      GError* tmp_err = NULL;
+      gint n_rows, n_cols;
 
-   fread( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
+      data = eh_dlm_read_swap( file , ";," , &n_rows , &n_cols , &tmp_err );
 
-   for ( i=0 ; i<n_x ; i++ )
-      eh_grid_x(grid)[i] = i*dx;
+      if ( tmp_err )
+         g_propagate_error( error , tmp_err );
+      else if ( n_rows!=2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
+            "%s: Bathymetry file does not contain 2 columns (found %d)\n" ,
+            file , n_rows );
+      else if ( n_cols<2 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_INSUFFICIENT_DATA ,
+            "%s: Bathymetry file contains only one data point\n" ,
+            file );
+      else if ( !eh_dbl_array_is_monotonic_up( data[0] , n_cols ) )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_TIME_NOT_MONOTONIC ,
+            "%s: The position data must be monotonically increasing.\n" ,
+            file );
+      else if ( data[0][0]>0 )
+         g_set_error( &tmp_err ,
+            SED_CUBE_ERROR ,
+            SED_CUBE_ERROR_DATA_BAD_RANGE ,
+            "%s: Insufficient range in position data.\n" ,
+            file );
+      else
+      {
+         double *y, *z;
+         gint n;
 
-   for ( i=0 ; i<n_y ; i++ )
-      eh_grid_y(grid)[i] = i*dy;
+         //---
+         // The cross-shore positions will be the first row, and the depths the
+         // second row (in the file they are listed in columns).
+         // They should both be the same length.  We don't bother checking.
+         //---
+         y = data[0];
+         z = data[1];
+         n = n_cols;
 
-   fclose( fp );
+         //---
+         // Interpolate the data from the file to an equally spaced grid.
+         //---
+         eh_debug( "Interpolate to a uniform grid" );
+         {
+            gssize n_y = (y[n-1]-y[0]) / dy;
+            grid = eh_grid_new( double , 1 , n_y );
+            eh_grid_set_y_lin( grid , y[0] , dy );
+
+            interpolate( y , z , n , eh_grid_y(grid) , eh_grid_data_start(grid) , n_y );
+         }
+
+      }
+
+      eh_free_2( data );
+
+      if ( tmp_err!=NULL )
+         g_propagate_error( error , tmp_err );
+   }
+
 
    return grid;
 }
@@ -3186,9 +3305,12 @@ output vector, y must be allocated enough size to hold the elevation data.
 
 @see sed_get_floor .
 */
-int sed_get_floor_vec(char *filename, double *y, int len, double *z)
+int
+sed_get_floor_vec(char *filename, double *y, int len, double *z , GError** error )
 {
    gssize new_len = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
 
    eh_require( filename );
    eh_require( y        );
@@ -3196,8 +3318,9 @@ int sed_get_floor_vec(char *filename, double *y, int len, double *z)
    eh_require( len>0    );
 
    {
+      GError* tmp_err = NULL;
       gssize i;
-      GArray *y_array=g_array_new( FALSE , FALSE , sizeof(double) );
+      GArray *y_array = g_array_new( FALSE , FALSE , sizeof(double) );
       GArray *z_array;
 
       //---
@@ -3209,18 +3332,23 @@ int sed_get_floor_vec(char *filename, double *y, int len, double *z)
       //---
       // Get the depths as an array
       //---
-      z_array = sed_get_floor( filename , y_array );
+      z_array = sed_get_floor( filename , y_array , &tmp_err );
 
-      new_len = z_array->len;
-
-      //---
-      // Copy the array values to the input locations
-      //---
-      for ( i=0 ; i<new_len ; i++ )
+      if ( z_array )
       {
-         z[i] = g_array_index( z_array , double , i );
-         y[i] = g_array_index( y_array , double , i );
+         new_len = z_array->len;
+
+         //---
+         // Copy the array values to the input locations
+         //---
+         for ( i=0 ; i<new_len ; i++ )
+         {
+            z[i] = g_array_index( z_array , double , i );
+            y[i] = g_array_index( y_array , double , i );
+         }
       }
+      else
+         g_propagate_error( error , tmp_err );
 
       g_array_free( y_array , TRUE );
       g_array_free( z_array , TRUE );
@@ -3242,18 +3370,24 @@ elevations are held in GArray's rather than standard arrays.
 
 @see sed_get_floor_vec .
 */
-GArray *sed_get_floor( char *file , GArray *y_array )
+GArray*
+sed_get_floor( char *file , GArray *y_array , GError** error )
 {
+   GArray*        z_array    = NULL;
    Eh_data_record floor_data = NULL;
-   GArray *z_array = g_array_new(FALSE,TRUE,sizeof(double));
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    //---
    // Scan the data file.
    // The should only be one record.  If there is more, we'll just ignore them.
    //---
    {
-      gssize i;
-      Eh_data_record* all_data = eh_data_record_scan_file( file , "," , EH_FAST_DIM_COL , FALSE );
+      gssize          i;
+      Eh_data_record* all_data = NULL;
+      GError*         tmp_err  = NULL;
+
+      all_data = eh_data_record_scan_file( file , "," , EH_FAST_DIM_COL , FALSE , &tmp_err );
 
       if ( all_data )
       {
@@ -3263,13 +3397,15 @@ GArray *sed_get_floor( char *file , GArray *y_array )
          eh_free( all_data );
       }
       else
-         eh_error( "Error reading bathymetry file, %s." , file );
+         g_propagate_error( error , tmp_err );
    }
 
    if ( floor_data )
    {
       double *y, *z;
       gssize n;
+
+      z_array = g_array_new(FALSE,TRUE,sizeof(double));
 
       //---
       // The cross-shore positions will be the first row, and the depths the
@@ -3436,4 +3572,44 @@ sed_cube_to_cell( Sed_cube c , Sed_cell d )
    return d;
 }
 
+/** Count the number of columns above some elevation
 
+\param c    A Sed_cube
+\param h    The elevation to compare
+
+\return The number of columns above the elevation
+*/
+gint
+sed_cube_count_above( Sed_cube c , double h )
+{
+   gint n = 0;
+
+   eh_require( c );
+
+   if ( c )
+   {
+      gint id;
+      gint len = sed_cube_size(c);
+      for ( id=0 ; id<len ; id++ )
+         n += sed_column_is_above( c->col[0][id] , h );
+   }
+
+   return n;
+}
+
+/** Find the area of columns above some elevation
+
+\param c    A Sed_cube
+\param h    The elevation to compare
+
+\return The area of columns above the elevation
+*/
+double
+sed_cube_area_above( Sed_cube c , double h )
+{
+   eh_require( c );
+
+   return   sed_cube_count_above( c , h )
+          * sed_cube_x_res(c)
+          * sed_cube_y_res(c);
+}

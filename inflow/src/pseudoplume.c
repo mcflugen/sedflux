@@ -101,7 +101,7 @@ int main(int argc,char *argv[])
 
 // Read input bathymetry.
    {
-      Eh_data_record* all_records = eh_data_record_scan_file( infile , "," , EH_FAST_DIM_COL , FALSE );
+      Eh_data_record* all_records = eh_data_record_scan_file( infile , "," , EH_FAST_DIM_COL , FALSE , NULL );
 
       x = eh_data_record_dup_row( all_records[0] , 0 );
       y = eh_data_record_dup_row( all_records[0] , 1 );

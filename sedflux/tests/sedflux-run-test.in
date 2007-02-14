@@ -18,7 +18,7 @@ copy_sedflux_test_files () {
    input_files=bench_river.kvf
    hydro_file=bench_river.kvf
    sediment_file=bench_sediment.kvf
-   bathy_file=bench_bathy_be.bin
+   bathy_file=bench_bathy.csv
    input_file=bench_input_be.seq
    current_file=bimodal_current.csv
 
@@ -49,8 +49,7 @@ run_sedflux_test () {
    init_file=${test_name}_init.kvf
 
    print "Running test: $test_name"
-#   cd $test_dir && $SEDFLUX_HOME/bin/sedflux3d --msg=$init_file --init-file=$init_file > output.txt 2> /dev/null
-   cd $test_dir && $SEDFLUX_HOME/bin/sedflux3d --msg=$init_file --init-file=$init_file > output.txt 2> /dev/null
+   cd $test_dir && $SEDFLUX_HOME/bin/sedflux -3 --msg=$init_file --init-file=$init_file > output.txt 2> /dev/null
    print "Finished test: $test_name"
 }
 
@@ -105,15 +104,15 @@ check_input_args () {
 }
 
 
-LS=/usr/bin/ls
-RM=/usr/bin/rm
-MV=/usr/bin/mv
-CP=/usr/bin/cp
-PWD=/usr/bin/pwd
+LS=/bin/ls
+RM=/bin/rm
+MV=/bin/mv
+CP=/bin/cp
+PWD=/bin/pwd
 
 SEDFLUX_DIR=@prefix@
 SEDFLUX_HOME=$SEDFLUX_DIR
-SEDFLUX_SHARE=$SEDFLUX_DIR/share/ew
+SEDFLUX_SHARE=$SEDFLUX_DIR/share/sedflux
 ALL_TESTS="avulsion bbl compaction plume_0 plume_1 plume_2 plume_3 river storm"
 
 export SEDFLUX_DIR

@@ -11,10 +11,10 @@ RPM_SRC=./SRPMS/${PACKAGE}-$(VERSION)-$(RPM_RELEASE).src.rpm
 
 RPMDIRS=BUILD SOURCES RPMS RPMS/i386 SRPMS
 
-rpm: check.spec
+rpm: sedflux.spec
 	mkdir -p ${RPMDIRS}
 	cp ../${SOURCE_FILE} SOURCES
-	rpm ${TOPDIRFLAGS} ${RPMFLAGS} -ba sedflux.spec
+	rpmbuild ${TOPDIRFLAGS} ${RPMFLAGS} -ba sedflux.spec
 	cp ${RPM_I386} ..
 	cp ${RPM_SRC} ..
 	rm -rf ${RPMDIRS}

@@ -21,93 +21,6 @@
 #if !defined(SED_SCANNER_H)
 #define SED_SCANNER_H
 
-// GHashTable        Symbol_table
-// struct            Eh_data_record
-// struct            Eh_record_file
-// struct            Eh_data_file
-//
-// Symbol_table*     eh_create_symbol_table           ( void );
-// void              eh_symbol_table_insert           ( Symbol_table*,
-//                                                      char*,
-//                                                      char* );
-// char*             eh_symbol_table_lookup           ( Symbol_table*,
-//                                                      char* );
-// void              eh_print_symbol                  ( gpointer,
-//                                                      gpointer,
-//                                                      gpointer );
-// void              eh_print_symbol_table            ( Symbol_table*,
-//                                                      FILE *fp );
-// void              eh_print_symbol_table_aligned    ( Symbol_table *t,
-//                                                      FILE *fp );
-// void              eh_destroy_symbol_table          ( Symbol_table* );
-// Symbol_table*     eh_merge_symbol_table            ( Symbol_table* table1,
-//                                                      ... );
-// GScanner*         eh_open_scanner                  ( const char *filename );
-// GPtrArray*        eh_scan_data_file                ( const char *filename,
-//                                                      const char *delimiter,
-//                                                      gboolean row_major,
-//                                                      gboolean with_header );
-// GPtrArray*        eh_scan_data_record              ( GScanner *s,
-//                                                      const char *delimeter,
-//                                                      gboolean row_major,
-//                                                      GPtrArray *data );
-// char*             eh_scan_ascii_data_line          ( GScanner *s );
-// GHashTable*       eh_scan_record_file              ( const char *filename );
-// Symbol_table*     eh_scan_record_file_for          ( const char *filename,
-//                                                      const char *rec_name );
-// char*             eh_scan_next_record              ( GScanner *s,
-//                                                      GHashTable *symbol_table );
-// char*             eh_seek_record_start             ( GScanner *s );
-// char*             eh_scan_label                    ( GScanner *s );
-// char*             eh_scan_entry                    ( GScanner *s );
-// void              eh_print_record                  ( const char *rec_name,
-//                                                      Symbol_table *t,
-//                                                      FILE *fp );
-// gboolean          eh_scanner_eor                   ( GScanner *s );
-// Eh_data_record*   eh_create_data_record            ( void );
-// void              eh_free_data_record              ( Eh_data_record *p );
-// void              eh_print_data_record             ( Eh_data_record *p,
-//                                                      char *rec_name,
-//                                                      char *delimeter,
-//                                                      gboolean row_major,
-//                                                      gboolean with_header,
-//                                                      FILE *fp );
-// int               eh_get_data_record_size          ( Eh_data_record *p,
-//                                                      int i );
-// Symbol_table*     eh_get_data_record_sym_table     ( Eh_data_record *p );
-// GArray*           eh_get_data_record_row           ( Eh_data_record *p,
-//                                                      int row);
-// void              eh_set_data_record_row           ( Eh_data_record *p,
-//                                                      int row,
-//                                                      GArray *a );
-// void              eh_add_data_record_row           ( Eh_data_record *p,
-//                                                      GArray *a );
-// void              eh_add_data_record_label         ( Eh_data_record *p,
-//                                                      char *label,
-//                                                      char *value );
-// #define           eh_get_data_record_row_ptr       ( Eh_data_record *p,
-// void              eh_interpolate_data_record_rows  ( Eh_data_record *p ,
-//                                                      int row,
-//                                                      GArray *x );
-//
-// Eh_record_file*   eh_open_record_file              ( const char *filename );
-// void              eh_close_record_file             ( Eh_record_file *rec_file );
-// Symbol_table*     eh_get_record_from_record_file   ( Eh_record_file *rec_file,
-//                                                      const char *name );
-// char*             eh_get_value_from_record_file    ( Eh_record_file *rec_file,
-//                                                      const char *rec_name,
-//                                                      const char *label );
-// Eh_data_file*     eh_open_data_file                ( const char *filename,
-//                                                      Eh_data_file_attr *attr );
-// void              eh_close_data_file               ( Eh_data_file *data_file );
-// GArray*           eh_get_row_from_data_file        ( Eh_data_file *data_file,
-//                                                      int row );
-// GArray*           eh_interpolate_data_file         ( Eh_data_file *data_file,
-//                                                      GArray *interp_data,
-//                                                      int row );
-// Eh_data_record*   eh_get_data_from_file            ( Eh_data_file *data_file,
-//                                                      int i );
-
 #include <glib.h>
 #include "eh_symbol_table.h"
 #include "eh_data_record.h"
@@ -219,7 +132,7 @@ void eh_print_symbol(char *key, char  *value, FILE *fp);
 // open a scanner file.
 // filename     : the name of the file to open.
 // return value : the opened scanner.
-GScanner *eh_open_scanner(const char *filename);
+GScanner *eh_open_scanner(const char *filename , GError** error );
 
 void eh_close_scanner( GScanner* );
 
@@ -397,7 +310,7 @@ gboolean eh_scanner_eor(GScanner *s);
 // filename     : the name of the file (NULL for stdin);
 // attr         : attributes to use when opening a data file.  use NULL for defaults.
 // return value : pointer to the opened data file.
-Eh_data_file *eh_open_data_file( const char *filename , Eh_data_file_attr *attr );
+Eh_data_file *eh_open_data_file( const char *filename , Eh_data_file_attr *attr , GError** error );
 
 // close a data file.
 // data_file    : pointer to a data file.

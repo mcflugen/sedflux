@@ -41,6 +41,19 @@ avulsion_new( GRand* rand , double std_dev )
 }
 
 Avulsion_st*
+avulsion_dup( Avulsion_st* s )
+{
+   Avulsion_st* d = NULL;
+
+   if ( s )
+   {
+      d = avulsion_new( g_rand_copy(s->rand) , s->std_dev );
+   }
+
+   return d;
+}
+
+Avulsion_st*
 avulsion_destroy( Avulsion_st* data )
 {
    if ( data )
@@ -97,15 +110,39 @@ avulsion_scale_std_dev_up( double std_dev , double min_angle , double max_angle 
 }
 
 Sed_riv
-sed_river_set_avulsion( Sed_riv r , Avulsion_st* data )
+sed_river_set_avulsion_data( Sed_riv r , Avulsion_st* data )
 {
-   return sed_river_set_data_full( r , AVULSION_DATA , data , avulsion_destroy );
+   g_dataset_id_set_data_full( r , AVULSION_DATA , data , avulsion_destroy );
+   return r;
+}
+
+Sed_riv
+sed_river_impart_avulsion_data( Sed_riv r )
+{
+   Avulsion_st* parent_data = sed_river_avulsion_data(r);
+   Avulsion_st* left_data   = avulsion_dup( parent_data );
+   Avulsion_st* right_data  = avulsion_dup( parent_data );
+
+   left_data->std_dev  *=.5;
+   right_data->std_dev *=2.;
+
+   sed_river_set_avulsion_data( sed_river_left (r) , left_data  );
+   sed_river_set_avulsion_data( sed_river_right(r) , right_data );
+
+   return r;
+}
+
+Sed_riv
+sed_river_unset_avulsion_data( Sed_riv r )
+{
+   g_dataset_remove_data( r , AVULSION_DATA );
+   return r;
 }
 
 Avulsion_st*
-sed_river_avulsion( Sed_riv r )
+sed_river_avulsion_data( Sed_riv r )
 {
-   return sed_river_data( r , AVULSION_DATA );
+   return g_dataset_id_get_data( r , AVULSION_DATA );
 }
 
 Sed_riv
@@ -116,8 +153,8 @@ sed_river_avulse( Sed_riv r )
    if ( r )
    {
       double       angle;
-      double       last_angle = sed_river_angle( r );
-      Avulsion_st* data       = sed_river_data( r , AVULSION_DATA );
+      double       last_angle = sed_river_angle        ( r );
+      Avulsion_st* data       = sed_river_avulsion_data( r );
 
       if ( data )
       {
@@ -140,14 +177,36 @@ sed_river_avulse( Sed_riv r )
    return r;
 }
 
+/** Avulse all of the branches of a Sed_riv
+
+Run the avulsion process for each branch of a Sed_riv.  This will avulse all of the
+branches, not just the smallest branches.  However, it is only the smallest branches
+that enter the ocean.  We keep track of the location of the parent branches in
+case its child branches merge.  In such a case the location of the merged river
+will be the that of the parent.
+
+\param c   A Sed_cube containing the river
+\param r   A Sed_riv to avulse
+
+\return The input Sed_cube
+
+*/
 Sed_cube
 sed_cube_avulse_river( Sed_cube c , Sed_riv r )
 {
 
    if ( c )
    {
-      sed_river_avulse( r );
-      sed_cube_find_river_mouth( c , r );
+      Sed_riv* branch = sed_river_branches( r );
+      Sed_riv* this_branch;
+
+      for ( this_branch=branch ; *this_branch ; this_branch++ )
+      {
+         sed_river_avulse( *this_branch );
+         sed_cube_find_river_mouth( c , *this_branch );
+      }
+
+      eh_free( branch );
    }
 
    return c;

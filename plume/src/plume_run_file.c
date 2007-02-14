@@ -66,7 +66,12 @@ dx = 12.5;
    }
 
    {
-      Sed_sediment this_sed = sed_sediment_scan( sediment_file );
+      GError*      error    = NULL;
+      Sed_sediment this_sed = sed_sediment_scan( sediment_file , &error );
+
+      if ( !this_sed )
+         eh_error( "%s: Unable to scan sediment file: %s" , sediment_file , error->message );
+
       sed_sediment_set_env( this_sed );
       sed_sediment_destroy( this_sed );
    }

@@ -139,12 +139,16 @@ void eh_data_record_interpolate_rows( Eh_data_record p , gssize row , double* y 
    }
 }
 
-Eh_data_record* eh_data_record_scan_file( const char* file , const char* delim , int fast_dim , gboolean with_header )
+Eh_data_record*
+eh_data_record_scan_file( const char* file , const char* delim , int fast_dim , gboolean with_header , GError** error )
 {
    Eh_data_record* all_records = NULL;
-   GScanner* s;
+   GError*         tmp_err     = NULL;
+   GScanner*       s           = NULL;
 
-   s = eh_open_scanner( file );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   s = eh_open_scanner( file , &tmp_err );
 
    if ( s )
    {
@@ -161,6 +165,8 @@ Eh_data_record* eh_data_record_scan_file( const char* file , const char* delim ,
       if ( all_records )
          all_records[n_recs] = NULL;
    }
+   else
+      g_propagate_error( error , tmp_err );
 
    eh_close_scanner( s );
 

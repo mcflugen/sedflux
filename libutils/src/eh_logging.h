@@ -21,22 +21,12 @@
 #if !defined(EH_LOGGING_H)
 # define EH_LOGGING_H
 
-// #define           DEFAULT_LOG                      "stdout"
-// #define           DEFAULT_ERROR_LOG                "stderr"
-// FILE*             eh_open_log                      ( const char *log_name );
-// void              eh_close_log                     ( const char *log_name );
-// void              eh_print_log                     ( const char *log_name,
-//                                                      const char *message,
-//                                                      ... );
-// FILE*             eh_open_log_file                 ( const char *log_name );
-// void              eh_reset_log                     ( const char *log_file );
-// void              eh_redirect_log                  ( const char *log_file1,
-//                                                      const char *log_file2 );
-
 #include <stdio.h>
 #include <glib.h>
 #include <string.h>
 #include <stdarg.h>
+
+#define EH_LOG_LEVEL_DATA (1<<G_LOG_LEVEL_USER_SHIFT)
 
 #define DEFAULT_LOG "stdout"
 #define DEFAULT_ERROR_LOG "stderr"
@@ -99,6 +89,9 @@ void eh_logger( const gchar *log_domain ,
 #define eh_debug(...)    g_log( EH_LOG_DOMAIN ,     \
                                 G_LOG_LEVEL_DEBUG , \
                                 __VA_ARGS__ )
+#define eh_data(...)     g_log( EH_LOG_DOMAIN ,     \
+                                EH_LOG_LEVEL_DATA , \
+                                __VA_ARGS__ )
 #elif defined(G_HAVE_GNUC_VARARGS)
 #define eh_message(format...)  g_log( EH_LOG_DOMAIN ,       \
                                       G_LOG_LEVEL_MESSAGE , \
@@ -114,6 +107,9 @@ void eh_logger( const gchar *log_domain ,
                                       format )
 #define eh_debug(format...)    g_log( EH_LOG_DOMAIN ,     \
                                       G_LOG_LEVEL_DEBUG , \
+                                      format )
+#define eh_data(format...)     g_log( EH_LOG_DOMAIN ,     \
+                                      EH_LOG_LEVEL_DATA , \
                                       format )
 #else
 static void eh_message( const char *format , ... )
@@ -152,6 +148,14 @@ static void eh_debug( const char *format , ... )
    va_list args;
    va_start( args , format );
    g_logv( EH_LOG_DOMAIN , G_LOG_LEVEL_DEBUG , format , args );
+   va_end( args );
+}
+
+static void eh_data( const char* format , ... )
+{
+   va_list args;
+   va_start( args , format );
+   g_logv( EH_LOG_DOMAIN , EH_LOG_LEVEL_DATA , format , args );
    va_end( args );
 }
 #endif

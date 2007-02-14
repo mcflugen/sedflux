@@ -99,28 +99,40 @@ sed_epoch_new_from_table( Eh_symbol_table t )
 }
 
 Sed_epoch_queue
-sed_epoch_queue_new( const gchar* file )
+sed_epoch_queue_new( const gchar* file , GError** error )
 {
    Sed_epoch_queue e_list = NULL;
 
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    if ( file )
    {
-      Eh_key_file       key_file = eh_key_file_scan( file );
-      Eh_symbol_table*  tables   = eh_key_file_get_symbol_tables( key_file , "epoch" );
-      Eh_symbol_table*  this_table;
+      GError*     tmp_err  = NULL;
+      Eh_key_file key_file = NULL;
 
-      NEW_OBJECT( Sed_epoch_queue , e_list );
-      e_list->l = NULL;
+      key_file = eh_key_file_scan( file , &tmp_err );
 
-      for ( this_table=tables ; *this_table ; this_table++ )
+      if ( key_file )
       {
-         e_list->l = g_list_append( e_list->l , sed_epoch_new_from_table(*this_table) );
-         eh_symbol_table_destroy( *this_table );
+         Eh_symbol_table*  tables     = eh_key_file_get_symbol_tables( key_file , "epoch" );
+         Eh_symbol_table*  this_table;
+
+         NEW_OBJECT( Sed_epoch_queue , e_list );
+         e_list->l = NULL;
+
+         for ( this_table=tables ; *this_table ; this_table++ )
+         {
+            e_list->l = g_list_append( e_list->l , sed_epoch_new_from_table(*this_table) );
+            eh_symbol_table_destroy( *this_table );
+         }
+
+         e_list->l = g_list_sort( e_list->l , (GCompareFunc)sed_epoch_number_cmp );
+
+         eh_free( tables );
       }
+      else
+         g_propagate_error( error , tmp_err );
 
-      e_list->l = g_list_sort( e_list->l , sed_epoch_number_cmp );
-
-      eh_free( tables );
       eh_key_file_destroy( key_file );
    }
 

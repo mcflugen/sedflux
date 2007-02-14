@@ -41,6 +41,8 @@ typedef enum
    SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
    SED_CUBE_ERROR_DATA_BAD_RANGE ,
 
+   SED_CUBE_ERROR_TOO_FEW_ROWS ,
+   SED_CUBE_ERROR_TOO_FEW_COLUMNS ,
    SED_CUBE_ERROR_BAD_GRID_DIMENSION ,
    SED_CUBE_ERROR_TRUNCATED_FILE
 }
@@ -108,7 +110,7 @@ typedef gboolean (*Sed_cube_func) ( const Sed_cube , gssize , gssize , gpointer 
 #define S_LOAD_FUNC         (&sed_cube_load)
 
 Sed_cube sed_cube_new( gssize n_x , gssize n_y );
-Sed_cube sed_cube_new_from_file( const gchar* file );
+Sed_cube sed_cube_new_from_file( const gchar* file , GError** error );
 Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y );
 Sed_cube sed_cube_free( Sed_cube c , gboolean free_data );
 Sed_cube sed_cube_free_river( Sed_cube p );
@@ -228,7 +230,11 @@ gssize        sed_cube_river_id        ( Sed_cube s , Sed_riv river );
 
 Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no );
 GList* sed_cube_river_list( Sed_cube s );
-gssize sed_cube_number_of_rivers( Sed_cube s );
+
+gssize     sed_cube_number_of_rivers( Sed_cube s ) G_GNUC_DEPRECATED;
+gint       sed_cube_n_branches      ( Sed_cube s );
+gint       sed_cube_n_rivers        ( Sed_cube s );
+
 Sed_cube      sed_cube_add_river       ( Sed_cube s , Sed_riv river );
 
 Sed_cube sed_load_cube( FILE *fp );
@@ -291,12 +297,34 @@ GList *sed_cube_find_line_path( Sed_cube c         ,
 double sed_cube_river_angle( Sed_cube c , GList *river );
 
 Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y );
-Eh_dbl_grid sed_get_floor_1d_grid( const char *file ,
-                                   double dx        ,
-                                   double dy        ,
-                                   GError** err );
 double**    sed_scan_sea_level_curve( const char* file , gint* len , GError** err );
-Eh_dbl_grid sed_get_floor_2d_grid( const char *file , double dx , double dy );
+
+typedef enum
+{
+   SED_BATHY_FILE_TYPE_2D_ASCII  ,
+   SED_BATHY_FILE_TYPE_2D_BINARY ,
+   SED_BATHY_FILE_TYPE_1D_ASCII
+}
+Sed_bathy_type;
+
+
+Eh_dbl_grid sed_bathy_grid_scan          ( const char* file         ,
+                                           double dx                ,
+                                           double dy                ,
+                                           GError** error );
+Eh_dbl_grid sed_bathy_grid_scan_2d_binary( const char* file         ,
+                                           double dx                ,
+                                           double dy                ,
+                                           GError** error );
+Eh_dbl_grid sed_bathy_grid_scan_2d_ascii ( const char* file         ,
+                                           double dx                ,
+                                           double dy                ,
+                                           GError** error );
+Eh_dbl_grid sed_bathy_grid_scan_1d_ascii ( const char* file         ,
+                                           double dx                ,
+                                           double dy                ,
+                                           GError** error );
+
 Eh_sequence *sed_get_floor_sequence_2( const char *file ,
                                        double *y        ,
                                        gssize n_y       ,
@@ -306,7 +334,7 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
                                        double dy        ,
                                        GError** error );
 
-Sed_cube sed_cube_avulse_all_rivers( Sed_cube c );
+Sed_cube sed_cube_foreach_river( Sed_cube c , GFunc func , gpointer user_data );
 
 Sed_cube sed_cube_find_all_river_mouths( Sed_cube c );
 
@@ -316,8 +344,8 @@ Sed_cube sed_cube_read( FILE *fp );
 gssize *sed_cube_find_column_below( Sed_cube c , double z );
 gssize *sed_cube_find_column_above( Sed_cube c , double z );
 
-int         sed_get_floor_vec ( char *filename , double *x , int len , double *y );
-GArray*     sed_get_floor     ( char *filename , GArray *x );
+int         sed_get_floor_vec ( char *filename , double *x , int len , double *y , GError** error ) G_GNUC_DEPRECATED;
+GArray*     sed_get_floor     ( char *filename , GArray *x , GError** error ) G_GNUC_DEPRECATED;
 
 gssize   sed_cube_id ( Sed_cube p , gssize i , gssize j );
 Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id );
@@ -328,6 +356,9 @@ gboolean sed_cube_is_1d( Sed_cube p );
 gssize   sed_cube_fprint( FILE* fp , Sed_cube c );
 
 Sed_cell sed_cube_to_cell( Sed_cube c , Sed_cell d );
+
+gint     sed_cube_count_above( Sed_cube c , double h );
+double   sed_cube_area_above ( Sed_cube c , double h );
 
 #endif
 

@@ -109,6 +109,8 @@ void        eh_dbl_grid_fprintf      ( FILE* fp        , const gchar* format , E
 Eh_grid     eh_grid_transpose        ( Eh_grid g );
 Eh_dbl_grid eh_dbl_grid_diff         ( Eh_dbl_grid g , gssize n , gssize dim );
 
+Eh_dbl_grid eh_dbl_grid_new_set      ( gint n_x , gint n_y , double** d );
+
 #define eh_grid_val( g , t , i , j ) ( *((t*)eh_grid_loc(g,i,j)) )
 #define eh_grid_new( t , n_x , n_y ) eh_grid_malloc( (n_x) , (n_y) , sizeof(t) )
 #define eh_grid_new_uniform( t , n_x , n_y , dx , dy ) eh_grid_malloc_uniform( (n_x) , (n_y) , sizeof(t) , dx , dy )

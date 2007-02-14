@@ -434,7 +434,7 @@ Sed_type sed_type_new( )
    Sed_type t;
    NEW_OBJECT( Sed_type , t );
 
-   memset( t , 0 , sizeof(Sed_type) );
+   memset( t , 0 , sizeof(*t) );
 
    return t;
 }
@@ -598,23 +598,29 @@ This is the start of the next group.
 
 \return A new Sed_sediment constructed from the file.  Use sed_sediment_destroy to free.
 */
-Sed_sediment sed_sediment_scan( const char *file )
+Sed_sediment
+sed_sediment_scan( const char *file , GError** error )
 {
    Sed_sediment sed = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    if ( !file )
       file = SED_SEDIMENT_TEST_FILE;
 
    {
-      char* name_used = g_strdup( file );
+      char*       name_used = g_strdup( file );
+      GError*     tmp_err   = NULL;
+      Eh_key_file key_file  = NULL;
 
-      sed = sed_sediment_new();
+      key_file = eh_key_file_scan( name_used , &tmp_err );
 
-//      eh_debug( "Read in the sediment types" );
+      if ( key_file )
       {
-         Eh_key_file key_file = eh_key_file_scan( name_used );
          Eh_symbol_table group;
-         Sed_type new_type;
+         Sed_type        new_type;
+
+         sed = sed_sediment_new();
 
          for ( group = eh_key_file_pop_group( key_file ) ;
                group ;
@@ -627,11 +633,12 @@ Sed_sediment sed_sediment_scan( const char *file )
             group    = eh_symbol_table_destroy( group );
             new_type = sed_type_destroy       ( new_type );
          }
-
-         eh_key_file_destroy( key_file );
       }
+      else
+         g_propagate_error( error , tmp_err );
 
-      eh_free( name_used );
+      eh_key_file_destroy( key_file  );
+      eh_free            ( name_used );
    }
 
    return sed;

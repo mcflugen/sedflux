@@ -40,7 +40,7 @@ double        sed_epoch_duration       ( Sed_epoch e );
 double        sed_epoch_time_step      ( Sed_epoch e );
 const char*   sed_epoch_filename       ( Sed_epoch e );
 
-Sed_epoch_queue sed_epoch_queue_new    ( const gchar* file );
+Sed_epoch_queue sed_epoch_queue_new    ( const gchar* file , GError** error );
 Sed_epoch_queue sed_epoch_queue_destroy( Sed_epoch_queue q );
 gssize          sed_epoch_queue_length ( Sed_epoch_queue q );
 gint            sed_epoch_number_cmp   ( Sed_epoch a , Sed_epoch b );

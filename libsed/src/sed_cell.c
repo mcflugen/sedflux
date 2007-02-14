@@ -767,7 +767,7 @@ sed_cell_separate_thickness( Sed_cell in ,
    eh_require( in );
 
    {
-      double total    = sed_cell_thickness( in );
+      double total    = sed_cell_size( in );
       double in_size  = total - t;
       double out_size = total - in_size;
 
@@ -1726,7 +1726,7 @@ double
 sed_cell_consolidation( const Sed_cell c , double time_now )
 {
    double dt = time_now - sed_cell_age_in_years( c );
-   double d  = sed_cell_thickness(c);
+   double d  = sed_cell_size(c);
    double data[2];
 
    data[0] = d;
@@ -1776,7 +1776,7 @@ double
 sed_cell_consolidation_rate( const Sed_cell c , double time_now )
 {
    double dt = time_now - sed_cell_age_in_years( c );
-   double d  = sed_cell_thickness(c);
+   double d  = sed_cell_size(c);
    double data[2];
 
    data[0] = d;
@@ -1790,9 +1790,6 @@ sed_cell_consolidation_rate( const Sed_cell c , double time_now )
 //
 ///////////////////////////////////////////////////////////////////
 
-/** Get the current thickness of a cell.
-\param c The Sed_cell to query.
-*/
 double
 sed_cell_thickness(const Sed_cell c)
 {
@@ -1802,6 +1799,12 @@ sed_cell_thickness(const Sed_cell c)
       return 0;
 }
 
+/** Get the thickness of a cell.
+
+\param c The Sed_cell to query.
+
+\return The size (thickness) of the Sed_cell
+*/
 double
 sed_cell_size( const Sed_cell c )
 {
@@ -2290,7 +2293,7 @@ sed_cell_is_same( Sed_cell a , Sed_cell b )
    if ( a != b )
    {
       if (    sed_cell_n_types(a) != sed_cell_n_types(b)
-           || fabs( sed_cell_thickness(a)-sed_cell_thickness(b) )>1e-6
+           || fabs( sed_cell_size(a)-sed_cell_size(b) )>1e-6
            || fabs( sed_cell_age(a) - sed_cell_age(b) ) >1e-6
            || sed_cell_facies(a) != sed_cell_facies(b) )
          same = FALSE;

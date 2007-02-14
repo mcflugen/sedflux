@@ -92,7 +92,7 @@ int main( int argc , char* argv[] )
             eh_dbl_grid_set_val( g , i , j , -slope*j*y_res );
 
       if      ( ascii )
-         eh_dbl_grid_fprintf( fp_out , "%f " , g );
+         eh_dlm_print_dbl_grid( out_file , ", " , g , NULL );
       else if ( byte_order == G_BYTE_ORDER )
       {
          fwrite( &n_y                  , sizeof(gint32) , 1       , fp_out );

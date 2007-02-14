@@ -27,6 +27,7 @@
 #include "processes.h"
 #include "plume_types.h"
 #include "utils.h"
+#include "sedflux.h"
 
 /** Global variable that lists all of the process that sedflux will run 
 
@@ -85,49 +86,61 @@ will \b NOT be active.
 */
 
 Sed_process_queue
-sedflux_create_process_queue( const gchar* file , gchar** user_data )
+sedflux_create_process_queue( const gchar* file , gchar** user_data , GError** error )
 {
    Sed_process_queue q = NULL;
 
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    if ( file )
    {
-      gssize i;
-      Eh_key_file key_file    = eh_key_file_scan( file );
-      gint        n_processes = sizeof( process_list ) / sizeof(Sed_process_init_t);
+      GError*     tmp_err  = NULL;
+      Eh_key_file key_file = NULL;
 
-      q = sed_process_queue_new();
-      for ( i=0 ; i<n_processes ; i++ )
-         sed_process_queue_push( q , process_list[i] );
+      key_file    = eh_key_file_scan( file , &tmp_err );
 
-      sed_process_queue_scan( q , key_file );
-
-      if ( user_data )
+      if ( key_file )
       {
-         gchar** name;
-         sed_process_queue_deactivate( q , "<all>" );
+         gint   n_processes = sizeof( process_list ) / sizeof(Sed_process_init_t);
+         gssize i;
 
-         for ( name=user_data ; *name ; name++ )
-            sed_process_queue_activate  ( q , *name );
+         q = sed_process_queue_new();
+         for ( i=0 ; i<n_processes ; i++ )
+            sed_process_queue_push( q , process_list[i] );
+
+         sed_process_queue_scan( q , key_file );
+
+         if ( user_data )
+         {
+            gchar** name;
+            sed_process_queue_deactivate( q , "<all>" );
+
+            for ( name=user_data ; *name ; name++ )
+               sed_process_queue_activate  ( q , *name );
+         }
+
+
+         {
+            gssize i;
+            Failure_proc_t** data;
+            Sed_process d = sed_process_queue_find_nth_obj( q , "debris flow"       , 0 );
+            Sed_process t = sed_process_queue_find_nth_obj( q , "turbidity current" , 0 );
+            Sed_process s = sed_process_queue_find_nth_obj( q , "slump"             , 0 );
+
+            data = (Failure_proc_t**)sed_process_queue_obj_data( q , "failure" );
+            for ( i=0 ; data && data[i] ; i++ )
+            {
+               data[i]->debris_flow       = d;
+               data[i]->turbidity_current = t;
+               data[i]->slump             = s;
+            }
+            eh_free( data );
+         }
       }
+      else
+         g_propagate_error( error , tmp_err );
 
       eh_key_file_destroy( key_file );
-
-      {
-         gssize i;
-         Failure_proc_t** data;
-         Sed_process d = sed_process_queue_find_nth_obj( q , "debris flow"       , 0 );
-         Sed_process t = sed_process_queue_find_nth_obj( q , "turbidity current" , 0 );
-         Sed_process s = sed_process_queue_find_nth_obj( q , "slump"             , 0 );
-
-         data = (Failure_proc_t**)sed_process_queue_obj_data( q , "failure" );
-         for ( i=0 ; data && data[i] ; i++ )
-         {
-            data[i]->debris_flow       = d;
-            data[i]->turbidity_current = t;
-            data[i]->slump             = s;
-         }
-         eh_free( data );
-      }
    }
 
    return q;
@@ -179,22 +192,26 @@ while \p family_check describes errors in families of processes.
 
 \return TRUE if there were no erros, FALSE otherwise.
 */
-gboolean check_process_list( Sed_process_queue q )
+gboolean
+check_process_list( Sed_process_queue q , GError** error )
 {
-   gboolean no_errors = TRUE;
-   gint error = 0;
+   gboolean file_is_ok = TRUE;
+   gchar** err_s_list = NULL;
+   gint error_no = 0;
    gssize n_checks = sizeof( process_check ) / sizeof( Process_check_t );
    gssize n_families;
    gssize i;
+   gchar* err_s = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
 
    for ( i=0 ; i<n_checks ; i++ )
    {
-      error = sed_process_queue_check( q , process_check[i].name );
-      if ( error & process_check[i].error )
+      error_no = sed_process_queue_check( q , process_check[i].name );
+      if ( error_no!=0 & process_check[i].error )
       {
-         eh_warning( "%s: Possible error (#%d) in process input file." ,
-                     process_check[i].name , error );
-         no_errors = FALSE;
+         err_s = g_strdup_printf( "%s: Error in process input file" , process_check[i].name , error_no );
+         eh_strv_append( &err_s_list , err_s );
       }
    }
 
@@ -202,18 +219,37 @@ gboolean check_process_list( Sed_process_queue q )
 
    for ( i=0 ; i<n_families ; i++ )
    {
-      error = sed_process_queue_check_family( q                           ,
-                                              family_check[i].parent_name ,
-                                              family_check[i].child_name , NULL );
-      if (   error & family_check[i].error )
+      error_no = sed_process_queue_check_family( q                           ,
+                                                 family_check[i].parent_name ,
+                                                 family_check[i].child_name , NULL );
+      if (   error_no!=0 & family_check[i].error )
       {
          eh_warning( "%s: Possible error (#%d) in process input file." ,
                      family_check[i].parent_name , error );
-         no_errors = FALSE;
+
+         err_s = g_strdup_printf( "%s: Error %d in process input file" , process_check[i].name , error_no );
+         eh_strv_append( &err_s_list , err_s );
       }
    }
 
-   return no_errors;
+   if ( err_s_list!=NULL )
+   {
+      GError* tmp_err = NULL;
+      gchar*  err_msg = g_strjoinv( "\n" , err_s_list );
+
+      g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_PROCESS_FILE_CHECK , err_msg );
+
+      g_propagate_error( error , tmp_err );
+
+      eh_free   ( err_msg    );
+      g_strfreev( err_s_list );
+      
+      file_is_ok = FALSE;
+   }
+   else
+      file_is_ok = TRUE;
+
+   return file_is_ok;
 }
 
 
@@ -233,28 +269,43 @@ will \b NOT be active.
 
 \return TRUE if there were no errors, FALSE otherwise
 */
-gboolean check_process_files( Sed_epoch_queue e_list , gchar** active )
+gboolean
+check_process_files( Sed_epoch_queue e_list , gchar** active , GError** error )
 {
    gboolean no_errors = TRUE;
-   int n_epochs = sed_epoch_queue_length( e_list );
-   gssize i;
-   Sed_process_queue q;
-   Sed_epoch this_epoch;
 
-   //---
-   // For each epoch, we create each of the processes, initialize the 
-   // processes from the appropriate input file, and destroy the processes.
-   //---
-   for ( i=0 ; i<n_epochs ; i++ )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
    {
-      this_epoch = sed_epoch_queue_nth( e_list , i );
+      GError*           tmp_err  = NULL;
+      int               n_epochs = sed_epoch_queue_length( e_list );
+      gssize            i;
+      Sed_process_queue q;
+      Sed_epoch         this_epoch;
 
-      q = sedflux_create_process_queue( sed_epoch_filename(this_epoch) , active );
+      //---
+      // For each epoch, we create each of the processes, initialize the 
+      // processes from the appropriate input file, and destroy the processes.
+      //---
+      for ( i=0 ; i<n_epochs && !tmp_err ; i++ )
+      {
+         this_epoch = sed_epoch_queue_nth( e_list , i );
 
-      no_errors = no_errors && check_process_list( q );
+         q = sedflux_create_process_queue( sed_epoch_filename(this_epoch) , active , &tmp_err );
 
-      sed_process_queue_destroy( q );
-   } 
+         if ( q )
+         {
+            no_errors = no_errors && check_process_list( q , &tmp_err );
+            sed_process_queue_destroy( q );
+         }
+      } 
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         no_errors = FALSE;
+      }
+   }
 
    return no_errors;
 }

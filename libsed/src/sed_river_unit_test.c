@@ -67,7 +67,7 @@ START_TEST ( test_sed_river_dup )
 }
 END_TEST
 
-START_TEST ( test_sed_river_mouth )
+START_TEST ( test_sed_river_leaves )
 {
    {
       Sed_riv r = sed_river_new( NULL );
@@ -77,9 +77,66 @@ START_TEST ( test_sed_river_mouth )
       sed_river_split( sed_river_left(r) );
       sed_river_split( sed_river_right(sed_river_left(r)) );
 
-      river_mouth = sed_river_mouths( r );
+      river_mouth = sed_river_leaves( r );
 
       fail_unless( g_strv_length( river_mouth )==4 , "Incorrect number of river mouths" );
+   }
+}
+END_TEST
+
+START_TEST ( test_sed_river_branches )
+{
+   {
+      Sed_riv r = sed_river_new( NULL );
+      Sed_riv* river_branch;
+
+      sed_river_split( r );
+      sed_river_split( sed_river_left(r) );
+      sed_river_split( sed_river_right(sed_river_left(r)) );
+
+      river_branch = sed_river_branches( r );
+
+      fail_unless( g_strv_length( river_branch )==7 , "Incorrect number of river branches" );
+   }
+}
+END_TEST
+
+START_TEST ( test_sed_river_n_branches )
+{
+   {
+      Sed_riv r = sed_river_new( NULL );
+      Sed_riv* river_branch;
+
+      fail_unless( sed_river_n_branches(NULL)==0 , "Size of NULL river is 0" );
+
+      fail_unless( sed_river_n_branches(r)==1 , "River size is incorrect" );
+
+      sed_river_split( r );
+      fail_unless( sed_river_n_branches(r)==3 , "River size is incorrect" );
+
+      sed_river_split( sed_river_left(r) );
+      sed_river_split( sed_river_right(sed_river_left(r)) );
+      fail_unless( sed_river_n_branches(r)==7 , "River size is incorrect" );
+   }
+}
+END_TEST
+
+START_TEST ( test_sed_river_longest )
+{
+   {
+      Sed_riv r = sed_river_new( NULL );
+      Sed_riv* river_branch;
+
+      fail_unless( sed_river_longest_branch(NULL)==NULL , "Longest branch of NULL is NULL" );
+
+      fail_unless( sed_river_longest_branch(r)==r , "Return the trunk if it doesn't branch" );
+
+      sed_river_split( r );
+      fail_unless( sed_river_longest_branch(r)==sed_river_left(r) , "Left branch in the case of a tie" );
+
+      sed_river_split( sed_river_left(r) );
+      sed_river_split( sed_river_right(sed_river_left(r)) );
+      fail_unless( sed_river_longest_branch(r)==sed_river_right(r) , "Error finding longest branch" );
    }
 }
 END_TEST
@@ -124,15 +181,11 @@ START_TEST ( test_sed_river_set_angle )
    fail_unless( eh_compare_dbl( sed_river_angle(r) , .25*G_PI , 1e-12 ) , "Angle incorrectly set"         );
 
    sed_river_set_angle( r , .95*G_PI );
-   fail_unless( eh_compare_dbl( sed_river_angle(r) , .05*G_PI , 1e-12 ) , "Angle not reflected correctly" );
+
+   fail_unless( eh_compare_dbl( sed_river_angle(r) , .5*G_PI , 1e-12 ) , "Angle out of range" );
 
    sed_river_set_angle( r , -.75*G_PI );
-   fail_unless( eh_compare_dbl( sed_river_angle(r) , .25*G_PI , 1e-12 ) , "Angle not reflected correctly" );
-
-   sed_river_set_angle_limit( r , 0. , .01*G_PI );
-   sed_river_set_angle( r , -.99*G_PI );
-   fail_unless( sed_river_angle(r)>=0                                   , "Angle not reflected correctly" );
-   fail_unless( sed_river_angle(r)<=.01*G_PI                            , "Angle not reflected correctly" );
+   fail_unless( eh_compare_dbl( sed_river_angle(r) , 0.      , 1e-12 ) , "Angle out of range" );
 }
 END_TEST
 
@@ -148,7 +201,10 @@ Suite *sed_river_suite( void )
    tcase_add_test( test_case_core , test_sed_river_dup   );
    tcase_add_test( test_case_core , test_sed_river_split );
    tcase_add_test( test_case_core , test_sed_river_set_angle );
-   tcase_add_test( test_case_core , test_sed_river_mouth );
+   tcase_add_test( test_case_core , test_sed_river_leaves );
+   tcase_add_test( test_case_core , test_sed_river_branches );
+   tcase_add_test( test_case_core , test_sed_river_n_branches );
+   tcase_add_test( test_case_core , test_sed_river_longest );
 
    return s;
 }

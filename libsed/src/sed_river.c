@@ -27,7 +27,6 @@ CLASS( Sed_riv )
    gchar* name;            ///< The name of the river
    Sed_riv l;
    Sed_riv r;
-   GData* user_data;
 };
 
 Sed_riv_hinge* sed_river_hinge_new( );
@@ -89,7 +88,6 @@ sed_river_new( gchar* name )
    r->name  = g_strdup( name );
    r->l     = NULL;
    r->r     = NULL;
-   g_datalist_init( &(r->user_data) );
 
    return r;
 }
@@ -110,8 +108,6 @@ sed_river_copy( Sed_riv d , Sed_riv s )
       d->hinge = sed_river_hinge_copy( d->hinge , s->hinge );
       sed_river_copy      ( d->l     , s->l     );
       sed_river_copy      ( d->r     , s->r     );
-
-      d->user_data = s->user_data;
 
       eh_free( d->name );
       d->name = g_strdup( s->name );
@@ -184,6 +180,8 @@ sed_river_set_angle( Sed_riv s , double a )
       if ( eh_compare_dbl( a , G_PI , 1e-12 ) )
          a -= 1e-12;
       s->hinge->angle = eh_reduce_angle( a );
+
+      eh_clamp( s->hinge->angle , s->hinge->min_angle , s->hinge->max_angle );
    }
    return s;
 }
@@ -241,25 +239,6 @@ sed_river_set_mouth( Sed_riv r , gint i , gint j )
 }
 
 Sed_riv
-sed_river_set_data( Sed_riv s , GQuark key_id , gpointer data )
-{
-   eh_return_val_if_fail( s , NULL );
-
-   g_datalist_id_set_data( &(s->user_data) , key_id , data );
-   return s;
-}
-
-Sed_riv
-sed_river_set_data_full( Sed_riv s , GQuark key_id , gpointer data , GDestroyNotify func )
-{
-   eh_return_val_if_fail( s , NULL );
-
-   g_datalist_id_set_data_full( &(s->user_data) , key_id , data , func );
-
-   return s;
-}
-
-Sed_riv
 sed_river_adjust_mass( Sed_riv s , double f )
 {
    eh_return_val_if_fail( s , NULL );
@@ -293,6 +272,41 @@ sed_river_hydro   ( Sed_riv s )
    eh_return_val_if_fail( s->data , NULL );
 
    return sed_hydro_dup( s->data );
+}
+
+gint*
+sed_river_n_branches_helper( Sed_riv s , gint* n )
+{
+   if ( s )
+   {
+      sed_river_n_branches_helper( s->l , n );
+      sed_river_n_branches_helper( s->r , n );
+
+      (*n) += 1;
+   }
+
+   return n;
+}
+
+/** Count the number of branches of a river
+
+Count all of the branches of a river, including the river trunk.  Thus,
+if the river does not branch, sed_river_n_branches will return 1.  If the
+trunk branches only once, the size is 3.
+
+\param s   A Sed_river
+
+\return The total number of branches of the river
+*/
+gint
+sed_river_n_branches( Sed_riv s )
+{
+   gint n = 0;
+
+   if ( s )
+      sed_river_n_branches_helper( s , &n );
+
+   return n;
 }
 
 double
@@ -388,14 +402,6 @@ sed_river_mouth( Sed_riv s )
    return pos;
 }
 
-gpointer
-sed_river_data( Sed_riv s , GQuark key_id )
-{
-   eh_return_val_if_fail( s , NULL );
-
-   return g_datalist_id_get_data( &(s->user_data) , key_id );
-}
-
 gboolean
 sed_river_mouth_is( Sed_riv s , gint i , gint j )
 {
@@ -478,10 +484,41 @@ sed_river_split( Sed_riv s )
 
          s->l = sed_river_split_discharge( child );
          s->r = sed_river_dup( s->l );
+
+         sed_river_set_angle( s->l , .5*(sed_river_angle(s)+sed_river_max_angle(s)) );
+         sed_river_set_angle( s->r , .5*(sed_river_angle(s)+sed_river_min_angle(s)) );
       }
    }
 
    return s;
+}
+
+/** Find the longest branch of a river
+
+The length of a  branch is determined by its number of child branches.  The
+longest branch is the branch that has the FEWEST children.  In the case of a
+tie, the left-most branch is chosen.  That is, the one that was first created.
+
+\param s A Sed_riv
+
+\return The longest branch
+*/
+Sed_riv
+sed_river_longest_branch( Sed_riv s )
+{
+   Sed_riv longest = NULL;
+
+   if ( s )
+   {
+      if ( !sed_river_has_children(s) )
+         longest = s;
+      else if ( sed_river_n_branches(s->l) > sed_river_n_branches(s->r) )
+         longest = sed_river_longest_branch( s->r );
+      else
+         longest = sed_river_longest_branch( s->l );
+   }
+
+   return longest;
 }
 
 Sed_riv
@@ -496,36 +533,94 @@ sed_river_destroy( Sed_riv s )
       sed_river_destroy      ( s->l         );
       sed_river_destroy      ( s->r         );
 
-      if ( s->user_data )
-         g_datalist_clear( &(s->user_data) );
-
       eh_free( s );
    }
    return NULL;
 }
 
 Sed_riv**
-sed_river_mouths_helper( Sed_riv s , Sed_riv** leaf )
+sed_river_leaves_helper( Sed_riv s , Sed_riv** leaf )
 {
    if ( !sed_river_has_children(s) )
       eh_strv_append( (gpointer)leaf , (gpointer)s );
    else
    {
-      sed_river_mouths_helper( s->l , leaf );
-      sed_river_mouths_helper( s->r , leaf );
+      sed_river_leaves_helper( s->l , leaf );
+      sed_river_leaves_helper( s->r , leaf );
    }
 
    return leaf;
 }
 
+/** Get an array of the 'leaf' branches of a Sed_riv
+
+Construct a NULL terminated array of Sed_riv's that represent the 'leaf' branches
+of a Sed_riv.  These are the smallest branches of the river that are nearest the
+mouth of the river.  If the input Sed_riv has no children, then it is returned as the only
+branch (as the only element in a NULL-terminated array).
+
+When finished, the returned array should be freed.  The elements of the
+array should not be destroyed however as they reference the actual location
+of the children of the parent Sed_riv.
+
+\param s   The parent Sed_riv
+
+\return A NULL-terminated array of Sed_riv structures
+
+\see sed_river_branches
+*/
 Sed_riv*
-sed_river_mouths( Sed_riv s )
+sed_river_leaves( Sed_riv s )
 {
    Sed_riv* leaf = NULL;
 
    if ( s )
    {
-      sed_river_mouths_helper( s , &leaf );
+      sed_river_leaves_helper( s , &leaf );
+   }
+
+   return leaf;
+}
+
+Sed_riv**
+sed_river_branches_helper( Sed_riv s , Sed_riv** leaf )
+{
+
+   if ( s )
+   {
+      sed_river_branches_helper( s->l , leaf );
+      sed_river_branches_helper( s->r , leaf );
+
+      eh_strv_append( (gpointer)leaf , (gpointer)s );
+   }
+
+   return leaf;
+}
+
+/** Get an array of all the branches of a Sed_riv
+
+Construct a NULL terminated array of Sed_riv's that represent all of the branches
+of a Sed_riv.  If the input Sed_riv has no children, then it is returned as the only
+branch (as the only element in a NULL-terminated array).
+
+When finished, the returned array should be freed.  The elements of the
+array should not be destroyed however as they reference the actual location
+of the children of the parent Sed_riv.
+
+\param s   The parent Sed_riv
+
+\return A NULL-terminated array of Sed_riv structures
+
+\see sed_river_leaves
+*/
+Sed_riv*
+sed_river_branches( Sed_riv s )
+{
+   Sed_riv* leaf = NULL;
+
+   if ( s )
+   {
+      sed_river_branches_helper( s , &leaf );
    }
 
    return leaf;
@@ -557,15 +652,17 @@ sed_river_fwrite( FILE* fp , Sed_riv s )
 
    if ( s )
    {
-      
+      eh_require_not_reached();
    }
 
    return n;
 }
 
-gint
+Sed_riv
 sed_river_fread( FILE* fp , Sed_riv d )
 {
+   eh_require_not_reached();
+   return NULL;
 }
 
 

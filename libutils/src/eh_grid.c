@@ -152,6 +152,29 @@ Eh_grid eh_grid_malloc( gssize n_x , gssize n_y , gssize size )
    return g;
 }
 
+Eh_dbl_grid
+eh_dbl_grid_new_set( gint n_x , gint n_y , double** d )
+{
+   Eh_dbl_grid g;
+
+   NEW_OBJECT( Eh_dbl_grid , g );
+
+   eh_return_val_if_fail( n_x>=0  , NULL );
+   eh_return_val_if_fail( n_y>=0  , NULL );
+   eh_return_val_if_fail( d!=NULL , NULL );
+
+   g->data    = (void**)d;
+   g->x       = eh_new( double , n_x );
+   g->y       = eh_new( double , n_y );
+   g->n_x     = n_x;
+   g->n_y     = n_y;
+   g->low_x   = 0;
+   g->low_y   = 0;
+   g->el_size = sizeof(double);
+
+   return g;
+}
+
 Eh_grid eh_grid_malloc_uniform( gssize n_x , gssize n_y , gssize size , double dx , double dy )
 {
    Eh_grid g = eh_grid_malloc( n_x , n_y , size );

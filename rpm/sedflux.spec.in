@@ -3,6 +3,7 @@ Name: sedflux
 Version: @VERSION@
 Release: 1
 Epoch: 1
+License: GPL
 Source: http://instaar.colorado.edu/pub/ew/sedflux-%{version}.tar.gz
 Group: Development/Tools
 URL: http://instaar.colorado.edu/delta_force

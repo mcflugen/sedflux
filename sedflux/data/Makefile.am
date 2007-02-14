@@ -3,7 +3,7 @@
 EXTRA_DIST = \
              sample-init.kvf \
              sample-epoch.kvf \
-             sample-inline.kvf \
+             sample-river.kvf \
              sample-sediment.kvf \
              sample-bathy.csv \
              sample-sea-level.csv \
@@ -16,7 +16,7 @@ EXTRA_DIST = \
 pkgdata_DATA = \
              sample-init.kvf \
              sample-epoch.kvf \
-             sample-inline.kvf \
+             sample-river.kvf \
              sample-sediment.kvf \
              sample-bathy.csv \
              sample-sea-level.csv \

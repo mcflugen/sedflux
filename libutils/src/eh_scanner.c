@@ -291,55 +291,64 @@ Symbol_table* eh_scan_key_file_for( const gchar* file ,
 
 #endif 
 
-GScanner *eh_open_scanner(const char *filename)
+#include <errno.h>
+
+GScanner *eh_open_scanner(const char *filename , GError** error )
 {
-   GScannerConfig config;
-   GScanner *s;
+   GScanner* s = NULL;
 
-   config.cset_skip_characters = g_strdup( " \t\n" );
-
-   config.cset_identifier_first = g_strconcat( G_CSET_a_2_z        , 
-                                               "^%.+-,_0123456789" ,
-                                               G_CSET_A_2_Z        , 
-                                               NULL );
-   config.cset_identifier_nth   = g_strconcat( G_CSET_a_2_z        ,
-                                               G_CSET_A_2_Z        ,
-                                               "^%.+-,_0123456789" ,
-                                               G_CSET_LATINS       ,
-                                               G_CSET_LATINC       ,
-                                               NULL );
-   config.cpair_comment_single = g_strdup( "#\n" );
-
-   config.skip_comment_multi    = TRUE;      /* C like comment */
-   config.skip_comment_single   = TRUE;      /* single line comment */
-   config.scan_comment_multi    = TRUE;      /* scan multi line comments? */
-   config.scan_identifier       = 1;
-   config.scan_identifier_1char = 1;
-   config.scan_identifier_NULL  = 1;
-   config.scan_symbols          = 1;
-   config.scan_binary           = FALSE;
-   config.scan_octal            = FALSE;
-   config.scan_float            = FALSE;
-   config.scan_hex              = FALSE;     /* `0x0ff0' */
-   config.scan_hex_dollar       = FALSE;     /* `$0ff0' */
-   config.scan_string_sq        = TRUE;      /* string: 'anything' */
-   config.scan_string_dq        = TRUE;      /* string: "\\-escapes!\n" */
-   config.numbers_2_int         = TRUE;      /* bin, octal, hex => int */
-   config.int_2_float           = TRUE;      /* int => G_TOKEN_FLOAT? */
-   config.identifier_2_string   = TRUE;
-   config.char_2_token          = TRUE;      /* return G_TOKEN_CHAR? */
-   config.symbol_2_token        = FALSE;
-   config.scope_0_fallback      = TRUE;      /* try scope 0 on lookups? */
+   eh_require( filename );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    {
-      int fd = open(filename,O_RDONLY);
-      if ( fd < 0 )
-         perror(filename) , eh_exit(-1);
+      int fd = g_open( filename , O_RDONLY );
 
-      s = g_scanner_new(&config);
-      s->input_name = filename;
+      if ( fd != -1 )
+      {
+         GScannerConfig config;
 
-      g_scanner_input_file( s , fd );
+         config.cset_skip_characters = g_strdup( " \t\n" );
+
+         config.cset_identifier_first = g_strconcat( G_CSET_a_2_z        , 
+                                                     "^%.+-,_0123456789" ,
+                                                     G_CSET_A_2_Z        , 
+                                                     NULL );
+         config.cset_identifier_nth   = g_strconcat( G_CSET_a_2_z        ,
+                                                     G_CSET_A_2_Z        ,
+                                                     "^%.+-,_0123456789" ,
+                                                     G_CSET_LATINS       ,
+                                                     G_CSET_LATINC       ,
+                                                     NULL );
+         config.cpair_comment_single = g_strdup( "#\n" );
+
+         config.skip_comment_multi    = TRUE;      /* C like comment */
+         config.skip_comment_single   = TRUE;      /* single line comment */
+         config.scan_comment_multi    = TRUE;      /* scan multi line comments? */
+         config.scan_identifier       = 1;
+         config.scan_identifier_1char = 1;
+         config.scan_identifier_NULL  = 1;
+         config.scan_symbols          = 1;
+         config.scan_binary           = FALSE;
+         config.scan_octal            = FALSE;
+         config.scan_float            = FALSE;
+         config.scan_hex              = FALSE;     /* `0x0ff0' */
+         config.scan_hex_dollar       = FALSE;     /* `$0ff0' */
+         config.scan_string_sq        = TRUE;      /* string: 'anything' */
+         config.scan_string_dq        = TRUE;      /* string: "\\-escapes!\n" */
+         config.numbers_2_int         = TRUE;      /* bin, octal, hex => int */
+         config.int_2_float           = TRUE;      /* int => G_TOKEN_FLOAT? */
+         config.identifier_2_string   = TRUE;
+         config.char_2_token          = TRUE;      /* return G_TOKEN_CHAR? */
+         config.symbol_2_token        = FALSE;
+         config.scope_0_fallback      = TRUE;      /* try scope 0 on lookups? */
+
+         s = g_scanner_new(&config);
+         s->input_name = filename;
+
+         g_scanner_input_file( s , fd );
+      }
+      else
+         eh_set_file_error_from_errno( error , errno );
    }
 
    return s;
@@ -1019,9 +1028,15 @@ char *eh_get_value_from_record_file( Eh_record_file *rec_file , const char *rec_
 
 #endif
 
-Eh_data_file *eh_open_data_file( const char *filename , Eh_data_file_attr *attr )
+Eh_data_file*
+eh_open_data_file( const char *filename , Eh_data_file_attr *attr , GError** error )
 {
-   Eh_data_file *data_file = eh_new0( Eh_data_file , 1 );
+   Eh_data_file* data_file = NULL;
+   GError*       tmp_err   = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   data_file = eh_new0( Eh_data_file , 1 );
 
    if ( attr==NULL )
    {
@@ -1039,16 +1054,21 @@ Eh_data_file *eh_open_data_file( const char *filename , Eh_data_file_attr *attr 
    }
 
    data_file->filename    = g_strdup( filename );
-/*
-   data_file->records     = eh_scan_data_file( filename ,
-                                               data_file->delimeter ,
-                                               data_file->row_major, 
-                                               data_file->with_header );
-*/
    data_file->records     = eh_data_record_scan_file( filename             ,
                                                       data_file->delimeter ,
                                                       data_file->fast_dim  ,
-                                                      data_file->with_header );
+                                                      data_file->with_header ,
+                                                      &tmp_err );
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+
+      eh_free( data_file->filename );
+      eh_free( data_file           );
+
+      data_file = NULL;
+   }
 
    return data_file;
 }

@@ -30,7 +30,7 @@
 # define DATADIR "/usr/local/share"
 #endif
 
-#define SED_SEDIMENT_TEST_FILE DATADIR "/ew/test.sediment"
+#define SED_SEDIMENT_TEST_FILE DATADIR "/sedflux/sample_sediment.kvf"
 
 new_handle( Sed_type     );
 new_handle( Sed_sediment );
@@ -170,7 +170,7 @@ Sed_type     sed_sediment_type     ( const Sed_sediment , gssize             );
 Sed_sediment sed_sediment_destroy  ( Sed_sediment                            );
 gssize       sed_sediment_write    ( FILE*              , const Sed_sediment );
 Sed_sediment sed_sediment_load     ( FILE*                                   );
-Sed_sediment sed_sediment_scan     ( const char*                             );
+Sed_sediment sed_sediment_scan     ( const char*        , GError**           );
 
 Sed_sediment sed_sediment_set_env    ( Sed_sediment s );
 Sed_sediment sed_sediment_unset_env  ( );

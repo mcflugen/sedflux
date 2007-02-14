@@ -31,6 +31,7 @@ typedef struct
    Eh_input_val min_angle;
    Eh_input_val max_angle;
    Eh_input_val f_remain;
+   gboolean     branching_is_on;
    GRand*       rand;
    guint32      rand_seed;
    gboolean     reset_angle;

@@ -50,8 +50,8 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 
    if ( !data->initialized )
    {
-      sed_river_set_avulsion( sed_cube_river_by_name(prof,data->river_name) ,
-                              avulsion_new(NULL,0.) );
+      sed_river_set_avulsion_data( sed_cube_river_by_name(prof,data->river_name) ,
+                                   avulsion_new(NULL,0.) );
       data->rand = (data->rand_seed>0)?g_rand_new_with_seed( data->rand_seed ):g_rand_new();
       data->reset_angle = TRUE;
       data->initialized = TRUE;
@@ -61,14 +61,30 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 
    if ( this_river )
    {
-      double       time      = sed_cube_age_in_years( prof );
-      double       fraction  = eh_input_val_eval( data->f_remain  , time    );
-      double       std_dev   = eh_input_val_eval( data->std_dev   , time    )*S_RADS_PER_DEGREE;
-      double       min_angle = eh_input_val_eval( data->min_angle , time    )*S_RADS_PER_DEGREE;
-      double       max_angle = eh_input_val_eval( data->max_angle , time    )*S_RADS_PER_DEGREE;
+      double time       = sed_cube_age_in_years( prof );
+      double fraction   = eh_input_val_eval( data->f_remain  , time    );
+      double std_dev    = eh_input_val_eval( data->std_dev   , time    )*S_RADS_PER_DEGREE;
+      double min_angle  = eh_input_val_eval( data->min_angle , time    )*S_RADS_PER_DEGREE;
+      double max_angle  = eh_input_val_eval( data->max_angle , time    )*S_RADS_PER_DEGREE;
+      double f          = 10e6;
 
-      sed_river_avulsion( this_river )->std_dev = std_dev;
-      sed_river_avulsion( this_river )->rand    = data->rand;
+      if ( data->branching_is_on )
+      {
+         double area       = sed_cube_area_above( prof , sed_cube_sea_level(prof) );
+         gint   n_branches = sed_cube_n_branches( prof );
+
+         while ( area/n_branches > f )
+         {
+            sed_river_split( sed_river_longest_branch(this_river) );
+
+            sed_river_impart_avulsion_data( this_river );
+
+            n_branches += 2;
+         }
+      }
+
+      sed_river_avulsion_data( this_river )->std_dev = std_dev;
+      sed_river_avulsion_data( this_river )->rand    = data->rand;
 
       eh_require( max_angle>min_angle );
       eh_require( fraction>=0.        );
@@ -85,7 +101,7 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
       sed_river_set_hinge      ( this_river , data->hinge_i , data->hinge_j );
 
       sed_cube_avulse_river( prof , this_river );
-
+/*
       eh_message( "time         : %f" , sed_cube_age_in_years (prof)           );
       eh_message( "river name   : %s" , data->river_name                       );
       eh_message( "minimum angle: %f" , sed_river_min_angle   ( this_river )   );
@@ -94,6 +110,15 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
       eh_message( "position (x) : %d" , sed_river_mouth       ( this_river ).i );
       eh_message( "position (y) : %d" , sed_river_mouth       ( this_river ).j );
       eh_message( "fraction     : %f" , fraction                               );
+      eh_message( "no. branches : %d" , sed_river_n_branches  ( this_river )   );
+*/
+
+      eh_data   ( "%f, %f, %f, %f, %d" ,
+                  sed_cube_age_in_years ( prof       ) ,
+                  sed_river_angle_to_deg( this_river ) ,
+                  sed_river_angle_to_deg( sed_river_left (this_river) ) ,
+                  sed_river_angle_to_deg( sed_river_right(this_river) ) ,
+                  sed_river_n_branches  ( this_river ) );
 
       if ( sed_mode_is_2d() )
          sed_river_adjust_mass( this_river , fraction  );
@@ -120,6 +145,8 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 /// Fraction of total sediment to be placed within this profile
 /// (2D-sedflux only)
 #define S_KEY_FRACTION    "fraction of sediment remaining in plane"
+/// If yes, the river is allowed to bifurcate
+#define S_KEY_BRANCHING   "river can branch?"
 /// Seed for the avulsion random number generator
 #define S_KEY_SEED        "seed for random number generator"
 /* @} */
@@ -150,9 +177,9 @@ gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
       eh_exit( EXIT_FAILURE );
    }
 
-   data->rand_seed = eh_symbol_table_int_value( tab , S_KEY_SEED );
-
-   data->river_name = eh_symbol_table_value( tab , S_KEY_RIVER_NAME );
+   data->branching_is_on = eh_symbol_table_bool_value( tab , S_KEY_BRANCHING  );
+   data->rand_seed       = eh_symbol_table_int_value ( tab , S_KEY_SEED       );
+   data->river_name      = eh_symbol_table_value     ( tab , S_KEY_RIVER_NAME );
 
    hinge_point = g_strsplit ( eh_symbol_table_lookup( 
                                   tab ,

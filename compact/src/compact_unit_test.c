@@ -284,10 +284,17 @@ Suite *sed_compact_suite( void )
 int main( void )
 {
    int n;
+   Sed_sediment sed   = NULL;
+   GError*      error = NULL;
 
    eh_init_glib();
 
-   sed_sediment_set_env( sed_sediment_scan( SED_SEDIMENT_TEST_FILE ) );
+   sed = sed_sediment_scan( SED_SEDIMENT_TEST_FILE , &error );
+   if ( !sed )
+      eh_error( "%s: Unable to read sediment file: %s" , SED_SEDIMENT_TEST_FILE , error->message);
+   else
+      sed_sediment_set_env( sed );
+
 
    {
       Suite *s = sed_compact_suite();

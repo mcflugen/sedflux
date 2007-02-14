@@ -9,11 +9,18 @@ int test_sed_sediment( void );
 
 int main( void )
 {
-   int n = 0;
+   int          n     = 0;
+   Sed_sediment s     = NULL;
+   GError*      error = NULL;
 
    eh_init_glib();
 
-   sed_sediment_set_env( sed_sediment_scan(SED_SEDIMENT_TEST_FILE) );
+   s = sed_sediment_scan( SED_SEDIMENT_TEST_FILE , &error );
+
+   if ( s )
+      sed_sediment_set_env( s );
+   else
+      eh_error( "%s: Unable to read sediment file: %s" , SED_SEDIMENT_TEST_FILE , error->message  );
 
    eh_message( "Start test" );
 

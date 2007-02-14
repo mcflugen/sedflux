@@ -274,39 +274,48 @@ sed_hydro_scan( const gchar* file , GError** error )
       file = SED_HYDRO_TEST_INLINE_FILE;
 
    {
-      gint            i;
-      Eh_symbol_table group;
       gchar*          name_used = g_strdup( file );
-      Eh_key_file     key_file  = eh_key_file_scan( name_used );
       GError*         tmp_err   = NULL;
+      Eh_key_file     key_file  = NULL;
 
-      hydro_arr = eh_new0( Sed_hydro , eh_key_file_size(key_file)+1 );
+      key_file  = eh_key_file_scan( name_used , &tmp_err );
 
-      for ( group = eh_key_file_pop_group( key_file ), i=0 ;
-            group && !tmp_err ;
-            group = eh_key_file_pop_group( key_file ), i++ )
+      if ( key_file )
       {
-         hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
+         gint            i;
+         Eh_symbol_table group;
 
-         if ( !tmp_err )
-            sed_hydro_check( hydro_arr[i] , &tmp_err );
+         hydro_arr = eh_new0( Sed_hydro , eh_key_file_size(key_file)+1 );
 
-         eh_symbol_table_destroy( group );
+         for ( group = eh_key_file_pop_group( key_file ), i=0 ;
+               group && !tmp_err ;
+               group = eh_key_file_pop_group( key_file ), i++ )
+         {
+            hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
+
+            if ( !tmp_err )
+               sed_hydro_check( hydro_arr[i] , &tmp_err );
+
+            eh_symbol_table_destroy( group );
+         }
+         hydro_arr[i] = NULL;
+
+         if ( tmp_err )
+         {
+            g_propagate_error( error , tmp_err );
+
+            for ( i=0 ; hydro_arr[i] ; i++ )
+               sed_hydro_destroy( hydro_arr[i] );
+            eh_free( hydro_arr );
+            hydro_arr = NULL;
+         }
+
       }
-      hydro_arr[i] = NULL;
-
-      if ( tmp_err )
-      {
+      else
          g_propagate_error( error , tmp_err );
 
-         for ( i=0 ; hydro_arr[i] ; i++ )
-            sed_hydro_destroy( hydro_arr[i] );
-         eh_free( hydro_arr );
-         hydro_arr = NULL;
-      }
-
-      eh_free( name_used );
-      eh_key_file_destroy( key_file );
+      eh_free            ( name_used );
+      eh_key_file_destroy( key_file  );
    }
 
    return hydro_arr;
@@ -1331,7 +1340,6 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
 {
    Sed_hydro rec = NULL;
 
-   eh_debug( "Read inline record" );
    /* Check if the buffer has already been set */
    if ( fp->buf_set )
    {
@@ -1342,7 +1350,6 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
       /* Rewind the buffer (the buffer is NULL-terminated) */
       if ( *(fp->buf_cur)==NULL )
       {
-         eh_debug( "Rewind the buffer" );
          if ( fp->wrap_is_on )
             fp->buf_cur = fp->buf_set;
          else
@@ -1353,7 +1360,6 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
    {
       GError* error = NULL;
 
-      eh_debug( "Fill the buffer" );
       /* Fill the buffer with all the records from the file */
       fp->buf_set = sed_hydro_scan( fp->file , &error );
       if ( !fp->buf_set )

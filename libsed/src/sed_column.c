@@ -800,7 +800,7 @@ double* sed_column_avg_property( Sed_property f ,
 
       t[n_bins-1] = sed_cell_size( c->cell[n_bins-1] );
       for ( i=n_bins-2 ; i>=0 ; i-- )
-         t[i] = t[i+1] + sed_cell_thickness( c->cell[i] );
+         t[i] = t[i+1] + sed_cell_size( c->cell[i] );
 
       val[n_bins-1] = sed_property_measure( f , c->cell[n_bins-1] );
       for ( i=n_bins-2 ; i>=0 ; i-- )
@@ -971,7 +971,7 @@ double sed_column_property( Sed_property f ,
             for ( i=0 ; i<len ; i++ )
             {
                val += sed_property_measure( f , s->cell[i] , extra_arg )
-                    * sed_cell_thickness(s->cell[i]);
+                    * sed_cell_size(s->cell[i]);
             }
          }
          else
@@ -981,7 +981,7 @@ double sed_column_property( Sed_property f ,
             for ( i=0 ; i<len ; i++ )
             {
                val += sed_property_measure( f , s->cell[i] , extra_arg[i] )
-                    * sed_cell_thickness(s->cell[i]);
+                    * sed_cell_size(s->cell[i]);
             }
          }
       }
@@ -990,7 +990,7 @@ double sed_column_property( Sed_property f ,
          for ( i=0 ; i<len ; i++ )
          {
             val += sed_property_measure( f , s->cell[i] )
-                 * sed_cell_thickness(s->cell[i]);
+                 * sed_cell_size(s->cell[i]);
          }
       }
 
@@ -1427,7 +1427,7 @@ Sed_column sed_column_remove_top_cell( Sed_column col , double f )
                                 - f*sed_cell_size(top_cell) );
       sed_cell_resize( top_cell , sed_cell_size(top_cell)*(1.-f) );
 
-      if ( sed_cell_thickness(top_cell) < 1e-12 )
+      if ( sed_cell_size(top_cell) < 1e-12 )
       {
          sed_cell_clear( top_cell );
          (col->len)--;

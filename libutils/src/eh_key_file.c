@@ -690,41 +690,57 @@ the file information.
 
 \return A new Eh_key_file.  Use eh_key_file_destroy to free.
 */
-Eh_key_file eh_key_file_scan( const char* file )
+Eh_key_file
+eh_key_file_scan( const char* file , GError** error )
 {
-   Eh_key_file f = eh_key_file_new();
+   Eh_key_file f = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   f = eh_key_file_new();
 
    if ( f )
    {
+      GError*   tmp_err = NULL;
       GScanner* s;
-      gchar* group_name;
-      gboolean done = FALSE;
-      Eh_symbol_table symbol_table;
-      gpointer user_data[2];
 
-      s = eh_open_scanner( file );
+      s = eh_open_scanner( file , &tmp_err );
 
-      while( !done && !g_scanner_eof(s) )
+      if ( s )
       {
-         symbol_table = eh_symbol_table_new();
-         group_name = eh_scan_next_record( s , symbol_table );
+         gboolean        done = FALSE;
+         gchar*          group_name;
+         Eh_symbol_table symbol_table;
+         gpointer        user_data[2];
 
-         if ( group_name )
+         while( !done && !g_scanner_eof(s) )
          {
-            user_data[0] = f;
-            user_data[1] = group_name;
+            symbol_table = eh_symbol_table_new();
+            group_name = eh_scan_next_record( s , symbol_table );
 
-            eh_symbol_table_foreach( symbol_table , &add_record_value , user_data );
+            if ( group_name )
+            {
+               user_data[0] = f;
+               user_data[1] = group_name;
+
+               eh_symbol_table_foreach( symbol_table , &add_record_value , user_data );
+            }
+            else
+               done = TRUE;
+
+            eh_symbol_table_destroy( symbol_table );
+            eh_free( group_name );
          }
-         else
-            done = TRUE;
 
-         eh_symbol_table_destroy( symbol_table );
-         eh_free( group_name );
+         eh_close_scanner( s );
       }
-
-      eh_close_scanner( s );
+      else
+      {
+         eh_key_file_destroy( f );
+         g_propagate_error( error , tmp_err );
+      }
    }
+
    return f;
 }
 
@@ -759,7 +775,7 @@ eh_key_file_scan_from_template( const gchar* file       ,
 
       len = eh_new( gint , n_entries );
 
-      f = eh_key_file_scan( file );
+      f = eh_key_file_scan( file , &tmp_error );
 
       for ( i=0 ; i<n_entries && !tmp_error ; i++ )
       {
@@ -880,11 +896,15 @@ group is scanned.
 \return         An Eh_symbol_table containing the key-value pairs of the group, or NULL if the
                 file does not contain the specified group.
 */
-Eh_symbol_table eh_key_file_scan_for( const gchar* file ,
-                                      const gchar* name ,
-                                      Eh_symbol_table tab )
+Eh_symbol_table
+eh_key_file_scan_for( const gchar* file ,
+                      const gchar* name ,
+                      Eh_symbol_table tab ,
+                      GError** error )
 {
-   Eh_symbol_table new_tab;
+   Eh_symbol_table new_tab = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
    //---
    // Open the key-file and scan in all of the entries.
@@ -892,12 +912,18 @@ Eh_symbol_table eh_key_file_scan_for( const gchar* file ,
    // Add each key-value pair (of the specified group) to the symbol table.
    //---
    {
-      Eh_key_file key_file = eh_key_file_scan( file );
+      GError*     tmp_err  = NULL;
+      Eh_key_file key_file = eh_key_file_scan( file , &tmp_err );
    
-      if ( eh_key_file_has_group( key_file , name ) )
-         new_tab = eh_key_file_get_symbol_table( key_file , name );
+      if ( key_file )
+      {
+         if ( eh_key_file_has_group( key_file , name ) )
+            new_tab = eh_key_file_get_symbol_table( key_file , name );
+         else
+            new_tab = NULL;
+      }
       else
-         new_tab = NULL;
+         g_propagate_error( error , tmp_err );
 
       eh_key_file_destroy( key_file );
    }

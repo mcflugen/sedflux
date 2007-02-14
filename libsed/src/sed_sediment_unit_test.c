@@ -94,7 +94,7 @@ END_TEST
 START_TEST ( test_sed_sediment_scan )
 {
    {
-      Sed_sediment s = sed_sediment_scan( SED_SEDIMENT_TEST_FILE );
+      Sed_sediment s = sed_sediment_scan( SED_SEDIMENT_TEST_FILE , NULL );
 
       fail_if    ( s==NULL                    , "Invalid sediment scanned" );
       fail_unless( sed_sediment_n_types(s)==5 , "Sediment not scanned properly from file" );

@@ -87,6 +87,7 @@ int main( int argc , char *argv[] )
    Sed_property_file sed_fp;
    Sed_property grain_size;
    Eh_args *args;
+   GError* error = NULL;
 
    args = eh_opts_init( argc , argv );
    if ( eh_check_opts( args , req , NULL , help_msg )!=0 )
@@ -121,10 +122,14 @@ int main( int argc , char *argv[] )
       g_array_append_val(x,val);
 
    // read in the bathymetry.
-   bathymetry = sed_get_floor( bathy_file , x );
+   bathymetry = sed_get_floor( bathy_file , x , &error );
+   if ( !bathymetry )
+      eh_error( "%s: Unable to read bathymetry file: %s" , bathy_file , error->message );
 
    // read in the type of sediment.
-   sediment_type = sed_sediment_scan( sediment_file );
+   sediment_type = sed_sediment_scan( sediment_file , &error );
+   if ( !sediment_type )
+      eh_error( "%s: Unable to scan sediment file: %s" , sediment_file , error->message );
    n_grains = sed_sediment_n_types( sediment_type );
    sed_sediment_set_env( sediment_type );
 

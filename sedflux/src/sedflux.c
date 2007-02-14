@@ -23,6 +23,8 @@
 #include "processes.h"
 #include "sedflux.h"
 
+Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** user_data , GError** error );
+
 gboolean
 sedflux( const gchar* init_file , Sedflux_run_flag flag )
 {
@@ -35,8 +37,13 @@ sedflux( const gchar* init_file , Sedflux_run_flag flag )
 
    eh_debug( "Scan the init file" );
    {
-      prof = sed_cube_new_from_file( init_file );
-      list = sed_epoch_queue_new   ( init_file );
+      GError* error = NULL;
+
+      prof = sed_cube_new_from_file( init_file , &error );
+      eh_exit_on_error( error , "%s: Error reading initialization file" , init_file );
+
+      list = sed_epoch_queue_new   ( init_file , &error );
+      eh_exit_on_error( error , "%s: Error reading epoch file" , init_file );
    }
 
    if ( flag & SEDFLUX_RUN_FLAG_SUMMARY )
@@ -58,6 +65,7 @@ sedflux( const gchar* init_file , Sedflux_run_flag flag )
       double            time_step;
       Sed_process_queue q;
       Eh_status_bar*    bar;
+      GError*           error = NULL;
 
       bar = eh_status_bar_new( &year , &n_years );
 
@@ -66,7 +74,8 @@ sedflux( const gchar* init_file , Sedflux_run_flag flag )
             epoch = sed_epoch_queue_pop( list ) )
       {
          eh_debug( "Read the process data" );
-         q = sedflux_create_process_queue( sed_epoch_filename(epoch) , NULL );
+         q = sedflux_create_process_queue( sed_epoch_filename(epoch) , NULL , &error );
+         eh_exit_on_error( error , "Error creating process queue" );
 
          eh_debug( "Set the time step and duration for this epoch" );
          time_step = sed_epoch_time_step( epoch );

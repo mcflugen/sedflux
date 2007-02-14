@@ -105,16 +105,16 @@ noinst_HEADERS            = \
                             run_constants.h \
                             run_xshore.h
 
-install-exec-local:
-	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
-	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
-	fi 
-	ln -f -s $(DESTDIR)$(bindir)/sedflux $(DESTDIR)$(bindir)/sedflux3d
+#install-exec-local:
+#	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
+#	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
+#	fi 
+#	ln -f -s $(DESTDIR)$(bindir)/sedflux $(DESTDIR)$(bindir)/sedflux3d
 
-uninstall-local:
-	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
-	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
-	fi
+#uninstall-local:
+#	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
+#	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
+#	fi
 
 
 

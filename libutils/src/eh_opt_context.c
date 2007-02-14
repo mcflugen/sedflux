@@ -112,7 +112,7 @@ Eh_symbol_table set_default_values( const char *name      ,
    //---
    rc_file = g_build_filename( home_dir , ehrc , NULL );
    if ( eh_is_readable_file( rc_file ) )
-      default_tab = eh_key_file_scan_for( rc_file , name , default_tab );
+      default_tab = eh_key_file_scan_for( rc_file , name , default_tab , NULL );
    eh_free( rc_file );
 
    //---
@@ -120,7 +120,7 @@ Eh_symbol_table set_default_values( const char *name      ,
    //---
    rc_file = g_build_filename( cur_dir , ehrc , NULL );
    if ( eh_is_readable_file( rc_file ) )
-      default_tab = eh_key_file_scan_for( rc_file , name , default_tab );
+      default_tab = eh_key_file_scan_for( rc_file , name , default_tab , NULL );
 //      default_tab = eh_key_file_scan_for( rc_file , name , NULL );
    eh_free( rc_file );
 

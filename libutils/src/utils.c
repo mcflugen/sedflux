@@ -61,6 +61,24 @@ eh_exit( int code )
    exit( code );
 }
 
+void
+eh_exit_on_error( GError* error , const gchar* format , ... )
+{
+   if ( error )
+   {
+      gchar* err_s;
+      va_list ap;
+      va_start( ap , format );
+
+      err_s = g_strdup_vprintf( format , ap );
+      eh_error( eh_render_error_str( error , err_s ) );
+      eh_exit( EXIT_FAILURE );
+
+      va_end(ap);
+      eh_free( err_s );
+   }
+}
+
 gchar* brief_copyleft_msg[] =
 {
 "Copywrite (C) 2006 Eric Hutton." ,
@@ -549,17 +567,14 @@ FILE *eh_fopen(const char *filename, const char *type)
 
 #include <errno.h>
 
-FILE* eh_fopen_error( const char* file , const char* type , GError** error )
+gchar*
+eh_render_file_error_str( gint err_no )
 {
-   FILE* fp = NULL;
+   gchar* err_str = NULL;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
-
-   fp = fopen( file , type );
-   if ( !fp && error )
+   if ( err_no!=0 )
    {
-      GFileError file_error = g_file_error_from_errno( errno );
-      gchar*     err_str    = NULL;
+      GFileError file_error = g_file_error_from_errno( err_no );
 
       switch ( file_error )
       {
@@ -614,12 +629,73 @@ FILE* eh_fopen_error( const char* file , const char* type , GError** error )
          case G_FILE_ERROR_FAILED:
             err_str = g_strdup( "Error unknown" ); break;
       }
-
-      g_set_error( error , G_FILE_ERROR , file_error , "%s: %s" , file , err_str );
-
-      eh_free( err_str );
    }
+
+   return err_str;
+}
+
+gchar*
+eh_render_error_str( GError* error , const gchar* err_str )
+{
+   gchar* new_str = NULL;
+
+   if ( error )
+   {
+      if ( err_str )
+         new_str = g_strdup_printf( "Error %d: %s: %s: %s"        ,
+                                    error->code                   ,
+                                    g_quark_to_string(error->domain) ,
+                                    err_str                       ,
+                                    error->message );
+      else
+         new_str = g_strdup_printf( "Error %d: %s: %s"            ,
+                                    error->code                   ,
+                                    g_quark_to_string(error->domain) ,
+                                    error->message );
+   }
+
+   return new_str;
+}
+
+FILE* eh_fopen_error( const char* file , const char* type , GError** error )
+{
+   FILE*   fp = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   fp = fopen( file , type );
+
+   if ( !fp )
+   {
+      GError* tmp_err = NULL;
+      eh_set_file_error_from_errno( &tmp_err , file , errno );
+      g_propagate_error( error , tmp_err );
+   }
+
    return fp;
+}
+
+void
+eh_set_file_error_from_errno( GError** error , const gchar* file , gint err_no )
+{
+   if ( error )
+   {
+      eh_return_if_fail( *error==NULL );
+
+      if ( err_no!=0 )
+      {
+         gchar* err_str = eh_render_file_error_str( err_no );
+
+         g_set_error( error ,
+                      G_FILE_ERROR ,
+                      g_file_error_from_errno(err_no) ,
+                      "%s: %s" , file , err_str );
+
+         eh_free( err_str );
+      }
+   }
+
+   return;
 }
 
 FILE* eh_open_file( const char *filename , const char *type )

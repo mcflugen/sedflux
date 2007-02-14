@@ -46,15 +46,15 @@ Sed_hydro_error;
 #endif
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-# define SED_HYDRO_TEST_FILE        DATADIR "/ew/po_daily-be.river"
-# define SED_HYDRO_PO_FILE          DATADIR "/ew/po_daily-be.river"
-# define SED_HYDRO_EEL_FILE         DATADIR "/ew/eel_daily-be.river"
-# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/ew/po.inline"
+# define SED_HYDRO_TEST_FILE        DATADIR "/sedflux/po_daily-be.river"
+# define SED_HYDRO_PO_FILE          DATADIR "/sedflux/po_daily-be.river"
+# define SED_HYDRO_EEL_FILE         DATADIR "/sedflux/eel_daily-be.river"
+# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/sedflux/po_river.kvf"
 #else
-# define SED_HYDRO_TEST_FILE        DATADIR "/ew/po_daily-le.river"
-# define SED_HYDRO_PO_FILE          DATADIR "/ew/po_daily-le.river"
-# define SED_HYDRO_EEL_FILE         DATADIR "/ew/eel_daily-le.river"
-# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/ew/po.inline"
+# define SED_HYDRO_TEST_FILE        DATADIR "/sedflux/po_daily-le.river"
+# define SED_HYDRO_PO_FILE          DATADIR "/sedflux/po_daily-le.river"
+# define SED_HYDRO_EEL_FILE         DATADIR "/sedflux/eel_daily-le.river"
+# define SED_HYDRO_TEST_INLINE_FILE DATADIR "/sedflux/po_river.kvf"
 #endif
 
 //# define SED_HYDRO_TEST_INLINE_FILE "/home/plum/huttone/local/ew114/share"##"/ew/po.inline"
