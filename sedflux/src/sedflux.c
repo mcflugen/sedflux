@@ -20,8 +20,171 @@
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "processes.h"
 #include "sedflux.h"
+#include "my_sedflux.h"
+
+#define ESMF
+#if defined( ESMF )
+
+Sedflux_param_st* sedflux_setup        ( gchar* command_s );
+gboolean sedflux_init         ( Sed_epoch_queue* q , Sed_cube* p , const gchar* init_file );
+gboolean sedflux_run_time_step( Sed_epoch_queue  q , Sed_cube  p );
+gboolean sedflux_run          ( Sed_epoch_queue  q , Sed_cube  p );
+gboolean sedflux_finalize     ( Sed_epoch_queue  q , Sed_cube  p );
+
+gboolean
+sedflux( const gchar* init_file )
+{
+   gboolean          success = TRUE;
+   Sed_epoch_queue   q       = NULL; //< List of all the epochs
+   Sed_cube          p       = NULL; //< The cube 
+
+   if (    sedflux_init    ( &q , &p , init_file )
+        && sedflux_run     (  q ,  p )
+        && sedflux_finalize(  q ,  p ) )
+      success = TRUE;
+   else
+      success = FALSE;
+
+   return success;
+}
+
+Sedflux_param_st*
+sedflux_setup( gchar* command_s )
+{
+   Sedflux_param_st* p           = NULL;
+   GError*           error       = NULL;
+   gchar*            command_str = NULL;
+   int               argc;
+   char**            argv;
+
+   g_thread_init( NULL );
+   eh_init_glib();
+   g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
+
+   argv = g_strsplit( command_s , " " , 0 );
+   argc = g_strv_length( argv );
+
+   command_str = eh_render_command_str( argc , argv );
+
+   /* Parse command line arguments */
+   p = sedflux_parse_command_line( argc , argv , &error );
+   eh_exit_on_error( error , "Error parsing command line arguments" );
+
+   /* Create the project directory and check permissions */
+   sedflux_setup_project_dir( &p->init_file , &p->working_dir , &error );
+   eh_exit_on_error( error , "Error setting up project directory" );
+
+   sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
+
+   /* Setup the signal handling */
+   sedflux_set_signal_action();
+
+   return p;
+}
+
+gboolean
+sedflux_init( Sed_epoch_queue* q , Sed_cube* p , const gchar* init_file )
+{
+   gboolean success = TRUE;
+
+   eh_require( init_file  );
+   eh_require( q          );
+   eh_require( p          );
+   eh_require( (*q)==NULL );
+   eh_require( (*p)==NULL );
+   eh_require( sed_mode_is_2d() || sed_mode_is_3d() );
+
+   eh_debug( "Scan the init file" );
+
+   if ( init_file && p && q )
+   {
+      GError* error = NULL;
+
+eh_message("read init file");
+      (*p) = sed_cube_new_from_file( init_file , &error );
+      eh_exit_on_error( error , "%s: Error reading initialization file" , init_file );
+
+eh_message("read epoch file");
+//      (*q) = sed_epoch_queue_new_full( init_file , my_proc_defs , my_proc_family , my_proc_checks , &error );
+      (*q) = sed_epoch_queue_new_full( init_file , my_proc_defs , my_proc_family , NULL , &error );
+      eh_exit_on_error( error , "%s: Error reading epoch file" , init_file );
+eh_message("done init");
+
+   }
+/*
+   if ( flag & SEDFLUX_RUN_FLAG_SUMMARY )
+   {
+      sed_cube_fprint       ( stdout , p );
+      sed_epoch_queue_fprint( stdout , q );
+   }
+*/
+   return success;
+}
+
+gboolean
+sedflux_run_time_step( Sed_epoch_queue q , Sed_cube p )
+{
+   gboolean success = FALSE;
+
+   eh_require( q );
+   eh_require( p );
+
+   if ( p && q )
+   {
+      sed_epoch_queue_tic( q , p );
+      success = TRUE;
+   }
+
+   return success;
+}
+
+gboolean
+sedflux_run( Sed_epoch_queue q , Sed_cube p )
+{
+   gboolean success = FALSE;
+
+   eh_require( q );
+   eh_require( p );
+
+   if ( q && p )
+   {
+      sed_epoch_queue_run( q , p );
+      success = TRUE;
+   }
+
+   return success;
+}
+
+gboolean
+sedflux_finalize( Sed_epoch_queue q , Sed_cube p )
+{
+   gboolean success = FALSE;
+
+   eh_require( q );
+   eh_require( p );
+
+   if ( q && p )
+   {
+      eh_debug( "Destroy epoch queue" );
+      sed_epoch_queue_destroy( q );
+
+      eh_debug( "Destroy cube" );
+      sed_cube_destroy( p );
+
+      eh_debug( "Destroy sediment environment" );
+      sed_sediment_unset_env( );
+
+      if ( g_getenv("SED_MEM_CHECK") )
+         eh_heap_dump( "heap_dump.txt" );
+
+      success = TRUE;
+   }
+
+   return success;
+}
+
+#else /* ESMF */
 
 Sed_process_queue sedflux_create_process_queue( const gchar* file , gchar** user_data , GError** error );
 
@@ -131,6 +294,7 @@ sedflux( const gchar* init_file , Sedflux_run_flag flag )
 
    return success;
 }
+#endif /* NOT ESMF */
 
 #if defined(IGNORE)
 int run_sedflux(int argc, char *argv[])

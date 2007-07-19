@@ -8,6 +8,7 @@ This manual is divided into the following sections:
 - \subpage modules_sec
 - \subpage prog_sec
 - \subpage input_files_sec
+- \subpage matlab_visualization_sec
 
 */
 

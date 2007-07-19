@@ -119,8 +119,11 @@ void eh_symbol_table_replace( Symbol_table* t , char* key , char* value )
    g_hash_table_replace((GHashTable*)t,g_strdup(key),g_strdup(value));
 }
 
-char *eh_symbol_table_lookup(Symbol_table *t, char *key)
+char*
+eh_symbol_table_lookup(Symbol_table *t, char *key)
 {
+   return (char*)g_hash_table_lookup((GHashTable*)t,key);
+/*
    char *value = (char*)g_hash_table_lookup((GHashTable*)t,key);
    if ( value )
       return value;
@@ -131,6 +134,7 @@ char *eh_symbol_table_lookup(Symbol_table *t, char *key)
    }
    eh_require_not_reached();
    return NULL;
+*/
 }
 
 typedef struct
@@ -348,7 +352,7 @@ GScanner *eh_open_scanner(const char *filename , GError** error )
          g_scanner_input_file( s , fd );
       }
       else
-         eh_set_file_error_from_errno( error , errno );
+         eh_set_file_error_from_errno( error , filename , errno );
    }
 
    return s;
@@ -671,7 +675,8 @@ char *eh_scan_next_record( GScanner *s , Eh_symbol_table symbol_table )
    return record_name;
 }
 
-gboolean eh_scanner_eor(GScanner *s)
+gboolean
+eh_scanner_eor(GScanner *s)
 {
    if ( g_scanner_peek_next_token(s) == G_TOKEN_SYMBOL )
    {
@@ -718,7 +723,8 @@ void eh_print_record( const char *rec_name , Symbol_table *t , FILE *fp )
    g_hash_table_foreach( t ,(GHFunc)&eh_print_symbol , fp );
 }
 */
-char *eh_scan_label(GScanner *s)
+char*
+eh_scan_label(GScanner *s)
 {
    char *first = g_strconcat(G_CSET_a_2_z," _0123456789",G_CSET_A_2_Z,NULL);
    char *nth   = g_strconcat(G_CSET_a_2_z,G_CSET_A_2_Z," _0123456789",G_CSET_LATINS,G_CSET_LATINC,NULL);
@@ -912,7 +918,8 @@ void eh_print_data_record( Eh_data_record *p , char *rec_name , char *delimeter 
    eh_print_data_table( p->data , delimeter , row_major , fp );
 }
 
-int eh_get_data_record_size(Eh_data_record *p,int dim)
+int
+eh_get_data_record_size( Eh_data_record *p , int dim )
 {
    if ( dim==0 )
       return p->data->len;

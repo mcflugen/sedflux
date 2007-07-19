@@ -18,20 +18,17 @@
 //
 //---
 
-#define SED_PLUME_PROC_NAME "plume"
-#define EH_LOG_DOMAIN SED_PLUME_PROC_NAME
+#define EH_LOG_DOMAIN PLUME_PROCESS_NAME_S
 
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-//#include <values.h>
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "run_plume.h"
 #include "plume_types.h"
 #include "plumeinput.h"
-#include "processes.h"
+#include "my_processes.h"
 
 #define LEFT 0
 #define RIGHT 1
@@ -44,60 +41,78 @@ gboolean plume3d( Plume_inputs *plume_const , Plume_river river       ,
 gboolean compare_river(Plume_river *r1,Plume_river *r2,int n_grains);
 int copy_river(Plume_river *r1,Plume_river *r2,int n_grains);
 
-Sed_process_info
-run_plume( gpointer ptr , Sed_cube prof )
+gboolean init_plume_data     ( Sed_process proc , Sed_cube prof , GError** error );
+gboolean init_plume_hypo_data( Sed_process proc , Sed_cube prof , GError** error );
+
+GQuark
+plume_hydro_data_quark( void )
 {
-   Plume_t *data=(Plume_t*)ptr;
-   Plume_sediment *sediment_data;
-   Sed_hydro hydro_data;
-   gssize i, j, n;
-   gssize n_grains, n_susp_grains;
-   gssize n_rivers, river_no;
-   Plume_river river_data;
-   Plume_inputs plume_const;
-   Eh_dbl_grid *plume_deposit_grid;
-   Sed_cell_grid in_suspension;
-   Sed_riv this_river;
+   return g_quark_from_string( "plume-hydro-data-quark" );
+}
+
+Sed_process_info
+run_plume( Sed_process proc , Sed_cube p )
+{
+   Plume_t*         data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( prof == NULL )
+   if ( sed_process_run_count(proc)==0 )
+      init_plume_data( proc , p , NULL );
+
+   //---
+   // Run the plume for each of the rivers.
+   //---
    {
-      // Clean up the static variables and return.
-      if ( data->initialized )
+      Sed_process plume_hyper = data->plume_proc_hyper;
+      Sed_process plume_hypo  = data->plume_proc_hypo;
+      Sed_riv*    all_leaves;
+      Sed_riv*    r;
+
+      all_leaves = sed_cube_all_leaves( p );
+
+      if ( all_leaves )
       {
-         sed_cell_grid_free( data->deposit_grid );
-         sed_cell_grid_free( data->last_deposit_grid );
-         eh_grid_destroy( data->deposit_grid , TRUE );
-         eh_grid_destroy( data->last_deposit_grid , TRUE );
-         eh_free( data->last_river_data.Cs );
-         destroy_plume_data( data->plume_data );
+         for ( r=all_leaves ; *r ; r++ )
+         {
+            eh_debug( "Running plume for river %s" , sed_river_name_loc( *r ) );
 
-         data->initialized = FALSE;
+            if ( sed_river_is_hyperpycnal(*r) ) eh_debug( "Plume is hyperpycnal" );
+            else                                eh_debug( "Plume is hypopycnal" );
+
+            sed_process_provide( plume_hyper , PLUME_HYDRO_DATA , *r );
+            sed_process_provide( plume_hypo  , PLUME_HYDRO_DATA , *r );
+
+            if      ( plume_hyper && sed_river_is_hyperpycnal( *r ) )
+               sed_process_run_now( plume_hyper , p );
+            else if ( plume_hypo )
+               sed_process_run_now( plume_hypo  , p );
+
+            sed_process_withhold( plume_hyper , PLUME_HYDRO_DATA );
+            sed_process_withhold( plume_hypo  , PLUME_HYDRO_DATA );
+         }
       }
-      return SED_EMPTY_INFO;
    }
 
-   if ( !data->initialized )
-   {
-      data->last_deposit_grid = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
-      data->deposit_grid      = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
+   return info;
+}
 
-      sed_cell_grid_init( data->deposit_grid      , sed_sediment_env_size() );
-      sed_cell_grid_init( data->last_deposit_grid , sed_sediment_env_size() );
+Sed_process_info
+run_plume_hypo( Sed_process proc , Sed_cube prof )
+{
+   Plume_hypo_t*    data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+   Plume_sediment*  sediment_data;
+   gssize           n_grains;
+   gssize           n_susp_grains;
 
-      memset( &data->last_river_data , 0 , sizeof(Plume_river) );
-      data->last_river_data.Cs = eh_new0( double , sed_sediment_env_size()-1 );
-
-      data->plume_data = eh_new( Plume_data , 1 );
-      init_plume_data( data->plume_data );
-
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_plume_hypo_data( proc , prof , NULL );
 
    n_grains      = sed_sediment_env_size();
    n_susp_grains = sed_sediment_env_size()-1;
 
    {
+      gssize  i;
       double* lambda     = sed_sediment_property( NULL , &sed_type_lambda_in_per_seconds );
       double* rho_sat    = sed_sediment_property( NULL , &sed_type_rho_sat );
       double* grain_size = sed_sediment_property( NULL , &sed_type_grain_size );
@@ -119,19 +134,17 @@ run_plume( gpointer ptr , Sed_cube prof )
       eh_free( diff_coef  );
    }
 
-   n_rivers = sed_cube_number_of_rivers( prof );
-
    info.mass_lost = 0.;
 
-   //---
-   // Run the plume for each of the rivers.
-   //---
-   for ( river_no=0 ; river_no<n_rivers ; river_no++ )
    {
+      gssize        i, j, n;
+      Sed_hydro     hydro_data;
+      Sed_riv       this_river;
+      Plume_river   river_data;
+      Plume_inputs  plume_const;
+      Eh_dbl_grid*  plume_deposit_grid = eh_new( Eh_dbl_grid , n_susp_grains );
+      Sed_cell_grid in_suspension;
 
-      eh_debug( "Running plume for river %d" , river_no );
-
-      plume_deposit_grid = eh_new( Eh_dbl_grid , n_susp_grains );
       for ( n=0 ; n<n_susp_grains ; n++ )
       {
          eh_debug( "Creating grid for grain type %d" , n );
@@ -159,8 +172,7 @@ run_plume( gpointer ptr , Sed_cube prof )
                             sed_cube_y_res(prof) );
       }
 
-      this_river = sed_cube_nth_river( prof , river_no );
-
+      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
       hydro_data = sed_river_hydro( this_river );
    
       // copy the river discharge data.
@@ -169,7 +181,6 @@ run_plume( gpointer ptr , Sed_cube prof )
       river_data.u0 = sed_hydro_velocity  ( hydro_data );
       river_data.b0 = sed_hydro_width     ( hydro_data );
       river_data.d0 = sed_hydro_depth     ( hydro_data );
-
 
       if ( eh_dbl_array_min( river_data.Cs , n_susp_grains ) < .001 )
          info.mass_lost += sed_hydro_suspended_load( hydro_data );
@@ -223,7 +234,7 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
       if ( sed_mode_is_2d() )
          plume_const.current_velocity = 0.;
 
-      in_suspension = sed_cube_in_suspension( prof , river_no );
+      in_suspension = sed_cube_in_suspension( prof , this_river );
    
       // compare this river with the river at the last time step.  if they are
       // the same, then we don't have to run the plume again.
@@ -240,8 +251,8 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
                          plume_deposit_grid    ,
                          data->plume_data ) )
       {
-         double* deposit_rate;
-         double** plume_deposit;
+         double*    deposit_rate;
+         double**   plume_deposit;
          Sed_cell** deposit = sed_cell_grid_data( data->deposit_grid );
 
          deposit_rate = eh_new( double , n_grains );
@@ -328,6 +339,8 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
       eh_free( plume_deposit_grid );
 
       eh_free( river_data.Cs );
+
+      hydro_data = sed_hydro_destroy( hydro_data );
    }
 
    eh_free( sediment_data );
@@ -335,42 +348,191 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
    return info;
 }
 
-#define S_KEY_CONCENTRATION    "background ocean concentration"
-#define S_KEY_CURRENT_VEL      "velocity of coastal current"
-#define S_KEY_WIDTH            "maximum plume width"
-#define S_KEY_X_SHORE_NODES    "number of grid nodes in cross-shore"
-#define S_KEY_RIVER_NODES      "number of grid nodes in river mouth"
+#define PLUME_KEY_HYPO_MODEL      "Hypopycnal plume model"
+#define PLUME_KEY_HYPER_MODEL     "Hyperpycnal plume model"
+
+static gchar* plume_req_labels[] =
+{
+   PLUME_KEY_HYPO_MODEL  ,
+   PLUME_KEY_HYPER_MODEL ,
+   NULL
+};
 
 gboolean
-init_plume( Eh_symbol_table tab , gpointer ptr )
+init_plume( Sed_process p , Eh_symbol_table t , GError** error )
 {
-   Plume_t *data=(Plume_t*)ptr;
-   GError* err = NULL;
+   Plume_t* data     = sed_process_new_user_data( p , Plume_t );
+   GError*  tmp_err  = NULL;
 
-   if ( tab == NULL )
+   data->plume_proc_hyper = NULL;
+   data->plume_proc_hypo  = NULL;
+
+   if ( eh_symbol_table_require_labels( t , plume_req_labels , &tmp_err ) )
    {
-      eh_input_val_destroy( data->current_velocity );
-      data->initialized = FALSE;
-      return TRUE;
+      data->hyper_name   = eh_symbol_table_value ( t , PLUME_KEY_HYPER_MODEL );
+      data->hypo_name    = eh_symbol_table_value ( t , PLUME_KEY_HYPO_MODEL  );
    }
 
-   if ( sed_mode_is_3d() )
+   if ( tmp_err ) g_propagate_error( error , tmp_err );
+
+   return TRUE;
+}
+
+gboolean
+destroy_plume( Sed_process p )
+{
+   if ( p )
    {
-      if ( (data->current_velocity = eh_symbol_table_input_value(tab,S_KEY_CURRENT_VEL ,&err)) == NULL )
+      Plume_t* data = sed_process_user_data( p );
+      
+      if ( data )
       {
-         fprintf( stderr , "Unable to read input values: %s" , err->message );
-         eh_exit( EXIT_FAILURE );
+         eh_free( data->hypo_name  );
+         eh_free( data->hyper_name );
+         eh_free( data             );
       }
    }
-   else
-      data->current_velocity = eh_input_val_set( "0.0" , NULL );
 
-   data->ocean_concentration = eh_symbol_table_dbl_value( tab , S_KEY_CONCENTRATION );
-   data->plume_width         = eh_symbol_table_dbl_value( tab , S_KEY_WIDTH         );
-   data->ndx                 = eh_symbol_table_int_value( tab , S_KEY_X_SHORE_NODES );
-   data->ndy                 = eh_symbol_table_int_value( tab , S_KEY_RIVER_NODES   );
+   return TRUE;
+}
 
-   data->plume_width *= 1000.;
+gboolean
+init_plume_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Plume_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      data->plume_proc_hypo  = sed_process_child( proc , data->hypo_name  );
+      data->plume_proc_hyper = sed_process_child( proc , data->hyper_name );
+   }
+
+   return TRUE;
+}
+
+#define HYPO_KEY_CONCENTRATION    "background ocean concentration"
+#define HYPO_KEY_CURRENT_VEL      "velocity of coastal current"
+#define HYPO_KEY_WIDTH            "maximum plume width"
+#define HYPO_KEY_X_SHORE_NODES    "number of grid nodes in cross-shore"
+#define HYPO_KEY_RIVER_NODES      "number of grid nodes in river mouth"
+
+static gchar* hypo_3d_req_labels[] =
+{
+   HYPO_KEY_CONCENTRATION ,
+   HYPO_KEY_CURRENT_VEL   ,
+   HYPO_KEY_WIDTH         ,
+   HYPO_KEY_X_SHORE_NODES ,
+   HYPO_KEY_RIVER_NODES   ,
+   NULL
+};
+
+static gchar* hypo_2d_req_labels[] =
+{
+   HYPO_KEY_CONCENTRATION ,
+   HYPO_KEY_WIDTH         ,
+   HYPO_KEY_X_SHORE_NODES ,
+   HYPO_KEY_RIVER_NODES   ,
+   NULL
+};
+
+gboolean
+init_plume_hypo( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Plume_hypo_t* data     = sed_process_new_user_data( p , Plume_hypo_t );
+   GError*       tmp_err  = NULL;
+   gchar**       err_s    = NULL;
+   gboolean      is_ok    = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->deposit_size       = 0;
+   data->deposit            = NULL;
+   data->last_deposit       = NULL;
+   data->plume_deposit      = NULL;
+   data->last_river_data.Cs = NULL;
+   data->plume_data         = NULL;
+   data->deposit_grid       = NULL;
+   data->last_deposit_grid  = NULL;
+
+   if ( sed_mode_is_3d() ) eh_symbol_table_require_labels( tab , hypo_3d_req_labels , &tmp_err );
+   else                    eh_symbol_table_require_labels( tab , hypo_2d_req_labels , &tmp_err );
+
+   if ( !tmp_err )
+   {
+      if ( sed_mode_is_3d() )
+         data->current_velocity = eh_symbol_table_input_value( tab , HYPO_KEY_CURRENT_VEL , &tmp_err);
+      else
+         data->current_velocity = eh_input_val_set( "0.0" , NULL );
+
+      data->ocean_concentration = eh_symbol_table_dbl_value( tab , HYPO_KEY_CONCENTRATION );
+      data->plume_width         = eh_symbol_table_dbl_value( tab , HYPO_KEY_WIDTH         );
+      data->ndx                 = eh_symbol_table_int_value( tab , HYPO_KEY_X_SHORE_NODES );
+      data->ndy                 = eh_symbol_table_int_value( tab , HYPO_KEY_RIVER_NODES   );
+
+      data->plume_width *= 1000.;
+
+      eh_check_to_s( data->ocean_concentration>=0. , "Ocean concentration positive" , &err_s );
+      eh_check_to_s( data->plume_width>=0.         , "Plume width positive"         , &err_s );
+      eh_check_to_s( data->ndx>0.                  , "Plume ndx positive integer"   , &err_s );
+      eh_check_to_s( data->ndy>0.                  , "Plume ndy positive integer"   , &err_s );
+
+      if ( err_s ) eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+   }
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+init_plume_hypo_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Plume_hypo_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      data->last_deposit_grid = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
+      data->deposit_grid      = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
+
+      sed_cell_grid_init( data->deposit_grid      , sed_sediment_env_size() );
+      sed_cell_grid_init( data->last_deposit_grid , sed_sediment_env_size() );
+
+      memset( &data->last_river_data , 0 , sizeof(Plume_river) );
+      data->last_river_data.Cs = eh_new0( double , sed_sediment_env_size()-1 );
+
+      data->plume_data = eh_new( Plume_data , 1 );
+      plume_data_init( data->plume_data );
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_plume_hypo( Sed_process p )
+{
+   if ( p )
+   {
+      Plume_hypo_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         sed_cell_grid_free( data->deposit_grid      );
+         sed_cell_grid_free( data->last_deposit_grid );
+
+         eh_grid_destroy( data->deposit_grid      , TRUE );
+         eh_grid_destroy( data->last_deposit_grid , TRUE );
+
+         eh_free( data->last_river_data.Cs );
+         destroy_plume_data( data->plume_data );
+
+         eh_input_val_destroy( data->current_velocity );
+         eh_free( data );
+      }
+   }
 
    return TRUE;
 }

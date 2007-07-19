@@ -1073,7 +1073,7 @@ Fail_column *fail_reinit_fail_column( Fail_column *f ,
       for ( i=0 ; i<n_bins ; i++ )
       {
          f->height[i] = sed_column_base_height( c ) 
-                      + sed_cell_thickness( sed_column_nth_cell( c , i_bot+i-1 ) );
+                      + sed_cell_size( sed_column_nth_cell( c , i_bot+i-1 ) );
 
          // The height of the failure column (f->height) is measured to the
          // bottom of a bin and so if the failure plane (h) cuts through this

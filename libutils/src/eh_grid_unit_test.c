@@ -293,7 +293,7 @@ START_TEST ( test_reduce_grid )
    small_g   = eh_dbl_grid_reduce( g , 1 , 10 );
    final_sum = eh_dbl_grid_sum( small_g );
 
-   fail_unless( small_g                  , "NULL grid was returned"                );
+   fail_unless( small_g!=NULL            , "NULL grid was returned"                );
    fail_unless( eh_grid_n_x(small_g)==1  , "x-direction was not reduced correctly" );
    fail_unless( eh_grid_n_y(small_g)==10 , "y-direction was not reduced correctly" );
    fail_if    ( final_sum==0             , "NaNs found in reduced grid"            );

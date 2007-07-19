@@ -1171,6 +1171,12 @@ sed_cell_nth_fraction( const Sed_cell c , gssize n )
    return sed_cell_fraction( c , n );
 }
 
+double
+sed_cell_nth_amount( const Sed_cell c , gssize n )
+{
+   return sed_cell_fraction(c,n)*sed_cell_size(c);
+}
+
 double*
 sed_cell_fraction_ptr( const Sed_cell c )
 {
@@ -2124,6 +2130,13 @@ sed_cell_grid_new( gsize n_x , gsize n_y )
    return g;
 }
 
+Sed_cell_grid
+sed_cell_grid_new_env( gsize n_x , gsize n_y )
+{
+   Sed_cell_grid g = sed_cell_grid_new( n_x , n_y );
+   return sed_cell_grid_init( g , sed_sediment_env_size() );
+}
+
 /** \brief Initalize a two-dimensional array of Sed_cell's.
 
  Initialize a Sed_cell_grid with new Sed_cell's.  The input grid must first
@@ -2142,7 +2155,7 @@ sed_cell_grid_init( Sed_cell_grid g , gssize n_grains )
    eh_require( g );
    eh_require( n_grains>0 );
 
-   eh_return_val_if_fail( g , NULL )
+   if ( g )
    {
       Sed_cell* data = eh_grid_data_start(g);
       gssize i, n_i = eh_grid_n_el( g );
@@ -2167,15 +2180,26 @@ itself is not freed.  To free the Sed_cell_grid as well, use sed_destroy_grid .
 void
 sed_cell_grid_free( Sed_cell_grid g )
 {
-   eh_return_if_fail( g )
+   if ( g )
    {
       Sed_cell* data = eh_grid_data_start(g);
       gssize i, n_i = eh_grid_n_el( g );
 
       for ( i=0 ; i<n_i ; i++ )
          data[i] = sed_cell_destroy( data[i] );
-
    }
+}
+
+Sed_cell_grid
+sed_cell_grid_destroy( Sed_cell_grid g )
+{
+   if ( g )
+   {
+      sed_cell_grid_free( g );
+      eh_grid_destroy( g , TRUE );
+   }
+
+   return NULL;
 }
 
 void

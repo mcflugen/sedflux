@@ -95,6 +95,10 @@ gboolean inflow( double day       , double x[]        , double slopeX[]  ,
                  double rhoF0     , Inflow_const_st* c, double **deposit ,
                  double** eroded  , FILE *fpout );
 Sed_hydro inflow_flood_from_cell( Sed_cell c , double area );
-
+gboolean  sed_inflow( Sed_cube         p       ,
+                      Sed_hydro        f       ,
+                      gint             i_start ,
+                      double           dx      ,
+                      Inflow_const_st* c );
 
 #endif /* inflow.h is included */

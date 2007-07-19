@@ -19,6 +19,7 @@
 //---
 
 #include <stdio.h>
+#include <fcntl.h>
 #include <string.h>
 #include <limits.h>
 
@@ -28,97 +29,135 @@
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "measuring_station.h"
+#include "my_processes.h"
+
 /*
 int write_measurement_header( FILE *fp , 
                               Met_station_t *measuring_station_const );
 */
 
-Sed_process_info run_met_station(gpointer ptr,Sed_cube prof)
+gboolean init_met_station_data( Sed_process proc , Sed_cube prof , GError** error );
+
+Sed_process_info
+run_met_station( Sed_process proc , Sed_cube prof )
 {
-   Met_station_t *data=(Met_station_t*)ptr;
+   Met_station_t*   data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         sed_tripod_destroy( data->met_fp );
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->met_fp = sed_tripod_new( data->filename  , data->parameter , NULL );
-
-      if ( data->pos->len <= 0 )
-         sed_tripod_set_len( data->met_fp , sed_cube_size(prof) );
-      else
-         sed_tripod_set_len( data->met_fp , data->pos->len );
-      sed_tripod_set_n_x( data->met_fp , sed_cube_n_x(prof) );
-      sed_tripod_set_n_y( data->met_fp , sed_cube_n_y(prof) );
-
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_met_station_data( proc , prof , NULL );
 
    sed_tripod_write( data->met_fp , prof );
 
    return info;
 }
 
-#define S_KEY_PARAMETER  "parameter to measure"
-#define S_KEY_WHENCE     "position wrt river mouth"
-#define S_KEY_POSITION   "position of station"
-#define S_KEY_FILENAME   "filename"
+#define MET_KEY_PARAMETER  "parameter to measure"
+#define MET_KEY_WHENCE     "position wrt river mouth"
+#define MET_KEY_POSITION   "position of station"
+#define MET_KEY_FILENAME   "filename"
 
-gboolean init_met_station(Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* measuring_station_req_labels[] =
 {
-   Met_station_t *data=(Met_station_t*)ptr;
-   double d_val;
-   int i;
-   char **position;
+   MET_KEY_PARAMETER ,
+   MET_KEY_WHENCE    ,
+   MET_KEY_POSITION  ,
+   MET_KEY_FILENAME  ,
+   NULL
+};
 
-   if ( symbol_table == NULL )
+gboolean
+init_met_station( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Met_station_t* data    = sed_process_new_user_data( p , Met_station_t );
+   GError*        tmp_err = NULL;
+   gboolean       is_ok   = TRUE;
+   gchar*         pos_s   = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->met_fp           = NULL;
+
+   if ( eh_symbol_table_require_labels( tab , measuring_station_req_labels , &tmp_err ) )
    {
-      if ( data->pos )
-         g_array_free( data->pos , FALSE );
-      sed_measurement_destroy( data->parameter );
-      eh_free( data->parameter_str );
-      eh_free( data->filename );
-      data->initialized = FALSE;
-      return TRUE;
-   }
-   
-   data->parameter_str    = eh_symbol_table_value     ( symbol_table , S_KEY_PARAMETER );
-   data->from_river_mouth = eh_symbol_table_bool_value( symbol_table , S_KEY_WHENCE    );
+      data->parameter_str    = eh_symbol_table_value     ( tab , MET_KEY_PARAMETER );
+      data->from_river_mouth = eh_symbol_table_bool_value( tab , MET_KEY_WHENCE    );
+      data->filename         = eh_symbol_table_value     ( tab , MET_KEY_FILENAME  );
+      data->parameter        = sed_measurement_new( data->parameter_str );
 
-   data->parameter        = sed_measurement_new( data->parameter_str );
+      pos_s                  = eh_symbol_table_lookup( tab , MET_KEY_POSITION );
 
-   if ( strcasecmp( eh_symbol_table_lookup( symbol_table ,
-                                            S_KEY_POSITION ) ,
-                    "all" ) == 0 )
-      data->pos = g_array_new( FALSE , FALSE , sizeof(double) );
-   else
-   {
-      data->pos = g_array_new( FALSE , FALSE , sizeof(double) );
-      position  = g_strsplit ( eh_symbol_table_lookup( 
-                                  symbol_table ,
-                                  S_KEY_POSITION ) ,
-                               "," , -1 );
-      for ( i=0 ; position[i] ; i++ )
+      if ( g_ascii_strcasecmp( pos_s , "all" ) == 0 )
+         data->pos = g_array_new( FALSE , FALSE , sizeof(double) );
+      else
       {
-         d_val = g_strtod( position[i] , NULL );
-         g_array_append_val( data->pos , d_val );
+         gint    i;
+         double  d_val;
+         gchar** position = g_strsplit ( pos_s , "," , -1 );
+
+         data->pos = g_array_new( FALSE , FALSE , sizeof(double) );
+         for ( i=0 ; !tmp_err && position[i] ; i++ )
+         {
+            d_val = eh_str_to_dbl( position[i] , &tmp_err );
+
+            if ( !tmp_err ) g_array_append_val( data->pos , d_val );
+         }
+         g_strfreev(position);
       }
-      g_strfreev(position);
+
+      eh_touch_file( data->filename , O_WRONLY|O_CREAT , &tmp_err );
    }
 
-   data->filename = eh_symbol_table_value( symbol_table , S_KEY_FILENAME );
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
 
-   if ( !eh_try_open( data->filename ) )
-      eh_exit( EXIT_FAILURE );
+   return is_ok;
+}
+
+gboolean
+init_met_station_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Met_station_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      data->met_fp = sed_tripod_new( data->filename  , data->parameter , NULL );
+
+      if ( data->pos->len <= 0 )
+         sed_tripod_set_len( data->met_fp , sed_cube_size(prof) );
+      else
+         sed_tripod_set_len( data->met_fp , data->pos->len      );
+
+      sed_tripod_set_n_x( data->met_fp , sed_cube_n_x(prof) );
+      sed_tripod_set_n_y( data->met_fp , sed_cube_n_y(prof) );
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_met_station( Sed_process p )
+{
+   if ( p )
+   {
+      Met_station_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         sed_tripod_destroy( data->met_fp );
+
+         if ( data->pos ) g_array_free( data->pos , FALSE );
+
+         sed_measurement_destroy( data->parameter );
+
+         eh_free( data->parameter_str );
+         eh_free( data->filename      );
+         eh_free( data                );
+      }
+   }
 
    return TRUE;
 }
@@ -128,7 +167,6 @@ gboolean dump_measuring_station_data( gpointer ptr , FILE *fp )
    Met_station_t *data = (Met_station_t*)ptr;
    gint64 len;
 
-   fwrite( &(data->initialized)      , sizeof(gboolean) , 1 , fp );
    fwrite( &(data->from_river_mouth) , sizeof(gboolean) , 1 , fp );
 
    len = strlen( data->filename )+1;
@@ -152,7 +190,6 @@ gboolean load_measuring_station_data( gpointer ptr , FILE *fp )
    guint len;
    double *pos_data;
 
-   fread( &(data->initialized)      , sizeof(gboolean) , 1 , fp );
    fread( &(data->from_river_mouth) , sizeof(gboolean) , 1 , fp );
 
    fread( &len , sizeof(guint) , 1 , fp );

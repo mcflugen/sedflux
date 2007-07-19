@@ -1696,6 +1696,57 @@ gssize eh_dbl_array_fprint( FILE* fp , double* x , gssize n )
    return total_bytes;
 }
 
+gint
+eh_dbl_array_write( FILE *fp , double *x , gint len )
+{
+   size_t s=0;
+
+   eh_require( fp );
+   eh_require( x  );
+
+   if ( fp && x )
+   {
+      gint n_i = len;
+      gint n, i, i_0;
+      gint el_size = sizeof(double);
+      gint one = 1, size;
+      gdouble this_val;
+
+      for ( i_0=0 ; i_0<n_i ; i_0+=n )
+      {
+         if ( i_0==n_i-1 || x[i_0] == x[i_0+1] )
+         {
+            this_val = x[i_0];
+
+            for ( i=i_0,n=0 ;
+                  i<n_i && x[i]==this_val ;
+                  i++,n++ );
+
+            s += fwrite( &el_size  , sizeof(int) , 1 , fp )*sizeof(int);
+            s += fwrite( &n        , sizeof(int) , 1 , fp )*sizeof(int);
+            s += fwrite( &this_val , el_size     , 1 , fp )*el_size;
+         }
+         else
+         {
+            for ( i=i_0+1,n=1 ;
+                  i<n_i && x[i-1]!=x[i] ;
+                  i++,n++ );
+
+            if ( i<n_i )
+               n--;
+
+            size = n*el_size;
+
+            s += fwrite( &size      , sizeof(int) , 1 , fp )*sizeof(int);
+            s += fwrite( &one       , sizeof(int) , 1 , fp )*sizeof(int);
+            s += fwrite( &(x[i_0])  , size        , 1 , fp )*size;
+         }
+      }
+   }
+
+   return s;
+}
+
 double eh_dbl_array_mean( const double *x , gsize n )
 {
    return eh_dbl_array_sum( x , n )/(double)n;
@@ -2213,6 +2264,170 @@ gboolean eh_dbl_array_is_monotonic_down( double *x , gsize n )
    return TRUE;
 }
 
+/** Generate an array of equally spaced numbers.
+
+Generate an array of \a n linearly equally spaced points between \a x1 and
+\a x2.  returns a pointer to a newly allocated array.  should be freed
+using eh_free.
+
+\param x1 Lower bound
+\param x2 Lower bound
+\param n  Number of points
+
+\return An array of equally spaced points
+
+\see eh_logspace
+
+*/
+double *eh_linspace( double x1 , double x2 , gssize n )
+{
+   double *x = NULL;
+
+   eh_require( !eh_compare_dbl(x1,x2,1e-12) );
+   eh_require( n>1 );
+
+   {
+      gssize i;
+      double dx   = fabs(x2-x1)/(n-1.);
+      gssize sign = (x2>x1)?1:-1;
+
+      x = eh_new( double , n );
+   
+      for ( i=1 , x[0]=x1 ; i<n ; i++ )
+         x[i] = x[i-1] + sign*dx;
+   }
+
+   return x;
+}
+
+gssize*
+eh_id_array( gssize i_0 , gssize i_1 , gssize* n )
+{
+   gssize* id = NULL;
+
+   eh_require( i_1>=i_0 );
+
+   if ( i_1>=i_0 )
+   {
+      gint i;
+      gint len = i_1 - i_0 + 1;
+
+      id = eh_new( gssize , len+1 );
+
+      for ( i=0 ; i<len ; i++ )
+         id[i] = i_0+i;
+      id[len] = -1;
+
+      if ( n )
+         *n = len;
+   }
+   else
+   {
+      if ( n )
+         *n = 0;
+   }
+
+   return id;
+}
+
+double*
+eh_uniform_array( double x1 , double x2 , double dx , gssize* n )
+{
+   double* x = NULL;
+
+   eh_require( n     );
+   eh_require( x2>x1 );
+   eh_require( dx>0  );
+
+   *n = ( x2-x1 )/dx;
+
+   if ( *n>0 )
+   {
+      gssize i, len=*n;
+
+      x = eh_new( double , len );
+      for ( i=1,x[0]=x1 ; i<len ; i++ )
+         x[i] = x[i-1] + dx;
+
+   }
+   else
+      *n = 0;
+
+   return x;
+}
+
+double*
+eh_dbl_array_linspace( double* x , gssize n_x ,  double x_0 , double dx )
+{
+   eh_require( x      );
+   eh_require( n_x>=0 );
+
+   eh_return_val_if_fail( x && n_x>=0 , NULL )
+   {
+      gssize i;
+      for ( i=0 ; i<n_x ; i++ )
+         x[i] = i*dx + x_0;
+      return x;
+   }
+}
+
+/** Check if an array is monotonic (either increasing of decreasing)
+
+\param x A pointer to an array of doubles
+\param len The length of the array
+
+\return TRUE if the array is either monotonically increasing or decreasing.
+*/
+gboolean eh_dbl_array_is_monotonic( double* x , gssize len )
+{
+   gssize i;
+
+   eh_require( x );
+   eh_require( len>0 );
+
+   if ( len==1 )
+      return TRUE;
+   else if ( x[1]>x[0] )
+   {
+      for ( i=2 ; i<len ; i++ )
+         if ( x[i]<=x[i-1]  )
+            return FALSE;
+   }
+   else if ( x[1]<x[0] )
+   {
+      for ( i=2 ; i<len ; i++ )
+         if ( x[i]<=x[i-1]  )
+            return FALSE;
+   }
+   else
+      return FALSE;
+
+   return TRUE;
+}
+
+/** Generate an array of equally spaced numbers.
+
+Generate a row vector of n logarithmically equally spaced points between
+decades 10^d1 and 10^d2.  returns a pointer to a newly allocated array.
+should be freed using eh_free.
+
+\param d1 Lower bound
+\param d2 Lower bound
+\param n  Number of points
+
+\return An array of equally spaced points
+
+\see eh_linspace
+*/
+double *eh_logspace( double d1 , double d2 , int n )
+{
+   int i;
+   double *x = eh_linspace( d1 , d2 , n );
+   for ( i=0 ; i<n ; i++ )
+      x[i] = pow( 10. , x[i] );
+   return x;
+}
+
 void lubksb( double** a , gssize n , gssize* indx , double* b )
 {
    gssize i,ii=0,ip,j;
@@ -2518,4 +2733,243 @@ void twofft(double data1[], double data2[], double fft1[], double fft2[],
 		fft2[nn3-j]=rem;
 	}
 }
+
+/* Compute a weighted average of the data in vector x, given the weights in vector f.
+   Vectors are of length len.
+*/
+double
+eh_dbl_array_mean_weighted( const double x[] , gint len , const double f[] )
+{
+   long i;
+   double sum;
+   
+   for (i=0,sum=0;i<len;i++)
+      sum += f[i]*x[i];
+   
+   return sum;
+}
+
+#ifndef M_LN2
+# define M_LN2 0.69314718055994530942
+#endif
+
+#ifndef HAVE_LOG2
+double
+log2(double x)
+{
+   return log(x)/M_LN2;
+}
+#endif
+
+#undef M_LN2
+
+#if defined( OLD_EH_NAN )
+
+float eh_nan(void)
+{
+   gint32 a=0x7FF00000L;
+   return *((float*)(&a));
+}
+
+int eh_isnan(float x)
+{
+   return (    ((*(gint32*)&(x) & 0x7F800000L) == 0x7F800000L)
+            && ((*(gint32*)&(x) & 0x007FFFFFL) != 0x00000000L) );
+}
+#else
+
+double eh_nan( void )
+{
+//   return sqrt(-1);
+   return g_strtod( "NAN" , NULL );
+}
+
+gboolean eh_isnan( double x )
+{
+   return isnan(x);
+}
+#endif
+
+void eh_rebin_dbl_array( double *x     , double *y     , gssize len ,
+                         double *x_bin , double *y_bin , gssize len_bin )
+{
+   eh_rebin_dbl_array_bad_val( x     , y     , len     ,
+                               x_bin , y_bin , len_bin ,
+                               eh_nan() );
+}
+
+void eh_rebin_dbl_array_bad_val(
+        double *x     , double *y     , gssize len     ,
+        double *x_bin , double *y_bin , gssize len_bin ,
+        double bad_val )
+{
+   gssize i, j;
+   gssize top_i, top_j, lower_j, upper_j;
+//   gssize lower_edge, upper_edge;
+//   double left, right;
+//   gssize n;
+   double left_bin, right_bin, lower, upper, upper_bin, lower_bin;
+   double sum;
+   double *x_edge;
+
+   // initialize y_bin with NaN's.
+   for ( i=0 ; i<len_bin ; y_bin[i]=bad_val , i++ );
+
+   top_i = len_bin-1;
+   top_j = len-1;
+   lower_bin = x_bin[0]     - ( x_bin[1]     - x_bin[0]       ) * .5;
+   upper_bin = x_bin[top_i] + ( x_bin[top_i] - x_bin[top_i-1] ) * .5;
+   lower = x[0]     - ( x[1]     - x[0]       ) * .5;
+   upper = x[top_j] + ( x[top_j] - x[top_j-1] ) * .5;
+
+   // define the edges of the data.
+   x_edge      = eh_new( double , len+1 );
+   x_edge[0]   = x[0] - ( x[1] - x[0] ) * .5;
+   x_edge[len] = x[top_j] + ( x[top_j] - x[top_j-1] ) * .5;
+   for ( j=1 ; j<len ; j++ )
+      x_edge[j] = ( x[j-1] + x[j] ) * .5;
+/*
+   // set j to the index of the first data point that is inside a bin.
+   for ( j=0 ; j<len && !(x[j]>=lower && x[j]<upper) ; j++ );
+   if ( j==len )
+      return;
+
+   // set i to the first bin that contains data.
+   for ( i=0 ; i<len_bin && !(x_bin[i]>=x[0] && x_bin[i]<x[top_j]) ; i++ );
+   if ( i==len_bin )
+      return;
+*/
+   upper_j = 0;
+   for ( i=0 ; i<len_bin && j<=len ; i++ )
+   {
+
+      // Integrate the data in y over the entire bin.
+      left_bin  = (i!=0)    ?( x_bin[i]   + x_bin[i-1] ) * .5 : lower_bin;
+      right_bin = (i!=top_i)?( x_bin[i+1] + x_bin[i]   ) * .5 : upper_bin;
+
+      // Find the lower j.
+      for ( j=upper_j ; j<=len && x_edge[j]<=left_bin ; j++ );
+      lower_j = j-1;
+      eh_clamp( lower_j , 0 , len );
+
+      // Find the upper j.
+      for ( j=lower_j ; j<=len && x_edge[j]<=right_bin ; j++ );
+/*
+if ( len_bin == 2 )
+{
+   eh_watch_int( lower_j );
+   eh_watch_int( j );
+   eh_watch_int( len );
+   eh_watch_dbl( left_bin );
+   eh_watch_dbl( right_bin );
+   eh_watch_dbl( x_edge[0] );
+   eh_watch_dbl( x_edge[1] );
+}
+*/
+      upper_j = j;
+      eh_clamp( upper_j , 0 , len );
+//eh_watch_int( upper_j );
+//eh_watch_int( lower_j );
+//eh_watch_dbl( x_edge[lower_j] );
+//eh_watch_dbl( x_edge[upper_j] );
+//eh_watch_dbl( left_bin );
+//eh_watch_dbl( right_bin );
+
+      // Integrate the data over these j.
+//      sum  = y[lower_j]*(left_bin-x_edge[lower_j])/(right_bin-left_bin);
+//      sum += y[upper_j]*(right_bin-x_edge[upper_j])/(right_bin-left_bin);
+
+      sum  = 0;
+      if ( left_bin > x_edge[upper_j] || right_bin < x_edge[lower_j] )
+         sum = bad_val;
+      else if ( upper_j-lower_j>1 )
+      {
+//eh_watch_int( i );
+         if ( left_bin >= x_edge[lower_j] )
+            sum += y[lower_j]
+                 * (x_edge[lower_j+1]-left_bin);
+         else
+            sum += y[lower_j]
+                 * (x_edge[lower_j+1]-x_edge[lower_j]);
+//              / (x_edge[lower_j+1]-x_edge[lower_j])
+//              * (x_edge[lower_j+1]-x_edge[lower_j])
+//              / (x_edge[lower_j+1]-left_bin);
+//eh_watch_dbl( sum );
+         if ( right_bin <= x_edge[upper_j] )
+            sum += y[upper_j-1] 
+                 * (right_bin-x_edge[upper_j-1]);
+         else
+            sum += y[upper_j-1] 
+                 * (x_edge[upper_j]-x_edge[upper_j-1]);
+//              / (x_edge[upper_j]-x_edge[upper_j-1])
+//              * (x_edge[upper_j]-x_edge[upper_j-1])
+//              / (right_bin-x_edge[lower_j+1]);
+//eh_watch_dbl( sum );
+//eh_watch_dbl_vec( y , lower_j+1, upper_j-2 );
+         for ( j=lower_j+1 ; j<upper_j-1 ; j++ )
+            sum += y[j]*(x_edge[j+1]-x_edge[j]);
+//eh_watch_dbl( sum );
+         sum /= (right_bin-left_bin);
+if ( sum<0 )
+{
+   eh_watch_int( i );
+   eh_watch_int( lower_j );
+   eh_watch_int( upper_j );
+   eh_watch_dbl( left_bin );
+   eh_watch_dbl( right_bin );
+   eh_watch_dbl( sum );
+   eh_watch_dbl( x_edge[lower_j] );
+   eh_watch_dbl( x_edge[upper_j] );
+}
+//eh_watch_dbl( sum );
+      }
+      else
+         for ( j=lower_j ; j<upper_j ; j++ )
+            sum += y[j];
+//            sum += y[j]*(right_bin-left_bin)/(x_edge[j+1]-x_edge[j]);
+
+
+//eh_watch_dbl( sum );
+
+      y_bin[i] = sum;
+/*
+
+      // This is the left and right edge of the current datum.
+      left  = (j!=0)    ?( x[j]   + x[j-1] ) * .5 : lower;
+      right = (j!=top_j)?( x[j+1] + x[j]   ) * .5 : upper;
+
+      // This datum is entirely in the bin.
+      if ( left>=left_bin && right<right_bin )
+         sum += y[j];
+      // This datum is 
+      else ( left>left_bin && right<right_bin )
+      else ( left>=left_bin && right>right_bin )
+
+      for ( sum=0 ; j<len && left>=left_bin && right<right_bin; j++,n++ )
+
+
+
+      for ( n=0,sum=0 ; j<len && x[j]>=left_bin && x[j]<right_bin; j++,n++ )
+         sum += y[j];
+
+      if ( n==0 )
+      {
+         if ( j>=0 )
+         {
+            y_bin[i] = ( y[j] - y[j-1] ) / ( x[j] - x[j-1] ) * (x_bin[i]-x[j-1])
+                     + y[j-1];
+      y_bin[i] *= ( x_bin[i] - x_bin[i-1] ) / ( x[j] - x[j-1] );
+         }
+      }
+      else
+         y_bin[i] = sum;
+//         y_bin[i] = sum/(double)n;
+*/
+   }
+
+   eh_free( x_edge );
+
+   return;
+}
+
 

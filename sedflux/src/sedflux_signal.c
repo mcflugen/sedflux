@@ -94,28 +94,28 @@ print_choices( int sig_num )
 
       fscanf(stdin,"%s",&ch);
 
-      if (      g_strcasecmp( &ch , "1" )==0 )
+      if (      g_ascii_strcasecmp( &ch , "1" )==0 )
       {
          sedflux_signal_set( SEDFLUX_SIG_QUIT );
          fprintf(stdout,"   You have opted to quit early...\n\n");
       }
-      else if ( g_strcasecmp( &ch , "2" )==0 )
+      else if ( g_ascii_strcasecmp( &ch , "2" )==0 )
       {
          sedflux_signal_set( SEDFLUX_SIG_DUMP );
          fprintf( stdout ,
                   "   Temporary output files will be dumped at the end of this time step...\n\n");
       }
-      else if ( g_strcasecmp( &ch , "3" )==0 )
+      else if ( g_ascii_strcasecmp( &ch , "3" )==0 )
       {
          sedflux_signal_set( SEDFLUX_SIG_CPR );
          fprintf(stdout,"   Creating a checkpoint/reset file...\n\n");
       }
-      else if (    g_strcasecmp( &ch , "4" )==0 
-                || g_strcasecmp( &ch , "" )==0 )
+      else if (    g_ascii_strcasecmp( &ch , "4" )==0 
+                || g_ascii_strcasecmp( &ch , "" )==0 )
       {
          fprintf(stdout,"   Continuing...\n\n");
       }
-      else if (    g_strcasecmp( &ch , "5" )==0 )
+      else if (    g_ascii_strcasecmp( &ch , "5" )==0 )
       {
          fprintf(stdout,"   Terminating run without saving...\n\n" );
          eh_exit( EXIT_SUCCESS );

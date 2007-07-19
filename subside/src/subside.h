@@ -34,6 +34,8 @@
 # include "utils.h"
 # include "sed_sedflux.h"
 
+void subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y );
+
 /**
    \brief Solve the flexure equation for a point load.
 

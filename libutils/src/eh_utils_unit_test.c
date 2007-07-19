@@ -77,7 +77,6 @@ START_TEST ( test_dlmread_seq )
    char* tmp_file = tempnam( "/tmp" , "DLM_TEST_" );
    double*** data;
    gchar** rec_data;
-   gint i, j;
    gint *n_rows, *n_cols;
 
    /* write a test file */

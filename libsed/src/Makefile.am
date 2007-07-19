@@ -4,7 +4,7 @@ AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la
 
 BUILT_SOURCES            = datadir_path.h
 
-lib_LTLIBRARIES          = libsedflux.la libsedfluxui.la
+lib_LTLIBRARIES          = libsedflux.la
 
 libsedflux_la_SOURCES    = \
                            sed_cell.c \
@@ -12,31 +12,60 @@ libsedflux_la_SOURCES    = \
                            sed_cube.c \
                            sed_epoch.c \
                            sed_hydro.c \
+                           sed_hydrotrend.c \
                            sed_process.c \
                            sed_property.c \
                            sed_property_file.c \
                            sed_river.c \
                            sed_sediment.c \
+                           sed_signal.c \
                            sed_tripod.c \
                            sed_wave.c
 
-include_HEADERS          = \
+sedfluxincludedir=$(includedir)/ew-2.0
+sedfluxinclude_HEADERS = sed.h
+
+sedfluxsubincludedir=$(includedir)/ew-2.0/sed
+sedfluxsubinclude_HEADERS = \
                            sed_cell.h \
                            sed_column.h \
                            sed_const.h \
                            sed_cube.h \
                            sed_epoch.h \
                            sed_hydro.h \
+                           sed_hydrotrend.h \
                            sed_process.h \
                            sed_property.h \
                            sed_property_file.h \
                            sed_river.h \
-                           sed_sedflux.h \
                            sed_sediment.h \
+                           sed_signal.h \
                            sed_tripod.h \
                            sed_wave.h \
                            etk_addrem.h \
-                           etk_keyvalue.h
+                           etk_keyvalue.h \
+                           datadir_path.h
+
+#include_HEADERS          = \
+#                           sed_cell.h \
+#                           sed_column.h \
+#                           sed_const.h \
+#                           sed_cube.h \
+#                           sed_epoch.h \
+#                           sed_hydro.h \
+#                           sed_hydrotrend.h \
+#                           sed_process.h \
+#                           sed_property.h \
+#                           sed_property_file.h \
+#                           sed_river.h \
+#                           sed_sedflux.h \
+#                           sed_sediment.h \
+#                           sed_signal.h \
+#                           sed_tripod.h \
+#                           sed_wave.h \
+#                           etk_addrem.h \
+#                           etk_keyvalue.h \
+#                           datadir_path.h
 
 bin_PROGRAMS             = write_test_file
 
@@ -64,6 +93,7 @@ endif
 
 if ENABLE_GTK
 
+lib_LTLIBRARIES         += libsedfluxui.la
 bin_PROGRAMS            += sedflux_ui select_bathy_ui
 
 libsedfluxui_la_SOURCES  = etk_addrem.c etk_keyvalue.c stk_select_bathy.c

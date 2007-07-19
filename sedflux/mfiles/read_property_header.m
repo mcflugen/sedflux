@@ -1,3 +1,9 @@
+%% Read header information from a sedflux property file
+%
+% \param fid   File id of the sedflux property file
+%
+% \return A structure that contains the header information
+%
 function hdr = read_property_header( fid )
 % READ_PROPERTY_HEAEDER   Read a sedflux header file.
 %

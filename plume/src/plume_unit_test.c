@@ -48,7 +48,7 @@ START_TEST ( test_plume )
    sedload[2].rho    = 1650.;
    sedload[3].rho    = 1600.;
 
-   init_plume_data( &plume_data );
+   plume_data_init( &plume_data );
 
    deposit = eh_new( Eh_dbl_grid , 4 );
    for ( n=0 ; n<4 ; n++ )
@@ -91,7 +91,7 @@ START_TEST ( test_plume_from_file )
    plume_const.ndx                 = 1;
    plume_const.ndy                 = 3;
 
-   init_plume_data( &plume_data );
+   plume_data_init( &plume_data );
 
    {
       gssize n;
@@ -240,7 +240,7 @@ START_TEST ( test_approx_from_file )
             if ( dt <= 365 )
                dep = plume_centerline_deposit_nd( dep , x , len , l );
 
-            eh_dbl_array_add( total , dep , len );
+            eh_dbl_array_add_each( total , len , dep );
 
             sed_hydro_destroy( river );
          }

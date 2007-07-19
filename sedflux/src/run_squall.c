@@ -27,29 +27,16 @@
 #include <glib.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "run_squall.h"
+#include "squall.h"
+#include "my_processes.h"
 
-
-Sed_process_info run_squall(gpointer ptr, Sed_cube prof)
+Sed_process_info
+run_squall( Sed_process proc , Sed_cube prof )
 {
-   Squall_t *data=(Squall_t*)ptr;
-   double t=0, dt, total_t;
+   Squall_t *       data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
+   double t=0, dt, total_t;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
-   
 // 1e6y year run
 //   total_t = sed_get_profile_time_step_in_years( prof )*1e-2;
 // squall run
@@ -91,19 +78,44 @@ Sed_process_info run_squall(gpointer ptr, Sed_cube prof)
 #define S_KEY_TIME_STEP      "time step"
 #define S_KEY_TIME_FRACTION  "duration of squall"
 
-gboolean init_squall(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_squall( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Squall_t *data=(Squall_t*)ptr;
-   if ( symbol_table == NULL )
+   Squall_t* data    = sed_process_new_user_data( p , Squall_t );
+   GError*   tmp_err = NULL;
+   gchar**   err_s   = NULL;
+   gboolean  is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   // Read squall time step and time fraction.
+   data->dt              = eh_symbol_table_time_value( tab , S_KEY_TIME_STEP     );
+   data->squall_duration = eh_symbol_table_time_value( tab , S_KEY_TIME_FRACTION );
+
+   eh_check_to_s( data->dt>=0.               , "Time step positive"          , &err_s );
+   eh_check_to_s( data->squall_duration>=0.  , "Duration of squall positive" , &err_s );
+
+   if ( !tmp_err && err_s )
+      eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
+   if ( tmp_err )
    {
-      data->initialized = FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   // Read squall time step.
-   data->dt              = eh_symbol_table_time_value( symbol_table , S_KEY_TIME_STEP     );
-   // Read squall time fraction.
-   data->squall_duration = eh_symbol_table_time_value( symbol_table , S_KEY_TIME_FRACTION );
+   return is_ok;
+}
+
+gboolean
+destroy_squall( Sed_process p )
+{
+   if ( p )
+   {
+      Squall_t* data = sed_process_user_data( p );
+      
+      if ( data ) eh_free( data );
+   }
 
    return TRUE;
 }

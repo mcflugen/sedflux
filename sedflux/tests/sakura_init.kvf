@@ -1,0 +1,14 @@
+[ global ]
+margin name:            Benchmark
+vertical resolution:    1
+x resolution:           20000
+y resolution:           10
+bathymetry file:        sakura_bathy.csv
+sediment file:          bench_sediment.kvf
+
+[ epoch ]
+number:           1
+duration:         100y
+time step:        1y
+process file:     sakura_epoch.kvf
+

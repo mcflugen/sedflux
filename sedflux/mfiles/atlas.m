@@ -44,3 +44,4 @@ map = [ r' g' b' ];
 
 map( map>1 ) = 1;
 map( map<0 ) = 0;
+

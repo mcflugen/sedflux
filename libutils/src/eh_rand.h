@@ -58,4 +58,8 @@ double eh_rand_max_weibull     ( GRand* rand , double eta  , double beta , doubl
 double eh_rand_normal          ( GRand* rand , double mu   , double sigma             );
 double eh_rand_user            ( GRand* rand , double *x   , double *F  , gssize len  );
 
+double    eh_get_fuzzy_dbl      ( double min  , double max );
+double    eh_get_fuzzy_dbl_norm ( double mean , double std );
+gint32    eh_get_fuzzy_int      ( gint32 min  , gint32 max );
+
 #endif

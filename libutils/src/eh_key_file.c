@@ -418,7 +418,7 @@ gboolean eh_key_file_get_bool_value( Eh_key_file f           ,
                                      const gchar* key )
 {
    gchar*   str = eh_key_file_get_value(f,group_name,key);
-   gboolean ans = strtobool( str );
+   gboolean ans = eh_str_to_boolean( str , NULL );
 
    eh_free( str );
 
@@ -445,7 +445,7 @@ gboolean* eh_key_file_get_bool_values( Eh_key_file f           ,
    guint i;
 
    for ( i=0 ; i<len ; i++ )
-      ans[i] = strtobool( str[i] );
+      ans[i] = eh_str_to_boolean( str[i] , NULL );
 
    g_strfreev( str );
 
@@ -487,10 +487,10 @@ double eh_key_file_get_dbl_value( Eh_key_file f ,
 \return The value converted to a double array.
 */
 double*
-eh_key_file_get_dbl_array( Eh_key_file f           ,
+eh_key_file_get_dbl_array( Eh_key_file  f          ,
                            const gchar* group_name ,
                            const gchar* key        ,
-                           gssize* len )
+                           gint*        len )
 {
    double* d_array = NULL;
 
@@ -647,8 +647,8 @@ using eh_symbol_table_destroy.
 \return A NULL-terminated array of newly-allocated Eh_symbol_table's of key-value pairs.
         Use eh_symbol_table_destroy to free each element of the array.
 */
-Eh_symbol_table* eh_key_file_get_symbol_tables( Eh_key_file f , 
-                                                const gchar* group_name )
+Eh_symbol_table*
+eh_key_file_get_symbol_tables( Eh_key_file f , const gchar* group_name )
 {
    Eh_symbol_table* value = NULL;
 
@@ -687,6 +687,7 @@ Scan an entire key-file and construct a new Eh_key_file containing
 the file information.
 
 \param file   The name of the file to scan
+\param error  A GError
 
 \return A new Eh_key_file.  Use eh_key_file_destroy to free.
 */
@@ -736,7 +737,7 @@ eh_key_file_scan( const char* file , GError** error )
       }
       else
       {
-         eh_key_file_destroy( f );
+         f = eh_key_file_destroy( f );
          g_propagate_error( error , tmp_err );
       }
    }
@@ -796,7 +797,7 @@ eh_key_file_scan_from_template( const gchar* file       ,
                                   EH_KEY_FILE_ERROR ,
                                   EH_KEY_FILE_ERROR_ARRAY_LEN_MISMATCH ,
                                   "%s: Array length mismatch (%d!=%d): %s\n" ,
-                                  file , len[i] , t[i].arg_data_len , t[i].label );
+                                  file , len[i] , *(t[i].arg_data_len) , t[i].label );
 
                   break;
                case EH_ARG_FILENAME:
@@ -826,7 +827,6 @@ eh_key_file_scan_from_template( const gchar* file       ,
 
       g_strfreev( missing_entries );
       eh_free( len );
-
       eh_key_file_destroy( f );
    }
 
@@ -892,6 +892,7 @@ group is scanned.
 \param name     The name of the group to scan
 \param tab      A symbol table to place the key-value pairs into.  If NULL, a
                 new table will be created.
+\param error    A GError
 
 \return         An Eh_symbol_table containing the key-value pairs of the group, or NULL if the
                 file does not contain the specified group.

@@ -96,7 +96,8 @@ Sed_column sed_column_new_filled( double t , Sed_size_class size )
 
 @see sed_column_new
 */
-Sed_column sed_column_destroy( Sed_column s )
+Sed_column
+sed_column_destroy( Sed_column s )
 {
    if ( s )
    {
@@ -116,7 +117,8 @@ Sed_column sed_column_destroy( Sed_column s )
 
 @param s The column to remove the sediment from.
 */
-Sed_column sed_column_clear( Sed_column s )
+Sed_column
+sed_column_clear( Sed_column s )
 {
    if ( s )
    {
@@ -144,7 +146,8 @@ information from the source column.
 
 @see sed_dup_column
 */
-Sed_column sed_column_copy( Sed_column dest , const Sed_column src )
+Sed_column
+sed_column_copy( Sed_column dest , const Sed_column src )
 {
    eh_require( src );
 
@@ -175,7 +178,8 @@ Sed_column sed_column_copy( Sed_column dest , const Sed_column src )
    return dest;
 }
 
-gboolean sed_column_is_same( const Sed_column c_1 , const Sed_column c_2 )
+gboolean
+sed_column_is_same( const Sed_column c_1 , const Sed_column c_2 )
 {
    gboolean same = TRUE;
 
@@ -195,7 +199,8 @@ gboolean sed_column_is_same( const Sed_column c_1 , const Sed_column c_2 )
    return same;
 }
 
-gboolean sed_column_is_same_data( const Sed_column c_1 , const Sed_column c_2 )
+gboolean
+sed_column_is_same_data( const Sed_column c_1 , const Sed_column c_2 )
 {
    gboolean same = TRUE;
 
@@ -273,7 +278,8 @@ That is, i=0 refers to the lowest cell within the column.
 
 @return A pointer to the fraction information for the requested Sed_cell.
 */
-double* sed_column_cell_fraction( const Sed_column col , gssize i )
+double*
+sed_column_cell_fraction( const Sed_column col , gssize i )
 {
    return sed_cell_fraction_ptr( col->cell[i] );
 }
@@ -466,7 +472,8 @@ Sed_column sed_column_set_z_res( Sed_column col , double new_dz )
 
 @return The elevation to the last filled Sed_cell in a Sed_column.
 */
-double sed_column_top_height( const Sed_column col )
+double
+sed_column_top_height( const Sed_column col )
 {
    eh_return_val_if_fail( col , 0 );
    return col->z + sed_column_thickness(col);
@@ -1016,9 +1023,8 @@ thickness is changed in such a way so as to retain its degree of compactedness.
 
 @see sed_compact_cell_in_column .
 */
-Sed_column sed_column_resize_cell( Sed_column s ,
-                                   gssize i ,
-                                   double new_t )
+Sed_column
+sed_column_resize_cell( Sed_column s , gssize i , double new_t )
 {
    eh_require( s );
 
@@ -1159,51 +1165,6 @@ double sed_column_add_cell_real( Sed_column col ,
    return amount_to_add;
 }
 
-double sed_column_append_cell_real( Sed_column col ,
-                                    Sed_cell cell  ,
-                                    gboolean update_pressure )
-{
-   double amount_to_add = 0;
-
-   eh_require( col  );
-   eh_require( cell );
-
-   if ( col && cell )
-   {
-      amount_to_add = sed_cell_size( cell );
-
-      sed_column_resize( col , col->len + 1 );
-/*
-      if ( sed_column_is_empty(col) )
-         sed_cell_copy( col->cell[0] , cell );
-      else
-      {
-         sed_cell_copy( col->cell[col->len] , cell );
-         col->len += 1;
-      }
-*/
-      sed_cell_copy( col->cell[col->len] , cell );
-      col->len += 1;
-
-      sed_column_set_thickness( col , sed_column_thickness(col)+sed_cell_size(cell) );
-
-      if ( update_pressure )
-      {
-         gssize i;
-         gssize len = sed_column_len( col );
-         double cell_load = sed_cell_load( cell );
-
-         for ( i=0 ; i<len ; i++ )
-            sed_cell_set_pressure( col->cell[i] ,
-                                   sed_cell_pressure( col->cell[i] )
-                                   + cell_load );
-      }
-
-   }
-
-   return amount_to_add;
-}
-
 /** Add a Sed_cell to the top of a Sed_column.
 
 The contents of a Sed_cell is added to the top of a Sed_column.  This is the
@@ -1221,11 +1182,6 @@ updated to reflect the increase in overlying load due to the new sediment.
 double sed_column_add_cell( Sed_column col , Sed_cell cell  )
 {
    return sed_column_add_cell_real( col , cell , FALSE );
-}
-
-double sed_column_append_cell( Sed_column col , Sed_cell cell )
-{
-   return sed_column_append_cell_real( col , cell , FALSE );
 }
 
 /** Add a Sed_cell to the top of a Sed_column.
@@ -1283,7 +1239,8 @@ double sed_column_add_vec( Sed_column c , const double* t )
 
 @return A pointer to the Sed_cell at the top of a Sed_column.
 */
-Sed_cell sed_column_top_cell( const Sed_column col )
+Sed_cell
+sed_column_top_cell( const Sed_column col )
 {
    Sed_cell top = NULL;
 
@@ -1326,7 +1283,8 @@ In this case, no memory is freed.
 @param col A pointer to a Sed_column.
 @param n   The new size of the Sed_column.
 */
-Sed_column sed_column_resize( Sed_column col , gssize n )
+Sed_column
+sed_column_resize( Sed_column col , gssize n )
 {
    eh_require( col );
 
@@ -1339,16 +1297,11 @@ Sed_column sed_column_resize( Sed_column col , gssize n )
          gssize add_bins = ((n-col->size)/S_ADDBINS+1)*S_ADDBINS;
          gssize new_size = col->size + add_bins;
 
-         if ( col->cell )
-         {
-            Sed_cell* new_col;
-            col->cell = eh_renew( Sed_cell , col->cell , col->size+add_bins );
-         }
-         else
-            col->cell = eh_new( Sed_cell , col->size+add_bins );
+         if ( col->cell ) col->cell = eh_renew( Sed_cell , col->cell , col->size+add_bins );
+         else             col->cell = eh_new  ( Sed_cell             , col->size+add_bins );
 
          for ( i=col->size ; i<new_size ; i++ )
-            col->cell[i] = sed_cell_new( sed_sediment_env_size() );
+            col->cell[i] = sed_cell_new_env();
          col->size += add_bins;
       }
       else
@@ -1376,9 +1329,10 @@ is passed as the destination cell, a new cell is created to hold the sediment.
 
 @see sed_column_remove_cell.
 */
-Sed_cell sed_column_extract_top_cell( Sed_column col ,
-                                      double f       ,
-                                      Sed_cell dest )
+Sed_cell
+sed_column_extract_top_cell( Sed_column col ,
+                             double f       ,
+                             Sed_cell dest )
 {
    eh_require( col );
    eh_require( f<=1 );
@@ -1411,7 +1365,8 @@ column.  The removed sediment is discarded.
 
 @see sed_extract_cell_from_column .
 */
-Sed_column sed_column_remove_top_cell( Sed_column col , double f )
+Sed_column
+sed_column_remove_top_cell( Sed_column col , double f )
 {
    eh_require( col );
    eh_require( f<=1 );
@@ -1434,13 +1389,6 @@ Sed_column sed_column_remove_top_cell( Sed_column col , double f )
          if ( col->len<0 )
             eh_require_not_reached();
       }
-/*
-      if ( sed_cell_is_empty( top_cell ) )
-      {
-         if ( col->len > 1 )
-            (col->len)--;
-      }
-*/
    }
 
    return col;
@@ -1463,8 +1411,8 @@ is passed as the destination cell, a new cell is created to hold the sediment.
 */
 Sed_cell
 sed_column_extract_top( Sed_column col ,
-                        double t       ,
-                        Sed_cell dest )
+                        double     t   ,
+                        Sed_cell   dest )
 {
    return sed_column_extract_top_fill( col , t , NULL , dest );
 }
@@ -1486,7 +1434,6 @@ Sed_cell sed_column_extract_top_fill( Sed_column col ,
 
    if ( t>0 )
    {
-      gssize n_grain = sed_sediment_env_size();
       double left_to_remove, available_sediment;
       double f;
       Sed_cell cell_temp, top_cell;
@@ -1552,7 +1499,8 @@ column.  The removed sediment is discarded.
 
 @see sed_extract_top_from_column , sed_get_top_from_column .
 */
-Sed_column sed_column_remove_top( Sed_column col , double t )
+Sed_column
+sed_column_remove_top( Sed_column col , double t )
 {
    eh_require( col );
 
@@ -2029,9 +1977,10 @@ new column is created.
 @return A pointer to the destination column.
 
 */
-Sed_column sed_column_height_copy( const Sed_column src ,
-                                   double z             ,
-                                   Sed_column dest )
+Sed_column
+sed_column_height_copy( const Sed_column src ,
+                        double z             ,
+                        Sed_column dest )
 {
    eh_return_val_if_fail( src , NULL );
 
@@ -2058,13 +2007,13 @@ Sed_column sed_column_height_copy( const Sed_column src ,
 
          if ( dh>0 )
          {
-            sed_column_append_cell( dest , src->cell[start] );
+            sed_column_stack_cell( dest , src->cell[start] );
             sed_cell_resize( dest->cell[0] , dh );
          }
 
          // Add the cells to be extracted.
          for ( i=1 ; i<bins_to_extract ; i++ )
-            sed_column_append_cell( dest , src->cell[start+i] );
+            sed_column_stack_cell( dest , src->cell[start+i] );
 
       }
    }
@@ -2104,7 +2053,8 @@ Cut off the top part of a column starting at an elevation, top.
 
 @see sed_chomp_column , sed_strip_column .
 */
-Sed_column sed_column_chop( Sed_column col , double top )
+Sed_column
+sed_column_chop( Sed_column col , double top )
 {
    eh_return_val_if_fail( col , NULL );
 
@@ -2413,10 +2363,12 @@ destination column.
 
 @return A pointer to the destination Sed_column.
 */
-Sed_column sed_column_add( Sed_column dest , const Sed_column src )
+Sed_column
+sed_column_add( Sed_column dest , const Sed_column src )
 {
    eh_return_val_if_fail( src , NULL );
 
+   if ( src )
    {
       gssize i;
       if ( !dest )
@@ -2428,7 +2380,8 @@ Sed_column sed_column_add( Sed_column dest , const Sed_column src )
    return dest;
 }
 
-Sed_column sed_column_append( Sed_column dest , const Sed_column src )
+Sed_column
+sed_column_append( Sed_column dest , const Sed_column src )
 {
    eh_require( src );
 
@@ -2436,7 +2389,7 @@ Sed_column sed_column_append( Sed_column dest , const Sed_column src )
    {
       gssize i;
       for ( i=0 ; i<src->len ; i++ )
-         sed_column_append_cell( dest , src->cell[i] );
+         sed_column_stack_cell( dest , src->cell[i] );
    }
    else
       dest = NULL;
@@ -2496,5 +2449,215 @@ Sed_column sed_column_rebin( Sed_column col )
    }
 
    return col;
+}
+
+Sed_cell
+sed_column_extract_top_cell_loc( Sed_column col )
+{
+   Sed_cell c = NULL;
+
+   eh_require( col );
+
+   if ( col && !sed_column_is_empty(col) )
+   {
+      gint n = sed_column_len(col)-1;
+
+      c = col->cell[n];
+
+      sed_column_set_thickness( col , sed_column_thickness(col) - sed_cell_size(c) );
+
+      col->len -= 1;
+      if ( col->len<0 )
+         eh_require_not_reached();
+   }
+
+   return c;
+}
+
+Sed_cell*
+sed_column_extract_cells_above( Sed_column col , double z )
+{
+   Sed_cell* cell_arr = NULL;
+
+   eh_require( col  );
+
+   if ( col && !sed_column_is_empty(col) )
+   {
+      gint n_bins = sed_column_top_nbins( col , z );
+
+      if ( n_bins>0 )
+      {
+         double dz;
+
+         cell_arr = sed_column_extract_top_n_cells( col , n_bins );
+
+         eh_require( cell_arr && cell_arr[0] );
+
+         dz = sed_cell_size( cell_arr[0] );
+
+         sed_cell_resize    ( cell_arr[0] , z - sed_column_top_height(col) );
+         sed_column_add_cell( col         , cell_arr[0]                    );
+         sed_cell_resize    ( cell_arr[0] , dz                             );
+      }
+   }
+
+   return cell_arr;
+}
+
+Sed_cell*
+sed_column_extract_top_n_cells( Sed_column col , gint n_cells )
+{
+   Sed_cell* cell_arr = NULL;
+
+   eh_require( col  );
+   eh_require( n_cells>=0 );
+
+   if ( col )
+   {
+      eh_clamp( n_cells , 0 , sed_column_len(col) );
+
+      if ( n_cells>0 )
+      {
+         gint   n_0 = sed_column_len(col) - n_cells;
+         double dz  = 0;
+         gint i, n;
+
+         cell_arr          = eh_new( Sed_cell , n_cells+1 );
+         cell_arr[n_cells] = NULL;
+
+         for ( i=0,n=n_0 ; i<n_cells ; i++,n++ )
+         {
+            dz           += sed_cell_size( col->cell[n] );
+            cell_arr[i]   = col->cell[n];
+            col->cell[n]  = sed_cell_new_env();
+         }
+
+         sed_column_set_thickness( col , sed_column_thickness(col) - dz );
+         col->len -= n_cells;
+
+         eh_require( col->len>=0 );
+      }
+   }
+
+   return cell_arr;
+}
+
+Sed_column
+sed_column_stack_cells( Sed_column dest , Sed_cell* src )
+{
+   eh_require( src );
+
+   if ( src )
+   {
+      Sed_cell* c;
+      for ( c=src ; *c ; c++ )
+         sed_column_stack_cell( dest , *c );
+   }
+   else
+      dest = NULL;
+
+   return dest;
+}
+
+Sed_column
+sed_column_stack_cells_loc( Sed_column dest , Sed_cell* src )
+{
+   eh_require( src );
+
+   if ( src )
+   {
+      Sed_cell* c;
+      for ( c=src ; *c ; c++ )
+         sed_column_stack_cell_loc( dest , *c );
+   }
+   else
+      dest = NULL;
+
+   return dest;
+}
+
+double
+sed_column_stack_cell_real( Sed_column col , Sed_cell cell , gboolean update_pressure )
+{
+   double amount_to_add = 0;
+
+   eh_require( col  );
+   eh_require( cell );
+
+   if ( col && cell )
+   {
+      amount_to_add = sed_cell_size( cell );
+
+      sed_column_resize( col , col->len + 1 );
+      sed_cell_copy( col->cell[col->len] , cell );
+      col->len += 1;
+
+      sed_column_set_thickness( col , sed_column_thickness(col)+sed_cell_size(cell) );
+
+      if ( update_pressure )
+      {
+         gssize i;
+         gssize len = sed_column_len( col );
+         double cell_load = sed_cell_load( cell );
+
+         for ( i=0 ; i<len ; i++ )
+            sed_cell_set_pressure( col->cell[i] ,
+                                   sed_cell_pressure( col->cell[i] )
+                                   + cell_load );
+      }
+
+   }
+
+   return amount_to_add;
+}
+
+double
+sed_column_stack_cell_loc_real( Sed_column col , Sed_cell cell , gboolean update_pressure )
+{
+   double amount_to_add = 0;
+
+   eh_require( col  );
+   eh_require( cell );
+
+   if ( col && cell )
+   {
+      amount_to_add = sed_cell_size( cell );
+
+      sed_column_resize( col , col->len + 1 );
+
+      sed_cell_destroy( col->cell[col->len] );
+
+      col->cell[col->len] = cell;
+      col->len += 1;
+
+      sed_column_set_thickness( col , sed_column_thickness(col)+sed_cell_size(cell) );
+
+      if ( update_pressure )
+      {
+         gssize i;
+         gssize len = sed_column_len( col );
+         double cell_load = sed_cell_load( cell );
+
+         for ( i=0 ; i<len ; i++ )
+            sed_cell_set_pressure( col->cell[i] ,
+                                   sed_cell_pressure( col->cell[i] )
+                                   + cell_load );
+      }
+
+   }
+
+   return amount_to_add;
+}
+
+double
+sed_column_stack_cell( Sed_column col , Sed_cell cell )
+{
+   return sed_column_stack_cell_real( col , cell , FALSE );
+}
+
+double
+sed_column_stack_cell_loc( Sed_column col , Sed_cell cell )
+{
+   return sed_column_stack_cell_loc_real( col , cell , FALSE );
 }
 

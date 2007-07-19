@@ -19,6 +19,7 @@
 //---
 
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,8 +28,7 @@
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "subsidence.h"
-#include "processes.h"
+#include "my_processes.h"
 
 typedef struct
 {
@@ -40,60 +40,21 @@ Subsidence_record_t;
 //GArray *read_tectonic_curve(const char *filename, double *x_resample, int len);
 int get_tectonics(GArray *rate_array, double year, double *rate_resample, int len);
 
-Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
+gboolean init_subsidence_data( Sed_process proc , Sed_cube prof , GError** error );
+
+Sed_process_info
+run_subsidence( Sed_process proc , Sed_cube prof )
 {
-   Subsidence_t *data=(Subsidence_t*)ptr; 
+   Subsidence_t*    data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    gsize i, j, n;
    double year;
    double start_year, end_year;
    double upper_edge, lower_edge;
    double time_step, total_time=0., total_subsidence=0.;
-   double *y;
-   Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( prof== NULL )
-   {
-      if ( data->initialized )
-      {
-         eh_grid_destroy( data->subsidence_grid , TRUE );
-         data->last_year = 0.;
-         for ( i=0 ; i<data->subsidence_seq->len ; i++ )
-            eh_grid_destroy( data->subsidence_seq->data[i] , TRUE );
-         eh_destroy_sequence( data->subsidence_seq , FALSE );
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      GError* err = NULL;
-//      data->subsidence_grid = sed_get_floor_3( data->filename         ,
-//                                               sed_cube_x_res( prof ) ,
-//                                               sed_cube_y_res( prof ) );
-      y = sed_cube_y( prof , NULL );
-
-      if ( sed_mode_is_3d() )
-         data->subsidence_seq  = sed_get_floor_sequence_3(
-                                    data->filename ,
-                                    sed_cube_x_res( prof ) ,
-                                    sed_cube_y_res( prof ) ,
-                                    &err );
-      else
-         data->subsidence_seq  = sed_get_floor_sequence_2(
-                                    data->filename     ,
-                                    y                  ,
-                                    sed_cube_n_y(prof) ,
-                                    &err );
-
-      eh_free( y );
-
-      if ( err )
-         eh_error( "Unable to read subsidence file: %s" , err->message );
-
-      data->last_year = sed_cube_age_in_years(prof);
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_subsidence_data( proc , prof , NULL );
 
    start_year      = data->last_year;
    end_year        = sed_cube_age_in_years( prof );
@@ -177,22 +138,103 @@ Sed_process_info run_subsidence( gpointer ptr , Sed_cube prof )
    return info;
 }
 
-#define S_KEY_SUBSIDENCE_FILE "subsidence file"
+#define SUBSIDENCE_KEY_FILENAME "subsidence file"
 
-gboolean init_subsidence( Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* subsidence_req_labels[] =
 {
-   Subsidence_t *data=(Subsidence_t*)ptr; 
-   if ( symbol_table == NULL )
+   SUBSIDENCE_KEY_FILENAME ,
+   NULL
+};
+
+gboolean
+init_subsidence( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Subsidence_t* data    = sed_process_new_user_data( p , Subsidence_t );
+   GError*       tmp_err = NULL;
+   gboolean      is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->last_year      = 0.;
+   data->subsidence_seq = NULL;
+
+   eh_symbol_table_require_labels( tab , subsidence_req_labels , &tmp_err );
+
+   if ( !tmp_err )
    {
-      eh_free( data->filename );
-      data->initialized = FALSE;
-      return TRUE;
+      data->filename = eh_symbol_table_value( tab , SUBSIDENCE_KEY_FILENAME );
+
+      eh_touch_file( data->filename , O_RDONLY , &tmp_err );
    }
 
-   data->filename = eh_symbol_table_value( symbol_table , S_KEY_SUBSIDENCE_FILE );
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
 
-   if ( !eh_try_open(data->filename) )
-      eh_exit( EXIT_FAILURE );
+   return is_ok;
+}
+
+gboolean
+init_subsidence_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   gboolean      is_ok = TRUE;
+   Subsidence_t* data  = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      GError* tmp_err = NULL;
+      double* y       = sed_cube_y( prof , NULL );
+
+      data->last_year = sed_cube_age_in_years(prof);
+
+      if ( sed_mode_is_3d() )
+         data->subsidence_seq  = sed_get_floor_sequence_3(
+                                    data->filename ,
+                                    sed_cube_x_res( prof ) ,
+                                    sed_cube_y_res( prof ) ,
+                                    &tmp_err );
+      else
+         data->subsidence_seq  = sed_get_floor_sequence_2(
+                                    data->filename     ,
+                                    y                  ,
+                                    sed_cube_n_y(prof) ,
+                                    &tmp_err );
+
+
+
+      eh_free( y );
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         is_ok = FALSE;
+      }
+   }
+
+   return is_ok;
+}
+
+gboolean
+destroy_subsidence( Sed_process p )
+{
+   if ( p )
+   {
+      Subsidence_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         gint i;
+
+         for ( i=0 ; i<data->subsidence_seq->len ; i++ )
+            eh_grid_destroy( data->subsidence_seq->data[i] , TRUE );
+         eh_destroy_sequence( data->subsidence_seq , FALSE );
+
+         eh_free( data->filename );
+         eh_free( data           );
+      }
+   }
 
    return TRUE;
 }
@@ -201,8 +243,6 @@ gboolean dump_subsidence_data( gpointer ptr , FILE *fp )
 {
    Subsidence_t *data = (Subsidence_t*)ptr;
    guint len;
-
-   fwrite( &(data->initialized) , sizeof(gboolean) , 1 , fp );
 
    len = strlen( data->filename )+1;
    fwrite( &len , sizeof(guint) , 1 , fp );
@@ -222,8 +262,6 @@ gboolean load_subsidence_data( gpointer ptr , FILE *fp )
    Subsidence_t *data = (Subsidence_t*)ptr;
    guint len;
    double *tectonic_data;
-
-   fread( &(data->initialized) , sizeof(gboolean) , 1 , fp );
 
    fread( &len , sizeof(guint) , 1 , fp );
    fread( data->filename , sizeof(char) , len , fp );

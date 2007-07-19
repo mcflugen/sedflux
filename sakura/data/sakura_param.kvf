@@ -1,0 +1,29 @@
+[ SAKURA ]
+Length of basin (km):                              100
+Bin spacing (m):                                   100
+dt:                                                30.
+outtime:                                           3600.
+maxtime:                                           86400
+Density of seawater (kg/m^3):                      1028
+Density of river water (kg/m^3):                   1028
+Number of grain sizes:                             5
+Rate removal constant (1/day):                     25.0,  16.8, 9.0, 3.2, 2.4
+Equivalent grain diameter (microns):               202 , 105 , 69  , 25  , 10
+Component grain diameter (microns):                150 , 50  , 25  , 5   , 1
+Fraction of each grain in river:                   0.0 , 0.1 , 0.2 , 0.3 , 0.4
+Fraction of flow occupied by each grain:           1,   1,  1,  1, 1.0
+Bulk density (kg/m^3):                             1850, 1600, 1400, 1300, 1200
+Grain density (kg/m^3):                            2650, 2650, 2650, 2650, 2650
+Distance from river to start deposition (km):      2
+Average grain size of bottom sediments (microns):  64
+Average bulk density of bottom sediments (kg/m^3): 1600
+Fraction of each grain size in bottom sediments:   .2, .2, .2, .2, .2
+sua (Pa/m):                                        30
+sub (kPa):                                         .5
+Entrainment constant, Ea (-):                      0.00153
+Entrainment constant, Eb (-):                      0.0204
+Coefficient of drag (-):                           0.004
+Angle of internal friction (degrees):              20
+Kinematic viscosity of clear water (*1e-6m*m/s):   1.3
+Read in flood data:                                file
+

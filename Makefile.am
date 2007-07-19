@@ -15,6 +15,7 @@ SUBDIRS              = rpm \
                        libsed  \
                        avulsion  \
                        bing  \
+                       bio  \
                        compact  \
                        diffusion  \
                        failure  \

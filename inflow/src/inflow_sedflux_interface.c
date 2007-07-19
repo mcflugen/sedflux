@@ -28,9 +28,10 @@ inflow_set_bathy_data_from_cube( Sed_cube p ,
                                  double* width ,
                                  gssize ind_start ,
                                  double dx );
-Inflow_sediment_st*
-inflow_set_sediment_data_from_env( );
+Inflow_sediment_st* inflow_set_sediment_data_from_env( );
 void sed_get_phe( Inflow_phe_query_st* data , Sed_cube p );
+
+double inflow_get_equivalent_diameter(double real_diameter);
 
 gboolean
 sed_inflow( Sed_cube         p       ,
@@ -43,15 +44,15 @@ sed_inflow( Sed_cube         p       ,
 
    if ( p && f && c )
    {
-      FILE*               fp_debug       = g_getenv("INFLOW_DEBUG")?stderr:NULL;
       double**            deposit_in_m   = NULL;
       double**            erosion_in_m   = NULL;
       Inflow_flood_st*    daily_flood    = NULL;
       Inflow_bathy_st*    bathy_data     = NULL;
       Inflow_sediment_st* sediment_data  = NULL;
       double*             width          = NULL;
-      double              total_t        = sed_hydro_duration(f);
-      double              t, dt;
+      double              total_t        = sed_hydro_duration(f)*S_SECONDS_PER_DAY;
+      double              dt             = S_SECONDS_PER_DAY;
+      double              t;
 
       c->get_phe      = sed_get_phe;
       c->get_phe_data = p;
@@ -59,6 +60,10 @@ sed_inflow( Sed_cube         p       ,
       width         = inflow_set_width_from_cube       ( p , i_start );
       bathy_data    = inflow_set_bathy_data_from_cube  ( p , width , i_start , dx );
       sediment_data = inflow_set_sediment_data_from_env( );
+
+      eh_require( width         );
+      eh_require( bathy_data    );
+      eh_require( sediment_data );
 
       deposit_in_m = eh_new_2( double , sediment_data->n_grains , bathy_data->len );
       erosion_in_m = eh_new_2( double , sediment_data->n_grains , bathy_data->len );
@@ -105,7 +110,7 @@ inflow_erode_sediment( Sed_cube         p          ,
    {
       gint i,  len;
       gint n,  n_grains = sed_sediment_env_size();
-      double** erosion  = eh_new( double* , n_grains );;
+      double** erosion  = eh_new( double* , n_grains );
       double   total_t;
       double   dx       = bathy_data->x[1] - bathy_data->x[0];
       double   bin_size = sed_cube_y_res(p) / dx;
@@ -255,25 +260,38 @@ inflow_set_bathy_data_from_cube( Sed_cube p , double* width , gssize ind_start ,
 
    if ( p )
    {
-      gssize   len;
-      gssize*  id        = eh_id_array( ind_start , sed_cube_size(p) , &len );
-      double** bathy     = eh_new_2( double , 3 , sed_cube_size(p) );
-      double   basin_len;
-      Eh_dbl_grid g = sed_cube_water_depth_grid( p , id );
+      gssize      len;
+      gssize*     id        = eh_id_array( ind_start , sed_cube_size(p)-1 , &len );
+      double**    bathy     = eh_new_2( double , 3 , sed_cube_size(p) );
+      Eh_dbl_grid g         = sed_cube_water_depth_grid( p , id );
+      double      basin_len;
 
+      eh_require( id       );
+      eh_require( bathy    );
+      eh_require( bathy[0] );
+      eh_require( bathy[1] );
+      eh_require( bathy[2] );
+      eh_require( g        );
+
+      eh_require( len>=0                     );
+      eh_require( len<sed_cube_size(p)       );
       eh_require( ind_start>=0               );
       eh_require( ind_start<sed_cube_size(p) );
 
-      bathy[0] = sed_cube_x            ( p , id );
+      bathy[0] = sed_cube_y( p , id );
       bathy[1] = eh_dbl_grid_data(g)[0];
       bathy[2] = width + ind_start;
+
+      eh_require( bathy[0] );
+      eh_require( bathy[1] );
+      eh_require( bathy[2] );
 
       basin_len = bathy[0][len-2] - bathy[0][0];
 
       b = inflow_set_bathy_data( bathy , len , dx , basin_len );
 
-      eh_free( bathy    );
       eh_free( bathy[0] );
+      eh_free( bathy    );
       eh_free( id       );
       eh_grid_destroy( g , TRUE );
    }
@@ -294,7 +312,7 @@ inflow_set_sediment_data_from_env( )
    s->grain_density = eh_dbl_array_new_set( s->n_grains , INFLOW_GRAIN_DENSITY );
 
    for ( n=0 ; n<s->n_grains ; n++ )
-      s->size_equiv[n] = get_equivalent_diameter( s->size_equiv[n] );
+      s->size_equiv[n] = inflow_get_equivalent_diameter( s->size_equiv[n] );
 
    return s;
 }
@@ -377,5 +395,28 @@ sed_get_phe( Inflow_phe_query_st* data , Sed_cube p )
    data->erode_depth = volume;
 
    return;
+}
+
+/** Calculate the equivalent grain size.
+
+Sediment grains falling through water will settle a rates that are greater than
+those predicted because of flocculation.  That is, a grain will settle at a rate predicted
+for a larger grain.  This function calculates this "equivalent" grain size, given the real
+grain size.
+
+\param real_diameter The real grain size in meters.
+
+\return The equivalent grain size in meters.
+*/
+
+double inflow_get_equivalent_diameter(double real_diameter)
+{
+/* double m=0.2,b=220e-6;
+   double m=0.2,b=100e-6;
+   double m=0.2,b=200e-6;
+   return m*real_diameter+b;
+*/
+   double a=39.8e-3, b=.6;
+   return a*pow(real_diameter,b);
 }
 

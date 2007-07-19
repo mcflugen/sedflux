@@ -205,6 +205,7 @@ eh_dlm_read_full( const gchar* file ,
          gchar** rec;
          gint i, n_recs;
          rec = eh_dlm_split_records( str , "[" , "]" , rec_data );
+
          n_recs  = g_strv_length( rec );
 
          if ( max_records>0 )
@@ -324,7 +325,6 @@ eh_dlm_read_data( gchar* str        ,
          gchar* pos_0;
          gchar* pos_1;
          gchar** values;
-         gchar** line;
          gint n_vals;
          gchar* str_end = str+strlen(str);
 
@@ -365,33 +365,6 @@ eh_dlm_find_n_rows( gchar* str , gint delim )
    if ( str )
    {
       n = eh_str_count_chr( str , str+strlen(str) , delim )+1;
-   }
-
-   return n;
-}
-
-/** Count the number of occurances of a character in a string
-
-Count the number of times \p delim occurs from \p str up to
-and including \p end.
-
-\param str   The start of the string
-\param end   The end of the string
-\param delim The character to look for
-
-\return The number of occurances of the character in the string
-*/
-gint
-eh_str_count_chr( gchar* str , gchar* end , gint delim )
-{
-   gint n = 0;
-
-   if ( str )
-   {   
-      gchar* pos;
-      for ( pos=strchr(str  , delim ),n=0 ;
-            pos && pos<=end ;
-            pos=strchr(pos+1, delim ),n++ );
    }
 
    return n;
@@ -485,128 +458,11 @@ eh_dlm_remove_empty_lines( gchar* str )
    return str;
 }
 
-/** Remove comments that run to the end of a line
-
-Remove comments that begin with \p com_start and continue until
-the end of the line.  This function does not allocate or
-reallocate any memory.  It modifies \p str in place.
-The pointer to \p str is returned to allow the nesting of functions.
-
-\param str       A string to remove comments from.
-\param com_start A string that marks the start of a comment.
-
-\return \p str
-*/
-gchar*
-eh_str_remove_to_eol_comments( gchar* str , gchar* com_start )
-{
-   return eh_str_remove_comments( str , com_start , NULL , NULL );
-}
-
-/** Remove c-style comments from a string
-
-Remove comments that begin with '\/*' and end with '*\/'
-This function does not allocate or reallocate any memory.
-It modifies \p str in place.  The pointer to \p str is
-returned to allow the nesting of functions.
-
-\param str       A string to remove comments from.
-
-\return \p str
-*/
-gchar*
-eh_str_remove_c_style_comments( gchar* str )
-{
-   return eh_str_remove_comments( str , "/*" , "*/" , NULL );
-}
-
-/** Remove comments from a string
-
-Remove comments that begin with \p start_str and end with \p end_str.
-If \p end_str is NULL, then each comment is assumed to end at the end
-of the line.  This function does not allocate or reallocate any memory.
-It modifies \p str in place.  The pointer to \p str is returned to allow
-the nesting of functions.
-
-If non-NULL, the parameter \p comments will contain a (newly-allocated)
-string array of the comments that were removed.  Use g_strfreev to 
-free when no longer in use.
-
-\param str       A string to remove comments from.
-\param start_str A string that indicates the start of a comment.
-\param end_str   A string that indicates the end of a comment (or NULL
-                 if the comment terminates at the end of its line).
-\param comments  Location to put a string array that contains the comments
-                 that were removed (or NULL).
-
-\return \p str
-*/
-gchar*
-eh_str_remove_comments( gchar* str             ,
-                        const gchar* start_str ,
-                        const gchar* end_str   ,
-                        gchar*** comments )
-{
-   gchar* str_0 = str;
-   gint end_len;
-
-   eh_require( start_str );
-
-   if ( !end_str )
-   {
-      /* This is a special case where the comment ends at the end of the
-         line but we don't want to remove the EOL character */
-      end_str = "\n";
-      end_len = 0;
-   }
-   else
-      end_len = strlen(end_str);
-
-   if ( comments )
-      *comments = NULL;
-
-   if ( str )
-   {
-      gchar* pos_0;
-      gchar* pos_1;
-      gchar* str_end = str+strlen(str);
-      gint   start_len = strlen(start_str);
-      gint   len = 1;
-
-      pos_0 = strstr( str , start_str );
-      while ( pos_0 )
-      {
-         pos_1 = strstr( pos_0 , end_str );
-
-         if ( !pos_1 )
-            pos_1 = str_end-end_len;
-
-         if ( comments )
-         {
-            len             += 1;
-            *comments        = eh_renew( gchar* , *comments , len );
-            *comments[len-2] = g_strndup( pos_0 + start_len ,
-                                          pos_1 - (pos_0+start_len) );
-            *comments[len-1] = NULL;
-         }
-
-         g_memmove( pos_0 ,
-                    pos_1+end_len ,
-                    str_end - (pos_1+end_len)+1 );
-         str_end -= pos_1+end_len - pos_0;
-
-         pos_0 = strstr( pos_0 , start_str );
-      }
-   }
-
-   return str;
-}
-
 gchar**
-eh_dlm_split_records( gchar* str             ,
+eh_dlm_split_records( gchar*       str       ,
                       const gchar* start_str ,
                       const gchar* end_str   ,
-                      gchar*** rec_data )
+                      gchar***     rec_data )
 {
    gchar** split_str = NULL;
 
@@ -673,137 +529,70 @@ eh_dlm_split_records( gchar* str             ,
    return split_str;
 }
 
-/** Parse a string into key-value pairs
-
-Key-value pairs are separated by the delimiter, \p delim_2.  The keys and
-values are separated by \p delim_1.  A Eh_symbol_table is created that 
-holds all of the key-value pairs.
-
-\param str       A string to parse.
-\param delim_1   The delimiter that separates keys from values.
-\param delim_2   The delimiter that separates key-value pairs from one another.
-
-\return A Eh_symbol_table of key-value pairs.  Use eh_symbol_table_destroy to free.
-*/
-Eh_symbol_table
-eh_str_parse_key_value( gchar* str , gchar* delim_1 , gchar* delim_2 )
+gint
+eh_dlm_print( const gchar* file , const gchar* delim , const double** data , const gint n_rows , const gint n_cols , GError** error ) 
 {
-   Eh_symbol_table tab = NULL;
-
-   if ( str )
-   {
-      gchar** key_value;
-      gchar** pairs;
-      gint i, n_pairs;
-
-      tab = eh_symbol_table_new( );
-
-      pairs = g_strsplit( str , delim_2 , -1 );
-      n_pairs = g_strv_length( pairs );
-      for ( i=0 ; i<n_pairs ; i++ )
-      {
-         key_value = g_strsplit( pairs[i] , delim_1 , 2 );
-
-         eh_require( g_strv_length(key_value)==2 )
-         {
-            eh_str_remove_comments( key_value[0] , "(" , ")" , NULL );
-            g_strstrip( key_value[0] );
-            g_strstrip( key_value[1] );
-
-            eh_symbol_table_insert( tab , key_value[0] , key_value[1] );
-         }
-
-         g_strfreev( key_value );
-      }
-      g_strfreev( pairs );
-
-      if ( eh_symbol_table_size(tab)==0 )
-         tab = eh_symbol_table_destroy(tab);
-   }
-
-   return tab;
+   return eh_dlm_print_full( file , delim , data , n_rows , n_cols , FALSE , error );
 }
 
-/** Append a string to the end of an array of strings.
-
-If str_l points to NULL, a new string array will be allocated.
-The location of \p new_str is appended to \p str_l rather than
-a copy.  Thus, \p new_str should not be freed before \p str_l.
-
-\param str_l   The location of a string array, or NULL.
-\param new_str The string to append.
-
-\return The input string_array.
-*/
-gchar** eh_strv_append( gchar*** str_l , gchar* new_str )
+gint
+eh_dlm_print_swap( const gchar* file , const gchar* delim , const double** data , const gint n_rows , const gint n_cols , GError** error ) 
 {
-   if ( str_l && new_str )
-   {
-      if ( *str_l==NULL )
-      {
-         *str_l = eh_new( gchar* , 2 );
+   return eh_dlm_print_full( file , delim , data , n_rows , n_cols , TRUE , error );
+}
 
-         (*str_l)[0] = new_str;
-         (*str_l)[1] = NULL;
+gint
+eh_dlm_print_full( const gchar* file , const gchar* delim , const double** data , const gint n_rows , const gint n_cols , gboolean swap , GError** error ) 
+{
+   gint n = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
+   eh_require( data     );
+   eh_require( n_rows>0 );
+   eh_require( n_cols>0 );
+
+   if ( data )
+   {
+      FILE* fp;
+      GError* tmp_err = NULL;
+
+      if ( file ) fp = eh_fopen_error( file , "w" , &tmp_err );
+      else        fp = stdout;
+
+      if ( fp )
+      {
+         gint i, j;
+
+         if ( !delim ) delim = " ";
+
+         if ( swap )
+         {
+            const gint top_row = n_rows-1;
+            for ( j=0 ; j<n_cols ; j++ )
+            {
+               for ( i=0 ; i<top_row ; i++ )
+                  n += fprintf( fp , "%f%s" , data[i][j] , delim );
+               n += fprintf( fp , "%f" , data[i][j] );
+               n += fprintf( fp , "\n" );
+            }
+         }
+         else
+         {
+            const gint top_col = n_cols-1;
+            for ( i=0 ; i<n_rows ; i++ )
+            {
+               for ( j=0 ; j<top_col ; j++ )
+                  n += fprintf( fp , "%f%s" , data[i][j] , delim );
+               n += fprintf( fp , "%f" , data[i][j] );
+               n += fprintf( fp , "\n" );
+            }
+         }
       }
       else
-      {
-         gint len = g_strv_length(*str_l)+1;
-
-         *str_l = eh_renew( gchar* , *str_l , len+1 );
-
-         (*str_l)[len-1] = new_str;
-         (*str_l)[len]   = NULL;
-      }
+         g_propagate_error( error , tmp_err );
    }
 
-   return *str_l;
-}
-
-gchar* eh_str_replace( gchar* str , gchar old_c , gchar new_c )
-{
-   if ( str )
-   {
-      gchar* pos;
-      for ( pos=strchr(str  , old_c ) ;
-            pos ;
-            pos=strchr(pos+1, old_c ) )
-         pos[0] = new_c;
-   }
-   return str;
-}
-
-gchar* eh_str_remove( gchar* str , gchar* start , gint n )
-{
-   if ( str )
-   {
-      gchar* tail = start+n;
-      g_memmove( start , tail , strlen(tail)+1 );
-   }
-   return str;
-}
-
-gchar* eh_str_remove_blocks( gchar* str , gchar** block_start , gchar** block_end )
-{
-   if ( str && block_start && block_start[0] )
-   {
-      gchar* tail;
-      gint i, n;
-      gint len = g_strv_length( block_start );
-
-      block_start[len] = block_end[len-1] + strlen(block_end[len-1])+1;
-
-      tail = block_start[0];
-      for ( i=0 ; i<len ; i++ )
-      {
-         n = block_start[i+1] - block_end[i];
-         g_memmove( tail , block_end[i] , n );
-         tail += n;
-      }
-
-      block_start[len] = NULL;
-   }
-   return str;
+   return n;
 }
 
 gint
@@ -812,37 +601,15 @@ eh_dlm_print_dbl_grid( const gchar* file , const gchar* delim , Eh_dbl_grid g , 
    gint n = 0;
 
    eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
-   eh_require( g     );
+   eh_require( g );
 
    if ( g )
    {
-      FILE* fp;
       GError* tmp_err = NULL;
 
-      if ( file )
-         fp = eh_fopen_error( file , "w" , &tmp_err );
-      else
-         fp = stdout;
+      n = eh_dlm_print( file , delim , eh_dbl_grid_data(g) , eh_grid_n_x(g) , eh_grid_n_y(g) , &tmp_err );
 
-      if ( fp )
-      {
-         gint i, j;
-         gint n_rows   = eh_grid_n_x( g );
-         gint top_col  = eh_grid_n_y( g )-1;
-         double** data = eh_dbl_grid_data( g );
-
-         if ( !delim )
-            delim = " ";
-
-         for ( i=0 ; i<n_rows ; i++ )
-         {
-            for ( j=0 ; j<top_col ; j++ )
-               n += fprintf( fp , "%f%s" , data[i][j] , delim );
-            n += fprintf( fp , "%f" , data[i][j] , delim );
-            n += fprintf( fp , "\n" );
-         }
-      }
-      else
+      if ( tmp_err )
          g_propagate_error( error , tmp_err );
    }
 

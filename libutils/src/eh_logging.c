@@ -43,7 +43,7 @@ eh_open_log( const char *log_name )
 
    if ( !_log_files_ )
    {
-      _log_files_ = g_hash_table_new(&g_str_hash,&g_str_equal);
+      _log_files_ = g_hash_table_new(&g_str_hash,&eh_str_case_equal);
       new_vec = g_ptr_array_new();
       g_ptr_array_add(new_vec,NULL);
       g_hash_table_insert(_log_files_,g_strdup("/dev/null"),new_vec);

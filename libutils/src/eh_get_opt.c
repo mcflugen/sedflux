@@ -258,7 +258,8 @@ char *eh_get_opt_str( Eh_args *args , char *label , char *default_val )
    return rtn;
 }
 
-gboolean eh_get_opt_bool( Eh_args *args , char *label , gboolean default_val )
+gboolean
+eh_get_opt_bool( Eh_args *args , char *label , gboolean default_val )
 {
    char *value = eh_get_opt( args , label );
    char *default_str = g_strdup_printf( "%d" , default_val );
@@ -268,10 +269,9 @@ gboolean eh_get_opt_bool( Eh_args *args , char *label , gboolean default_val )
       eh_args_insert_default( args , label , default_str );
 
    if ( value )
-      rtn = strtobool(value);
+      rtn = eh_str_to_boolean(value,NULL);
    else
-    
-  rtn = default_val;
+     rtn = default_val;
    return rtn;
 }
 
@@ -287,7 +287,7 @@ int eh_get_opt_key( Eh_args *args , char *label , int default_val , char *keys[]
    if ( value )
    {
       for ( i=0 ; keys[i] ; i++ )
-         if ( g_strcasecmp( value , keys[i] )==0 )
+         if ( g_ascii_strcasecmp( value , keys[i] )==0 )
          {
             rtn = i;
             break;
@@ -341,11 +341,17 @@ double eh_get_opt_dbl( Eh_args *args , char *label , double default_val )
    return rtn;
 }
 
-void eh_print_message( FILE *fp , char *msg[] )
+gint
+eh_print_message( FILE *fp , char *msg[] )
 {
-   char **p;
-   for ( p=msg ; *p ; p++ )
-      fprintf(fp,"%s\n",*p);
+   gint n = 0;
+   if ( fp )
+   {
+      gchar **p;
+      for ( p=msg ; *p ; p++ )
+         n += fprintf(fp,"%s\n",*p);
+   }
+   return n;
 }
 
 typedef struct

@@ -30,6 +30,12 @@ typedef double (Cost_fcn)( double*, int );
 typedef double (*Eh_dbl_func_with_data)(double x , gpointer data );
 typedef double (*Eh_dbl_func)( double x );
 
+typedef double (*Eh_dbl_cpy_func)( gpointer data , double* d );
+typedef double (*Eh_dbl_get_func)( gpointer data , gint ind );
+typedef double (*Eh_dbl_set_func)( gpointer data , gint ind , double val );
+typedef double (*Eh_dbl_add_func)( gpointer data , gint ind , double val );
+
+typedef void   (*Eh_array_func)  ( gpointer data , gpointer user_data );
 
 double eh_safe_dbl_division( double a , double b );
 gboolean eh_compare_dbl( double , double , double );
@@ -103,9 +109,10 @@ double*    eh_dbl_array_rebin       ( double* s , gssize n , double bin_size , g
 double     eh_dbl_array_min         ( const double* x , gsize n );
 gssize     eh_dbl_array_min_ind     ( const double* x , gssize n );
 double     eh_dbl_array_max         ( const double* x , gsize n );
-gssize     eh_dbl_array_min_ind     ( const double* x , gssize n );
+gssize     eh_dbl_array_max_ind     ( const double* x , gssize n );
 double     eh_dbl_array_abs_max     ( const double* x , gsize n );
 gssize     eh_dbl_array_fprint      ( FILE* fp , double* x , gssize n );
+gint       eh_dbl_array_write       ( FILE *fp , double *x , gint len );
 double     eh_dbl_array_mean        ( const double *x , gsize n );
 double*    eh_dbl_array_normalize   ( double* x , gsize n );
 double*    eh_dbl_array_foreach     ( double* x , gssize n , Eh_dbl_func f );
@@ -133,8 +140,14 @@ gboolean   eh_dbl_array_cmp_ge      ( double* x , double* y , gssize len );
 gboolean   eh_dbl_array_each_ge     ( double val , double *x , gssize len );
 gboolean   eh_dbl_array_each_le     ( double val , double *x , gssize len );
 
-gboolean   eh_dbl_array_is_monotonic_up( double *x , gsize n );
+gboolean   eh_dbl_array_is_monotonic_up  ( double *x , gsize n );
 gboolean   eh_dbl_array_is_monotonic_down( double *x , gsize n );
+double*    eh_linspace                   ( double x1 , double x2 , gssize n );
+gssize*    eh_id_array                   ( gssize i_0 , gssize i_1 , gssize* n );
+double*    eh_uniform_array              ( double x1 , double x2 , double dx , gssize* n );
+
+double*    eh_dbl_array_linspace         ( double* x , gssize n_x ,  double x_0 , double dx );
+
 
 #define eh_dbl_array_cum_mean( x , n )     eh_dbl_array_cum_mean_dir(x,n,TRUE )
 #define eh_dbl_array_cum_mean_rev( x , n ) eh_dbl_array_cum_mean_dir(x,n,FALSE)
@@ -151,5 +164,27 @@ void four1(double data[], unsigned long nn, int isign);
 void realft(double data[], unsigned long n, int isign);
 void twofft(double data1[], double data2[], double fft1[], double fft2[],
 	unsigned long n);
+
+double eh_dbl_array_mean_weighted( const double x[] , gint len , const double f[] );
+
+#ifndef HAVE_LOG2
+double log2( double x );
+#endif
+
+#undef OLD_EH_NAN
+
+#if defined( OLD_EH_NAN )
+float    eh_nan  ( void     );
+int      eh_isnan( float x  );
+#else
+double   eh_nan  ( void     );
+gboolean eh_isnan( double x );
+#endif
+
+void eh_rebin_dbl_array        ( double *x     , double *y     , gssize len ,
+                                 double *x_bin , double *y_bin , gssize len_bin );
+void eh_rebin_dbl_array_bad_val( double *x     , double *y     , gssize len     ,
+                                 double *x_bin , double *y_bin , gssize len_bin ,
+                                 double bad_val );
 
 #endif

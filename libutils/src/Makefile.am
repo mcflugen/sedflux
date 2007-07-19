@@ -8,7 +8,6 @@ libutils_la_SOURCES    = eh_input_val.c \
                          eh_grid.c \
                          eh_opt_context.c \
                          zbsubs.c \
-                         utils.c \
                          eh_rand.c \
                          eh_logging.c \
                          eh_glib.c \
@@ -19,9 +18,22 @@ libutils_la_SOURCES    = eh_input_val.c \
                          machcon.c \
                          eh_mem.c \
                          eh_project.c \
-                         eh_dlm_file.c
+                         eh_dlm_file.c \
+                         eh_str.c \
+                         eh_io.c \
+                         eh_status_bar.c \
+                         eh_polygon.c \
+                         eh_sequence.c \
+                         eh_misc.c \
+                         eh_thread_pool.c \
+                         eh_file_utils.c
 
-include_HEADERS        = utils.h \
+utilsincludedir=$(includedir)/ew-2.0
+utilsinclude_HEADERS = eh_utils.h
+
+utilssubincludedir=$(includedir)/ew-2.0/utils
+utilssubinclude_HEADERS = \
+                         utils.h \
                          eh_rand.h \
                          eh_logging.h \
                          eh_scanner.h \
@@ -40,7 +52,39 @@ include_HEADERS        = utils.h \
                          eh_data_record.h \
                          eh_types.h \
                          eh_input_val.h \
-                         eh_dlm_file.h
+                         eh_dlm_file.h \
+                         eh_str.h \
+                         eh_io.h \
+                         eh_status_bar.h \
+                         eh_sequence.h \
+                         eh_polygon.h \
+                         eh_misc.h \
+                         eh_thread_pool.h \
+                         eh_file_utils.h \
+                         eh_messages.h \
+                         eh_macros.h
+
+#include_HEADERS        = utils.h \
+#                         eh_rand.h \
+#                         eh_logging.h \
+#                         eh_scanner.h \
+#                         eh_glib.h \
+#                         eh_get_opt.h \
+#                         complex.h \
+#                         eh_num.h \
+#                         f2c.h \
+#                         eh_mem.h \
+#                         eh_project.h \
+#                         eh_opt_context.h \
+#                         eh_ndgrid.h \
+#                         eh_grid.h \
+#                         eh_key_file.h \
+#                         eh_symbol_table.h \
+#                         eh_data_record.h \
+#                         eh_types.h \
+#                         eh_input_val.h \
+#                         eh_dlm_file.h \
+#                         eh_str.h
 
 bin_PROGRAMS           = test
 test_SOURCES           = test.c

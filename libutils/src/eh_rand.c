@@ -593,4 +593,24 @@ double eh_rand_normal( GRand* rand , double mu , double sigma )
    }
 }
 
+double eh_get_fuzzy_dbl( double min , double max )
+{
+   return g_random_double_range( min , max );
+}
+
+double eh_get_fuzzy_dbl_norm( double mean , double std )
+{
+   return eh_rand_normal( NULL , mean , std );
+}
+
+double eh_get_fuzzy_dbl_log_norm( double mean , double std )
+{
+   return eh_log_normal( NULL , mean , std );
+}
+
+gint32 eh_get_fuzzy_int( gint32 min , gint32 max )
+{
+   return g_random_int_range( min , max );
+}
+
 /* @} */

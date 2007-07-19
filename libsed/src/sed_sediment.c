@@ -150,7 +150,7 @@ gssize sed_sediment_n_types( const Sed_sediment sed )
    if ( sed )
       return sed->len;
    else
-      return sed_sediment_env_size();
+      return sed_sediment_env_n_types();
 }
 
 gssize sed_sediment_env_size( )
@@ -161,6 +161,17 @@ gssize sed_sediment_env_size( )
       n = sed_sediment_env()->len;
 //   else
 //      eh_warning( "A sediment environment has not been set" );
+
+   return n;
+}
+
+gint
+sed_sediment_env_n_types()
+{
+   gint n = 0;
+
+   if ( sed_sediment_env_is_set() )
+      n = sed_sediment_env()->len;
 
    return n;
 }
@@ -595,6 +606,7 @@ This is the start of the next group.
       grain size.
 
 \param file    The name of the file to scan
+\param error   A GError
 
 \return A new Sed_sediment constructed from the file.  Use sed_sediment_destroy to free.
 */
@@ -726,6 +738,7 @@ sed_type_is_same_size( Sed_type t_1 , Sed_type t_2 )
 double __gravity         = S_GRAVITY;
 double __rho_sea_water   = S_RHO_SEA_WATER;
 double __rho_fresh_water = S_RHO_FRESH_WATER;
+double __mu_water        = S_MU_WATER;
 double __salinity_sea    = S_SALINITY_SEA;
 double __rho_grain       = S_RHO_GRAIN;
 double __rho_mantle      = S_RHO_MANTLE;
@@ -760,7 +773,9 @@ double sed_rho_sea_water()
    extern double __rho_sea_water;
    return __rho_sea_water;
 }
-double sed_rho_sea_water_units( Sed_units units )
+
+double
+sed_rho_sea_water_units( Sed_units units )
 {
    switch ( units )
    {
@@ -775,17 +790,23 @@ double sed_rho_sea_water_units( Sed_units units )
          return sed_rho_sea_water();
    }
 }
-double sed_set_rho_sea_water( double new_val )
+
+double
+sed_set_rho_sea_water( double new_val )
 {
    extern double __rho_sea_water;
    return __rho_sea_water = new_val;
 }
-double sed_rho_fresh_water()
+
+double
+sed_rho_fresh_water()
 {
    extern double __rho_fresh_water;
    return __rho_fresh_water;
 }
-double sed_rho_fresh_water_units( Sed_units units )
+
+double
+sed_rho_fresh_water_units( Sed_units units )
 {
    switch ( units )
    {
@@ -800,11 +821,42 @@ double sed_rho_fresh_water_units( Sed_units units )
          return sed_rho_fresh_water();
    }
 }
-double sed_set_rho_fresh_water( double new_val )
+
+double
+sed_set_rho_fresh_water( double new_val )
 {
    extern double __rho_fresh_water;
    return __rho_fresh_water = new_val;
 }
+
+double
+sed_mu_water()
+{
+   extern double __mu_water;
+   return __mu_water;
+}
+
+double
+sed_mu_water_units( Sed_units units )
+{
+   switch ( units )
+   {
+      case UNITS_MKS: return sed_mu_water();
+      case UNITS_CGS: return sed_mu_water()*10.;
+      case UNITS_IMPERIAL:
+      default:
+         eh_require_not_reached();
+         return sed_mu_water();
+   }
+}
+
+double
+sed_set_mu_water( double new_val )
+{
+   extern double __mu_water;
+   return __mu_water = new_val;
+}
+
 double sed_sea_salinity()
 {
    extern double __salinity_sea;

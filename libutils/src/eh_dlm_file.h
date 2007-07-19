@@ -53,8 +53,28 @@ gchar*     eh_str_remove_blocks          ( gchar* str   ,
                                            gchar** block_start ,
                                            gchar** block_end );
 
+gint       eh_dlm_print                  ( const gchar*   file   ,
+                                           const gchar*   delim  ,
+                                           const double** data   ,
+                                           const gint     n_rows ,
+                                           const gint     n_cols ,
+                                           GError** error ) ;
+gint       eh_dlm_print_swap             ( const gchar*   file   ,
+                                           const gchar*   delim  ,
+                                           const double** data   ,
+                                           const gint     n_rows ,
+                                           const gint     n_cols ,
+                                           GError** error ) ;
+gint       eh_dlm_print_full             ( const gchar*   file   ,
+                                           const gchar*   delim  ,
+                                           const double** data   ,
+                                           const gint     n_rows ,
+                                           const gint     n_cols ,
+                                           gboolean       swap   ,
+                                           GError** error ) ;
 gint       eh_dlm_print_dbl_grid         ( const gchar* file  ,
                                            const gchar* delim ,
                                            Eh_dbl_grid g      ,
                                            GError** error );
+
 #endif

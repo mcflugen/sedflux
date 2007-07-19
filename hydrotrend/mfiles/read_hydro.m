@@ -32,55 +32,44 @@ function [data, varargout] = read_hydro(file_name,varargin)
 % SEE ALSO PLOT_HYDRO, HYDRO_INFO
 %
    
-   [n_seasons maxYear n_grains]=hydro_info(file_name)
-   
-   max_record = n_seasons*maxYear;
-   start_record=1;
-   output_type = 'raw';
-   n_records = max_record;
-   
-   for i=1:length(varargin)
+   valid_args = { 'format'  , 'char'   , 'native' ; ...
+                  'records' , 'double' , []       ; ...
+                  'output'  , 'char'   , 'raw'   };
 
-      this_arg = varargin{i};
-      if ( i<length(varargin) )
-         next_arg = varargin{i+1};
-      else
-         next_arg = [];
-      end
+   values = parse_varargin( valid_args , varargin );
 
-      if ( ischar(this_arg) )
-         if ( strcmpi( this_arg , 'qs' ) )
-            output_type = 'qs';
-         elseif ( strcmpi( this_arg , 'qb' ) )
-            output_type = 'qb';
-         elseif ( strcmpi( this_arg , 'q' ) )
-            output_type = 'q';
-         elseif ( strcmpi( this_arg , 'cs' ) )
-            output_type = 'cs';
-         elseif ( strcmpi( this_arg , 'raw' ) )
-            output_type = 'raw';
-         else
-            error( ['unrecognized output type -- ' this_arg ]);
-         end
-      else
-         if ( max(size(this_arg))==1 )
-            n_records=this_arg;
-            start_record=1;
-         else
-            start_record=this_arg(1);
-            n_records=this_arg(2)-start_record;
-         end
-      end
+   format  = values{ strmatch( 'format'  , {valid_args{:,1}} , 'exact' )}
+   records = values{ strmatch( 'records' , {valid_args{:,1}} , 'exact' )}
+   output  = values{ strmatch( 'output'  , {valid_args{:,1}} , 'exact' )}
+
+   type = strmatch( output , { 'qs' , 'qb' , 'q' , 'cs' , 'raw' } , 'exact' );
+   if ( isempty(type) )
+      error( ['Unrecognized output type -- ' output ]);
+   end
+
+   [n_seasons maxYear n_grains]=hydro_info( file_name , 'format' , format )
+
+   if ( isempty(records) )
+      start_record = 1;
+      n_records    = maxYear*n_seasons;
+   elseif ( isscalar(records) )
+      start_record = 1;
+      n_records    = records;
+   elseif ( length(records) == 2 )
+      start_record = records(1);
+      n_records    = records(2);
+   else
+      error( 'Invalid value for RECORDS parameter' );
+   end
+
+   top_record = n_seasons*maxYear;
+   if ( start_record + n_records-1 > top_record )
+      n_records=top_record-start_record+1;
    end
    
-   if ( start_record+n_records-1 > max_record ) 
-      n_records=max_record-start_record+1;
-   end
-   
-   fid=fopen(file_name);
+   fid = fopen( file_name , 'r' , format );
    if ( fid < 0 )
-      error_str=sprintf('Can not open file %s',file_name);
-      error(error_str);
+      error( ['Can not open file: ' file_name ] );
       data = -1;
       for i=1:nargout
          varargout{i}=-1;
@@ -92,7 +81,7 @@ function [data, varargout] = read_hydro(file_name,varargin)
 %%%   
 %%% Skip the first start_record records.
 %%%
-   skip_river_record(fid,n_grains,start_record-1);
+   skip_river_record( fid , n_grains , start_record-1 );
    
    values_per_record = 4+n_grains;
 
@@ -100,20 +89,20 @@ function [data, varargout] = read_hydro(file_name,varargin)
    
    fclose(fid);
 
-   if ( strcmp( output_type , 'qs' ) )
+   if ( strcmp( output , 'qs' ) )
       data = data(1,:).*data(2,:).*data(3,:).*(sum(data(5:end,:),1));
-   elseif ( strcmp( output_type , 'qb' ) )
+   elseif ( strcmp( output , 'qb' ) )
       data = data(4,:);
-   elseif ( strcmp( output_type , 'q' ) )
+   elseif ( strcmp( output , 'q' ) )
       data = data(1,:).*data(2,:).*data(3,:);
-   elseif ( strcmp( output_type , 'cs' ) )
+   elseif ( strcmp( output , 'cs' ) )
       data = sum(data(4:end,:));
    else
       data=num2cell(data,2);
    end
    
    if nargout == 2
-      varargout{1} = n_seasons;
+      varargout{1} = [start_record:(start_record+n_records-1)]/n_seasons;
    end
 
 function skip_header( fid )

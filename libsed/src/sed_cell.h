@@ -139,6 +139,7 @@ double sed_cell_silt_fraction          ( const Sed_cell );
 double sed_cell_clay_fraction          ( const Sed_cell );
 double sed_cell_mud_fraction           ( const Sed_cell );
 double sed_cell_nth_fraction           ( const Sed_cell , gssize n );
+double sed_cell_nth_amount             ( const Sed_cell , gssize n );
 double sed_cell_c_consolidation        ( const Sed_cell );
 double sed_cell_velocity               ( const Sed_cell );
 double sed_cell_viscosity              ( const Sed_cell );
@@ -182,8 +183,10 @@ double         sed_cell_size_class_percent( Sed_cell c , Sed_size_class size );
 Sed_size_class sed_cell_size_classes( Sed_cell c );
 
 Sed_cell_grid    sed_cell_grid_new       ( gsize n_x          , gsize n_y                           );
+Sed_cell_grid    sed_cell_grid_new_env   ( gsize n_x          , gsize n_y                           );
 Sed_cell_grid    sed_cell_grid_init      ( Sed_cell_grid g    , gssize n_grains                     );
 void             sed_cell_grid_free      ( Sed_cell_grid g                                          );
+Sed_cell_grid    sed_cell_grid_destroy   ( Sed_cell_grid g );
 void             sed_cell_grid_free_data ( Sed_cell_grid g                                          );
 Sed_cell         sed_cell_grid_val       ( Sed_cell_grid g    , gssize i          , gssize j        );
 Sed_cell_grid    sed_cell_grid_add       ( Sed_cell_grid g_1  , Sed_cell_grid g_2                   );

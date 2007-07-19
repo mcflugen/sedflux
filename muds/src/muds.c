@@ -169,7 +169,7 @@ int muddy(Sed_cube prof,Sed_cell *in_suspension_cell, double *wave , double dura
    }
    for ( i=river_mouth ; i<sed_cube_n_y(prof) ; i++ )
    {
-      in_suspension_thickness[i] = sed_cell_thickness( in_suspension_cell[i] );
+      in_suspension_thickness[i] = sed_cell_size( in_suspension_cell[i] );
       for ( n=0 ; n<n_grains ; n++ )
          in_suspension[i][n] = sed_cell_fraction( in_suspension_cell[i] , n )
                              * in_suspension_thickness[i];
@@ -255,8 +255,8 @@ int muddy(Sed_cube prof,Sed_cell *in_suspension_cell, double *wave , double dura
                sed_column_extract_top( sed_cube_col(prof,i) , extra , temp_cell );
                for ( n=0 ; n<n_grains ; n++ )
                   in_suspension[i][n] +=   sed_cell_fraction ( temp_cell , n )
-                                         * sed_cell_thickness( temp_cell );
-               in_suspension_thickness[i] += sed_cell_thickness( temp_cell );
+                                         * sed_cell_size( temp_cell );
+               in_suspension_thickness[i] += sed_cell_size( temp_cell );
             }
          }
       }

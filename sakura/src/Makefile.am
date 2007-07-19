@@ -1,19 +1,20 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src
+INCLUDES                 = -I$(top_srcdir)/libutils/src \
+                           -I$(top_srcdir)/libsed/src
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la
+AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
+                           $(top_builddir)/libsed/src/libsedflux.la
 
-bin_SCRIPTS               = runsakura
 bin_PROGRAMS              = sakura
 
-sakura_SOURCES            = sakura_main.c
-include_HEADERS           = sakura.h sakura_utils.h
+include_HEADERS           = sakura.h
 
 lib_LTLIBRARIES           = libsakura.la
-libsakura_la_SOURCES      = sakura.c sakura_utils.c
+libsakura_la_SOURCES      = sakura.c sakura_io.c sakura_sedflux_interface.c sakura_utils.c
 
 LDADD                     = -lglib-2.0
-sakura_LDADD              = sakura_standalone.o -lsakura -lglib-2.0
 
-sakura_standalone.o: sakura.c
-	$(COMPILE) -DSAKURA_STANDALONE -o sakura_standalone.o -c $(top_srcdir)/sakura/src/sakura.c
+sakura_SOURCES            = sakura_main.c sakura.c sakura_io.c sakura_utils.c sakura_local.h
+sakura_CFLAGS             = -DSAKURA_STANDALONE
+sakura_LDADD              = -lglib-2.0
+
 

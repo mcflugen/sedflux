@@ -18,204 +18,102 @@
 //
 //---
 
-#if !defined(__SAKURA_H__)
-#define __SAKURA_H__
+#ifndef SAKURA_IS_INCLUDED
+# define SAKURA_IS_INCLUDED
 
+#include <stdio.h>
 #include <glib.h>
+#include "utils.h"
+#include "sed_sedflux.h"
 
-// LIST OF FUNCTIONS defined only for sakura
-// define constants
-#define HMIN 0.0000001
-#define UPPERLIMIT 20
+#include "datadir_path.h"
+#if !defined( DATADIR )
+# define DATADIR "/usr/local/share"
+#endif
+#define SAKURA_TEST_PARAM_FILE DATADIR "/ew/sakura_param.kvf"
+#define SAKURA_TEST_BATHY_FILE DATADIR "/ew/sakura_bathy.csv"
+#define SAKURA_TEST_FLOOD_FILE DATADIR "/ew/sakura_flood.kvf"
 
-//
-// define general constants
-//
+typedef enum
+{
+   SAKURA_ERROR_BAD_PARAMETER
+}
+Sakura_error;
 
-/** @name Physical Constants */
-//@{
-/// gravitational acceleration (m/s/s)
-#define G (9.81)
+#define SAKURA_ERROR sakura_error_quark()
+/*
+typedef struct
+{
+   double  x;            //< Position to query
+   double  dx;           //< Grid spacing
+   double  erode_depth;  //< Burial depth to query
+   double *phe;         //< Fraction of each grain size
+}
+Sakura_phe_query_st;
 
-/// submerged specific gravity of quartz
-#define R (1.65)
-
-/// near-bed bulk concentration ratio
-#define Ro (2.0)
-
-/// Length of a day in seconds.
-# define DAY (86400.)
-//@}
-
-/** @name Convenience Macros */
-//@{
-/// The square of a value.
-#define SQ(A) (A * A)
-/// Sign of a value.
-#define	SIGN(A) ((A) > (0.0) ? (1.0) : (-1.0))
-/// The larger of two values.
-#define LARGER(A,B) ((A)>(B) ? (A):(B))
-/// The smaller of two values.
-#define SMALLER(A,B) ((A)<(B) ? (A):(B))
-//@}
-
-/**
-Specifies the type of functions that are used to query the sedflux
-architecture.
-
-@param query_data A pointer to the data that specifies the user's query.  This
-                  data may contain things like a location, depth, or
-                  sediment property.  Any output data should also be contained
-                  within this data structure.
-@param data       A pointer to data from the architecture that is to be
-                  queried.
-
-@return Nothing.
-*/
-typedef void (*Eh_query_func) ( gpointer query_data , gpointer data );
-
-/** Define physica constants for the sakura module
-
-The Sakura_t structure holds physical constants that are required for the
-turbidity current model.  Also included are pointers to various Eh_query_func's
-that can be used to query the architecture.  Here there are functions to add
-sediment, remove sediment, and get the grain size distribution.
-
+typedef void (*Sakura_query_func) ( Sakura_phe_query_st* data , gpointer user_data );
 */
 typedef struct
 {
-   double Ea;            ///< Entrainment coefficient.
-   double Eb;            ///< Entrainment coefficient.
-   double sua;           ///< Shear strength at the seafloor
-   double sub;           ///< Rate of change of shear strength with burial depth
-   double Cd;            ///< Drag coefficient.
-   double tanPhi;
-   double mu;
-   double rhoSW;         ///< Density of sea water.
-   double rhoRW;         ///< Density of river water.
-   double channelWidth;  ///< Width of the channel.
-   double channelLength; ///< Length of the channel.
-
-   Eh_query_func get_phe;   ///< Function that gets the grain size distribution.
-   Eh_query_func add;       ///< Function that adds sediment to a location.
-   Eh_query_func remove;    ///< Function that removes sediment from a location.
-   Eh_query_func get_depth; ///< Function that gets the depth at an index.
-   Eh_query_func set_depth; ///< Function that sets the depth at an index.
-   gpointer get_phe_data;   ///< Architecture data used for the get_phe function.
-   gpointer add_data;       ///< Architecture data used for the add function.
-   gpointer remove_data;    ///< Architecture data used for the remove function.
-   gpointer depth_data;     ///< Architecture data used for the set/get depth functions.
+   double* phe;
+   gint    n_grains;
+   double  val;
 }
-Sakura_t;
+Sakura_phe_st;
 
-/**  Defines grain-size information for the sakura module
-
-The Sak_get_phe_t structure describes the grain size distribution of
-the bottom sediments used in the sakura turbidity current model. It is intended
-to be passed as the data parameter of a Eh_query_func.
-
-The phe_bottom member gives the fraction of each grain type that is found on
-the sea floor.
-
-The n_grains member is the number of grain types (the length of phe_bottom ).
-
-@see Eh_query_func , sakura_get_phe .
-
-*/
 typedef struct
 {
-   double *phe_bottom; ///< The grain type distribution of bottom sediments.
-   int n_grains;       ///< The number of grain types.
+   gint   id; //< Id that identifies the sediment type of the cell
+   double t;  //< The amount of sediment in the cell
 }
-Sak_bottom_t;
+Sakura_cell_st;
 
-/** Defines bathymetry within the sakura module
+typedef double (*Sakura_phe_func) ( gpointer data , double x , Sakura_phe_st* s  );
+typedef double (*Sakura_add_func) ( gpointer data , double x , Sakura_cell_st* s );
+typedef double (*Sakura_get_func) ( gpointer data , double x );
 
-The Sak_bathy_t structure describes the bathymetric architecture for the
-sakura model.  With this information a user is able to query bathymetric data
-(such as slope or depth) or add and remove sediment from a location.
-
-*/
 typedef struct
 {
-   double *x;     ///< Horizontal position
-   double *depth; ///< Bathymetric elevation (a larger negative number is deeper).
-   double *slope; ///< The bathymetric slope at a location.
-   int n_nodes;   ///< The number of nodes in the model.  This is the length of the various arrays.
+   double dt;
+   double out_dt;
+   double e_a;
+   double e_b;
+   double sua;
+   double sub;
+   double c_drag;
+   double tan_phi;
+   double mu_water;
+   double rho_river_water;
+   double rho_sea_water;
+   double channel_width;
+   double channel_len;
+   double dep_start;
+
+   Sakura_phe_func get_phe;
+   Sakura_add_func add;
+   Sakura_add_func remove;
+   Sakura_get_func get_depth;
+
+   gpointer        get_phe_data;
+   gpointer        add_data;
+   gpointer        remove_data;
+   gpointer        depth_data;
 }
-Sak_bathy_t;
+Sakura_const_st;
 
-/** Holds data for depth queries for sakura
-
-This structure provides the information that is required to get/set the
-depth of the bathymetry of the sakura architecture.
-*/
-typedef struct
-{
-   int i;
-   double depth;
-}
-Sak_depth_query_t;
-
-/** Holds data for erosion queries for sakura
-
-This structure provides the information that is required to erode sediment
-from the sakura architecture.
-*/
-typedef struct
-{
-   double dh; ///< The amount of sediment to erode.
-   int i;     ///< The index of the node to erode.
-}
-Sak_erode_query_t;
-
-/** Holds data for deposition queries for sakura
-
-This structure provides the information that is required to add sediment
-to the sakura architecture.
-
-@see Sak_remove_query_t .
-*/
-typedef Sak_erode_query_t Sak_add_query_t;
-
-/** Holds data for grain-size queries for sakura
-
-The Sak_phe_query_t structure describes the grain size distribution of
-the bottom sediments used in the sakura turbidity current model. It is intended
-to be passed as the data parameter of a Eh_query_func that communicates with
-the sedflux architecture.
-
-The dx member specifies the column spacing in the Sed_cube.
-
-The x member gives the position of the sediment that is to be queried.
-
-The erode_depth is the depth of erosion.  All of the sediment up to this depth
-is averaged to find the grain size distibution.  This value should be changed
-if there is not enough sediment at the particular location.
-
-The phe member points to the location to write the grain size distribution to.
-
-@see Eh_query_func , sakura_get_phe .
-
-*/
-typedef struct
-{
-   double dx;          ///< The column spacing.
-   double x;           ///< The position of the sediment where the query will be made.
-   double erode_depth; ///< The depth of erosion.
-   double *phe;        ///< Array to hold the grain type distribution.
-}
-Sak_phe_query_t;
-
-int sakura ( double Dx         , double Dt              , double Basin_Len ,
-             int nNodes        , int nGrains            , double Xx[]      ,
-             double Zz[]       , double Wx[]            , double Init_U[]  ,
-             double Init_C[]   , double *Lambda         , double *Stv      ,
-             double *Rey       , double *gDens          , double InitH     ,
-             double SupplyTime , double DepositionStart , double *Fraction ,
-             double *PheBottom , double *DepositDensity , double OutTime   ,
-             Sakura_t Consts   , double **Deposit       , FILE *fp_data );
+gboolean sakura ( double dx         , double dt              , double basin_Len ,
+                  int n_nodes       , int n_grains           , double* x      ,
+                  double* depth     , double *width            , double Init_U[]  ,
+                  double Init_C[]   , double *lambda         , double *Stv      ,
+                  double *Rey       , double *rho_grain          , double init_h     ,
+                  double supply_time , double dep_start , double *fraction ,
+                  double *phe_bot , double *rho_bot , double OutTime   ,
+                  Sakura_const_st* c   , double **deposit       , FILE *fp_data );
+Sed_hydro sakura_flood_from_cell( Sed_cell c , double area );
+gboolean  sed_sakura( Sed_cube         p       ,
+                      Sed_hydro        f       ,
+                      gint             i_start ,
+                      double           dx      ,
+                      Sakura_const_st* c );
 
 #endif /* sakura.h is included */
-
-

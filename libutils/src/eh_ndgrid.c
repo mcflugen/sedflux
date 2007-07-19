@@ -259,7 +259,7 @@ gssize eh_ndgrid_write( FILE *fp , Eh_ndgrid g )
    gssize n, n_x;
    for ( n=0,n_x=1 ; n<g->n_dim ; n++ )
       n_x *= g->size[n];
-   return eh_write_dbl_array( fp , g->data , n_x );
+   return eh_dbl_array_write( fp , g->data , n_x );
 }
 
 #endif

@@ -27,36 +27,36 @@
 #include "utils.h"
 #include "sed_sedflux.h"
 #include "failure.h"
-#include "failure_proc.h"
+#include "my_processes.h"
 
 int get_tsunami_parameters(Sed_cube fail);
 
-Sed_process_info run_failure( gpointer ptr , Sed_cube p )
+gboolean init_failure_data( Sed_process proc , Sed_cube prof , GError** error );
+
+GQuark
+failure_profile_data_quark( void )
 {
-   Failure_proc_t *data=(Failure_proc_t*)ptr;
+   return g_quark_from_string( "failure-profile-data-quark" );
+}
+
+Sed_process_info
+run_failure( Sed_process proc , Sed_cube p )
+{
+   Failure_proc_t*  data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    Sed_cube fail;
    int decision;
    int fail_count=0;
    int fs_min_start, fs_min_length;
    double fs_min;
-   Sed_process tc;
-   Sed_process db;
-   Sed_process slump;
+   Sed_process fail_process;
    Failure_t failure_const;
    GTimer *time;
    Fail_profile *fail_prof=NULL;
    gboolean flow_ok = TRUE;
-   Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( p == NULL )
-   {
-      if ( data->initialized )
-         data->initialized = FALSE;
-
-      fail_destroy_failure_profile( fail_prof );
-
-      return SED_EMPTY_INFO;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_failure_data( proc , p , NULL );
 
 /*
    prof = sed_create_empty_profile( p->n_y , p->sed );
@@ -77,20 +77,6 @@ Sed_process_info run_failure( gpointer ptr , Sed_cube p )
    prof->sealevel   = p->sea_level;
    prof->constants  = p->constants;
 */
-
-   if ( !data->initialized )
-   {
-
-      failure_const.consolidation     = data->consolidation;
-      failure_const.cohesion          = data->cohesion;
-      failure_const.frictionAngle     = data->friction_angle;
-      failure_const.gravity           = data->gravity;
-      failure_const.density_sea_water = data->density_sea_water;
-
-      data->fail_prof = fail_init_fail_profile( p , failure_const );
-
-      data->initialized = TRUE;
-   }
 
    time = g_timer_new();
 
@@ -145,11 +131,12 @@ Sed_process_info run_failure( gpointer ptr , Sed_cube p )
             sed_cube_remove(p,fail);
 
             decision = decider(fail,data->decider_clay_fraction);
-
+/*
             if ( decision == DECIDER_TURBIDITY_CURRENT )
             {
                tc = data->turbidity_current;
                //sed_process_data_val(tc,failure,Turbidity_t) = fail;
+
                ((Turbidity_t*)sed_process_data(tc))->failure = fail;
                flow_ok = sed_process_run_now(tc,p);
             }
@@ -167,6 +154,17 @@ Sed_process_info run_failure( gpointer ptr , Sed_cube p )
                ((Slump_t*)sed_process_data(slump))->failure = fail;
                flow_ok = sed_process_run_now(slump,p);
             }
+*/
+            if      ( decision == DECIDER_TURBIDITY_CURRENT ) fail_process = data->turbidity_current;
+            else if ( decision == DECIDER_DEBRIS_FLOW       ) fail_process = data->debris_flow;
+            else if ( decision == DECIDER_SLUMP             ) fail_process = data->slump;
+
+            sed_process_provide( fail_process , FAILURE_PROFILE_DATA , fail );
+
+            flow_ok = sed_process_run_now( fail_process , p );
+
+            sed_process_withhold( fail_process , FAILURE_PROFILE_DATA );
+
             sed_cube_destroy(fail);
 
          }
@@ -214,25 +212,92 @@ Sed_process_info run_failure( gpointer ptr , Sed_cube p )
 #define S_KEY_FRICTION_ANGLE "apparent coulomb friction angle"
 #define S_KEY_CLAY_FRACTION  "fraction of clay for debris flow"
 
-gboolean init_failure( Eh_symbol_table symbol_table , gpointer ptr )
+gboolean
+init_failure( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Failure_proc_t *data=(Failure_proc_t*)ptr;
-   if ( symbol_table == NULL )
-   {
-      data->initialized = FALSE;
-      return TRUE;
-   }
+   Failure_proc_t* data    = sed_process_new_user_data( p , Failure_proc_t );
+   GError*         tmp_err = NULL;
+   gchar**         err_s   = NULL;
+   gboolean        is_ok   = TRUE;
 
-   data->consolidation         = eh_symbol_table_dbl_value( symbol_table , S_KEY_CONSOLIDATION  );
-   data->cohesion              = eh_symbol_table_dbl_value( symbol_table , S_KEY_COHESION       );
-   data->friction_angle        = eh_symbol_table_dbl_value( symbol_table , S_KEY_FRICTION_ANGLE );
-   data->decider_clay_fraction = eh_symbol_table_dbl_value( symbol_table , S_KEY_CLAY_FRACTION  );
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->fail_prof             = NULL;
+   data->turbidity_current     = NULL;
+   data->debris_flow           = NULL;
+   data->slump                 = NULL;
+   data->flow                  = NULL;
+
+   data->consolidation         = eh_symbol_table_dbl_value( tab , S_KEY_CONSOLIDATION  );
+   data->cohesion              = eh_symbol_table_dbl_value( tab , S_KEY_COHESION       );
+   data->friction_angle        = eh_symbol_table_dbl_value( tab , S_KEY_FRICTION_ANGLE );
+   data->decider_clay_fraction = eh_symbol_table_dbl_value( tab , S_KEY_CLAY_FRACTION  );
 
    data->friction_angle        *= S_RADS_PER_DEGREE;
    data->decider_clay_fraction /= 100.;
 
    data->gravity                = sed_gravity();
    data->density_sea_water      = sed_rho_sea_water();
+
+   eh_check_to_s( data->consolidation>=0         , "Sediment consolidation positive" , &err_s );
+   eh_check_to_s( data->cohesion>=0              , "Sediment cohesion positive"      , &err_s );
+   eh_check_to_s( data->friction_angle>=0        , "Friction angle positive"         , &err_s );
+   eh_check_to_s( data->decider_clay_fraction>=0 , "Clay fraction between 0 and 1"   , &err_s );
+   eh_check_to_s( data->decider_clay_fraction<=1 , "Clay fraction between 0 and 1"   , &err_s );
+
+   if ( !tmp_err && err_s )
+      eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+init_failure_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Failure_proc_t* data = sed_process_user_data(proc);
+
+   if ( data )
+   {
+      Failure_t failure_const;
+
+      failure_const.consolidation     = data->consolidation;
+      failure_const.cohesion          = data->cohesion;
+      failure_const.frictionAngle     = data->friction_angle;
+      failure_const.gravity           = data->gravity;
+      failure_const.density_sea_water = data->density_sea_water;
+
+      data->fail_prof = fail_init_fail_profile( prof , failure_const );
+
+      data->turbidity_current = sed_process_child( proc , "TURBIDITY CURRENT" );
+      data->debris_flow       = sed_process_child( proc , "DEBRIS FLOW"       );
+      data->slump             = sed_process_child( proc , "SLUMP"             );
+
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_failure( Sed_process p )
+{
+   if ( p )
+   {
+      Failure_proc_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         if ( data->fail_prof )
+            fail_destroy_failure_profile( data->fail_prof );
+
+         eh_free( data );
+      }
+   }
 
    return TRUE;
 }

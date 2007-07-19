@@ -21,46 +21,27 @@
 #define SED_CPR_PROC_NAME "cpr"
 #define EH_LOG_DOMAIN SED_CPR_PROC_NAME
 
+#include <string.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "cpr.h"
-#include <string.h>
+#include "my_processes.h"
 
-gboolean dump_cpr_data( gpointer ptr , FILE *fp );
-gpointer load_cpr_data( FILE *fp );
-void eh_dump_file_list( Eh_file_list *fl , FILE *fp );
-Eh_file_list *eh_load_file_list( FILE *fp );
+gboolean      dump_cpr_data      ( gpointer ptr , FILE *fp );
+gpointer      load_cpr_data      ( FILE *fp );
+void          eh_dump_file_list  ( Eh_file_list *fl , FILE *fp );
+Eh_file_list* eh_load_file_list  ( FILE *fp );
+gboolean      init_cpr_data      ( Sed_process proc , Sed_cube prof , GError** error );
 
-Sed_process_info run_cpr(gpointer ptr,Sed_cube prof)
+Sed_process_info
+run_cpr( Sed_process proc , Sed_cube prof )
 {
-   Cpr_t *data=(Cpr_t*)ptr;
-   char *file_name;
-   char *base_name;
-   FILE *fp;
+   Cpr_t*           data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+   gchar* file_name;
+   FILE*  fp;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      gchar* cube_name = sed_cube_name( prof );
-      base_name = g_strconcat( data->output_dir  ,
-                               G_DIR_SEPARATOR_S ,
-                               cube_name         ,
-                               "#"               ,
-                               ".cpr" , NULL );
-      data->file_list = eh_create_file_list( base_name );
-      eh_free( base_name );
-      eh_free( cube_name );
-
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_cpr_data( proc , prof , NULL );
 
    file_name = eh_get_next_file( data->file_list );
 
@@ -70,28 +51,73 @@ Sed_process_info run_cpr(gpointer ptr,Sed_cube prof)
 
    fclose(fp);
 
-   return SED_EMPTY_INFO;
+   return info;
 }
 
 #define S_KEY_DIR       "output directory"
 
-gboolean init_cpr( Eh_symbol_table symbol_table , gpointer ptr )
+gboolean
+init_cpr( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Cpr_t *data=(Cpr_t*)ptr;
-   
-   if ( symbol_table == NULL )
+   Cpr_t*   data    = sed_process_new_user_data( p , Cpr_t );
+   GError*  tmp_err = NULL;
+   gboolean is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->file_list  = NULL;
+
+   data->output_dir = eh_symbol_table_value( tab , S_KEY_DIR );
+
+   if ( !tmp_err ) try_dir( data->output_dir , &tmp_err );
+
+   if ( tmp_err )
    {
-      eh_free( data->output_dir );
-      data->output_dir = NULL;
-      data->initialized = FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   data->output_dir = eh_symbol_table_value( symbol_table , S_KEY_DIR );
+   return is_ok;
+}
 
-   if ( !try_dir( data->output_dir ) )
-      eh_exit( EXIT_FAILURE );
+gboolean
+init_cpr_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Cpr_t* data = sed_process_user_data( proc );
 
+   if ( data )
+   {
+      gchar* cube_name = sed_cube_name( prof );
+      gchar* base_name = g_strconcat( data->output_dir  ,
+                                      G_DIR_SEPARATOR_S ,
+                                      cube_name         ,
+                                      "#"               ,
+                                      ".cpr" , NULL );
+
+      data->file_list = eh_create_file_list( base_name );
+
+      eh_free( base_name );
+      eh_free( cube_name );
+   }
+   return TRUE;
+}
+
+gboolean
+destroy_cpr( Sed_process p )
+{
+   if ( p )
+   {
+      Cpr_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         eh_destroy_file_list( data->file_list );
+
+         eh_free( data->output_dir );
+         data->output_dir = NULL;
+         eh_free( data );
+      }
+   }
    return TRUE;
 }
 
@@ -108,7 +134,6 @@ gboolean dump_cpr_data( gpointer ptr , FILE *fp )
    eh_dump_file_list( data->file_list , fp );
    fwrite( &len                 , sizeof(gint)      , 1   , fp );
    fwrite( data->output_dir     , sizeof(char)      , len , fp );
-   fwrite( &(data->initialized) , sizeof(gboolean)  , 1   , fp );
 
    return TRUE;
 }
@@ -125,7 +150,6 @@ gpointer load_cpr_data( FILE *fp )
    data->file_list = eh_load_file_list( fp );
    fread( &len                 , sizeof(gint) , 1   , fp );
    fread( data->output_dir     , sizeof(char) , len , fp );
-   fread( &(data->initialized) , sizeof(char) , len , fp );
 
    return (gpointer)data;
 }

@@ -7,8 +7,8 @@
 typedef struct
 {
    double angle;      ///< The angle the stream leaves the hinge point from
-   gint i;            ///< The x-index of the hinge point
-   gint j;            ///< The y-index of the hinge point
+   gint   i;          ///< The x-index of the hinge point
+   gint   j;          ///< The y-index of the hinge point
    double min_angle;  ///< The minimum angle the steam can make
    double max_angle;  ///< The maximum angle the stream can make
    double std_dev;    ///< The standard deviation of stream avulsions
@@ -20,13 +20,13 @@ Sed_riv_hinge;
 */
 CLASS( Sed_riv )
 {
-   Sed_hydro data;         ///< The hydrological characteristics of the river
+   Sed_hydro      data;    ///< The hydrological characteristics of the river
    Sed_riv_hinge* hinge;   ///< The hinge point of the river
-   gint x_ind;             ///< The x-index of the river mouth
-   gint y_ind;             ///< The y-index of the river mouth
-   gchar* name;            ///< The name of the river
-   Sed_riv l;
-   Sed_riv r;
+   gint           x_ind;   ///< The x-index of the river mouth
+   gint           y_ind;   ///< The y-index of the river mouth
+   gchar*         name;    ///< The name of the river
+   Sed_riv        l;
+   Sed_riv        r;
 };
 
 Sed_riv_hinge* sed_river_hinge_new( );
@@ -126,9 +126,7 @@ Sed_riv
 sed_river_set_hydro( Sed_riv s , const Sed_hydro h )
 {
    if ( s && h )
-   {
       s->data = sed_hydro_copy( s->data , h );
-   }
    return s;
 }
 
@@ -272,6 +270,14 @@ sed_river_hydro   ( Sed_riv s )
    eh_return_val_if_fail( s->data , NULL );
 
    return sed_hydro_dup( s->data );
+}
+
+gboolean
+sed_river_is_hyperpycnal( Sed_riv s )
+{
+   eh_require( s );
+
+   return sed_hydro_is_hyperpycnal( s->data );
 }
 
 gint*

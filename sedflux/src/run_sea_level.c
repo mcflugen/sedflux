@@ -26,45 +26,23 @@
 #include <math.h>
 
 #include "utils.h"
-#include "sealevel.h"
+#include "my_processes.h"
 
 double**  read_sea_level_curve( char* , gint* );
 double    get_sea_level       ( double** , gint , double );
 
-Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
+gboolean init_sea_level_data( Sed_process proc , Sed_cube prof , GError** error );
+
+Sed_process_info
+run_sea_level( Sed_process proc , Sed_cube prof )
 {
-   Sea_level_t *data=(Sea_level_t*)ptr;
+   Sea_level_t*     data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    double new_sea_level;
    double year;
-   Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         eh_free_2( data->sea_level );
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      gint len;
-      GError* err = NULL;
-
-      data->sea_level   = sed_scan_sea_level_curve( data->filename , &len , &err );
-
-      if ( err )
-      {
-         fprintf( stderr , "Error reading sea level file: %s\n" , err->message );
-         eh_exit( EXIT_FAILURE );
-      }
-
-      data->len         = len;
-      data->start_year  = sed_cube_age_in_years(prof);
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_sea_level_data( proc , prof , NULL );
 
    year = sed_cube_age_in_years( prof )-data->start_year;
 
@@ -91,22 +69,68 @@ Sed_process_info run_sea_level(gpointer ptr,Sed_cube prof)
 
 #include <sys/stat.h>
 
-#define S_KEY_SEA_LEVEL_FILE "sea level file"
+#define SEA_LEVEL_KEY_FILENAME "sea level file"
 
-gboolean init_sea_level(Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* sea_level_req_labels[] =
 {
-   Sea_level_t *data=(Sea_level_t*)ptr;
-   if ( symbol_table == NULL )
+   SEA_LEVEL_KEY_FILENAME ,
+   NULL
+};
+gboolean
+init_sea_level( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Sea_level_t* data    = sed_process_new_user_data( p , Sea_level_t );
+   GError*      tmp_err = NULL;
+   gboolean     is_ok   = TRUE;
+   gint         len;
+
+   data->start_year = 0.;
+
+   eh_symbol_table_require_labels( tab , sea_level_req_labels , &tmp_err );
+
+   if ( !tmp_err )
    {
-      eh_free( data->filename );
-      data->initialized = FALSE;
-      return TRUE;
+      data->filename   = eh_symbol_table_value( tab , SEA_LEVEL_KEY_FILENAME );
+      data->sea_level  = sed_scan_sea_level_curve( data->filename , &len , &tmp_err );
+      data->len        = len;
    }
 
-   data->filename = eh_symbol_table_value( symbol_table, S_KEY_SEA_LEVEL_FILE );
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
 
-   if ( !eh_try_open(data->filename) )
-      eh_exit( EXIT_FAILURE );
+   return is_ok;
+}
+
+gboolean
+init_sea_level_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   gboolean     is_ok = TRUE;
+   Sea_level_t* data  = sed_process_user_data( proc );
+
+   if ( data )
+      data->start_year = sed_cube_age_in_years(prof);
+
+   return is_ok;
+}
+
+gboolean
+destroy_sea_level( Sed_process p )
+{
+   if ( p )
+   {
+      Sea_level_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         eh_free_2( data->sea_level );
+
+         eh_free  ( data->filename   );
+         eh_free  ( data             );
+      }
+   }
 
    return TRUE;
 }
@@ -115,9 +139,6 @@ gboolean dump_sea_level_data( gpointer ptr , FILE *fp )
 {
    Sea_level_t *data = (Sea_level_t*)ptr;
    guint len;
-   double *t, *z;
-
-   fwrite( &(data->initialized) , sizeof(gboolean) , 1 , fp );
 
    len = strlen(data->filename);
    fwrite( &len , sizeof(guint) , 1 , fp );
@@ -136,9 +157,6 @@ gboolean load_sea_level_data( gpointer ptr , FILE *fp )
 {
    Sea_level_t *data = (Sea_level_t*)ptr;
    guint len;
-   double *t, *z;
-
-   fread( &(data->initialized) , sizeof(gboolean) , 1 , fp );
 
    fread( &len , sizeof(guint) , 1 , fp );
    fread( data->filename , sizeof(char) , len , fp );

@@ -8,6 +8,14 @@
 
 new_handle( Eh_symbol_table );
 
+typedef enum
+{
+   EH_SYM_TABLE_ERROR_MISSING_LABEL
+}
+Eh_symbol_table_error;
+
+#define EH_SYM_TABLE_ERROR eh_symbol_table_error_quark()
+
 Eh_symbol_table  eh_symbol_table_new            ( void                   );
 Eh_symbol_table  eh_symbol_table_dup            ( Eh_symbol_table t      );
 Eh_symbol_table  eh_symbol_table_copy           ( Eh_symbol_table dest   ,
@@ -37,6 +45,9 @@ gboolean         eh_symbol_table_has_label      ( Eh_symbol_table s      ,
                                                   gchar* label           );
 gboolean         eh_symbol_table_has_labels     ( Eh_symbol_table s      ,
                                                   gchar** labels );
+gboolean         eh_symbol_table_require_labels ( Eh_symbol_table s      ,
+                                                  gchar**         labels ,
+                                                  GError**        error );
 gchar*           eh_symbol_table_value          ( Eh_symbol_table s      ,
                                                   const gchar* label     );
 gchar**          eh_symbol_table_values         ( Eh_symbol_table s      ,
@@ -58,5 +69,8 @@ gint             eh_symbol_table_int_value      ( Eh_symbol_table s      ,
 Eh_input_val     eh_symbol_table_input_value    ( Eh_symbol_table s      ,
                                                   gchar* label           ,
                                                   GError** err );
+
+guint            eh_str_case_hash               ( gconstpointer key );
+gboolean         eh_str_case_equal              ( gconstpointer a, gconstpointer b);
 
 #endif

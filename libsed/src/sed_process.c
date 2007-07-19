@@ -19,6 +19,7 @@
 //---
 
 #include "sed_process.h"
+#include "sed_signal.h"
 
 typedef struct
 {
@@ -39,23 +40,34 @@ typedef struct
 }
 Sed_real_process_info;
 
-
 CLASS ( Sed_process )
 {
    gchar*           name;
    gchar*           tag;
 
    gpointer         data;
-   gint             data_size;
 
    gboolean         active;
+   double           start;
+   double           stop;
+
+   gint             run_count;
+
+   Sed_process*     parent;
+   Sed_process*     child;
+
+   gboolean         is_child;
+
    gboolean         logging;
    FILE**           log_files;
    double           interval;
    GArray*          next_event;
    Sed_real_process_info* info;
+
    init_func        f_init;
    run_func         f_run;
+   destroy_func     f_destroy;
+
    dump_func        f_dump;
    load_func        f_load;
 };
@@ -76,10 +88,11 @@ CLASS( Sed_process_queue )
 };
 
 __Sed_process_link* sed_process_link_new           ( gchar* name       ,
-                                                     gssize data_size  ,
                                                      init_func f_init  ,
                                                      run_func f_run    ,
-                                                     Eh_key_file file );
+                                                     destroy_func f_destroy    ,
+                                                     Eh_key_file file  ,
+                                                     GError** error );
 __Sed_process_link* sed_process_link_destroy       ( __Sed_process_link* link );
 Sed_process_queue  sed_process_queue_append       ( Sed_process_queue q ,
                                                     __Sed_process_link* p );
@@ -93,6 +106,12 @@ gint               sed_process_queue_find_position( Sed_process_queue q ,
 GList*             sed_process_queue_find         ( Sed_process_queue q ,
                                                     const gchar* name );
 
+GQuark
+sed_process_error_quark( void )
+{
+   return g_quark_from_static_string( "sed-process-error-quark" );
+}
+
 Sed_process_queue
 sed_process_queue_new( void )
 {
@@ -105,23 +124,63 @@ sed_process_queue_new( void )
    return q;
 }
 
+Sed_process_queue
+sed_process_queue_dup( Sed_process_queue s )
+{
+   return sed_process_queue_copy( NULL , s );
+}
+
+Sed_process_queue
+sed_process_queue_copy( Sed_process_queue d , Sed_process_queue s )
+{
+   if ( s )
+   {
+      GList* l;
+
+      if ( d ) d = sed_process_queue_destroy( d );
+
+      d = sed_process_queue_new( );
+
+      for ( l=s->l ; l ; l=l->next )
+         d->l = g_list_append( d->l , sed_process_dup( l->data ) );
+      
+   }
+   return d;
+}
+
 __Sed_process_link*
-sed_process_link_new( gchar* name       , gssize data_size ,
-                      init_func f_init  , run_func f_run   ,
-                      Eh_key_file file )
+sed_process_link_new( gchar*       name      ,
+                      init_func    f_init    ,
+                      run_func     f_run     ,
+                      destroy_func f_destroy ,
+                      Eh_key_file  file      ,
+                      GError**     error )
 {
    __Sed_process_link* link = eh_new( __Sed_process_link , 1 );
 
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    eh_require( name );
-   eh_require( data_size>0 );
-   eh_require( f_init );
-   eh_require( f_run );
    eh_require( file );
 
    if ( link )
    {
-      link->p        = sed_process_create( name , data_size , f_init , f_run );
-      link->obj_list = sed_process_scan  ( file , link->p );
+      GError* tmp_e = NULL;
+
+      /* Create an empty process that will be used as a template for future objects */
+      link->p        = sed_process_create( name , f_init , f_run , f_destroy );
+
+      /* Scan object based on the template */
+      link->obj_list = sed_process_scan  ( file , link->p , &tmp_e );
+
+      if ( tmp_e && tmp_e->code == SED_PROC_ERROR_NOT_FOUND )
+         g_clear_error( &tmp_e );
+
+      if ( tmp_e )
+      {
+         link = sed_process_link_destroy( link );
+         g_propagate_error( error , tmp_e );
+      }
    }
 
    return link;
@@ -135,9 +194,7 @@ sed_process_queue_destroy( Sed_process_queue q )
       GList* link;
 
       for ( link=q->l ; link ; link=link->next )
-      {
          sed_process_link_destroy( link->data );
-      }
 
       g_list_free( q->l );
 
@@ -153,6 +210,7 @@ sed_process_link_destroy( __Sed_process_link* link )
    if ( link )
    {
       g_list_foreach( link->obj_list , (GFunc)sed_process_destroy , NULL );
+      g_list_free   ( link->obj_list );
       sed_process_destroy( link->p );
       eh_free( link );
    }
@@ -160,18 +218,186 @@ sed_process_link_destroy( __Sed_process_link* link )
 }
 
 Sed_process_queue
-sed_process_queue_scan( Sed_process_queue q , Eh_key_file file )
+sed_process_queue_init( const gchar*       file       ,
+                        Sed_process_init_t p_list[]   ,
+                        Sed_process_family p_family[] ,
+                        Sed_process_check  p_check[]  ,
+                        GError**           error )
 {
+   Sed_process_queue q = NULL;
+
+   eh_require( file   );
+   eh_require( p_list );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   if ( file && p_list )
+   {
+      GError*     tmp_err  = NULL;
+      Eh_key_file key_file = NULL;
+
+      key_file = eh_key_file_scan( file , &tmp_err );
+
+      if ( key_file )
+      {
+         gssize i;
+
+         q = sed_process_queue_new( );
+         for ( i=0 ; p_list[i].name ; i++ )
+            sed_process_queue_push( q , p_list[i] );
+
+         sed_process_queue_scan( q , key_file , &tmp_err );
+
+         if ( !tmp_err && p_family ) sed_process_queue_set_families( q , p_family , &tmp_err );
+         if ( !tmp_err && p_check  ) sed_process_queue_validate    ( q , p_check  , &tmp_err );
+
+/*
+         if ( !tmp_err )
+         {
+            if ( on_procs )
+            {
+               gchar** name;
+               sed_process_queue_deactivate( q , "<all>" );
+
+               for ( name=on_procs ; *name ; name++ )
+                  sed_process_queue_activate( q , *name );
+            }
+
+            //if ( hook_func ) hook_func( q );
+            if ( !tmp_err && p_check  ) sed_process_queue_validate( q , p_check , &tmp_err );
+            if ( !tmp_err && p_family ) sed_process_queue_set_families( q , p_family , &tmp_err );
+         }
+*/
+      }
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         q = sed_process_queue_destroy( q );
+      }
+   }
+   return q;
+}
+
+Sed_process_queue
+sed_process_queue_set_families( Sed_process_queue q , Sed_process_family f[] , GError** error )
+{
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   if ( q )
+   {
+      GError*     tmp_err = NULL;
+      gint        i;
+      Sed_process p;
+      Sed_process c;
+      gchar**     err_s = NULL;
+
+      for ( i=0 ; f[i].parent ; i++ )
+      {
+         p = sed_process_queue_find_nth_obj( q , f[i].parent , 0 );
+         c = sed_process_queue_find_nth_obj( q , f[i].child  , 0 );
+
+         if ( !sed_process_is_active(p) ) p=NULL;
+         if ( !sed_process_is_active(c) ) c=NULL;
+
+         if ( c && !p )
+         {
+            eh_strv_append( &err_s , g_strdup_printf( "Child process has a missing or inactive parent" ) );
+            eh_strv_append( &err_s , g_strdup_printf( "Missing %s needed by %s" , f[i].parent , f[i].child ) );
+         }
+         else if ( c && p )
+            sed_process_append_child( p , c );
+      }
+      if ( tmp_err )
+      {
+         eh_set_error_strv( &tmp_err ,
+                            SED_PROC_ERROR ,
+                            SED_PROC_ERROR_MISSING_PARENT ,
+                            err_s );
+         g_propagate_error( error , tmp_err );
+         q = NULL;
+      }
+
+      g_strfreev( err_s );
+   }
+
+   return q;
+}
+
+Sed_process
+sed_process_child( Sed_process p , const gchar* child_s )
+{
+   Sed_process found_child = NULL;
+
+   if ( p && p->child && child_s )
+   {
+      Sed_process* c = NULL;
+
+      for ( c=p->child ; !found_child && *c ; c++ )
+      {
+         if ( g_ascii_strcasecmp( (*c)->name , child_s )==0 )
+            found_child = *c;
+      }
+
+   }
+
+   return found_child;
+}
+
+Sed_process
+sed_process_append_child( Sed_process p , Sed_process c )
+{
+   eh_require( p );
+   eh_require( c );
+
+   if ( p && c )
+   {
+      eh_strv_append( (gchar***)(&(p->child )) , (gchar*)c );
+      eh_strv_append( (gchar***)(&(c->parent)) , (gchar*)p );
+
+      c->is_child = TRUE;
+   }
+   return p;
+}
+
+gboolean
+sed_process_is_parent( Sed_process p )
+{
+   gboolean is_parent = FALSE;
+
+   if ( p ) is_parent = !(p->is_child);
+
+   return is_parent;
+}
+
+Sed_process_queue
+sed_process_queue_scan( Sed_process_queue q , Eh_key_file file , GError** error )
+{
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    if ( q && file )
    {
-      GList* link;
+      GList*              link;
+      GList*              new_p;
       __Sed_process_link* data;
+      GError*             tmp_e = NULL;
 
-      for ( link=q->l ; link ; link=link->next )
+      for ( link=q->l ; !tmp_e && link ; link=link->next )
       {
          data = link->data;
 
-         data->obj_list = g_list_concat( data->obj_list , sed_process_scan( file , data->p ) );
+         new_p = sed_process_scan( file , data->p , &tmp_e );
+
+         if ( tmp_e && tmp_e->code == SED_PROC_ERROR_NOT_FOUND )
+            g_clear_error( &tmp_e );
+
+         if ( !tmp_e )
+            data->obj_list = g_list_concat( data->obj_list , new_p );
+      }
+
+      if ( tmp_e )
+      {
+         g_propagate_error( error , tmp_e );
+         q = NULL;
       }
 
    }
@@ -239,7 +465,7 @@ sed_process_queue_find( Sed_process_queue q , const gchar* name )
 
    if ( q && name )
    {
-      link = g_list_find_custom( q->l , name , __sed_process_compare_name );
+      link = g_list_find_custom( q->l , name , (GCompareFunc)__sed_process_compare_name );
    }
 
    return link;
@@ -252,7 +478,7 @@ sed_process_queue_push( Sed_process_queue q , Sed_process_init_t init )
    {
       __Sed_process_link* new_link = eh_new( __Sed_process_link , 1 );
 
-      new_link->p = sed_process_create( init.name , init.data_size , init.init_f , init.run_f );
+      new_link->p = sed_process_create( init.name , init.init_f , init.run_f , init.destroy_f );
       new_link->obj_list = NULL;
 
       sed_process_queue_append( q , new_link );
@@ -269,7 +495,7 @@ sed_process_queue_find_nth_obj( Sed_process_queue q , const gchar* name , gssize
    if ( n>=0 && name && q )
    {
       GList* link = sed_process_queue_find( q , name );
-      obj = g_list_nth_data( SED_PROCESS_LINK(link->data)->obj_list , n );
+      if ( link ) obj = g_list_nth_data( SED_PROCESS_LINK(link->data)->obj_list , n );
    }
 
    return obj;
@@ -330,6 +556,48 @@ sed_process_queue_run( Sed_process_queue q , Sed_cube p )
 }
 
 Sed_process_queue
+sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
+{
+   eh_require( q );
+   eh_require( p );
+
+   if ( q && p )
+   {
+      double         t; /* Time in years */
+//      Eh_status_bar* bar = eh_status_bar_new( &t , &t_total );
+
+      for ( t  = sed_cube_time_step( p ) ;
+               t < t_total
+            && !sed_signal_is_pending( SED_SIG_QUIT )
+            && !sed_signal_is_pending( SED_SIG_NEXT ) ;
+            t += sed_cube_time_step( p ) )
+      {
+         sed_process_queue_run( q , p );
+
+         if ( sed_signal_is_pending( SED_SIG_DUMP ) )
+         {
+            sed_process_queue_run_process_now( q , "data dump" , p );
+            sed_signal_reset( SED_SIG_DUMP );
+         }
+
+         sed_cube_increment_age( p );
+
+         //fprintf( stderr , "%7g (%3.0g%%)\r" , t , t/t_total*100 );
+      }
+
+      if ( sed_signal_is_pending( SED_SIG_NEXT ) )
+      {
+         sed_cube_set_age( p , t_total );
+         sed_signal_reset( SED_SIG_NEXT );
+      }
+
+//      eh_status_bar_destroy( bar );
+   }
+
+   return q;
+}
+
+Sed_process_queue
 sed_process_queue_run_at_end( Sed_process_queue q , Sed_cube p )
 {
    if ( q && p )
@@ -352,7 +620,7 @@ sed_process_queue_run_process_now( Sed_process_queue q , const gchar* name , Sed
    {
       GList* link = sed_process_queue_find( q , name );
 
-      g_list_foreach( SED_PROCESS_LINK(link->data)->obj_list , sed_process_run_now , cube );
+      g_list_foreach( SED_PROCESS_LINK(link->data)->obj_list , (GFunc)sed_process_run_now , cube );
    }
 
    return q;
@@ -363,29 +631,42 @@ sed_process_queue_run_process_now( Sed_process_queue q , const gchar* name , Sed
 static FILE*     info_fp        = NULL;
 static gboolean  info_fp_is_set = FALSE;
 
-Sed_process sed_process_create( const char *name ,
-                                size_t data_size ,
-                                init_func f_init ,
-                                run_func f_run   )
+Sed_process sed_process_create( const char*  name   ,
+                                init_func    f_init ,
+                                run_func     f_run  ,
+                                destroy_func f_destroy )
 {
    Sed_process p;
 
    NEW_OBJECT( Sed_process , p );
 
-//   p->data = g_malloc0(data_size);
-//   p->data = eh_malloc( data_size , NULL , __FILE__ , __LINE__ );
-   p->data = eh_new( gchar , data_size );
+//   p->data = eh_new( gchar , data_size );
+   p->data         = NULL;
 
    p->log_files    = eh_new( FILE* , SED_MAX_LOG_FILES+1 );
    p->log_files[0] = NULL;
 
-   p->data_size    = data_size;
+//   p->data_size    = data_size;
+
+   p->active       = FALSE;
+   p->start        = -G_MAXDOUBLE;
+   p->stop         =  G_MAXDOUBLE;
+
+   p->run_count    = 0;
+
+   p->parent       = NULL;
+   p->child        = NULL;
+
+   p->is_child     = FALSE;
+
    p->name         = g_strdup( name );
    p->tag          = NULL;
    p->interval     = -1;
    p->next_event   = g_array_new(TRUE,TRUE,sizeof(double));
-   p->f_run        = f_run;
+
    p->f_init       = f_init;
+   p->f_run        = f_run;
+   p->f_destroy    = f_destroy;
    p->f_load       = NULL;
    p->f_dump       = NULL;
 
@@ -401,11 +682,13 @@ Sed_process sed_process_create( const char *name ,
    if ( g_getenv("SED_TRACK_MASS")  && !info_fp_is_set )
    {
       info_fp_is_set = TRUE;
-      info_fp = eh_fopen( "mass_balance.txt" , "w" );
+      info_fp        = eh_fopen( "mass_balance.txt" , "w" );
    }
 
+/*
    (*f_init)(NULL,p->data);
    (*f_run)(p->data,NULL);
+*/
 
    return p;
 }
@@ -414,11 +697,13 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
 {
    eh_return_val_if_fail( s , NULL );
 
+   eh_require( s->data==NULL );
+
    {
       gssize i;
 
       if ( !d )
-         d = sed_process_create( s->name , s->data_size , s->f_init , s->f_run );
+         d = sed_process_create( s->name , s->f_init , s->f_run , s->f_destroy );
 
       d->next_event = g_array_new(TRUE,TRUE,sizeof(double));
 
@@ -427,7 +712,9 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
 
       d->tag = g_strdup( s->tag );
 
-      g_memmove( d->data , s->data , s->data_size );
+      //g_memmove( d->data , s->data , s->data_size );
+      d->data = s->data;
+
       g_memmove( d->log_files , 
                  s->log_files ,
                  (SED_MAX_LOG_FILES+1)*sizeof( FILE* ) );
@@ -438,6 +725,15 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
       d->info->u_secs = s->info->u_secs;
 
       d->active   = s->active;
+      d->start    = s->start;
+      d->stop     = s->stop;
+
+      d->run_count= s->run_count;
+
+      d->parent   = s->parent;
+      d->child    = s->child;
+      d->is_child = s->is_child;
+
       d->logging  = s->logging;
       d->interval = s->interval;
    }
@@ -445,59 +741,74 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
    return d;
 }
 
-Sed_process sed_process_dup( Sed_process s )
+Sed_process
+sed_process_dup( Sed_process s )
 {
    return sed_process_copy( NULL , s );
 }
 
-Sed_process sed_process_destroy( Sed_process p )
+Sed_process
+sed_process_destroy( Sed_process p )
 {
    if ( p )
    {
-      sed_process_clean( p );
+
+      if ( p->f_destroy ) p->f_destroy( p );
+
       g_array_free(p->next_event,TRUE);
 
       g_timer_destroy( p->info->timer );
 
+      eh_free( p->child     );
+      eh_free( p->parent    );
       eh_free( p->info      );
       eh_free( p->log_files );
       eh_free( p->name      );
       eh_free( p->tag       );
-      eh_free( p->data      );
       eh_free( p            );
    }
 
    return NULL;
 }
 
-void sed_process_clean( Sed_process p )
+void
+sed_process_clean( Sed_process p )
 {
    eh_return_if_fail( p );
 
-   p->f_run ( p->data , NULL    );
-   p->f_init( NULL    , p->data );
+   if ( p->f_destroy ) p->f_destroy( p );
+
+//   p->f_run ( p->data , NULL    );
+//   p->f_init( NULL    , p->data );
 }
 
-double sed_process_next_event( Sed_process p )
+double
+sed_process_next_event( Sed_process p )
 {
    return g_array_index(p->next_event,double,p->next_event->len-1);
 }
 
-Sed_process sed_process_set_next_event( Sed_process p , double new_next_event )
+Sed_process
+sed_process_set_next_event( Sed_process p , double new_next_event )
 {
    g_array_index( p->next_event , double , p->next_event->len-1 ) = new_next_event ;
    return p;
 }
 
-gboolean sed_process_is_on( Sed_process p , double time )
+gboolean
+sed_process_is_on( Sed_process p , double time )
 {
    gboolean is_on = FALSE;
 
    eh_return_val_if_fail( p , FALSE );
 
+   if ( p )
    {
       double last_event;
-      if ( !p->active || sed_process_interval_is_at_end(p) )
+      if (    !p->active
+           || sed_process_interval_is_at_end(p) 
+           || time < p->start
+           || time > p->stop )
          is_on = FALSE;
       else if ( sed_process_interval_is_always(p) )
          is_on = TRUE;
@@ -514,7 +825,8 @@ gboolean sed_process_is_on( Sed_process p , double time )
    return is_on;
 }
 
-gboolean sed_process_array_run( GPtrArray *a , Sed_cube p )
+gboolean
+sed_process_array_run( GPtrArray *a , Sed_cube p )
 {
    gssize i;
    gboolean rtn_val = TRUE;
@@ -527,7 +839,7 @@ gboolean
 sed_process_run( Sed_process a , Sed_cube p )
 {
    gboolean rtn_val = TRUE;
-   if ( sed_process_is_on( a , sed_cube_age(p) ) )
+   if ( sed_process_is_on( a , sed_cube_age(p) ) && sed_process_is_parent(a) )
       rtn_val = sed_process_run_now(a,p);
    return rtn_val;
 }
@@ -536,69 +848,80 @@ gboolean
 sed_process_run_at_end( Sed_process a , Sed_cube p )
 {
    gboolean rtn_val = TRUE;
-   if ( sed_process_is_active(a) && sed_process_interval_is_at_end(a) )
+   if ( sed_process_is_active(a) && sed_process_interval_is_at_end(a) && sed_process_is_parent(a) )
       rtn_val = sed_process_run_now(a,p);
    return rtn_val;
 }
 
-gboolean sed_process_run_now( Sed_process a , Sed_cube p )
+gboolean
+sed_process_run_now( Sed_process a , Sed_cube p )
 {
-   Sed_process_info info;
-   char *log_name;
-   gboolean rtn_val=TRUE;
-   gulong u_secs = 0;
+   gboolean rtn_val = TRUE;
 
-   g_timer_start( a->info->timer );
-
-   if ( a->logging )
-      log_name = a->name;
-   else
-      log_name = "/dev/null";
-   eh_redirect_log(log_name,DEFAULT_LOG);
-
-   if ( g_getenv("SED_TRACK_MASS") )
+   if ( a && a->f_run )
    {
-      double mass_before = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
+      gchar*           log_name;
+      Sed_process_info info;
+      gulong           u_secs = 0;
 
-      info = a->f_run(a->data,p);
+      g_timer_start( a->info->timer );
 
-      a->info->mass_added        = info.mass_added;
-      a->info->mass_lost         = info.mass_lost;
-      a->info->error             = info.error;
+      if ( a->logging ) log_name = a->name;
+      else              log_name = "/dev/null";
 
-      a->info->mass_before       = mass_before;
-      a->info->mass_after        = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
+      eh_redirect_log( log_name , DEFAULT_LOG );
 
-      a->info->mass_total_added += info.mass_added;
-      a->info->mass_total_lost  += info.mass_lost;
+      fprintf( stderr , "%7g years [ Running process: %-25s]\r" , sed_cube_age_in_years(p) , a->name );
 
-      sed_process_fprint_info( info_fp , a );
-
-      if ( sed_process_error( a ) )
+      if ( g_getenv("SED_TRACK_MASS") )
       {
-         eh_warning( "A mass balance error was detected (%s)." , a->name );
-         rtn_val = FALSE;
+         double mass_before = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
+
+         info = a->f_run(a,p);
+
+         a->info->mass_added        = info.mass_added;
+         a->info->mass_lost         = info.mass_lost;
+         a->info->error             = info.error;
+
+         a->info->mass_before       = mass_before;
+         a->info->mass_after        = sed_cube_mass(p) + sed_cube_mass_in_suspension(p);
+
+         a->info->mass_total_added += info.mass_added;
+         a->info->mass_total_lost  += info.mass_lost;
+
+         sed_process_fprint_info( info_fp , a );
+
+         if ( sed_process_error( a ) )
+         {
+            eh_warning( "A mass balance error was detected (%s)." , a->name );
+            rtn_val = FALSE;
+         }
       }
+      else
+      {
+         //info = a->f_run( a->data , p );
+         info = a->f_run( a , p );
+
+         a->info->mass_total_added += info.mass_added;
+         a->info->mass_total_lost  += info.mass_lost;
+      }
+
+      eh_reset_log(DEFAULT_LOG);
+
+      a->info->secs   += g_timer_elapsed( a->info->timer , NULL );
+      a->info->u_secs += u_secs;
+
+      a->run_count++;
    }
-   else
-   {
-      info = a->f_run(a->data,p);
 
-      a->info->mass_total_added += info.mass_added;
-      a->info->mass_total_lost  += info.mass_lost;
-   }
-
-   eh_reset_log(DEFAULT_LOG);
-
-   a->info->secs   += g_timer_elapsed( a->info->timer , NULL );
-   a->info->u_secs += u_secs;
 
    return rtn_val;
 }
 
-void sed_process_init( Sed_process a , Eh_symbol_table symbol_table )
+void
+sed_process_init( Sed_process p , Eh_symbol_table t , GError** error )
 {
-   a->f_init( symbol_table , a->data );
+   if ( p->f_init ) p->f_init( p , t , error );
 }
 
 #define SED_KEY_TAG         "process tag"
@@ -606,18 +929,29 @@ void sed_process_init( Sed_process a , Eh_symbol_table symbol_table )
 #define SED_KEY_LOGGING     "logging"
 #define SED_KEY_INTERVAL    "repeat interval"
 
-GList *sed_process_scan( Eh_key_file k , Sed_process p )
+static gchar* sed_process_req_labels[] =
 {
-   GList* p_array = NULL;
+   SED_KEY_ACTIVE   ,
+   SED_KEY_LOGGING  ,
+   SED_KEY_INTERVAL ,
+   NULL
+};
+
+GList*
+sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
+{
+   GList*  p_array = NULL;
+   GError* tmp_err = NULL;
 
    eh_require( k );
    eh_require( p );
 
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
    if ( !eh_key_file_has_group( k , p->name ) )
    {
       Sed_process new_proc;
 
-      g_warning( "%s: Process not found (disabling)" , p->name );
+      g_set_error( &tmp_err , SED_PROC_ERROR , SED_PROC_ERROR_NOT_FOUND , "Process not found: %s" , p->name );
 
       new_proc         = sed_process_dup( p );
       new_proc->active = FALSE;
@@ -625,35 +959,63 @@ GList *sed_process_scan( Eh_key_file k , Sed_process p )
    }
    else
    {
-      Eh_symbol_table* t = eh_key_file_get_symbol_tables( k , p->name );
-      gchar**     tag    = eh_key_file_get_str_values   ( k , p->name , SED_KEY_TAG  );
-      gboolean*  active  = eh_key_file_get_bool_values  ( k , p->name , SED_KEY_ACTIVE  );
-      gboolean* logging  = eh_key_file_get_bool_values  ( k , p->name , SED_KEY_LOGGING );
-      gchar**  interval  = eh_key_file_get_all_values   ( k , p->name , SED_KEY_INTERVAL );
-      gssize len = eh_key_file_group_size( k , p->name );
-      gssize i;
-      Sed_process new_proc;
+      //gboolean*  active  = eh_key_file_get_bool_values  ( k , p->name , SED_KEY_ACTIVE  );
+      Eh_symbol_table* t        = eh_key_file_get_symbol_tables( k , p->name );
+      gchar**          tag      = eh_key_file_get_str_values   ( k , p->name , SED_KEY_TAG  );
+      gchar**          active_s = eh_key_file_get_str_values   ( k , p->name , SED_KEY_ACTIVE  );
+      gboolean*        logging  = eh_key_file_get_bool_values  ( k , p->name , SED_KEY_LOGGING );
+      gchar**          interval = eh_key_file_get_all_values   ( k , p->name , SED_KEY_INTERVAL );
+      gssize           len      = eh_key_file_group_size       ( k , p->name );
+      gssize           i;
+      Sed_process      new_proc;
+      gboolean         is_active;
 
-      for ( i=0 ; i<len ; i++ )
+      for ( i=0 ; !tmp_err && i<len ; i++ )
+         eh_symbol_table_require_labels( t[i] , sed_process_req_labels , &tmp_err );
+
+      for ( i=0 ; !tmp_err && i<len ; i++ )
       {
-         new_proc = sed_process_dup( p );
-         new_proc->active = active[i];
-         new_proc->tag    = tag[i];
+         new_proc      = sed_process_dup( p );
+         new_proc->tag = tag[i];
 
-         if ( active[i] )
+         if ( eh_str_is_boolean( active_s[i] ) )
+         {
+            is_active   = eh_str_to_boolean( active_s[i] , &tmp_err );
+
+            if ( is_active )
+            {
+               new_proc->start = -G_MAXDOUBLE;
+               new_proc->stop  =  G_MAXDOUBLE;
+            }
+         }
+         else
+         {
+            double* active_time = eh_str_to_time_range( active_s[i] , &tmp_err );
+
+            is_active       = TRUE;
+
+            new_proc->start = active_time[0];
+            new_proc->stop  = active_time[1];
+
+            eh_free( active_time );
+         }
+
+         new_proc->active = is_active;
+
+         if ( !tmp_err && is_active )
          {
             new_proc->logging = logging[i];
 
-            if      ( g_strcasecmp( interval[i] , "always" ) == 0 )
+            if      ( g_ascii_strcasecmp( interval[i] , "always" ) == 0 )
                new_proc->interval = -1;
-            else if ( g_strcasecmp( interval[i] , "at-end" ) == 0 )
+            else if ( g_ascii_strcasecmp( interval[i] , "at-end" ) == 0 )
                new_proc->interval = -2;
             else
-               new_proc->interval = strtotime( interval[i] );
+               new_proc->interval = eh_str_to_time_in_years( interval[i] , &tmp_err );
 
-            g_array_append_val(new_proc->next_event,new_proc->interval);
+            g_array_append_val( new_proc->next_event , new_proc->interval );
 
-            sed_process_init( new_proc , t[i] );
+            if ( !tmp_err ) sed_process_init( new_proc , t[i] , &tmp_err );
 
             if ( new_proc->logging )
             {
@@ -677,22 +1039,38 @@ GList *sed_process_scan( Eh_key_file k , Sed_process p )
          }
 
          p_array = g_list_append(p_array,new_proc);
-
-         eh_symbol_table_destroy( t[i] );
       }
 
+      if ( tmp_err )
+      {
+         g_list_foreach( p_array , (GFunc)sed_process_destroy , NULL );
+         g_list_free   ( p_array );
+         p_array = NULL;
+      }
+
+      for ( i=0 ; i<len ; i++ )
+         eh_symbol_table_destroy( t[i] );
+
       eh_free( t       );
-      eh_free( active  );
+      eh_free( active_s );
       eh_free( logging );
       eh_free( tag     );
       g_strfreev( interval );
+   }
 
+   if ( tmp_err )
+   {
+      gchar* err_s = g_strdup_printf( "Process scan error (%s): %s" , p->name , tmp_err->message );
+      eh_free( tmp_err->message );
+      tmp_err->message = err_s;
+      g_propagate_error( error , tmp_err );
    }
 
    return p_array;
 }
 
-gssize sed_process_fprint( FILE *fp , Sed_process p )
+gssize
+sed_process_fprint( FILE *fp , Sed_process p )
 {
    gssize n = 0;
 
@@ -709,7 +1087,31 @@ gssize sed_process_fprint( FILE *fp , Sed_process p )
       n += fprintf( fp,"name          = %s\n" , p->name     );
       n += fprintf( fp,"tag           = %s\n" , tag_str     );
       n += fprintf( fp,"active        = %s\n" , active_str  );
-      n += fprintf( fp,"interval      = %f\n" , p->interval );
+      if ( p->active )
+      {
+         if ( eh_compare_dbl( p->start , -G_MAXDOUBLE , 1e-6 ) )
+            n += fprintf( fp,"start         = %s\n" , "The begining" );
+         else
+            n += fprintf( fp,"start         = %f\n" , p->start    );
+
+         if ( eh_compare_dbl( p->stop  ,  G_MAXDOUBLE , 1e-6 ) )
+            n += fprintf( fp,"stop          = %s\n" , "The end" );
+         else
+            n += fprintf( fp,"stop          = %f\n" , p->stop     );
+      }
+      else
+      {
+         n += fprintf( fp,"start         = N/A\n" );
+         n += fprintf( fp,"stop          = N/A\n" );
+      }
+
+      n += fprintf( fp,"run count     = %d\n" , p->run_count );
+
+      if ( sed_process_interval_is_always(p) )
+         n += fprintf( fp,"interval      = %s\n" , "Always" );
+      else
+         n += fprintf( fp,"interval      = %f\n" , p->interval );
+
       n += fprintf( fp,"logging       = %s\n" , logging_str );
    }
 
@@ -738,7 +1140,8 @@ sed_process_queue_summary( FILE* fp , Sed_process_queue q )
    return n;
 }
 
-gssize sed_process_queue_fprint( FILE* fp , Sed_process_queue q )
+gssize
+sed_process_queue_fprint( FILE* fp , Sed_process_queue q )
 {
    gssize n = 0;
    if ( q )
@@ -834,7 +1237,7 @@ sed_process_queue_n_inactive( Sed_process_queue q )
       gssize n_absent = sed_process_queue_n_absent( q );
       gssize len      = sed_process_queue_size    ( q );
    
-      n = len - n_active - n_active;
+      n = len - n_active - n_absent;
 
       eh_require( n>=0   );
       eh_require( n<=len );
@@ -851,10 +1254,33 @@ copy of the data).
 
 @return A pointer to the data
 */
-gpointer sed_process_data( Sed_process p )
+gpointer
+sed_process_data( Sed_process p )
 {
    eh_return_val_if_fail( p!=NULL , NULL );
    return p->data;
+}
+
+void
+sed_process_provide( Sed_process p , GQuark key , gpointer data )
+{
+   if ( p ) g_dataset_id_set_data_full( p , key , data , NULL );
+}
+
+void
+sed_process_withhold( Sed_process p , GQuark key )
+{
+   if ( p ) g_dataset_id_remove_data( p , key );
+}
+
+gpointer
+sed_process_use( Sed_process p , GQuark key )
+{
+   gpointer data = NULL;
+
+   if ( p ) data = g_dataset_id_get_data( p , key );
+
+   return data;
 }
 
 /** Get the name of a process
@@ -865,10 +1291,35 @@ Obtain a copy of the name of a process.  The pointer should be freed after use.
 
 @return A newly-allocated string containing the name of the process
 */
-gchar* sed_process_name( Sed_process p )
+gchar*
+sed_process_name( Sed_process p )
 {
    eh_return_val_if_fail( p!=NULL , NULL );
    return g_strdup( p->name );
+}
+
+gint
+sed_process_run_count( Sed_process p )
+{
+   eh_return_val_if_fail( p , 0 );
+   return p->run_count;
+}
+
+gpointer
+sed_process_user_data( Sed_process p )
+{
+   eh_return_val_if_fail( p , NULL );
+   return p->data;
+}
+
+gpointer
+sed_process_malloc_user_data( Sed_process p , gssize n_bytes )
+{
+   if ( p )
+   {
+      if ( !p->data ) p->data = eh_new( gchar , n_bytes );
+   }
+   return p->data;
 }
 
 /** Compare the names of two processes
@@ -942,11 +1393,15 @@ sed_process_interval_is_at_end( Sed_process p )
 
 @return TRUE if the process is turned on.
 */
-
-gboolean sed_process_is_active( Sed_process p )
+gboolean
+sed_process_is_active( Sed_process p )
 {
-   eh_return_val_if_fail( p!=NULL , FALSE );
-   return p->active;
+   gboolean is_active = FALSE;
+
+   if ( p )
+      is_active = p->active;
+   
+   return is_active;
 }
 
 gssize
@@ -956,13 +1411,13 @@ sed_process_summary( FILE* fp , Sed_process p )
    if ( fp && p )
    {
       double t = p->info->secs + p->info->u_secs/1.e6;
-      gchar str[2048];
+      gchar* t_str = eh_render_time_str( t );
 
       n += fprintf( fp , "%18s | %10.3g | %10.3g | %s\n" ,
                     p->name ,
                     p->info->mass_total_added ,
                     p->info->mass_total_lost ,
-                    eh_render_time_str(t,str) );
+                    t_str );
    }
    return n;
 }
@@ -996,7 +1451,8 @@ gssize sed_process_fprint_info( FILE* fp , Sed_process p )
    return n;
 }
 
-gboolean sed_process_error( Sed_process p )
+gboolean
+sed_process_error( Sed_process p )
 {
    gboolean error = FALSE;
 
@@ -1019,134 +1475,109 @@ gboolean sed_process_error( Sed_process p )
 }
 
 int
-sed_process_queue_check( Sed_process_queue q , const gchar* p_name )
+sed_process_queue_check_item( Sed_process_queue q , const gchar* p_name )
 {
-   int error = 0;
-   GList* link;
+   int    flag = 0;
+   GList* item;
 
-   link = sed_process_queue_find( q , p_name );
+   item = sed_process_queue_find( q , p_name );
 
-   if ( link )
+   if ( item )
    {
-      gssize i, len;
-      gboolean is_active;
-      Sed_process this_proc;
-      GList* list;
-
-      list = SED_PROCESS_LINK(link->data)->obj_list;
+      GList* list = SED_PROCESS_LINK(item->data)->obj_list;
 
       /* Check if there are any instances of this process */
-      len = g_list_length( list );
-      if ( len>1 )
-         error |= SED_ERROR_MULTIPLE_PROCS;
+      if ( g_list_length( list )==1 )
+         flag |= SED_PROC_UNIQUE;
 
-      /* Check if the time step of each instance is set to always */
-      for ( i=0,is_active=FALSE ; i<len ; i++ )
+      if ( list )
       {
-         this_proc = g_list_nth_data( list , i );
+         gboolean is_active = FALSE;
+         gboolean is_always = TRUE;
+         GList*   l;
 
-         is_active |= sed_process_is_active(this_proc);
-         if ( sed_process_interval(this_proc) > 0 )
-            error |= SED_ERROR_NOT_ALWAYS;
-      }
+         /* Check if the time step of each instance is set to always */
+         for ( l=list ; l ; l=l->next )
+         {
+            is_active |= sed_process_is_active( l->data );
+            is_always &= sed_process_interval_is_always( l->data );
+         }
       
-      /* Check if any of the instances are turned on */
-      if ( !is_active )
-         error |= SED_ERROR_INACTIVE;
-   }
-   else
-      error |= SED_ERROR_PROC_ABSENT;
+         /* Check if any of the instances are turned on */
+         if ( is_active )
+            flag |= SED_PROC_ACTIVE;
 
-   return error;
+         /* Check if all of the instances are always */
+         if ( is_always )
+            flag |= SED_PROC_ALWAYS;
+      }
+   }
+
+   return flag;
 }
 
-int
+gint
 sed_process_queue_check_family( Sed_process_queue q ,
-                                const gchar* parent ,
-                                const gchar* child  ,
-                                ... )
+                                const gchar* parent_name ,
+                                const gchar* child_name  )
 {
-   int error = 0;
-   gboolean parent_active, child_active;
-   double parent_dt, child_dt;
+   gint flag = 0;
 
-   eh_require( q      );
-   eh_require( parent );
-   eh_require( child  );
+   eh_require( q           );
+   eh_require( parent_name );
 
    /* There should be a parent. */
-   if ( parent )
+   if ( parent_name && child_name )
    {
-      GList* parent_link = sed_process_queue_find( q , parent );
+      gint   parent_flag = sed_process_queue_check_item( q , parent_name );
+      gint   child_flag  = sed_process_queue_check_item( q , child_name );
+      double parent_dt;
+      double child_dt;
 
-      if ( parent_link )
-      {
-         __Sed_process_link* parent_proc = parent_link->data;
+      flag |= parent_flag;
 
-         /* There should only be one parent. */
-         if ( g_list_length( parent_proc->obj_list )>1 )
-            error |= SED_ERROR_MULTIPLE_PARENTS;
+      if ( parent_flag&SED_PROC_UNIQUE ) flag |= SED_PROC_UNIQUE_PARENT;
+      if ( parent_flag&SED_PROC_ACTIVE ) flag |= SED_PROC_ACTIVE_PARENT;
+      if ( child_flag &SED_PROC_UNIQUE ) flag |= SED_PROC_UNIQUE_CHILD;
+      if ( child_flag &SED_PROC_ACTIVE ) flag |= SED_PROC_ACTIVE_CHILD;
 
-         /* There should be an active parent. */
-         if ( g_list_length( parent_proc->obj_list )==0 )
-            error |= SED_ERROR_ABSENT_PARENT;
-         else
-         {
-            parent_active = sed_process_is_active( parent_proc->obj_list->data );
-            parent_dt     = sed_process_interval ( parent_proc->obj_list->data );
+      child_dt  = sed_process_queue_item_interval( q , child_name  );
+      parent_dt = sed_process_queue_item_interval( q , parent_name );
 
-            if ( !parent_active )
-               error |= SED_ERROR_INACTIVE_PARENT;
-         }
-      }
-      else
-         error |= SED_ERROR_ABSENT_PARENT;
+      if ( eh_compare_dbl( parent_dt , child_dt , 1e-12 ) )
+         flag |= SED_PROC_SAME_INTERVAL;
    }
+   else if ( parent_name )
+      flag |= sed_process_queue_check_item( q , parent_name );
    else
-      error |= SED_ERROR_ABSENT_PARENT;
+      eh_require_not_reached();
 
-   if ( child )
+   return flag;
+}
+
+double
+sed_process_queue_item_interval( Sed_process_queue q , const gchar* name )
+{
+   double interval = G_MAXDOUBLE;
+
+   if ( q && name )
    {
-      __Sed_process_link* child_proc;
-      GList* this_child;
-      va_list ap;
+      GList* item       = sed_process_queue_find( q , name );
+      GList* obj_list   = SED_PROCESS_LINK(item->data)->obj_list;
+      gboolean is_found = TRUE;
+      GList* l;
 
-      va_start( ap , child );
-
-      error |= SED_ERROR_INACTIVE_CHILDREN;
-
-      /* Check each of the child processes. */
-      for ( ; child ; child=va_arg( ap , const gchar* ) )
+      for ( l=obj_list ; l && !is_found ; l=l->next )
       {
-         child_proc = sed_process_queue_find( q , child )->data;
-
-         /* Check each object of this child process. */
-         for ( this_child=child_proc->obj_list ; this_child ; this_child=this_child->next )
+         if ( sed_process_is_active( l->data ) )
          {
-            child_active = sed_process_is_active( this_child->data );
-            child_dt     = sed_process_interval ( this_child->data );
-
-            /* If there is one active child, clear the inactive children error. */
-            if ( child_active )
-               error &= ~SED_ERROR_INACTIVE_CHILDREN;
-
-            /* The dt of parent and child should match */
-            if ( child_active && parent_active )
-            {
-               if ( !eh_compare_dbl( parent_dt , child_dt , 1e-12 ) )
-                  error |= SED_ERROR_DT_MISMATCH;
-            }
+            interval = sed_process_interval( l->data );
+            is_found = TRUE;
          }
       }
-
-      va_end( ap );
    }
 
-   /* If the children are inactive, then there is no error if the parent is inactive/absent. */
-   if ( error&SED_ERROR_INACTIVE_CHILDREN )
-      error &= ~(SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT);
-
-   return error;
+   return interval;
 }
 
 Sed_process sed_process_set_active( Sed_process p , gboolean val )
@@ -1220,13 +1651,129 @@ Sed_process_queue sed_process_queue_set_active( Sed_process_queue q ,
          if ( list )
          {
             if ( val )
-               g_list_foreach( SED_PROCESS_LINK(list->data)->obj_list , sed_process_activate , NULL );
+               g_list_foreach( SED_PROCESS_LINK(list->data)->obj_list , (GFunc)sed_process_activate , NULL );
             else
-               g_list_foreach( SED_PROCESS_LINK(list->data)->obj_list , sed_process_deactivate , NULL );
+               g_list_foreach( SED_PROCESS_LINK(list->data)->obj_list , (GFunc)sed_process_deactivate , NULL );
          }
       }
    }
 
    return q;
+}
+
+gchar*
+sed_process_flag_str( gint flag )
+{
+   gchar* flag_s = NULL;
+
+   if ( flag )
+   {
+      gchar* s = NULL;
+
+      switch ( flag )
+      {
+         case SED_PROC_UNIQUE:        s = "Process is unique"; break;
+         case SED_PROC_ACTIVE:        s = "Process is active"; break;
+         case SED_PROC_ACTIVE_PARENT: s = "Parent process is active"; break;
+         case SED_PROC_ACTIVE_CHILD:  s = "Child process is active"; break;
+         case SED_PROC_UNIQUE_PARENT: s = "Parent process is unique"; break;
+         case SED_PROC_UNIQUE_CHILD:  s = "Child process is unique"; break;
+         case SED_PROC_SAME_INTERVAL: s = "Parent and child process have same interval"; break;
+      }
+
+      flag_s = g_strdup( s );
+   }
+
+   return flag_s;
+}
+
+gchar*
+sed_process_render_flag_str( gint flag , const gchar* pre_s , const gchar* name )
+{
+   gchar* err_s = NULL;
+
+   if ( flag!=0 )
+   {
+      gchar** all_strs = NULL;
+
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_UNIQUE        ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_ACTIVE        ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_ACTIVE_PARENT ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_ACTIVE_CHILD  ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_UNIQUE_PARENT ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_UNIQUE_CHILD  ) );
+      eh_strv_append( &all_strs , sed_process_flag_str( flag&SED_PROC_SAME_INTERVAL ) );
+
+      {
+         gchar* s;
+         gint   i;
+
+         for ( i=0 ; all_strs[i] ; i++ )
+         {
+            s = all_strs[i];
+
+            if   ( pre_s ) all_strs[i] = g_strjoin( ": " , pre_s , all_strs[i] , name , NULL );
+            else           all_strs[i] = g_strjoin( ": " ,         all_strs[i] , name , NULL );
+
+            eh_free( s );
+         }
+      }
+         
+      err_s = g_strjoinv( "\n" , all_strs );
+
+      g_strfreev( all_strs );
+   }
+
+   return err_s;
+}
+
+gboolean
+sed_process_queue_validate( Sed_process_queue q , Sed_process_check check[] , GError** error )
+{
+   gboolean is_valid;
+
+   eh_require( q );
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+   
+   if ( q && check )
+   {
+      gint    i;
+      gchar*  err_s      = NULL;
+      gchar** err_s_list = NULL;
+      gint    on_flags;
+      gint    req_flags;
+
+      for ( i=0 ; check[i].parent ; i++ )
+      {
+         req_flags = check[i].flags;
+         on_flags  = sed_process_queue_check_family( q , check[i].parent , check[i].child )
+                   & req_flags;
+
+         if ( on_flags != req_flags )
+         {
+            err_s = sed_process_render_flag_str( on_flags^req_flags , "Failed requirement" , check[i].parent );
+            eh_strv_append( &err_s_list , err_s );
+         }
+      }
+
+      if ( err_s_list!=NULL )
+      {
+         GError* tmp_err = NULL;
+         gchar*  err_msg = g_strjoinv( "\n" , err_s_list );
+
+         g_set_error( &tmp_err , SED_PROC_ERROR , SED_PROC_ERROR_BAD_INIT_FILE , err_msg );
+
+         g_propagate_error( error , tmp_err );
+
+         eh_free   ( err_msg    );
+         g_strfreev( err_s_list );
+
+         is_valid = FALSE;
+      }
+      else
+         is_valid = TRUE;
+   }
+
+   return is_valid;
 }
 

@@ -27,29 +27,16 @@
 #include <glib.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "run_diffusion.h"
-#include "processes.h"
+#include "diffusion.h"
+#include "my_processes.h"
 
 Sed_process_info
-run_diffusion( gpointer ptr , Sed_cube prof )
+run_diffusion( Sed_process proc , Sed_cube prof )
 {
-   Diffusion_t *data=(Diffusion_t*)ptr;
-   double k_max, skin_depth;
+   Diffusion_t*     data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
+   double           k_max;
+   double           skin_depth;
 
    // Adjust diffusion constants for storms.
 /*
@@ -101,32 +88,63 @@ run_diffusion( gpointer ptr , Sed_cube prof )
    return info;
 }
 
-#define S_KEY_K_MAX         "diffusion constant"
-#define S_KEY_K_LONG_MAX    "long-shore diffusion constant"
-#define S_KEY_K_CROSS_MAX   "cross-shore diffusion constant"
-#define S_KEY_SKIN_DEPTH    "diffusion 1% depth"
+#define DIFFUSION_KEY_K_MAX         "diffusion constant"
+#define DIFFUSION_KEY_SKIN_DEPTH    "diffusion 1% depth"
+#define DIFFUSION_KEY_K_LONG_MAX    "long-shore diffusion constant"
+#define DIFFUSION_KEY_K_CROSS_MAX   "cross-shore diffusion constant"
+
+static gchar* diffusion_req_labels[] =
+{
+   DIFFUSION_KEY_K_MAX       ,
+   DIFFUSION_KEY_SKIN_DEPTH  ,
+   NULL
+};
 
 gboolean
-init_diffusion( Eh_symbol_table tab , gpointer ptr )
+init_diffusion( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Diffusion_t *data=(Diffusion_t*)ptr;
-   GError* err = NULL;
+   Diffusion_t* data    = sed_process_new_user_data( p , Diffusion_t );
+   GError*      tmp_err = NULL;
+   gchar**      err_s   = NULL;
+   gboolean     is_ok   = TRUE;
 
-   if ( tab == NULL )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   eh_symbol_table_require_labels( tab , diffusion_req_labels , &tmp_err );
+
+   if ( !tmp_err )
    {
-      eh_input_val_destroy( data->k_max );
-      data->initialized = FALSE;
-      return TRUE;
+      data->k_max      = eh_symbol_table_input_value( tab , DIFFUSION_KEY_K_MAX , &tmp_err );
+      data->skin_depth = eh_symbol_table_dbl_value  ( tab , DIFFUSION_KEY_SKIN_DEPTH );
+
+      eh_check_to_s( data->k_max>0      , "Diffusion coefficient positive" , &err_s );
+      eh_check_to_s( data->skin_depth>0 , "Skin depth positive"            , &err_s );
+
+      if ( !tmp_err && err_s )
+         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
    }
 
-   if ( (data->k_max = eh_symbol_table_input_value(tab,S_KEY_K_MAX ,&err)) == NULL )
+   if ( tmp_err )
    {
-      fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit( EXIT_FAILURE );
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   data->skin_depth = eh_symbol_table_dbl_value( tab , S_KEY_SKIN_DEPTH );
-
-   return TRUE;
+   return is_ok;
 }
 
+gboolean
+destroy_diffusion( Sed_process p )
+{
+   if ( p )
+   {
+      Diffusion_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         eh_input_val_destroy( data->k_max );
+         eh_free( data );
+      }
+   }
+   return TRUE;
+}

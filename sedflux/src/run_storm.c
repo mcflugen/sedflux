@@ -22,8 +22,22 @@
 #define EH_LOG_DOMAIN SED_STORM_PROC_NAME
 
 #include <stdio.h>
-#include "storms.h"
+#include "my_processes.h"
 #include "eh_rand.h"
+
+typedef struct
+{
+   Eh_input_val h;
+   double       t;
+}
+User_storm_data;
+
+GSList *get_equivalent_storm( GFunc    get_storm          ,
+                              gpointer user_data          ,
+                              double   n_days             ,
+                              double   sig_event_fraction ,
+                              gboolean average_non_events );
+void storm_func_user( double *ans , User_storm_data* user_data );
 
 double *get_wave_from_beaufort_scale_power_law( double beaufort_storm ,
                                                 double *wave );
@@ -37,6 +51,204 @@ double get_height_from_beaufort_scale( double beaufort_storm );
 double get_beaufort_scale_from_height( double wave_height );
 double get_wave_length_from_height( double wave_height );
 double get_wave_period_from_height( double wave_height_in_meters );
+
+gboolean init_storm_data( Sed_process proc , Sed_cube prof , GError** error );
+
+Sed_process_info
+run_storm( Sed_process proc , Sed_cube prof )
+{
+   Storm_t*         data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+   GSList*          storm_list;
+   double           n_days;
+   double           time_step;
+   double           start_time;
+
+   if ( sed_process_run_count(proc)==0 )
+      init_storm_data( proc , prof , NULL );
+
+   // average the requested number of days.
+   start_time      = data->last_time;
+   time_step       = sed_cube_age_in_years( prof ) - data->last_time;
+   data->last_time = sed_cube_age_in_years( prof );
+   n_days          = time_step*S_DAYS_PER_YEAR;
+
+   if ( time_step > 1e-6 )
+   {
+      if ( TRUE )
+      {
+         User_storm_data user_data;
+
+         user_data.h = data->wave_height;
+         user_data.t = start_time;
+
+         storm_list = get_equivalent_storm( (GFunc)storm_func_user ,
+                                            &user_data             ,
+                                            n_days         ,
+                                            data->fraction ,
+                                            data->average_non_events );
+      }
+   }
+   else
+      return info;
+
+   sed_cube_set_storm_list( prof , storm_list );
+
+   {
+      GSList *this_link;
+      Sed_ocean_storm this_storm;
+      gssize n = g_slist_length( storm_list );
+      gssize i = 0;
+      double this_time = start_time;
+      double significant_storm = G_MINDOUBLE;
+
+      for ( this_link=storm_list ; this_link ; this_link=this_link->next )
+      {
+         this_storm = this_link->data;
+
+         eh_dbl_set_max( significant_storm , sed_ocean_storm_wave_height( this_storm ) );
+
+         eh_message( "time        : %f" , this_time            );
+         eh_message( "time step   : %f" , sed_ocean_storm_duration(this_storm) );
+         eh_message( "storm number: %d" , i++                  );
+         eh_message( "total number: %d" , n                    );
+         eh_message( "wave height : %f" ,
+                     sed_ocean_storm_wave_height(this_storm) );
+         eh_message( "wave period : %f" ,
+                     sed_ocean_storm_wave_period(this_storm) );
+         eh_message( "wave length : %f" ,
+                     sed_ocean_storm_wave_length(this_storm) );
+
+         this_time  += sed_ocean_storm_duration(this_storm)*S_YEARS_PER_DAY;
+
+      }
+
+      if ( n>0 )
+      {
+         significant_storm = get_beaufort_scale_from_height( significant_storm );
+         sed_cube_set_storm( prof , significant_storm );
+      }
+      else
+         sed_cube_set_storm( prof , 0. );
+
+   }
+
+   return info;
+}
+
+#include <time.h>
+
+/** \name Input parameters for ocean storm module
+@{
+*/
+/// Average length of an ocean storm in days
+#define STORM_KEY_STORM_LENGTH    "average length of a storm"
+/// Wave height (in meters) of the 100y ocean storm
+#define STORM_KEY_STORM_MAGNITUDE "wave height of 100 year storm"
+/// Variance (in meters) of 100y storm wave height
+#define STORM_KEY_STORM_VARIANCE  "variance of 100 year storm"
+/// Scale parameter for ocean storm wave height (Weibull distribution)
+#define STORM_KEY_SCALE_PARAMETER "scale parameter for pdf"
+/// Shape parameter for ocean storm wave height (Weibull distribution)
+#define STORM_KEY_SHAPE_PARAMETER "shape parameter for pdf"
+/// Give wave heights from a file, or normal, uniform, or user defined
+/// distribution
+#define STORM_KEY_WAVE_HEIGHT     "wave height"
+/// Seed for the ocean storm random number generator
+#define STORM_KEY_SEED            "seed for random number generator"
+/// Fraction of days to model
+#define STORM_KEY_FRACTION        "fraction of events to model"
+/// Should the calm periods between storms be averaged to forgotten
+#define STORM_KEY_NON_EVENTS      "average non-events?"
+/*@}*/
+
+static gchar* storm_req_labels[] =
+{
+   STORM_KEY_FRACTION    ,
+   STORM_KEY_NON_EVENTS  ,
+   STORM_KEY_WAVE_HEIGHT ,
+   STORM_KEY_SEED        ,
+   NULL
+};
+
+/** Initialize a storm process.
+
+@param p     A pointer to Sed_process
+@param tab   A pointer to a Symbol_table.
+@param error       A GError to indicate user-input error
+
+@return TRUE if no problems were encountered.  FALSE otherwise.
+*/
+gboolean
+init_storm( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Storm_t* data    = sed_process_new_user_data( p , Storm_t );
+   GError*  tmp_err = NULL;
+   gchar**  err_s   = NULL;
+   gboolean is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->rand               = NULL;
+   data->last_time          = 0.;
+
+   eh_symbol_table_require_labels( tab , storm_req_labels , &tmp_err );
+
+   if ( !tmp_err )
+   {
+      data->wave_height        = eh_symbol_table_input_value( tab , STORM_KEY_WAVE_HEIGHT , &tmp_err );
+      data->fraction           = eh_symbol_table_dbl_value  ( tab , STORM_KEY_FRACTION   );
+      data->average_non_events = eh_symbol_table_bool_value ( tab , STORM_KEY_NON_EVENTS );
+      data->rand_seed          = eh_symbol_table_int_value  ( tab , STORM_KEY_SEED       );
+
+      eh_check_to_s( data->fraction>=0. , "Event fraction between 0 and 1" , &err_s );
+      eh_check_to_s( data->fraction<=1. , "Event fraction between 0 and 1" , &err_s );
+
+      if ( !tmp_err && err_s )
+         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+   }
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+init_storm_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Storm_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      if ( data->rand_seed>0 ) data->rand = g_rand_new_with_seed( data->rand_seed );
+      else                     data->rand = g_rand_new( );
+      data->last_time = sed_cube_age_in_years( prof );
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_storm( Sed_process p )
+{
+   if ( p )
+   {
+      Storm_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         g_rand_free         ( data->rand        );
+         eh_input_val_destroy( data->wave_height );
+         eh_free             ( data              );
+      }
+   }
+
+   return TRUE;
+}
 
 /** Calculate the magnitude of a storm.
 
@@ -78,11 +290,6 @@ Sed_ocean_storm average_storms( GSList *storms );
 void free_link_data( gpointer data , gpointer user_data );
 gint cmp_storm_size( Sed_ocean_storm a , Sed_ocean_storm b );
 gint cmp_storm_time( Sed_ocean_storm a , Sed_ocean_storm b );
-GSList *get_equivalent_storm( GFunc get_storm           ,
-                              gpointer user_data        ,
-                              double n_days             ,
-                              double sig_event_fraction ,
-                              gboolean average_non_events );
 void print_ocean_storm_list( GSList *list );
 void print_ocean_storm( Sed_ocean_storm this_storm , gpointer user_data );
 
@@ -104,13 +311,6 @@ void storm_func_weibull( double* ans , struct weibull_storm_data* user_data )
                                variance      ,
                                1./365. );
 }
-
-typedef struct
-{
-   Eh_input_val h;
-   double t;
-}
-User_storm_data;
 
 void storm_func_user( double *ans , User_storm_data* user_data )
 {
@@ -329,168 +529,6 @@ gint cmp_storm_time( Sed_ocean_storm a , Sed_ocean_storm b )
       return 1;
    else
       return 0;
-}
-
-Sed_process_info
-run_storm(gpointer ptr,Sed_cube prof)
-{
-   Storm_t *data=(Storm_t*)ptr;
-   GSList *storm_list;
-   double n_days;
-   double time_step;
-   double start_time;
-   Sed_process_info info = SED_EMPTY_INFO;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         g_rand_free( data->rand );
-         data->last_k = 1;
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-      if ( data->rand_seed>0 )
-         data->rand = g_rand_new_with_seed( data->rand_seed );
-      else
-         data->rand = g_rand_new( );
-      data->last_time   = 0;
-      data->last_time = sed_cube_age_in_years( prof );
-   }
-
-   // average the requested number of days.
-   start_time      = data->last_time;
-   time_step       = sed_cube_age_in_years( prof ) - data->last_time;
-   data->last_time = sed_cube_age_in_years( prof );
-   n_days          = time_step*S_DAYS_PER_YEAR;
-
-   if ( time_step > 1e-6 )
-   {
-      if ( TRUE )
-      {
-         User_storm_data user_data;
-         user_data.h = data->wave_height;
-         user_data.t = start_time;
-
-         storm_list = get_equivalent_storm( (GFunc)storm_func_user ,
-                                            &user_data             ,
-                                            n_days         ,
-                                            data->fraction ,
-                                            data->average_non_events );
-      }
-   }
-   else
-      return info;
-
-   sed_cube_set_storm_list( prof , storm_list );
-
-   {
-      GSList *this_link;
-      Sed_ocean_storm this_storm;
-      gssize n = g_slist_length( storm_list );
-      gssize i = 0;
-      double this_time = start_time;
-      double significant_storm = G_MINDOUBLE;
-
-      for ( this_link=storm_list ; this_link ; this_link=this_link->next )
-      {
-         this_storm = this_link->data;
-
-         eh_dbl_set_max( significant_storm , sed_ocean_storm_wave_height( this_storm ) );
-
-         eh_message( "time        : %f" , this_time            );
-         eh_message( "time step   : %f" , sed_ocean_storm_duration(this_storm) );
-         eh_message( "storm number: %d" , i++                  );
-         eh_message( "total number: %d" , n                    );
-         eh_message( "wave height : %f" ,
-                     sed_ocean_storm_wave_height(this_storm) );
-         eh_message( "wave period : %f" ,
-                     sed_ocean_storm_wave_period(this_storm) );
-         eh_message( "wave length : %f" ,
-                     sed_ocean_storm_wave_length(this_storm) );
-
-         this_time  += sed_ocean_storm_duration(this_storm)*S_YEARS_PER_DAY;
-
-      }
-
-      if ( n>0 )
-      {
-         significant_storm = get_beaufort_scale_from_height( significant_storm );
-         sed_cube_set_storm( prof , significant_storm );
-      }
-      else
-         sed_cube_set_storm( prof , 0. );
-
-   }
-
-   return info;
-}
-
-#include <time.h>
-
-/** \name Input parameters for ocean storm module
-@{
-*/
-/// Average length of an ocean storm in days
-#define S_KEY_STORM_LENGTH    "average length of a storm"
-/// Wave height (in meters) of the 100y ocean storm
-#define S_KEY_STORM_MAGNITUDE "wave height of 100 year storm"
-/// Variance (in meters) of 100y storm wave height
-#define S_KEY_STORM_VARIANCE  "variance of 100 year storm"
-/// Scale parameter for ocean storm wave height (Weibull distribution)
-#define S_KEY_SCALE_PARAMETER "scale parameter for pdf"
-/// Shape parameter for ocean storm wave height (Weibull distribution)
-#define S_KEY_SHAPE_PARAMETER "shape parameter for pdf"
-/// Give wave heights from a file, or normal, uniform, or user defined
-/// distribution
-#define S_KEY_WAVE_HEIGHT     "wave height"
-/// Seed for the ocean storm random number generator
-#define S_KEY_SEED            "seed for random number generator"
-/// Fraction of days to model
-#define S_KEY_FRACTION        "fraction of events to model"
-/// Should the calm periods between storms be averaged to forgotten
-#define S_KEY_NON_EVENTS      "average non-events?"
-/*@}*/
-
-/** Initialize a storm process.
-
-@param tab   A pointer to a Symbol_table.
-@param ptr   A pointer to user data
-
-@return TRUE if no problems were encountered.  FALSE otherwise.
-*/
-gboolean
-init_storm( Eh_symbol_table tab , gpointer ptr )
-{
-   Storm_t *data=(Storm_t*)ptr;
-   GError* err = NULL;
-
-   if ( tab == NULL )
-   {
-      eh_input_val_destroy( data->wave_height );
-      data->initialized = FALSE;
-      return TRUE;
-   }
-
-   if ( (data->wave_height = eh_symbol_table_input_value(tab,S_KEY_WAVE_HEIGHT ,&err)) == NULL )
-   {
-      fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit( EXIT_FAILURE );
-   }
-
-   data->fraction           = eh_symbol_table_dbl_value ( tab , S_KEY_FRACTION        );
-   data->average_non_events = eh_symbol_table_bool_value( tab , S_KEY_NON_EVENTS      );
-   data->rand_seed          = eh_symbol_table_int_value ( tab , S_KEY_SEED            );
-
-   eh_require( data->fraction>=0 && data->fraction<=1 );
-
-   return TRUE;
-
 }
 
 /** Get wave characteristics from a beaufort scale value.

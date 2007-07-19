@@ -119,6 +119,12 @@ User_data;
 #define F2 (0.9)
 #define XA (5.176)
 
+#if HAVE_IEEEFP_H
+# include <ieeefp.h>
+#else
+int finite( double dsrc );
+#endif
+
 double inventory( double x , double s , double l )
 {
    double i;
@@ -797,9 +803,7 @@ END_TEST
 START_TEST ( test_convolve )
 {
    gssize len_x = 32;
-   gssize len_y = 5;
    double* x = eh_new( double , len_x );
-   double  y[5] = {0.2,.2,.2,.2,.2};
    double* z;
    gssize i;
 

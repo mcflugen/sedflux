@@ -229,8 +229,8 @@ eh_message( "e_shelf set to zero." );
       c_v = 0;
    bb_cell = sed_cell_dup( erosion_cell );
    sf_cell = sed_cell_dup( erosion_cell );
-   sed_cell_resize( bb_cell ,      c_v*sed_cell_thickness(erosion_cell) );
-   sed_cell_resize( sf_cell , (1.-c_v)*sed_cell_thickness(erosion_cell) );
+   sed_cell_resize( bb_cell ,      c_v*sed_cell_size(erosion_cell) );
+   sed_cell_resize( sf_cell , (1.-c_v)*sed_cell_size(erosion_cell) );
 
    //---
    // phase 2:
@@ -243,7 +243,7 @@ eh_message( "e_shelf set to zero." );
    {
       double* grain_size = sed_sediment_property( NULL , &sed_type_grain_size_in_meters );
 //      for ( i=i_c ; i>i_m && sed_get_cell_thickness(bb_cell)>1e-5 ; i-- )
-      for ( i=i_c-1 ; i>i_m && sed_cell_thickness(bb_cell)>1e-5 ; i-- )
+      for ( i=i_c-1 ; i>i_m && sed_cell_size(bb_cell)>1e-5 ; i-- )
       {
          depth = sed_cube_water_depth( p , 0 , i );
    
@@ -255,7 +255,7 @@ eh_message( "e_shelf set to zero." );
             h = get_travel_dist( grain_size[n] ,
                                  depth         ,
                                  sed_cube_y_res(p) );
-            dep = sed_cell_thickness( bb_cell )
+            dep = sed_cell_size( bb_cell )
                 * sed_cell_fraction( bb_cell , n )
                 * sed_cube_y_res( p )
                 / h;
@@ -284,7 +284,7 @@ eh_message( "e_shelf set to zero." );
 
    for ( mass_in=0,n=0 ; n<n_grains ; n++ )
    {
-      total_erosion[n] = sed_cell_thickness( sf_cell )
+      total_erosion[n] = sed_cell_size( sf_cell )
                        * sed_cell_fraction( sf_cell , n );
       mass_in += total_erosion[n];
    }
@@ -333,7 +333,7 @@ eh_message( "e_shelf set to zero." );
                                        2 ,
                                        threshold_depth[n] )*dz;
    
-      for ( i=0 ; i<n_z_bins && sed_cell_thickness(sf_cell)>1e-5 ; i++ )
+      for ( i=0 ; i<n_z_bins && sed_cell_size(sf_cell)>1e-5 ; i++ )
       {
          depth = i*dz;
    
@@ -400,18 +400,18 @@ eh_message( "e_shelf set to zero." );
          sed_cell_resize( add_cell , 0. );
 //         sed_add_vector_to_cell( add_cell , dep_thickness[i] , n_grains );
          sed_cell_add_amount( add_cell , dep_thickness[i] );
-         if ( sed_cell_thickness(add_cell) > sed_cube_water_depth(p,0,i) )
+         if ( sed_cell_size(add_cell) > sed_cube_water_depth(p,0,i) )
             sed_cell_resize( add_cell , sed_cube_water_depth(p,0,i) );
    if (   sed_cube_water_depth(p,0,i)
-        - sed_cell_thickness(add_cell)
+        - sed_cell_size(add_cell)
         - sed_cube_water_depth(p,0,i-1) < 0. )
       sed_cell_resize( add_cell ,
                          sed_cube_water_depth(p,0,i)
                        - sed_cube_water_depth(p,0,i-1)
                        - .0 );
-         if ( sed_cell_thickness( add_cell ) > 0 )
+         if ( sed_cell_size( add_cell ) > 0 )
          {
-            mass_out += sed_cell_thickness( add_cell );
+            mass_out += sed_cell_size( add_cell );
             sed_column_add_cell( sed_cube_col(p,i) , add_cell );
          }
    }

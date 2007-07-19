@@ -39,6 +39,8 @@ static Eh_key_file_entry template[] =
  { "Flood data file"                                 , EH_ARG_FILENAME , &p.flood_file    } ,
 };
 
+void inflow_get_phe( Inflow_phe_query_st* query_data , Inflow_bottom_st* bed_data );
+
 gboolean
 inflow_wrapper( Inflow_bathy_st* b    ,
                 Inflow_flood_st* f    ,
@@ -154,17 +156,11 @@ inflow_check_params( Inflow_param_st* p , GError** error )
       eh_check_to_s( p->mu_water>0. ,            "Viscosity of water > 0" , &err_s );
 
       if ( err_s )
-      {
-         gchar* str = g_strjoinv( "\n" , err_s );
+         eh_set_error_strv( error ,
+                            INFLOW_ERROR ,
+                            INFLOW_ERROR_BAD_PARAMETER , err_s );
 
-         g_set_error( error ,
-                      INFLOW_ERROR ,
-                      INFLOW_ERROR_BAD_PARAMETER ,
-                      "%s" , str );
-
-         eh_free   ( str   );
-         g_strfreev( err_s );
-      }
+      g_strfreev( err_s );
    }
 
    return p;
@@ -292,9 +288,9 @@ inflow_scan_flood_file( const gchar* file , Inflow_param_st* p , GError** error 
    }
 
    {
-      GError* tmp_error = NULL;
-      Sed_hydro* river = sed_hydro_scan( file , &tmp_error );
-      gint i, len;
+      GError*    tmp_error = NULL;
+      Sed_hydro* river     = sed_hydro_scan( file , &tmp_error );
+      gint       i, len;
 
       if ( river )
       {

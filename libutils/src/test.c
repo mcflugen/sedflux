@@ -52,7 +52,6 @@ g_scanner_free_value (GTokenType     *token_p,
 
 int main()
 {
-   Eh_key_file f;
    GScanner* s;
 
    eh_init_glib();

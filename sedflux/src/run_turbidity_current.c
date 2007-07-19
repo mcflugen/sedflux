@@ -27,9 +27,8 @@
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "turbidity_current.h"
 #include "inflow.h"
-#include "processes.h"
+#include "my_processes.h"
 
 #define WITH_SAKURA
 #ifdef WITH_SAKURA
@@ -79,41 +78,60 @@
 #define DEFAULT_OUT_TIME    (30)
 #define DEFAULT_PHEBOTTOM   (0.2) 
 
-void sed_get_phe   ( gpointer user_data , gpointer bathy_data );
-
-Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
+typedef struct
 {
-   Turbidity_t*     data          = (Turbidity_t*)ptr; 
-   Sed_process_info info          = SED_EMPTY_INFO;
+   double  dx;
+   double  x;
+   double  erode_depth;
+   double* phe;
+}
+Sed_phe_query_t;
+
+typedef struct
+{
+   double dh;
+   int    i;
+}
+Sed_remove_query_t;
+
+typedef struct
+{
+   int     i;
+   double  dh;
+   double* phe;
+   int     n_grains;
+}
+Sed_add_query_t;
+
+typedef struct
+{
+   int    i;
+   double depth;
+}
+Sed_depth_query_t;
+
+//void sed_get_phe   ( gpointer user_data , gpointer bathy_data );
+
+Sed_process_info
+run_turbidity_inflow( Sed_process proc , Sed_cube p )
+{
+   Inflow_t*        data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    Sed_cube         fail;
    Inflow_const_st  inflow_const;
    gssize           ind_start;
    Sed_cell         flow_cell;
    Sed_hydro        flow;
 
-   // Clean up process.
-   if ( p == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   // Initialize process.
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
-   
    //---
    // This module can only be run on a 1D profile.
    //---
    if ( sed_mode_is_3d() )
       return info;
 
-   fail = data->failure;
+   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+
+   eh_require( fail );
 
    // Transfer over the (inflow) turbidity current flow constants.
    inflow_const.e_a             = data->E_a;
@@ -137,16 +155,165 @@ Sed_process_info run_turbidity( gpointer ptr , Sed_cube p )
    // initial flow conditions.
    flow = inflow_flood_from_cell( flow_cell , sed_cube_x_res(p)*sed_cube_y_res(p) );
 
-   sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , inflow_const );
+   sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &inflow_const );
 
    sed_cell_destroy( flow_cell );
 
    return info;
 }
 
+Sed_process_info
+run_turbidity_sakura( Sed_process proc , Sed_cube p )
+{
+   Inflow_t*        data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+   Sed_cube         fail;
+   Sakura_const_st  sakura_const;
+   gssize           ind_start;
+   Sed_cell         flow_cell;
+   Sed_hydro        flow;
+
+   //---
+   // This module can only be run on a 1D profile.
+   //---
+   if ( sed_mode_is_3d() )
+      return info;
+
+   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   //fail = data->failure;
+
+   // Transfer over the (inflow) turbidity current flow constants.
+   sakura_const.e_a             = data->E_a;
+   sakura_const.e_b             = data->E_b;
+   sakura_const.sua             = data->sua;
+   sakura_const.sub             = data->sub;
+   sakura_const.c_drag          = data->C_d;
+   sakura_const.tan_phi         = data->tan_phi;
+   sakura_const.mu_water        = data->mu;
+   sakura_const.rho_sea_water   = data->rhoSW;
+   sakura_const.rho_river_water = data->rhoSW;
+   sakura_const.channel_len     = data->channel_length;
+   sakura_const.channel_width   = data->channel_width;
+
+   // Start the flow at the end of the failure.
+   ind_start    = (int)( sed_cube_col_y( fail,sed_cube_n_y(fail)-1 ) );
+
+   // Average the failure into one cell.
+   flow_cell = sed_cube_to_cell( fail , NULL );
+
+   // initial flow conditions.
+   flow = sakura_flood_from_cell( flow_cell , sed_cube_x_res(p)*sed_cube_y_res(p) );
+
+   sed_sakura( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &sakura_const );
+
+   sed_cell_destroy( flow_cell );
+
+   return info;
+}
+
+Sed_process_info
+run_plume_hyper_inflow( Sed_process proc , Sed_cube p )
+{
+   Inflow_t*        data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+
+   //---
+   // This module can only be run on a 1D profile.
+   //---
+   if ( sed_mode_is_2d() )
+   {
+      Inflow_const_st  inflow_const;
+      Sed_hydro        flow;
+      Sed_riv          this_river;
+      gint             ind_start;
+
+      // Transfer over the (inflow) turbidity current flow constants.
+      inflow_const.e_a             = data->E_a;
+      inflow_const.e_b             = data->E_b;
+      inflow_const.sua             = data->sua;
+      inflow_const.sub             = data->sub;
+      inflow_const.c_drag          = data->C_d;
+      inflow_const.tan_phi         = data->tan_phi;
+      inflow_const.mu_water        = data->mu;
+      inflow_const.rho_sea_water   = data->rhoSW;
+      inflow_const.rho_river_water = sed_rho_fresh_water();
+      inflow_const.channel_len     = data->channel_length;
+      inflow_const.channel_width   = data->channel_width;
+      inflow_const.dep_start       = TURBIDITY_CURRENT_NO_DEPOSIT_LENGTH;
+
+      // Start the flow at the river mouth
+      ind_start  = sed_cube_river_mouth_1d( p );
+
+      // initial flow conditions.
+      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
+      flow       = sed_river_hydro( this_river );
+
+      eh_require( this_river                            );
+      eh_require( flow                                  );
+      eh_require( sed_cube_is_in_domain_id(p,ind_start) );
+
+      sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &inflow_const );
+
+      flow = sed_hydro_destroy( flow );
+   }
+
+   return info;
+}
+
+Sed_process_info
+run_plume_hyper_sakura( Sed_process proc , Sed_cube p )
+{
+   Inflow_t*        data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
+
+   //---
+   // This module can only be run on a 1D profile.
+   //---
+   if ( sed_mode_is_2d() )
+   {
+      Sakura_const_st  sakura_const;
+      Sed_hydro        flow;
+      Sed_riv          this_river;
+      gint             ind_start;
+
+      // Transfer over the (inflow) turbidity current flow constants.
+      sakura_const.e_a             = data->E_a;
+      sakura_const.e_b             = data->E_b;
+      sakura_const.sua             = data->sua;
+      sakura_const.sub             = data->sub;
+      sakura_const.c_drag          = data->C_d;
+      sakura_const.tan_phi         = data->tan_phi;
+      sakura_const.mu_water        = data->mu;
+      sakura_const.rho_sea_water   = data->rhoSW;
+      sakura_const.rho_river_water = sed_rho_fresh_water();
+      sakura_const.channel_len     = data->channel_length;
+      sakura_const.channel_width   = data->channel_width;
+      sakura_const.dep_start       = TURBIDITY_CURRENT_NO_DEPOSIT_LENGTH;
+      sakura_const.dt              = TURBIDITY_CURRENT_TIME_INTERVAL;
+
+      // Start the flow at the river mouth
+      ind_start  = sed_cube_river_mouth_1d( p );
+
+      // initial flow conditions.
+      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
+      flow       = sed_river_hydro( this_river );
+
+      eh_require( this_river                            );
+      eh_require( flow                                  );
+      eh_require( sed_cube_is_in_domain_id(p,ind_start) );
+
+      sed_sakura( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &sakura_const );
+
+      flow = sed_hydro_destroy( flow );
+   }
+
+   return info;
+}
+
 #undef HYPERPYCNAL
 #if defined( HYPERPYCNAL )
-Sed_process_info run_hyperpycnal( gpointer ptr , Sed_cube p )
+Sed_process_info
+run_hyperpycnal( gpointer ptr , Sed_cube p )
 {
    Turbidity_t *data=(Turbidity_t*)ptr; 
    Sed_process_info info = SED_EMPTY_INFO;
@@ -493,102 +660,121 @@ data->algorithm = TURBIDITY_CURRENT_ALGORITHM_INFLOW;
 #define S_KEY_TAN_PHI        "internal friction angle"
 #define S_KEY_CHANNEL_WIDTH  "width of channel"
 #define S_KEY_CHANNEL_LENGTH "length of channel"
-#define S_KEY_ALGORITHM      "algorithm"
 
-gboolean init_turbidity( Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* inflow_labels[] =
 {
-   Turbidity_t *data=(Turbidity_t*)ptr; 
-   char *key;
+   S_KEY_SUA            ,
+   S_KEY_SUB            ,
+   S_KEY_E_A            ,
+   S_KEY_E_B            ,
+   S_KEY_C_D            ,
+   S_KEY_TAN_PHI        ,
+   S_KEY_CHANNEL_WIDTH  ,
+   S_KEY_CHANNEL_LENGTH ,
+   NULL
+};
 
-   if ( symbol_table == NULL )
+gboolean
+init_inflow( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Inflow_t*    data    = sed_process_new_user_data( p , Inflow_t );
+   GError*      tmp_err = NULL;
+   gchar**      err_s   = NULL;
+   gboolean     is_ok   = TRUE;
+   //gchar*       key;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   eh_symbol_table_require_labels( tab , inflow_labels , &tmp_err );
+
+   if ( !tmp_err )
    {
-      data->initialized = FALSE;
-      return TRUE;
+      data->sua            = eh_symbol_table_dbl_value( tab , S_KEY_SUA            );
+      data->sub            = eh_symbol_table_dbl_value( tab , S_KEY_SUB            );
+      data->E_a            = eh_symbol_table_dbl_value( tab , S_KEY_E_A            );
+      data->E_b            = eh_symbol_table_dbl_value( tab , S_KEY_E_B            );
+      data->C_d            = eh_symbol_table_dbl_value( tab , S_KEY_C_D            );
+      data->tan_phi        = eh_symbol_table_dbl_value( tab , S_KEY_TAN_PHI        );
+      data->channel_width  = eh_symbol_table_dbl_value( tab , S_KEY_CHANNEL_WIDTH  );
+      data->channel_length = eh_symbol_table_dbl_value( tab , S_KEY_CHANNEL_LENGTH );
+/*
+      key                  = eh_symbol_table_lookup( tab , S_KEY_ALGORITHM );
+      if      ( g_ascii_strcasecmp( key , "INFLOW" ) == 0 ) data->algorithm = TURBIDITY_CURRENT_ALGORITHM_INFLOW;
+      else if ( g_ascii_strcasecmp( key , "SAKURA" ) == 0 ) data->algorithm = TURBIDITY_CURRENT_ALGORITHM_SAKURA;
+      else
+         g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM ,
+                      "Invalid turbidity current model (inflow or sakura): %s" , key );
+*/
+
+      data->tan_phi         = tan(data->tan_phi*S_RADS_PER_DEGREE);
+      data->channel_length *= 1000.;
+      data->mu              = 1.3e-6;
+      data->rhoSW           = 1028.;
+
+      eh_check_to_s( data->sua>=0            , "Bottom sediment shear strength positive"          , &err_s );
+      eh_check_to_s( data->sub>=0            , "Bottom sediment shear strength gradient positive" , &err_s );
+      eh_check_to_s( data->E_a>=0            , "Entrainment constant E_a positive"                , &err_s );
+      eh_check_to_s( data->E_b>=0            , "Entrainment constant E_b positive"                , &err_s );
+      eh_check_to_s( data->C_d>=0            , "Drag coefficient positive"                        , &err_s );
+      eh_check_to_s( data->tan_phi>=0        , "Sediment friction angle positive"                 , &err_s );
+      eh_check_to_s( data->channel_width>=0  , "Channel width positive"                           , &err_s );
+      eh_check_to_s( data->channel_length>=0 , "Channel length positive"                          , &err_s );
+
+      if ( !tmp_err && err_s )
+         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
    }
 
-   data->sua            = eh_symbol_table_dbl_value( symbol_table , S_KEY_SUA            );
-   data->sub            = eh_symbol_table_dbl_value( symbol_table , S_KEY_SUB            );
-   data->E_a            = eh_symbol_table_dbl_value( symbol_table , S_KEY_E_A            );
-   data->E_b            = eh_symbol_table_dbl_value( symbol_table , S_KEY_E_B            );
-   data->C_d            = eh_symbol_table_dbl_value( symbol_table , S_KEY_C_D            );
-   data->tan_phi        = eh_symbol_table_dbl_value( symbol_table , S_KEY_TAN_PHI        );
-   data->channel_width  = eh_symbol_table_dbl_value( symbol_table , S_KEY_CHANNEL_WIDTH  );
-   data->channel_length = eh_symbol_table_dbl_value( symbol_table , S_KEY_CHANNEL_LENGTH );
-
-   key = eh_symbol_table_lookup( symbol_table , S_KEY_ALGORITHM );
-
-   if ( strcasecmp( key , "INFLOW" ) == 0 )
-      data->algorithm = TURBIDITY_CURRENT_ALGORITHM_INFLOW;
-   else if ( strcasecmp( key , "SAKURA" ) == 0 )
-      data->algorithm = TURBIDITY_CURRENT_ALGORITHM_SAKURA;
-   else
+   if ( tmp_err )
    {
-      g_error( "unknown algorithm: %s." , key );
-      return FALSE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   data->tan_phi = tan(data->tan_phi*S_RADS_PER_DEGREE);
-   data->channel_length *= 1000.;
+   return is_ok;
+}
 
-   data->mu = 1.3e-6;
-   data->rhoSW = 1028.;
+gboolean
+destroy_inflow( Sed_process p )
+{
+   if ( p )
+   {
+      Inflow_t* data = sed_process_user_data( p );
+      
+      if ( data ) eh_free( data );
+   }
 
    return TRUE;
 }
 
 gboolean dump_turbidity_current_data( gpointer ptr , FILE *fp )
 {
-   Turbidity_t *data = (Turbidity_t*)ptr;
-   int i;
+   Inflow_t *data = (Inflow_t*)ptr;
 
-   fwrite( data , sizeof(Turbidity_t) , 1 , fp );
+   fwrite( data , sizeof(Inflow_t) , 1 , fp );
    sed_cube_write( fp , data->failure );
 
-   for ( i=0 ; i<data->n_x ; i++ )
-      fwrite( data->deposit[i] , sizeof(double) , data->n_y , fp );
+//   for ( i=0 ; i<data->n_x ; i++ )
+//      fwrite( data->deposit[i] , sizeof(double) , data->n_y , fp );
 
    return TRUE;
 }
 
 gboolean load_turbidity_current_data( gpointer ptr , FILE *fp )
 {
-   Turbidity_t *data = (Turbidity_t*)ptr;
-   int i;
+   Inflow_t* data = (Inflow_t*)ptr;
 
-   fread( data , sizeof(Turbidity_t) , 1 , fp );
+   fread( data , sizeof(Inflow_t) , 1 , fp );
    data->failure = sed_cube_read( fp );
 
-   data->deposit = eh_new( double* , data->n_x );
-   for ( i=0 ; i<data->n_x ; i++ )
-   {
-      data->deposit[i] = eh_new( double , data->n_y );
-      fread( data->deposit[i] , sizeof(double) , data->n_y , fp );
-   }
+//   data->deposit = eh_new( double* , data->n_x );
+//   for ( i=0 ; i<data->n_x ; i++ )
+//   {
+//      data->deposit[i] = eh_new( double , data->n_y );
+//      fread( data->deposit[i] , sizeof(double) , data->n_y , fp );
+//   }
 
    return TRUE;
-}
-
-/** Calculate the equivalent grain size.
-
-Sediment grains falling through water will settle a rates that are greater than
-those predicted because of flocculation.  That is, a grain will settle at a rate predicted
-for a larger grain.  This function calculates this "equivalent" grain size, given the real
-grain size.
-
-\param real_diameter The real grain size in meters.
-
-\return The equivalent grain size in meters.
-*/
-
-double get_equivalent_diameter(double real_diameter)
-{
-/* double m=0.2,b=220e-6;
-   double m=0.2,b=100e-6;
-   double m=0.2,b=200e-6;
-   return m*real_diameter+b;
-*/
-   double a=39.8e-3, b=.6;
-   return a*pow(real_diameter,b);
 }
 
 /***********************************************************************
@@ -746,7 +932,7 @@ more sediment than is actually present.
 \return       A pointer to the array of grain type fractions.
 
 */
-
+/*
 void sed_get_phe( gpointer data , gpointer p )
 {
    Sed_cube prof  = (Sed_cube)p;
@@ -815,8 +1001,7 @@ void sed_remove( gpointer remove_query , gpointer data )
    Sed_cell cell;
    
    cell = sed_column_top( sed_cube_col(prof,i) , remove , NULL );
-   EH_STRUCT_MEMBER( Sed_remove_query_t , remove_query , dh ) = 
-      sed_cell_thickness( cell );
+   EH_STRUCT_MEMBER( Sed_remove_query_t , remove_query , dh ) = sed_cell_size( cell );
    sed_cell_destroy( cell );
 
    return;
@@ -854,4 +1039,4 @@ void sed_get_depth( gpointer depth_query , gpointer data )
 
    return;
 }
-
+*/

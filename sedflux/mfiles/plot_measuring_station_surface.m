@@ -1,3 +1,26 @@
+%% Plot a surface from a sedflux measuring station file
+%
+% Optional paramter/value pairs:
+%   - timeslice : Index to the time slice to image. [int]
+%   - sealevel  : Elevation of sea level. [double]
+%   - zlim      : Limits of the z-axis. [Vector double]
+%   - wheeler   : For 1D slices, image the data wheeler-style. [boolean]
+%   - colorbar  : Include a colorbar. [boolean]
+%   - time      : The time of the image. [double]
+%   - view      : For 2D surface plot, specify the view. [double]
+%   - diff      : Take time derivative of the data. [boolean]
+%   - surf      : Create a surface plot rather than an image. [boolean]
+%   - refslice  : Specify a reference time slice from which all data
+%                 is differenced from. [int]
+%   - hook      : Specify a function to run after the data are plotted.
+%                 The function should accept a handle to an axis as
+%                 its only input parameter[function_handle]
+%
+% \param filename   The name of the measuring station file
+% \param varargin   Optional parameter/value pairs
+%
+% \return A handle to the new axis
+%
 function ax = plot_measuring_station_surface( filename , varargin )
 % PLOT_MEASURING_STATION   Plot a Wheeler type diagram from sedflux data.
 %
@@ -5,7 +28,6 @@ function ax = plot_measuring_station_surface( filename , varargin )
 
 valid_args = { 'timeslice'  , 'double' , inf ; ...
                'sealevel'   , 'double' , [] ; ...
-               'size'       , 'double' , [] ; ...
                'zlim'       , 'double' , [] ; ...
                'wheeler'    , 'logical', false ; ...
                'colorbar'   , 'logical', true ; ...
@@ -21,7 +43,6 @@ values = parse_varargin( valid_args , varargin );
 
 time_slice     = values{strmatch( 'timeslice', {valid_args{:,1}} , 'exact' )};
 sea_level      = values{strmatch( 'sealevel' , {valid_args{:,1}} , 'exact' )};
-grid_size      = values{strmatch( 'size'     , {valid_args{:,1}} , 'exact' )};
 z_lim          = values{strmatch( 'zlim'     , {valid_args{:,1}} , 'exact' )};
 time           = values{strmatch( 'time'     , {valid_args{:,1}} , 'exact' )};
 z_dir          = values{strmatch( 'zdir'     , {valid_args{:,1}} , 'exact' )};
@@ -195,5 +216,6 @@ if ( ~isempty(hook_func) )
    hook_func( h_ax );
 end
 
+%% Dummy function
 function empty_hook( ax )
 

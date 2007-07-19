@@ -74,6 +74,10 @@ int plumecheck( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
       fprintf( stderr,"   The river discharge is out of range \n");
       fprintf( stderr,"   river.Q = %g, qmin = 1.0, qmax = 1e6 (m^3/s) \n" ,
                river->Q );
+/*
+      eh_strv_append( &err_s , g_strdup_printf( "Plume input parameter error: River discharge out of range." ) );
+      eh_strv_append( &err_s , g_strdup_printf( "River discharge = %g ()." , river->Q ) );
+*/
       err = 1;
    }
    

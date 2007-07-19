@@ -81,9 +81,6 @@ inflow( double day        , double x[]         , double slope[]  , double width[
 {
    double **save_data;
 
-//   void inflow_get_phe ( gpointer query_data , gpointer profile_data );
-//   void sedflux_get_phe( gpointer query_data , gpointer profile_data );
-
    // Node parameters.
    double q, q0, J, J0, conc, conc0;
    double h, h0, u, u0;
@@ -103,7 +100,6 @@ inflow( double day        , double x[]         , double slope[]  , double width[
    double muEffective, *ws;
    double depth=0, max_depth=0;
    int i, n;
-   gpointer profile_data;
    Inflow_phe_query_st phe_query;
 
    Ea     = c->e_a;
@@ -140,7 +136,8 @@ inflow( double day        , double x[]         , double slope[]  , double width[
    q0    = dc;
    rho0  = rho_rw;
    rhoF0 = rho_flow;
-   rhoS0 = weighted_avg(gzF,rho_grain,n_grains);
+   rhoS0 = eh_dbl_array_mean_weighted(gzF,n_grains,rho_grain);
+   rhoS0 = eh_dbl_array_mean_weighted(gzF,n_grains,rho_grain);
    conc0 = (rhoF0-rho0)/(rhoS0-rho0);
    J0    = q0*conc0;
    for (n=0;n<n_grains;n++)
@@ -348,7 +345,7 @@ inflow( double day        , double x[]         , double slope[]  , double width[
       for (n=0;n<n_grains;n++)
          gzF[n] = Jgrain[n]/J;
       
-      rhoS = weighted_avg(gzF,rho_grain,n_grains);
+      rhoS = eh_dbl_array_mean_weighted(gzF,n_grains,rho_grain);
       for (n=0,conc=0;n<n_grains;n++)
       {
          Cgrain[n] = Jgrain[n]/q;
@@ -375,7 +372,7 @@ inflow( double day        , double x[]         , double slope[]  , double width[
          }
       }
 
-      rhoF = conc*(weighted_avg(gzF,rho_grain,n_grains)-rho)+rho;
+      rhoF = conc*(eh_dbl_array_mean_weighted(gzF,n_grains,rho_grain)-rho)+rho;
 
       // Save the node values.
       rho0 = rho;

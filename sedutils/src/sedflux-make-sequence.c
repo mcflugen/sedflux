@@ -34,7 +34,6 @@ int main( int argc , char* argv[] )
    GOptionContext* context = g_option_context_new( "Create a sequence grid file for sedflux-3d" );
    GError*         error   = NULL;
    FILE*           fp_out  = stdout;
-   FILE*           fp_in   = stdin;
    gint            byte_order = G_BYTE_ORDER;
 
    g_option_context_add_main_entries( context , entries , NULL );

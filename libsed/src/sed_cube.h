@@ -48,9 +48,11 @@ typedef enum
 }
 Sed_cube_error;
 
-#define SED_CUBE_ERROR sed_cube_error_quark()
+#define SED_CUBE_SUSP_GRID sed_cube_susp_grid_quark()
+#define SED_CUBE_ERROR     sed_cube_error_quark()
 
-GQuark sed_cube_error_quark( void );
+GQuark sed_cube_error_quark    ( void );
+GQuark sed_cube_susp_grid_quark( void );
 
 typedef enum
 {
@@ -129,8 +131,11 @@ Sed_cube sed_cube_set_dz( Sed_cube p , double new_dz );
 gssize sed_cube_size( const Sed_cube s );
 gssize sed_cube_n_x( const Sed_cube s );
 gssize sed_cube_n_y( const Sed_cube s );
-Sed_column sed_cube_col( const Sed_cube s , gssize ind );
-Sed_column sed_cube_col_ij( const Sed_cube s , gssize i , gssize j );
+
+Sed_column sed_cube_col    ( const Sed_cube s , gssize ind );
+Sed_column sed_cube_col_ij ( const Sed_cube s , gssize i , gssize j );
+Sed_column sed_cube_col_pos( const Sed_cube s , double x , double y );
+
 double sed_cube_sea_level( const Sed_cube s );
 double *sed_cube_x( const Sed_cube s , gssize *id );
 double *sed_cube_y( const Sed_cube s , gssize *id );
@@ -203,7 +208,15 @@ Sed_cube    sed_cube_set_river_data( Sed_cube s       ,
                               Sed_hydro new_data );
 */
 Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list ) G_GNUC_DEPRECATED;
-Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no );
+
+
+Sed_cube      sed_cube_split_river( Sed_cube s , const gchar* name );
+void          sed_river_attach_susp_grid( Sed_riv r , Sed_cell_grid g );
+Sed_cell_grid sed_river_get_susp_grid( Sed_riv r );
+void          sed_river_detach_susp_grid( Sed_riv r );
+Sed_cube      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
+Sed_cube      sed_cube_remove_river( Sed_cube s , Sed_riv r );
+Sed_cube      sed_cube_remove_all_trunks( Sed_cube s );
 
 Sed_cube sed_cube_set_name( Sed_cube s , char *name );
 Sed_cube sed_cube_set_time_step( Sed_cube s , double time_step_in_years );
@@ -225,17 +238,23 @@ Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index );
 Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index );
 
 Sed_riv       sed_cube_river_by_name   ( Sed_cube s , const char *name );
-Sed_riv       sed_cube_nth_river       ( Sed_cube s , gssize n );
+Sed_riv       sed_cube_nth_river       ( Sed_cube s , gint n );
 gssize        sed_cube_river_id        ( Sed_cube s , Sed_riv river );
 
-Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no );
-GList* sed_cube_river_list( Sed_cube s );
+//Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no );
+Sed_cell_grid sed_cube_in_suspension( Sed_cube s , Sed_riv r );
+
+GList*   sed_cube_river_list  ( Sed_cube s );
+Sed_riv* sed_cube_all_trunks  ( Sed_cube s );
+Sed_riv* sed_cube_all_branches( Sed_cube s );
+Sed_riv* sed_cube_all_leaves  ( Sed_cube s );
+Sed_riv* sed_cube_all_rivers  ( Sed_cube s );
 
 gssize     sed_cube_number_of_rivers( Sed_cube s ) G_GNUC_DEPRECATED;
 gint       sed_cube_n_branches      ( Sed_cube s );
 gint       sed_cube_n_rivers        ( Sed_cube s );
 
-Sed_cube      sed_cube_add_river       ( Sed_cube s , Sed_riv river );
+Sed_cube      sed_cube_add_trunk    ( Sed_cube s , Sed_riv river );
 
 Sed_cube sed_load_cube( FILE *fp );
 gssize sed_cube_column_id( const Sed_cube c , double x , double y );
@@ -349,8 +368,9 @@ GArray*     sed_get_floor     ( char *filename , GArray *x , GError** error ) G_
 
 gssize   sed_cube_id ( Sed_cube p , gssize i , gssize j );
 Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id );
-gboolean sed_cube_is_in_domain   ( Sed_cube p , gssize i , gssize j );
-gboolean sed_cube_is_in_domain_id( Sed_cube p , gssize id );
+gboolean sed_cube_is_in_domain    ( Sed_cube p , gssize i , gssize j );
+gboolean sed_cube_is_in_domain_id ( Sed_cube p , gssize id );
+gboolean sed_cube_is_in_domain_pos( Sed_cube p , double x , double y );
 gboolean sed_cube_is_1d( Sed_cube p );
 
 gssize   sed_cube_fprint( FILE* fp , Sed_cube c );

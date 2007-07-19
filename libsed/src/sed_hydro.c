@@ -23,6 +23,7 @@
 
 #include "utils.h"
 #include "sed_hydro.h"
+#include "sed_hydrotrend.h"
 
 CLASS ( Sed_hydro )
 {
@@ -33,6 +34,7 @@ CLASS ( Sed_hydro )
    double *conc;
    gint32 n_grains;
    double duration;
+   double t;
 };
 
 CLASS ( Sed_hydro_file )
@@ -48,7 +50,7 @@ CLASS ( Sed_hydro_file )
    size_t header_start;
    size_t data_start;
    size_t data_size;
-   Hydro_header *hdr;
+   Sed_hydrotrend_header *hdr;
    Hydro_read_record_func read_record;
    Hydro_read_header_func read_hdr;
 };
@@ -61,143 +63,11 @@ sed_hydro_error_quark( void )
 
 
 //Hydro_header* _hydro_read_inline_header           ( Sed_hydro_file fp );
-Sed_hydro     _hydro_read_inline_record           ( Sed_hydro_file fp );
-Hydro_header* _hydro_read_hydrotrend_header       ( Sed_hydro_file fp );
-Sed_hydro     _hydro_read_hydrotrend_record       ( Sed_hydro_file fp );
-Sed_hydro     _hydro_read_inline_record           ( Sed_hydro_file fp );
-Sed_hydro     _hydro_read_hydrotrend_record_buffer( Sed_hydro_file fp );
-
-/** Read the header of a HydroTrend file.
-
-\param fp   The file to read.
-
-\return The header information
-*/
-Hydro_header*
-sed_hydro_read_header( FILE *fp )
-{
-   return sed_hydro_read_header_from_byte_order( fp , G_BYTE_ORDER );
-}
-
-Hydro_header*
-sed_hydro_read_header_from_byte_order( FILE *fp , gint order )
-{
-   Hydro_header *hdr = NULL;
-
-   if ( fp )
-   {
-      gint n;
-      gssize (*fread_int)(void*,size_t,size_t,FILE*);
-
-      if ( order==G_BYTE_ORDER )
-         fread_int = fread;
-      else
-         fread_int = eh_fread_int32_swap;
-   
-      hdr = eh_new( Hydro_header , 1 );
-
-      if ( fread_int( &n , sizeof(int)  , 1 , fp )==1 && (n>=0 && n<2048 ) )
-      {
-         hdr->comment = eh_new( char , n+1 );
-         fread( hdr->comment , sizeof(char) , n , fp );
-         hdr->comment[n] = '\0';
-
-         if (    fread_int( &(hdr->n_grains ) , sizeof(int)  , 1 , fp )!=1 || hdr->n_grains <=0
-              || fread_int( &(hdr->n_seasons) , sizeof(int)  , 1 , fp )!=1 || hdr->n_seasons<=0
-              || fread_int( &(hdr->n_samples) , sizeof(int)  , 1 , fp )!=1 || hdr->n_samples<=0 )
-         {
-            eh_message( "Trouble reading hydrotrend header." );
-            eh_message( "Is the byte of the hydrotrend file the same as that" );
-            eh_message( "on the machine you are running sedflux?" );
-            eh_message( "The byte order of your system is %s" ,
-                        (G_BYTE_ORDER==G_BIG_ENDIAN)?"big-endian":"little-endian" );
-            eh_error( "Could not read hydrotrend file." );
-         }
-      }
-
-   }
-
-   return hdr;
-}
-
-/** Read one record from a HydroTrend file.
-
-\param fp   The file to read
-\param n_grains The number of suspended grains in the file
-
-\return A newly-created Sed_hydro.  Use sed_hydro_destroy to free.
-*/
-Sed_hydro
-sed_hydro_read_record( FILE* fp , int n_grains )
-{
-   return sed_hydro_read_record_from_byte_order( fp , n_grains , G_BYTE_ORDER );
-}
-
-Sed_hydro
-sed_hydro_read_record_from_byte_order( FILE *fp , int n_grains , gint order )
-{
-   int n;
-   float* fval = eh_new( float , 4+n_grains );
-   Sed_hydro rec = NULL;
-
-   if ( order==G_BYTE_ORDER )
-      n = fread            ( fval , sizeof(float) , 4+n_grains , fp );
-   else
-      n = eh_fread_flt_swap( fval , sizeof(float) , 4+n_grains , fp );
-
-   if ( n==4+n_grains )
-   {
-      gint i;
-      rec = sed_hydro_new( n_grains );
-
-      rec->velocity = fval[0];
-      rec->width    = fval[1];
-      rec->depth    = fval[2];
-      rec->bedload  = fval[3];
-
-      rec->n_grains = n_grains;
-      for (i=0 ; i<n_grains ; i++)
-         rec->conc[i] = fval[i+n_grains];
-   }
-
-   eh_free( fval );
-
-   return rec;
-}
-
-gssize
-sed_hydro_write_record( FILE *fp , Sed_hydro rec , gint order )
-{
-   return sed_hydro_write_record_to_byte_order( fp , rec , G_BYTE_ORDER );
-}
-
-gssize
-sed_hydro_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order )
-{
-   gssize n;
-
-   if ( rec )
-   {
-      gint i;
-      float* fval = eh_new( float , 4+rec->n_grains );
-
-      fval[0] = rec->velocity;
-      fval[1] = rec->width;
-      fval[2] = rec->depth;
-      fval[3] = rec->bedload;
-
-      for (i=0 ; i<rec->n_grains ; i++)
-         fval[4+i] = rec->conc[i];
-
-      if ( order==G_BYTE_ORDER )
-         n = fwrite            ( fval , sizeof(float) , 4+rec->n_grains , fp );
-      else
-         n = eh_fwrite_flt_swap( fval , sizeof(float) , 4+rec->n_grains , fp );
-
-      eh_free( fval );
-   }
-   return n;
-}
+Sed_hydro          _hydro_read_inline_record           ( Sed_hydro_file fp );
+Sed_hydrotrend_header* _hydro_read_hydrotrend_header       ( Sed_hydro_file fp );
+Sed_hydro          _hydro_read_hydrotrend_record       ( Sed_hydro_file fp );
+Sed_hydro          _hydro_read_inline_record           ( Sed_hydro_file fp );
+Sed_hydro          _hydro_read_hydrotrend_record_buffer( Sed_hydro_file fp );
 
 void
 sed_hydro_fprint_default_inline_file( FILE *fp )
@@ -206,6 +76,29 @@ sed_hydro_fprint_default_inline_file( FILE *fp )
    char **p;
    for ( p = text ; *p ; p++ )
       fprintf( fp , "%s\n" , *p );
+}
+
+gssize
+sed_hydro_array_fprint( FILE* fp , Sed_hydro* rec_a )
+{
+   gssize n = 0;
+
+   eh_return_val_if_fail( rec_a    , 0 );
+   eh_return_val_if_fail( rec_a[0] , 0 );
+
+   if ( fp && rec_a )
+   {
+      Sed_hydro* rec;
+      gint       n_rec = 0;
+
+      for ( rec=rec_a ; *rec ; rec++ )
+      {
+         n += fprintf( fp , "[ Record %d ]\n" , n_rec++ );
+         n += sed_hydro_fprint( fp , *rec );
+      }
+   }
+
+   return n;
 }
 
 gssize
@@ -219,10 +112,11 @@ sed_hydro_fprint( FILE* fp , Sed_hydro rec )
    {
       gssize i;
       n += fprintf( fp , "duration (day)         : %f\n" , rec->duration );
+      n += fprintf( fp , "time                   : %f\n" , rec->t        );
       n += fprintf( fp , "velocity (m/s)         : %f\n" , rec->velocity );
-      n += fprintf( fp , "width (m)              : %f\n" , rec->width );
-      n += fprintf( fp , "depth (m)              : %f\n" , rec->depth );
-      n += fprintf( fp , "bedload (kg/s)         : %f\n" , rec->bedload );
+      n += fprintf( fp , "width (m)              : %f\n" , rec->width    );
+      n += fprintf( fp , "depth (m)              : %f\n" , rec->depth    );
+      n += fprintf( fp , "bedload (kg/s)         : %f\n" , rec->bedload  );
       n += fprintf( fp , "concentration (kg/m^3) : " );
       for ( i=0 ; i<rec->n_grains-1 ; i++ )
          n += fprintf( fp , "%f, " , rec->conc[i] );
@@ -293,12 +187,13 @@ sed_hydro_scan( const gchar* file , GError** error )
          {
             hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
 
-            if ( !tmp_err )
-               sed_hydro_check( hydro_arr[i] , &tmp_err );
+            if ( !tmp_err ) sed_hydro_check( hydro_arr[i] , &tmp_err );
 
             eh_symbol_table_destroy( group );
          }
          hydro_arr[i] = NULL;
+
+         sed_hydro_array_set_time( hydro_arr , 0. );
 
          if ( tmp_err )
          {
@@ -359,9 +254,10 @@ sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
    {
       GError* tmp_err = NULL;
 
-      if ( eh_symbol_table_has_labels( t , required_labels ) )
+      //if ( eh_symbol_table_has_labels( t , required_labels ) )
+      if ( eh_symbol_table_require_labels( t , required_labels , &tmp_err ) )
       {
-         gssize n_susp_grains;
+         gint    n_susp_grains;
          double* c = eh_symbol_table_dbl_array_value( t , SED_HYDRO_LABEL_SUSPENDED_CONC , &n_susp_grains , NULL );
 
          r = sed_hydro_new( n_susp_grains );
@@ -376,15 +272,15 @@ sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
       
          r->duration *= S_DAYS_PER_YEAR;
 
+         r->t         = 0.;
+
          eh_free( c );
       }
-      else
+
+      if ( tmp_err )
       {
-         g_set_error( &tmp_err ,
-                      SED_HYDRO_ERROR ,
-                      SED_HYDRO_ERROR_MISSING_LABEL ,
-                      "Missing labels in hydro file\n" );
          g_propagate_error( error , tmp_err );
+         r = sed_hydro_destroy( r );
       }
    }
 
@@ -479,28 +375,6 @@ Hydro_header *sed_hydro_scan_inline_header( FILE *fp )
 }
 */
 
-/** Read a series of HydroTrend records
-
-\param fp       The file to read from
-\param rec      The location to put the records
-\param n_grains The number of suspended grain sizes.
-\param n_recs   The number of records to read.
-
-\return The number of records read.
-*/
-gssize sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs )
-{
-   gssize n = 0;
-   
-   do
-   {
-      rec[n] = sed_hydro_read_record( fp , n_grains );
-   }
-   while ( rec[n] && (++n)<n_recs );
-
-   return n;
-}
-
 /** Create a new Sed_hydro
 
 \param n_grains The number of suspended grain sizes
@@ -515,6 +389,7 @@ Sed_hydro sed_hydro_new( gssize n_grains )
 
    rec->conc = eh_new0( double , n_grains );
    rec->duration = 1.;
+   rec->t        = 0.;
    rec->n_grains = n_grains;
 
    rec->velocity = 0.;
@@ -542,6 +417,7 @@ Sed_hydro sed_hydro_copy( Sed_hydro dest , Sed_hydro src )
    dest->bedload  = src->bedload;
    dest->n_grains = src->n_grains;
    dest->duration = src->duration;
+   dest->t        = src->t;
 
    g_memmove( dest->conc , src->conc , sizeof(double)*src->n_grains );
 
@@ -553,7 +429,17 @@ Sed_hydro sed_hydro_dup( Sed_hydro src )
    return sed_hydro_copy( NULL , src );
 }
 
-gboolean sed_hydro_is_same( Sed_hydro a , Sed_hydro b )
+/** Compare two Sed_hydro values
+
+Note that this does not compare the times of the Sed_hydro values.
+
+\param a   A Sed_hydro
+\param b   A Sed_hydro
+
+\return TRUE if both values are the same
+*/
+gboolean
+sed_hydro_is_same( Sed_hydro a , Sed_hydro b )
 {
    eh_return_val_if_fail( a , FALSE );
    eh_return_val_if_fail( b , FALSE );
@@ -585,8 +471,17 @@ Sed_hydro sed_hydro_resize( Sed_hydro a , gssize n )
    return a;
 }
 
-gssize sed_hydro_size( Sed_hydro a )
+double
+sed_hydro_time( Sed_hydro a )
 {
+   eh_require( a );
+   return a->t;
+}
+
+gssize
+sed_hydro_size( Sed_hydro a )
+{
+   eh_require( a );
    return a->n_grains;
 }
 
@@ -601,7 +496,8 @@ Sed_hydro sed_hydro_destroy( Sed_hydro rec )
    return NULL;
 }
 
-Sed_hydro* sed_hydro_array_destroy( Sed_hydro* arr )
+Sed_hydro*
+sed_hydro_array_destroy( Sed_hydro* arr )
 {
    if ( arr )
    {
@@ -615,7 +511,8 @@ Sed_hydro* sed_hydro_array_destroy( Sed_hydro* arr )
    return NULL;
 }
 
-gssize sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
+gssize
+sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
 {
    gssize n = 0;
 
@@ -630,6 +527,7 @@ gssize sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
          n += fwrite( &(a->n_grains) , sizeof(int)    , 1 , fp );
          n += fwrite(   a->conc      , sizeof(double) , a->n_grains , fp );
          n += fwrite( &(a->duration) , sizeof(double) , 1 , fp );
+         n += fwrite( &(a->t)        , sizeof(double) , 1 , fp );
       }
       else
       {
@@ -640,24 +538,42 @@ gssize sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
          n += eh_fwrite_int32_swap( &(a->n_grains) , sizeof(gint32) , 1 , fp );
          n += eh_fwrite_dbl_swap  (   a->conc      , sizeof(double) , a->n_grains , fp );
          n += eh_fwrite_dbl_swap  ( &(a->duration) , sizeof(double) , 1 , fp );
+         n += eh_fwrite_dbl_swap  ( &(a->t)        , sizeof(double) , 1 , fp );
       }
    }
 
    return n;
 }
 
-gssize sed_hydro_write( FILE *fp , Sed_hydro a )
+gssize
+sed_hydro_write( FILE *fp , Sed_hydro a )
 {
    return sed_hydro_write_to_byte_order(fp,a,G_BYTE_ORDER);
 }
 
-Sed_hydro sed_hydro_read( FILE *fp )
+Sed_hydro
+sed_hydro_read( FILE *fp )
 {
-   Sed_hydro a = sed_hydro_new( 1 );
+   Sed_hydro a = NULL;
 
-   fread( a , sizeof(*a) , 1 , fp );
-   sed_hydro_resize( a , a->n_grains );
-   fread( a->conc , sizeof(double) , a->n_grains , fp );
+   if ( fp )
+   {
+      gint32 len;
+
+      a = sed_hydro_new( 1 );
+
+      fread( &(a->velocity) , sizeof(double) , 1   , fp );
+      fread( &(a->width)    , sizeof(double) , 1   , fp );
+      fread( &(a->depth)    , sizeof(double) , 1   , fp );
+      fread( &(a->bedload)  , sizeof(double) , 1   , fp );
+      fread( &len           , sizeof(gint32) , 1   , fp );
+
+      sed_hydro_resize( a , len );
+
+      fread( a->conc        , sizeof(double) , len , fp );
+      fread( &(a->duration) , sizeof(double) , 1   , fp );
+      fread( &(a->t)        , sizeof(double) , 1   , fp );
+   }
 
    return a;
 }
@@ -698,6 +614,21 @@ double
 sed_hydro_flow_density( Sed_hydro a , double rho )
 {
    return sed_hydro_suspended_concentration( a ) + rho;
+}
+
+gboolean
+sed_hydro_is_hyperpycnal( Sed_hydro a )
+{
+   gboolean is_hyper = FALSE;
+
+   eh_require( a );
+
+   if ( sed_hydro_flow_density( a , sed_rho_fresh_water() ) > sed_rho_sea_water() )
+      is_hyper = TRUE;
+   else
+      is_hyper = FALSE;
+
+   return is_hyper;
 }
 
 double*
@@ -792,10 +723,37 @@ double sed_hydro_suspended_load( Sed_hydro a )
    return sed_hydro_suspended_flux(a)*sed_hydro_duration_in_seconds(a);
 }
 
-double sed_hydro_total_load( Sed_hydro a )
+double
+sed_hydro_total_load( Sed_hydro a )
 {
    eh_return_val_if_fail( a , 0 );
    return sed_hydro_suspended_load( a ) + a->bedload*sed_hydro_duration_in_seconds(a);
+}
+
+double
+sed_hydro_array_suspended_load( Sed_hydro* arr )
+{
+   double load = 0.;
+   if ( arr )
+   {
+      Sed_hydro* r;
+      for ( r=arr ; *r ; r++ )
+         load += sed_hydro_suspended_load( *r );
+   }
+   return load;
+}
+
+double
+sed_hydro_array_total_load( Sed_hydro* arr )
+{
+   double load = 0.;
+   if ( arr )
+   {
+      Sed_hydro* r;
+      for ( r=arr ; *r ; r++ )
+         load += sed_hydro_total_load( *r );
+   }
+   return load;
 }
 
 Sed_hydro sed_hydro_set_nth_concentration( Sed_hydro a , gssize n , double val )
@@ -848,10 +806,39 @@ Sed_hydro sed_hydro_set_bedload( Sed_hydro a , double val )
    return a;
 }
 
-Sed_hydro sed_hydro_set_duration( Sed_hydro a , double val )
+Sed_hydro
+sed_hydro_set_duration( Sed_hydro a , double val )
 {
+   eh_require( a );
    a->duration = val;
    return a;
+}
+
+Sed_hydro
+sed_hydro_set_time( Sed_hydro a , double val )
+{
+   eh_require( a );
+   a->t = val;
+   return a;
+}
+
+Sed_hydro*
+sed_hydro_array_set_time( Sed_hydro* arr , double t_0 )
+{
+   if ( arr )
+   {
+      Sed_hydro* a = NULL;
+      double     t = t_0;
+
+      for ( a=arr ; *a ; a++ )
+      {
+         sed_hydro_set_time( *a , t );
+
+         t += sed_hydro_duration( *a );
+         a += 1;
+      }
+   }
+   return arr;
 }
 
 double sed_hydro_velocity( Sed_hydro a )
@@ -894,21 +881,21 @@ Add sediment to river discharge.
 
 @return The input Sed_hydro record
 */
-Sed_hydro sed_hydro_add_cell( Sed_hydro a         ,
-                              const Sed_cell s    ,
-                              double volume_in_m3 )
+Sed_hydro
+sed_hydro_add_cell( Sed_hydro a         ,
+                    const Sed_cell s    )
 {
    eh_return_val_if_fail( a , NULL );
    eh_return_val_if_fail( s , a    );
 
-   eh_require( volume_in_m3>=0 );
    eh_require( (sed_hydro_size(a)+1)==sed_cell_n_types(s) );
 
-   if ( volume_in_m3>0 )
+   if ( sed_cell_size(s)>0 )
    {
-      double q;
-      Sed_sediment sed = sed_sediment_env();
-      double dt_in_secs = sed_hydro_duration_in_seconds(a);
+      double       q;
+      double       volume_in_m3 = sed_cell_size( s );
+      Sed_sediment sed          = sed_sediment_env();
+      double       dt_in_secs   = sed_hydro_duration_in_seconds(a);
 
       // calculate the water flux.
       q = a->velocity*a->width*a->depth;
@@ -938,21 +925,20 @@ Sed_hydro sed_hydro_add_cell( Sed_hydro a         ,
 }
 
 Sed_hydro sed_hydro_subtract_cell( Sed_hydro a         ,
-                                   const Sed_cell s    ,
-                                   double volume_in_m3 )
+                                   const Sed_cell s    )
 {
 
    eh_return_val_if_fail( a , NULL );
    eh_return_val_if_fail( s , a    );
 
-   eh_require( volume_in_m3>=0 );
    eh_require( (sed_hydro_size(a)+1)==sed_cell_n_types(s) );
 
-   if ( volume_in_m3>0 )
+   if ( sed_cell_size(s)>0 )
    {
-      double q;
-      Sed_sediment sed = sed_sediment_env();
-      double dt_in_secs = sed_hydro_duration_in_seconds(a);
+      double       q;
+      double       volume_in_m3 = sed_cell_size( s );
+      Sed_sediment sed          = sed_sediment_env();
+      double       dt_in_secs   = sed_hydro_duration_in_seconds(a);
 
       // calculate the water flux.
       q = a->velocity*a->width*a->depth;
@@ -1057,14 +1043,218 @@ double sed_hydro_sum_durations( Sed_hydro* rec , gssize n_recs )
 typedef struct
 {
    double val;
-   int ind;
+   int    ind;
 }
-Hydro_sort_st G_GNUC_INTERNAL;
+Hydro_sort_st;
 
 gint cmp_hydro_sort_vals( Hydro_sort_st *a , Hydro_sort_st *b ) G_GNUC_INTERNAL;
 gint cmp_hydro_sort_inds( Hydro_sort_st *a , Hydro_sort_st *b ) G_GNUC_INTERNAL;
 
-Sed_hydro *sed_hydro_process_records( Sed_hydro* rec , gssize n_recs , gssize n_sig_values )
+/** Reduce a Sed_hydro array to a number of events
+
+\param rec_a      A NULL-terminated Sed_hydro array
+\param n_events   Number of events to retain
+
+\return A newly-allocated, NULL-terminated Sed_hydro array
+*/
+Sed_hydro*
+sed_hydro_array_eventize_number( Sed_hydro* rec_a , gssize n_events )
+{
+   Sed_hydro* event_a = NULL;
+
+   if ( rec_a && n_events>=0 )
+      event_a = sed_hydro_process_records( rec_a , g_strv_length( (gchar**)rec_a ) , n_events , TRUE );
+
+   return event_a;
+}
+
+/** Reduce a Sed_hydro array to a number of events based on a fraction of the total events
+
+\param rec_a      A NULL-terminated Sed_hydro array
+\param fraction   Fraction of events to retain
+
+\return A newly-allocated, NULL-terminated Sed_hydro array
+*/
+Sed_hydro*
+sed_hydro_array_eventize_fraction( Sed_hydro* rec_a , double fraction )
+{
+   Sed_hydro* event_a = NULL;
+
+   if ( rec_a && rec_a[0] && fraction>0 && fraction<=1 )
+   {
+      gssize len      = g_strv_length( (gchar**)rec_a);
+      double dummy;
+      gssize n_events = fraction*len;
+      double fraction = modf( fraction*len , &dummy );
+
+      if ( g_random_double_range( 0 , 1 ) < fraction )
+         n_events++;
+      
+      event_a = sed_hydro_process_records( rec_a , len , n_events , TRUE );
+   }
+
+   return event_a;
+}
+
+/** Reduce a Sed_hydro array to a number of events based on fraction of total sediment load
+
+\param rec_a              A NULL-terminated Sed_hydro array
+\param f                  Fraction of total sediment load to retain
+\param insert_mean_values If TRUE, mean values are inserted between events
+
+\return A newly-allocated, NULL-terminated Sed_hydro array
+*/
+Sed_hydro*
+sed_hydro_array_eventize( Sed_hydro* rec_a , double f , gboolean insert_mean_values )
+{
+   Sed_hydro* event_a = NULL;
+
+   if ( rec_a && rec_a[0] && f>0 && f<=1 )
+   {
+      gssize     n_events  = 0;
+      double     load      = sed_hydro_array_suspended_load( rec_a );
+      double     threshold = load*f;
+      Sed_hydro* sorted_a  = sed_hydro_array_sort_by_suspended_load( rec_a );
+      Sed_hydro* r;
+      double     sum;
+
+      for ( r=sorted_a,sum=0. ; *r && sum<threshold ; r++ )
+      {
+         sum += sed_hydro_suspended_load( *r );
+         n_events++;
+      }
+
+      eh_free( sorted_a );
+
+      event_a = sed_hydro_process_records( rec_a                         ,
+                                           g_strv_length((gchar**)rec_a) ,
+                                           n_events                      ,
+                                           insert_mean_values );
+   }
+
+   return event_a;
+}
+
+gint
+sed_hydro_cmp_suspended_load( Sed_hydro* a , Sed_hydro* b )
+{
+   gint cmp = 0;
+
+   eh_require( a && *a );
+   eh_require( b && *b );
+
+   if ( *a && *b )
+   {
+      double a_load = sed_hydro_suspended_load( *a );
+      double b_load = sed_hydro_suspended_load( *b );
+
+      if      ( a_load < b_load )
+         cmp = +1;
+      else if ( a_load > b_load )
+         cmp = -1;
+      else
+         cmp =  0;
+   }
+
+   return cmp;
+}
+
+gint
+sed_hydro_cmp_total_load( Sed_hydro* a , Sed_hydro* b )
+{
+   gint cmp = 0;
+
+   eh_require( a && *a );
+   eh_require( b && *b );
+
+   if ( *a && *b )
+   {
+      double a_load = sed_hydro_total_load( *a );
+      double b_load = sed_hydro_total_load( *b );
+
+      if      ( a_load < b_load )
+         cmp = +1;
+      else if ( a_load > b_load )
+         cmp = -1;
+      else
+         cmp =  0;
+   }
+
+   return cmp;
+}
+
+gint
+sed_hydro_cmp_time( Sed_hydro *a , Sed_hydro *b )
+{
+   gint cmp = 0;
+
+   eh_require( a && *a );
+   eh_require( b && *b );
+
+   if ( *a && *b )
+   {
+      double a_t = sed_hydro_time( *a );
+      double b_t = sed_hydro_time( *b );
+
+      if      ( a_t < b_t )
+         cmp = -1;
+      else if ( a_t > b_t )
+         cmp = +1;
+      else
+         cmp =  0;
+   }
+
+   return cmp;
+}
+
+Sed_hydro*
+sed_hydro_array_sort( Sed_hydro* rec_a , GCompareFunc f )
+{
+   Sed_hydro* sorted_a = NULL;
+
+   if ( rec_a )
+   {
+      gint       len           = g_strv_length( (gchar**)rec_a );
+      GPtrArray* sorted_parray = g_ptr_array_sized_new( len+1 );
+      Sed_hydro* r;
+
+      for ( r=rec_a ; *r ; r++ )
+      {
+         g_ptr_array_add( sorted_parray , *r );
+      }
+
+      g_ptr_array_sort( sorted_parray , f    );
+      g_ptr_array_add ( sorted_parray , NULL );
+
+      sorted_a = (Sed_hydro*)g_ptr_array_free( sorted_parray , FALSE );
+   }
+
+   return sorted_a;
+}
+
+Sed_hydro*
+sed_hydro_array_sort_by_time( Sed_hydro* arr )
+{
+   return sed_hydro_array_sort( arr , (GCompareFunc)sed_hydro_cmp_time );
+}
+
+Sed_hydro*
+sed_hydro_array_sort_by_suspended_load( Sed_hydro* arr )
+{
+   return sed_hydro_array_sort( arr , (GCompareFunc)sed_hydro_cmp_suspended_load );
+}
+
+Sed_hydro*
+sed_hydro_array_sort_by_total_load( Sed_hydro* arr )
+{
+   return sed_hydro_array_sort( arr , (GCompareFunc)sed_hydro_cmp_total_load );
+}
+
+Sed_hydro*
+sed_hydro_process_records( Sed_hydro* rec      ,
+                           gssize n_recs       ,
+                           gssize n_sig_values ,
+                           gboolean insert_mean_values )
 {
    Sed_hydro* return_ptr;
 
@@ -1072,25 +1262,32 @@ Sed_hydro *sed_hydro_process_records( Sed_hydro* rec , gssize n_recs , gssize n_
    eh_return_val_if_fail( rec[0]   , NULL   );
 
    {
-      Sed_hydro mean_rec, real_rec;
-      Hydro_sort_st *new_val, *lowest_val;
-      GSList *top_n=NULL;
-      GPtrArray *new_rec;
-      double val;
-      int i, j, ind, ind_last;
+      GSList*    top_n   = NULL;
+      GPtrArray* new_rec = NULL;
 
-      // This will record the top n events
-      for ( i=0 ; i<n_sig_values ; i++ )
+      // Create a list to record the top n events
       {
-         new_val = eh_new( Hydro_sort_st , 1 );
-         new_val->val = G_MINDOUBLE;
-         new_val->ind = -1;
-         top_n = g_slist_append( top_n , new_val );
+         Hydro_sort_st* new_val;
+         gint           i;
+
+         for ( i=0 ; i<n_sig_values ; i++ )
+         {
+            new_val      = eh_new( Hydro_sort_st , 1 );
+            new_val->val = G_MINDOUBLE;
+            new_val->ind = -1;
+
+            top_n        = g_slist_append( top_n , new_val );
+         }
       }
 
-      // find top n_sig_values records
+      // Insert to top n events into the list
       if ( n_sig_values!=0 )
       {
+         Hydro_sort_st* lowest_val;
+         Hydro_sort_st* new_val;
+         gint           i;
+         double         val;
+
          lowest_val = (Hydro_sort_st*)g_slist_nth_data( top_n , 0 );
          for ( i=0 ; i<n_recs ; i++ )
          {
@@ -1113,42 +1310,52 @@ Sed_hydro *sed_hydro_process_records( Sed_hydro* rec , gssize n_recs , gssize n_
       // sort these records by time (or index)
       top_n = g_slist_sort( top_n , (GCompareFunc)cmp_hydro_sort_inds );
 
-      // Create the new list or records with mean values put in between the
-      // largest events.
       new_rec = g_ptr_array_new();
-      for ( j=0,ind=0,ind_last=-1 ; j<n_sig_values ; j++,ind_last=ind )
-      {
-         ind = ((Hydro_sort_st*)g_slist_nth_data( top_n , j ))->ind;
 
-         if ( ind != ind_last+1 )
+      // Create the new list of records with mean values put in between the
+      // largest events.
+      {
+         gint      j;
+         gint      ind;
+         gint      ind_last;
+         Sed_hydro mean_rec;
+         Sed_hydro real_rec;
+
+         for ( j=0,ind=0,ind_last=-1 ; j<n_sig_values ; j++,ind_last=ind )
          {
+            ind = ((Hydro_sort_st*)g_slist_nth_data( top_n , j ))->ind;
+
+            if ( insert_mean_values && ind != ind_last+1 )
+            {
+               mean_rec = sed_hydro_average_records( &(rec[ind_last+1]) , ind-ind_last-1 );
+
+               // Add the mean record.
+               g_ptr_array_add( new_rec , mean_rec );
+            }
+
+            real_rec = sed_hydro_dup( rec[ind] );
+
+            // Add the real record.
+            g_ptr_array_add( new_rec , real_rec );
+         }
+
+         if ( insert_mean_values && ind<n_recs-1 )
+         {
+            ind = n_recs;
             mean_rec = sed_hydro_average_records( &(rec[ind_last+1]) , ind-ind_last-1 );
 
             // Add the mean record.
             g_ptr_array_add( new_rec , mean_rec );
          }
 
-         real_rec = sed_hydro_dup( rec[ind] );
-
-         // Add the real record.
-         g_ptr_array_add( new_rec , real_rec );
-
+         // Create a NULL-terminated array
+         g_ptr_array_add( new_rec , NULL );
       }
-      if ( ind<n_recs-1 )
-      {
-         ind = n_recs;
-         mean_rec = sed_hydro_average_records( &(rec[ind_last+1]) , ind-ind_last-1 );
 
-         // Add the mean record.
-         g_ptr_array_add( new_rec , mean_rec );
-      }
-      g_ptr_array_add( new_rec , NULL );
+      return_ptr = (Sed_hydro*)g_ptr_array_free( new_rec , FALSE );
 
-      return_ptr = g_memdup( new_rec->pdata , new_rec->len*sizeof(gpointer) );
-      g_ptr_array_free(new_rec,FALSE);
       g_slist_foreach( top_n , &eh_free_slist_data , NULL );
-      g_slist_free(top_n);
-
+      g_slist_free   ( top_n );
    }
 
    return return_ptr;
@@ -1198,7 +1405,7 @@ Sed_hydro_file sed_hydro_file_set_sig_values( Sed_hydro_file fp , int n_sig_valu
    return fp;
 }
 
-Hydro_header *sed_hydro_file_header( Sed_hydro_file fp )
+Sed_hydrotrend_header *sed_hydro_file_header( Sed_hydro_file fp )
 {
    return fp->hdr;
 }
@@ -1372,9 +1579,9 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
    return rec;
 }
 
-Hydro_header *_hydro_read_hydrotrend_header( Sed_hydro_file fp )
+Sed_hydrotrend_header *_hydro_read_hydrotrend_header( Sed_hydro_file fp )
 {
-   return sed_hydro_read_header( fp->fp );
+   return sed_hydrotrend_read_header( fp->fp );
 }
 
 Sed_hydro _hydro_read_hydrotrend_record( Sed_hydro_file fp )
@@ -1384,7 +1591,7 @@ Sed_hydro _hydro_read_hydrotrend_record( Sed_hydro_file fp )
    // read the record using the appropriate function.  if we encounter the end of
    // the file, start reading from the beginning of the data.  if wrap is off,
    // return with an error.
-   rec = sed_hydro_read_record( fp->fp , fp->hdr->n_grains );
+   rec = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
    if ( feof(fp->fp) )
    {
       if ( fp->wrap_is_on )
@@ -1428,7 +1635,7 @@ Sed_hydro *sed_hydro_file_fill_buffer( Sed_hydro_file fp )
 
    for ( i=0 ; i<buffer_len ; i++ )
    {
-      temp_buffer[i] = sed_hydro_read_record( fp->fp , fp->hdr->n_grains );
+      temp_buffer[i] = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
 
       if ( feof(fp->fp) )
       {
@@ -1436,14 +1643,14 @@ Sed_hydro *sed_hydro_file_fill_buffer( Sed_hydro_file fp )
          {
             clearerr(fp->fp);
             fseek( fp->fp , fp->data_start , SEEK_SET );
-            temp_buffer[i] = sed_hydro_read_record( fp->fp , fp->hdr->n_grains );
+            temp_buffer[i] = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
          }
          else
             eh_error( "Encountered end of the file");
       }
    }
 
-   buf_set = sed_hydro_process_records( temp_buffer , buffer_len , n_sig_values );
+   buf_set = sed_hydro_process_records( temp_buffer , buffer_len , n_sig_values , TRUE );
 
    for ( i=0 ; buf_set[i] ; i++ )
    {
@@ -1460,5 +1667,4 @@ Sed_hydro *sed_hydro_file_fill_buffer( Sed_hydro_file fp )
 
    return fp->buf_set;
 }
-
 

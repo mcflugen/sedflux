@@ -26,36 +26,19 @@
 #include "utils.h"
 #include "sed_sedflux.h"
 #include "avulsion.h"
-#include "run_avulsion.h"
-#include "avulsion.h"
-#include "processes.h"
+#include "my_processes.h"
 
-Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
+gboolean init_avulsion_data( Sed_process p , Sed_cube prof );
+
+Sed_process_info
+run_avulsion( Sed_process p , Sed_cube prof )
 {
-   Avulsion_t*      data = (Avulsion_t*)ptr;
+   Avulsion_t*      data = sed_process_user_data(p);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_riv          this_river;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         g_rand_free( data->rand );
-         data->rand        = NULL;
-         data->reset_angle = TRUE;
-         data->initialized = FALSE;
-      }
-      return info;
-   }
-
-   if ( !data->initialized )
-   {
-      sed_river_set_avulsion_data( sed_cube_river_by_name(prof,data->river_name) ,
-                                   avulsion_new(NULL,0.) );
-      data->rand = (data->rand_seed>0)?g_rand_new_with_seed( data->rand_seed ):g_rand_new();
-      data->reset_angle = TRUE;
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(p)==0 )
+      init_avulsion_data( p , prof );
 
    this_river = sed_cube_river_by_name( prof , data->river_name );
 
@@ -75,13 +58,15 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 
          while ( area/n_branches > f )
          {
-            sed_river_split( sed_river_longest_branch(this_river) );
+            sed_cube_split_river( prof , sed_river_name_loc(this_river) );
 
             sed_river_impart_avulsion_data( this_river );
 
             n_branches += 2;
          }
       }
+
+      eh_require( sed_river_avulsion_data( this_river ) );
 
       sed_river_avulsion_data( this_river )->std_dev = std_dev;
       sed_river_avulsion_data( this_river )->rand    = data->rand;
@@ -133,76 +118,140 @@ Sed_process_info run_avulsion( gpointer ptr , Sed_cube prof )
 @{
 */
 /// Standard deviation of angle change of river mouth with hinge point
-#define S_KEY_STDDEV      "standard deviation"
+#define AVULSION_KEY_STDDEV      "standard deviation"
 /// Minumum angle that the river mouth can make with the hinge point
-#define S_KEY_MIN_ANGLE   "minimum angle"
+#define AVULSION_KEY_MIN_ANGLE   "minimum angle"
 /// Maximum angle that the river mouth can make with the hinge point
-#define S_KEY_MAX_ANGLE   "maximum angle"
+#define AVULSION_KEY_MAX_ANGLE   "maximum angle"
 /// The name of the river that this avulsion process is associated with
-#define S_KEY_RIVER_NAME  "river name"
+#define AVULSION_KEY_RIVER_NAME  "river name"
 /// The (x,y) location of the hinge point
-#define S_KEY_HINGE_POINT "hinge point"
+#define AVULSION_KEY_HINGE_POINT "hinge point"
 /// Fraction of total sediment to be placed within this profile
 /// (2D-sedflux only)
-#define S_KEY_FRACTION    "fraction of sediment remaining in plane"
+#define AVULSION_KEY_FRACTION    "fraction of sediment remaining in plane"
 /// If yes, the river is allowed to bifurcate
-#define S_KEY_BRANCHING   "river can branch?"
+#define AVULSION_KEY_BRANCHING   "river can branch?"
 /// Seed for the avulsion random number generator
-#define S_KEY_SEED        "seed for random number generator"
+#define AVULSION_KEY_SEED        "seed for random number generator"
 /* @} */
 
-gboolean init_avulsion( Eh_symbol_table tab , gpointer ptr )
+static gchar* avulsion_req_labels[] =
 {
-   Avulsion_t *data=(Avulsion_t*)ptr;
-   char **hinge_point;
-   GError* err = NULL;
+   AVULSION_KEY_STDDEV      ,
+   AVULSION_KEY_MIN_ANGLE   ,
+   AVULSION_KEY_MAX_ANGLE   ,
+   AVULSION_KEY_RIVER_NAME  ,
+   AVULSION_KEY_FRACTION    ,
+   AVULSION_KEY_BRANCHING   ,
+   AVULSION_KEY_SEED        ,
+   NULL
+};
+static gchar* avulsion_3d_req_labels[] =
+{
+   AVULSION_KEY_HINGE_POINT ,
+   NULL
+};
 
-   if ( tab == NULL )
+gboolean
+init_avulsion( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Avulsion_t* data    = sed_process_new_user_data( p , Avulsion_t );
+   GError*     tmp_err = NULL;
+   gboolean    is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->rand = NULL;
+
+   if ( eh_symbol_table_require_labels( tab , avulsion_req_labels , &tmp_err ) )
    {
-      eh_input_val_destroy( data->min_angle );
-      eh_input_val_destroy( data->max_angle );
-      eh_input_val_destroy( data->std_dev   );
-      eh_input_val_destroy( data->f_remain  );
-      eh_free( data->river_name );
-      data->initialized = FALSE;
-      return TRUE;
-   }
+      if ( !tmp_err ) data->std_dev   = eh_symbol_table_input_value( tab , AVULSION_KEY_STDDEV    , &tmp_err );
+      if ( !tmp_err ) data->f_remain  = eh_symbol_table_input_value( tab , AVULSION_KEY_FRACTION  , &tmp_err );
+      if ( !tmp_err ) data->min_angle = eh_symbol_table_input_value( tab , AVULSION_KEY_MIN_ANGLE , &tmp_err );
+      if ( !tmp_err ) data->max_angle = eh_symbol_table_input_value( tab , AVULSION_KEY_MAX_ANGLE , &tmp_err );
 
-   if (    (data->std_dev   = eh_symbol_table_input_value(tab,S_KEY_STDDEV   ,&err)) == NULL
-        || (data->f_remain  = eh_symbol_table_input_value(tab,S_KEY_FRACTION ,&err)) == NULL
-        || (data->min_angle = eh_symbol_table_input_value(tab,S_KEY_MIN_ANGLE,&err)) == NULL
-        || (data->max_angle = eh_symbol_table_input_value(tab,S_KEY_MAX_ANGLE,&err)) == NULL )
-   {
-      fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit( EXIT_FAILURE );
-   }
+      data->branching_is_on = eh_symbol_table_bool_value( tab , AVULSION_KEY_BRANCHING  );
+      data->rand_seed       = eh_symbol_table_int_value ( tab , AVULSION_KEY_SEED       );
+      data->river_name      = eh_symbol_table_value     ( tab , AVULSION_KEY_RIVER_NAME );
 
-   data->branching_is_on = eh_symbol_table_bool_value( tab , S_KEY_BRANCHING  );
-   data->rand_seed       = eh_symbol_table_int_value ( tab , S_KEY_SEED       );
-   data->river_name      = eh_symbol_table_value     ( tab , S_KEY_RIVER_NAME );
+      data->reset_angle     = TRUE;
 
-   hinge_point = g_strsplit ( eh_symbol_table_lookup( 
-                                  tab ,
-                                  S_KEY_HINGE_POINT ) ,
-                              "," , -1 );
-
-   if ( hinge_point[0] && hinge_point[1] )
-   {
-      data->hinge_i = strtoul( hinge_point[0] , NULL , 10 );
-      data->hinge_j = strtoul( hinge_point[1] , NULL , 10 );
-   }
-   else
-      eh_error( "An x-y pair is required for the hinge point." );
-
-   if ( sed_mode_is_2d() )
-   {
       data->hinge_i = 0;
       data->hinge_j = 0;
+
+      if (    sed_mode_is_3d()
+           && eh_symbol_table_require_labels( tab , avulsion_3d_req_labels , &tmp_err ) )
+      {
+         gchar** err_s = NULL;
+         gchar** hinge = g_strsplit( eh_symbol_table_lookup( tab , AVULSION_KEY_HINGE_POINT ) , "," , -1 );
+
+         eh_check_to_s( hinge[0] && hinge[1] , "Need i and j index for hinge point" , &err_s );
+
+         if ( hinge[0] && hinge[1] )
+         {
+            data->hinge_i = strtoul( hinge[0] , NULL , 10 );
+            data->hinge_j = strtoul( hinge[1] , NULL , 10 );
+         }
+
+         g_strfreev( hinge );
+
+         eh_check_to_s( data->hinge_i>=0 , "Hinge index positive integer" , &err_s );
+         eh_check_to_s( data->hinge_j>=0 , "Hinge index positive integer" , &err_s );
+
+         if ( !tmp_err && err_s )
+            eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+      }
    }
 
-   g_strfreev( hinge_point );
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
 
-   data->reset_angle = TRUE;
+   return is_ok;
+}
+
+gboolean
+init_avulsion_data( Sed_process p , Sed_cube prof )
+{
+   Avulsion_t* data = sed_process_user_data( p );
+
+   if ( data )
+   {
+      Sed_riv r = sed_cube_river_by_name( prof , data->river_name );
+      
+      sed_river_set_avulsion_data( r , avulsion_new(NULL,0.) );
+
+      if ( data->rand_seed>0 ) data->rand = g_rand_new_with_seed( data->rand_seed );
+      else                     data->rand = g_rand_new();
+
+      data->reset_angle = TRUE;
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_avulsion( Sed_process p )
+{
+   if ( p )
+   {
+      Avulsion_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         if ( data->rand ) g_rand_free( data->rand );
+
+         eh_input_val_destroy( data->min_angle  );
+         eh_input_val_destroy( data->max_angle  );
+         eh_input_val_destroy( data->std_dev    );
+         eh_input_val_destroy( data->f_remain   );
+         eh_free             ( data->river_name );
+         eh_free             ( data             );
+      }
+   }
 
    return TRUE;
 }

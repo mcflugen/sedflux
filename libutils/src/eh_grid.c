@@ -89,10 +89,17 @@ void** eh_grid_data( Eh_grid g )
 {
    return g->data;
 }
-
-double** eh_dbl_grid_data( Eh_grid g )
+ 
+double**
+eh_dbl_grid_data( Eh_grid g )
 {
    return (double**)(g->data);
+}
+
+double**
+eh_dbl_grid_data_start( Eh_grid g )
+{
+   return (double**)(eh_grid_data_start(g));
 }
 
 void* eh_grid_data_start( Eh_grid g )
@@ -391,7 +398,8 @@ gboolean eh_dbl_grid_cmp( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 , double eps )
    return is_same;
 }
 
-Eh_grid eh_grid_dup( Eh_grid g )
+Eh_grid
+eh_grid_dup( Eh_grid g )
 {
    Eh_grid new_grid = eh_grid_malloc( g->n_x , g->n_y , g->el_size );
    eh_grid_copy( new_grid , g );
@@ -439,7 +447,8 @@ Eh_grid eh_grid_copy_data( Eh_grid dest , Eh_grid src )
    return dest;
 }
 
-Eh_grid eh_grid_reindex( Eh_grid g , gssize low_x , gssize low_y )
+Eh_grid
+eh_grid_reindex( Eh_grid g , gssize low_x , gssize low_y )
 {
    gssize i;
    gssize change_low_x = low_x - g->low_x;
@@ -817,6 +826,58 @@ Eh_dbl_grid eh_dbl_grid_remesh( Eh_dbl_grid g ,
    eh_free( new_y_ind );
 
    return new_grid;
+}
+
+void
+interpolate_2( Eh_dbl_grid source , Eh_dbl_grid dest )
+{
+   interpolate_2_bad_val( source , dest , eh_nan() );
+}
+
+void
+interpolate_2_bad_val( Eh_dbl_grid source , Eh_dbl_grid dest ,
+                       double bad_val )
+{
+   gssize i,j;
+   Eh_dbl_grid temp;
+   double *temp_source, *temp_dest;
+   gssize src_low_x=eh_grid_low_x(source), dest_low_x=eh_grid_low_x(dest);
+   gssize src_low_y=eh_grid_low_y(source), dest_low_y=eh_grid_low_y(dest);
+
+   eh_grid_reindex( source , 0 , 0 );
+   eh_grid_reindex( dest   , 0 , 0 );
+
+   temp        = eh_grid_new( double , eh_grid_n_x(source) , eh_grid_n_y(dest) );
+   temp_source = eh_new( double , eh_grid_n_x(source) );
+   temp_dest   = eh_new( double , eh_grid_n_x(dest)   );
+
+   for ( i=0 ; i<eh_grid_n_x(source) ; i++ )
+      interpolate_bad_val( eh_grid_y(source) , eh_grid_row(source,i) , eh_grid_n_y(source) ,
+                           eh_grid_y(dest)   , eh_grid_row(temp,i)   , eh_grid_n_y(dest)   ,
+                           bad_val );
+
+   for ( j=0 ; j<eh_grid_n_y(dest) ; j++ )
+   {
+      for ( i=0 ; i<eh_grid_n_x(source) ; i++ )
+         temp_source[i] = eh_dbl_grid_val(temp,i,j);
+
+      interpolate_bad_val( eh_grid_x(source) , temp_source , eh_grid_n_x(source) ,
+                           eh_grid_x(dest)   , temp_dest   , eh_grid_n_x(dest)   ,
+                           bad_val );
+
+      for ( i=0 ; i<eh_grid_n_x(dest) ; i++ )
+         eh_dbl_grid_set_val( dest , i , j , temp_dest[i] );
+//         dest->data[i][j] = temp_dest[i];
+   }
+
+   eh_free( temp_dest   );
+   eh_free( temp_source );
+   eh_grid_destroy( temp , TRUE );
+
+   eh_grid_reindex( source , src_low_x  , src_low_y  );
+   eh_grid_reindex( dest   , dest_low_x , dest_low_y );
+
+   return;
 }
 
 gboolean eh_grid_path_is_same( gssize* p_1 , gssize* p_2 )

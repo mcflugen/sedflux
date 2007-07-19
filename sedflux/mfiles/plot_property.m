@@ -1,26 +1,43 @@
 %%
 % \brief Plot a SEDFLUX property file.
 %
-% Possible parameters are:
-%  - SEDFLUX3D
-%   -# xslice
-%   -# yslice
-%   -# zslice
-%   -# nxslices
-%   -# nyslices
-%   -# nzslices
-%  - Both SEDFLUX3D and SEDFLUX2D
-%   -# time
-%   -# clim
-%   -# mask
-%   -# func
-%   -# colorbar
-%   -# nofloor
+% Plot a sedflux output property file.  If the property file is
+% a data cube that was generated with sedflux3D, property
+% profiles can be plotted in a fence diagram or as single profiles.
 %
-% @param filename Name of the property file
-% @param varargin A series of parameter/value pairs
-
+% A series of parameter value pairs can be passed that control
+% the way the data are presented.  Possible parameters are:
+%  - SEDFLUX3D
+%   -# xslice   : Plot the profiles with constant x-values.  X-values
+%                 are given in units of kilometers. [scalar or vector]
+%   -# yslice   : Plot the profiles with constant y-values.  Y-values
+%                 are given in units of kilometers. [scalar or vector]
+%   -# zslice   : Plot the profiles with constant z-values.  Z-values
+%                 are given in units of meters. [scalar or vector]
+%   -# nxslices : Plot a given number of x-profiles. [scalar]
+%   -# nyslices : Plot a given number of y-profiles. [scalar]
+%   -# nzslices : Plot a given number of z-profiles. [scalar]
+%  - Both SEDFLUX3D and SEDFLUX2D
+%   -# time     : Give the time associated with this profile.  A label
+%                 is placed on the image that gives this time.  This is
+%                 typically used when making a movie from a series of
+%                 profiles. [scalar]
+%   -# clim     : Define the limits of the property. [vector]
+%   -# mask     : Logical array that indicates which values should be
+%                 imaged and which should be masked.  The size of the
+%                 mask should be the same as that of the image.  [Vector]
+%   -# func     : Function called to process the data before plotting.
+%                 [function_handle]
+%   -# colorbar : Logical value that indicates whether to include a
+%                 colorbar. [scalar]
+%   -# nofloor  : Logical value that indicated whether to remove the
+%                 bedrock from the image. [scalar]
+%
+% @param filename    Name of the property file
+% @param varargin    A series of parameter/value pairs
+%
 function plot_property( filename , varargin )
+
 % PLOT_PROPERTY   Plot a sedflux property file.
 %
 % PLOT_PROPERTY( FILENAME ) - plots the sedflux property file
@@ -29,47 +46,45 @@ function plot_property( filename , varargin )
 % FILENAME can be followed by parameter/value pairs to specify
 % additional properties of the image.
 %
+   valid_args = { 'xslice'     , 'double' , [] ; ...
+                  'yslice'     , 'double' , [] ; ...
+                  'zslice'     , 'double' , [] ; ...
+                  'nxslices'   , 'double' , 5 ; ...
+                  'nyslices'   , 'double' , 5 ; ...
+                  'nzslices'   , 'double' , 0 ; ...
+                  'time'       , 'double' , [] ; ...
+                  'clim'       , 'double' , [] ; ...
+                  'mask'       , 'logical' , false ; ...
+                  'func'       , 'function_handle' , [] ; ...
+                  'colorbar'   , 'logical' , true ; ...
+                  'nofloor'    , 'logical' , false };
 
+   values = parse_varargin( valid_args , varargin );
 
-valid_args = { 'xslice'     , 'double' , [] ; ...
-               'yslice'     , 'double' , [] ; ...
-               'zslice'     , 'double' , [] ; ...
-               'nxslices'   , 'double' , 5 ; ...
-               'nyslices'   , 'double' , 5 ; ...
-               'nzslices'   , 'double' , 0 ; ...
-               'time'       , 'double' , [] ; ...
-               'clim'       , 'double' , [] ; ...
-               'mask'       , 'logical' , false ; ...
-               'func'       , 'function_handle' , [] ; ...
-               'colorbar'   , 'logical' , true ; ...
-               'nofloor'    , 'logical' , false };
-
-values = parse_varargin( valid_args , varargin );
-
-x_slice        = values{strmatch( 'xslice'   , {valid_args{:,1}} , 'exact' )};
-y_slice        = values{strmatch( 'yslice'   , {valid_args{:,1}} , 'exact' )};
-z_slice        = values{strmatch( 'zslice'   , {valid_args{:,1}} , 'exact' )};
-n_x_slices     = values{strmatch( 'nxslices' , {valid_args{:,1}} , 'exact' )};
-n_y_slices     = values{strmatch( 'nyslices' , {valid_args{:,1}} , 'exact' )};
-n_z_slices     = values{strmatch( 'nzslices' , {valid_args{:,1}} , 'exact' )};
-time           = values{strmatch( 'time'     , {valid_args{:,1}} , 'exact' )};
-clim           = values{strmatch( 'clim'     , {valid_args{:,1}} , 'exact' )};
-mask           = values{strmatch( 'mask'     , {valid_args{:,1}} , 'exact' )};
-func           = values{strmatch( 'func'     , {valid_args{:,1}} , 'exact' )};
-colorbar_is_on = values{strmatch( 'colorbar' , {valid_args{:,1}} , 'exact' )};
-no_floor       = values{strmatch( 'nofloor'  , {valid_args{:,1}} , 'exact' )};
+   x_slice        = values{strmatch( 'xslice'   , {valid_args{:,1}} , 'exact' )};
+   y_slice        = values{strmatch( 'yslice'   , {valid_args{:,1}} , 'exact' )};
+   z_slice        = values{strmatch( 'zslice'   , {valid_args{:,1}} , 'exact' )};
+   n_x_slices     = values{strmatch( 'nxslices' , {valid_args{:,1}} , 'exact' )};
+   n_y_slices     = values{strmatch( 'nyslices' , {valid_args{:,1}} , 'exact' )};
+   n_z_slices     = values{strmatch( 'nzslices' , {valid_args{:,1}} , 'exact' )};
+   time           = values{strmatch( 'time'     , {valid_args{:,1}} , 'exact' )};
+   clim           = values{strmatch( 'clim'     , {valid_args{:,1}} , 'exact' )};
+   mask           = values{strmatch( 'mask'     , {valid_args{:,1}} , 'exact' )};
+   func           = values{strmatch( 'func'     , {valid_args{:,1}} , 'exact' )};
+   colorbar_is_on = values{strmatch( 'colorbar' , {valid_args{:,1}} , 'exact' )};
+   no_floor       = values{strmatch( 'nofloor'  , {valid_args{:,1}} , 'exact' )};
 
    if ( isempty( func ) )
-      [data header] = read_property( filename , ...
-                                     'dim'  , false , ...
-                                     'clim' , clim  , ...
-                                     'mask' , mask );
+      [data , header] = read_property( filename , ...
+                                       'dim'  , false , ...
+                                       'clim' , clim  , ...
+                                       'mask' , mask );
    else
-      [data header] = read_property( filename , ...
-                                     'dim'  , false , ...
-                                     'clim' , clim  , ...
-                                     'mask' , mask  , ...
-                                     'func' , func );
+      [data , header] = read_property( filename , ...
+                                       'dim'  , false , ...
+                                       'clim' , clim  , ...
+                                       'mask' , mask  , ...
+                                       'func' , func );
    end
 
    if ( isempty(clim) )

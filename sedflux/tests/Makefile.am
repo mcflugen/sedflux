@@ -11,6 +11,10 @@ EXTRA_DIST      = \
                   bedload_init.kvf \
                   compaction_epoch.kvf \
                   compaction_init.kvf \
+                  inflow_epoch.kvf \
+                  inflow_init.kvf \
+                  inflow_bathy.csv \
+                  inflow_river.kvf \
                   plume_0_epoch.kvf \
                   plume_0_init.kvf \
                   plume_1_epoch.kvf \
@@ -21,11 +25,17 @@ EXTRA_DIST      = \
                   plume_3_init.kvf \
                   river_epoch.kvf \
                   river_init.kvf \
+                  sakura_epoch.kvf \
+                  sakura_init.kvf \
                   storm_epoch.kvf \
                   storm_init.kvf \
+                  subsidence_epoch.kvf \
+                  subsidence_init.kvf \
+                  subsidence_1d.seq \
                   bench_bathy_be.bin \
                   bench_bathy_le.bin \
                   bench_bathy.csv \
+                  bench_bathy_1d.csv \
                   bench_hydrotrend.dis \
                   bench_input_be.seq \
                   bench_river.kvf \

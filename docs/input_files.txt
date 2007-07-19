@@ -63,6 +63,57 @@ multiple occurances of a group.
 */
 
 /** \page sub_sec_subsidence Subsidence File
+
+The format for sedflux subsidence files is different for the 2D and 3D versions
+of sedflux.  In 2D mode, the subsidence file is a series of records that each contain
+a time value, and comma delimated data that define the subsidence curve.  In
+3D mode, the subsidence file is also a series of records that defines a time-varying
+subsidence curve but is binary.
+
+\section sec_2d_subsidence 2D subsidence file
+
+The subsidence file in the following example contains two records that define the
+subsidence of the profile at 0 and 100 years.  Each record begins with a header
+contained in square brackets followed by two columns of data that define how
+the profile subsides along its length.  The time is given in years, the position
+(first column) in meters, and the subsidence rate (second column) in meters per year.
+For times between records, sedflux interpolates linearly between records.
+
+\code
+[ Time: 0 ]    // Time of this record in years
+0, 0           // Subsidence is zero at the origin
+100000, -.2    //   and increases to -.2 m/y at 100km 
+
+[ Time: 100 ]  // The second record is at 100 years
+0,0
+100000, -.1
+\endcode
+
+If the file contains only one record, then the subsidence rate is held constant
+starting from the time indicated in the record header.  If the model runs
+longer than the time of the last record, the subsidence curve is set to that
+of the last record for the remainder of the simulation.
+
+\section sec_3d_subsidence 3D subsidence file
+
+The subsidence file for 3D sedflux, contains a series of binary records
+containing similar information as that of the 2D file described above.
+
+The file begins with two 32-bit integers that define the size of the
+subsidence grid for each record.  The first value is the number of
+rows and the second the number of columns.
+
+Records are then listed one after another.  Each record begins with
+a double value that gives the time in years of the record.  The subsidence
+data then follows as double values written row by row.  Subsidence values
+are given in meters per year.
+
+\note The size of the grid must match exactly that of the grid that is 
+defined in the bathymetery file.
+
+\note The byte order of the file must be the same as that of the machine
+that the simulation will be run on.
+
 */
 
 /** \page sub_sec_sediment Sediment File

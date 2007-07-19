@@ -32,7 +32,7 @@ CLASS ( Sed_cube )
    double tidal_period; //< The tidal period.
    double wave[3]; //< The wave height, period, and length respectively.
    GSList *storm_list;
-   GList *in_suspension; //< Array of grids (one for each river) of cells with sediment that is suspended in the water.
+//   GList *in_suspension; //< Array of grids (one for each river) of cells with sediment that is suspended in the water.
    Sed_cell erode; //< Sediment that has been eroded.
    Sed_cell remove; //< Sediment to be removed from the river
    Sed_column **col; //< Array of poiters to columns making up the profile.
@@ -47,6 +47,12 @@ CLASS ( Sed_cube )
    double cell_height; //< Height of a cell of sediment.
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 };
+
+GQuark
+sed_cube_susp_grid_quark( void )
+{
+   return g_quark_from_static_string( "sed-cube-susp-grid-quark" );
+}
 
 GQuark
 sed_cube_error_quark( void )
@@ -126,7 +132,7 @@ Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y )
    else
       s->col = NULL;
 
-   s->in_suspension = NULL;
+//   s->in_suspension = NULL;
 
    s->erode  = sed_cell_new_env( );
    s->remove = sed_cell_new_env( );
@@ -268,8 +274,6 @@ Sed_cube sed_cube_free( Sed_cube s , gboolean free_data )
 {
    if ( s )
    {
-      GList *list;
-
       if ( free_data )
       {
          gssize i, n_nodes = sed_cube_size(s);
@@ -280,11 +284,7 @@ Sed_cube sed_cube_free( Sed_cube s , gboolean free_data )
       eh_free( s->col[0] );
       eh_free( s->col    );
 
-      for ( list=s->in_suspension ; list ; list=list->next )
-         sed_cube_destroy_in_suspension( list->data );
-
-      for ( list=s->river ; list ; list=list->next )
-         sed_river_destroy( list->data );
+      sed_cube_remove_all_trunks( s );
 
       sed_cell_destroy( s->erode  );
       sed_cell_destroy( s->remove );
@@ -348,7 +348,7 @@ Sed_cube sed_cube_copy_pointer_data( Sed_cube dest , const Sed_cube src )
    if ( !dest )
       dest = sed_cube_new( src->n_x , dest->n_y );
 
-   dest->in_suspension = src->in_suspension;
+//   dest->in_suspension = src->in_suspension;
    dest->erode         = src->erode;
    dest->remove        = src->remove;
    dest->storm_list    = g_slist_copy( src->storm_list );
@@ -356,7 +356,8 @@ Sed_cube sed_cube_copy_pointer_data( Sed_cube dest , const Sed_cube src )
    return dest;
 }
 
-Sed_cell_grid sed_cube_create_in_suspension( Sed_cube s )
+Sed_cell_grid
+sed_cube_create_in_suspension( Sed_cube s )
 {
    Sed_cell_grid in_suspension;
 
@@ -377,10 +378,14 @@ Sed_cell_grid sed_cube_create_in_suspension( Sed_cube s )
    return in_suspension;
 }
 
-Sed_cell_grid sed_cube_destroy_in_suspension( Sed_cell_grid g )
+Sed_cell_grid
+sed_cube_destroy_in_suspension( Sed_cell_grid g )
 {
-   sed_cell_grid_free( g );
-   eh_grid_destroy( g , TRUE );
+   if ( g )
+   {
+      sed_cell_grid_free( g );
+      eh_grid_destroy( g , TRUE );
+   }
    return NULL;
 }
 
@@ -474,7 +479,8 @@ gssize sed_cube_n_y( const Sed_cube s )
    return s->n_y;
 }
 
-Sed_column sed_cube_col( const Sed_cube s , gssize ind )
+Sed_column
+sed_cube_col( const Sed_cube s , gssize ind )
 {
    eh_return_val_if_fail( s!=NULL , NULL );
 
@@ -484,7 +490,8 @@ Sed_column sed_cube_col( const Sed_cube s , gssize ind )
    return s->col[0][ind];
 }
 
-Sed_column sed_cube_col_ij( const Sed_cube s , gssize i , gssize j )
+Sed_column
+sed_cube_col_ij( const Sed_cube s , gssize i , gssize j )
 {
    eh_return_val_if_fail( s!=NULL , NULL );
 
@@ -494,6 +501,21 @@ Sed_column sed_cube_col_ij( const Sed_cube s , gssize i , gssize j )
    eh_require( sed_cube_id(s,i,j)<sed_cube_size(s) );
 
    return s->col[i][j];
+}
+
+Sed_column
+sed_cube_col_pos( const Sed_cube s , double x , double y )
+{
+   Sed_column c = NULL;
+
+   if ( s )
+   {
+      gint id = sed_cube_column_id( s , x , y );
+
+      if ( id>=0 ) c = sed_cube_col( s , id );
+   }
+
+   return c;
 }
 
 double sed_cube_sea_level( const Sed_cube s )
@@ -560,8 +582,7 @@ double sed_cube_col_x( const Sed_cube s , gssize id )
 {
    eh_require( id >= 0 );
    eh_require( id < sed_cube_size(s) );
-if ( id<0 )
-   eh_watch_int( id );
+
    return sed_column_x_position( sed_cube_col(s,id) );
 }
 
@@ -574,8 +595,7 @@ double sed_cube_col_y( const Sed_cube s , gssize id )
 {
    eh_require( id >= 0 );
    eh_require( id < sed_cube_size(s) );
-if ( id<0 )
-   eh_watch_int( id );
+
    return sed_column_y_position( sed_cube_col(s,id) );
 }
 
@@ -784,15 +804,107 @@ sed_cube_river_id( Sed_cube s , Sed_riv river )
    return g_list_index( s->river , river );
 }
 
-Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no )
+Sed_cell_grid
+sed_cube_in_suspension( Sed_cube s , Sed_riv river )
+{
+   eh_return_val_if_fail( s!=NULL , NULL );
+   return sed_river_get_susp_grid( river );
+}
+/*
+Sed_cell_grid
+sed_cube_in_suspension( Sed_cube s , gssize river_no )
 {
    eh_return_val_if_fail( s!=NULL , NULL );
    return g_list_nth_data( s->in_suspension , river_no );
 }
-
-GList* sed_cube_river_list( Sed_cube s )
+*/
+GList*
+sed_cube_river_list( Sed_cube s )
 {
    return s->river;
+}
+
+Sed_riv*
+sed_cube_all_trunks( Sed_cube s )
+{
+   Sed_riv* all = NULL;
+
+   if ( s )
+   {
+      GList*   r_list = sed_cube_river_list( s );
+      GList*   l;
+
+      for ( l=r_list ; l ; l=l->next )
+         eh_strv_append( (gchar***)&all , l->data );
+
+   }
+
+   return all;
+}
+
+Sed_riv*
+sed_cube_all_branches( Sed_cube s )
+{
+   Sed_riv* all = NULL;
+
+   if ( s )
+   {
+      GList*   r_list = sed_cube_river_list( s );
+      GList*   l;
+      Sed_riv* branches;
+
+      for ( l=r_list ; l ; l=l->next )
+      {
+         branches = sed_river_branches( l->data );
+         eh_strv_concat( (gchar***)&all , (gchar**)branches );
+
+         eh_free( branches );
+      }
+      
+   }
+
+   return all;
+}
+
+Sed_riv*
+sed_cube_all_leaves( Sed_cube s )
+{
+   Sed_riv* all = NULL;
+
+   if ( s )
+   {
+      GList*   r_list = sed_cube_river_list( s );
+      GList*   l;
+      Sed_riv* leaves;
+
+      for ( l=r_list ; l ; l=l->next )
+      {
+         leaves = sed_river_leaves( l->data );
+         eh_strv_concat( (gchar***)&all , (gchar**)leaves );
+
+         eh_free( leaves );
+      }
+      
+   }
+
+   return all;
+}
+
+Sed_riv*
+sed_cube_all_rivers( Sed_cube s )
+{
+   Sed_riv* all = NULL;
+
+   if ( s )
+   {
+      GList* r_list = sed_cube_river_list( s );
+      GList* l;
+
+      for ( l=r_list ; l ; l=l->next )
+         eh_strv_append( (gchar***)&all , l->data );
+   }
+
+   return all;
 }
 
 gint
@@ -1153,7 +1265,8 @@ Sed_cube sed_cube_copy_line( const Sed_cube src , double *x , double *y , double
    return new_cube;
 }
 
-Sed_cube sed_cube_cols( Sed_cube src , gssize *path )
+Sed_cube
+sed_cube_cols( Sed_cube src , gssize *path )
 {
    Sed_cube new_cube = NULL;
 
@@ -1269,28 +1382,36 @@ double sed_cube_mass( const Sed_cube p )
    return mass;
 }
 
-double sed_cube_mass_in_suspension( const Sed_cube p )
+double
+sed_cube_mass_in_suspension( const Sed_cube p )
 {
    double mass = 0.;
 
    if ( p )
    {
-      gssize        n_rivers = sed_cube_n_rivers(p);
-      Sed_cell_grid in_suspension;
-      gssize        i;
+      Sed_riv*      all_rivers = sed_cube_all_branches(p);
+      Sed_riv*      r;
+      Sed_cell_grid in_susp;
 
-      for ( i=0 ; i<n_rivers ; i++ )
+      if ( all_rivers )
       {
-         in_suspension = sed_cube_in_suspension(p,i);
-         mass += sed_cell_grid_mass( in_suspension );
+         for ( r=all_rivers ; *r ; r++ )
+         {
+            in_susp  = g_dataset_id_get_data( *r , SED_CUBE_SUSP_GRID );
+            mass    += sed_cell_grid_mass( in_susp );
+         }
+
+         eh_free( all_rivers );
       }
+
       mass *= sed_cube_x_res(p)*sed_cube_y_res(p);
    }
 
    return mass;
 }
 
-Sed_cube sed_cube_set_sea_level( Sed_cube s , double new_sea_level )
+Sed_cube
+sed_cube_set_sea_level( Sed_cube s , double new_sea_level )
 {
    if ( s )
    {
@@ -1403,18 +1524,100 @@ Sed_cube sed_cube_set_river_list( Sed_cube s , GList* river_list )
 }
 
 Sed_cube
-sed_cube_add_river( Sed_cube s , Sed_riv new_river )
+sed_cube_split_river( Sed_cube s , const gchar* name )
 {
-   Sed_cell_grid new_grid;
+   if ( s )
+   {
+      Sed_cell_grid left_grid;
+      Sed_cell_grid right_grid;
+      Sed_riv trunk = sed_cube_river_by_name( s , name );
+      Sed_riv r     = sed_river_longest_branch( trunk );
 
-   new_grid         = sed_cube_create_in_suspension( s );
+      /* Split the longest branch of the river */
+      sed_river_split( r );
 
-   s->river         = g_list_prepend( s->river         , new_river );
-   s->in_suspension = g_list_prepend( s->in_suspension , new_grid );
+      /* Create in_suspension grids for each new leaf */
+      left_grid  = sed_cube_create_in_suspension(s);
+      right_grid = sed_cube_create_in_suspension(s);
+
+      /* Attach in_suspension grids to the new leaves */
+      sed_river_attach_susp_grid( sed_river_left(r)  , left_grid  );
+      sed_river_attach_susp_grid( sed_river_right(r) , right_grid );
+   }
+   return s;
+}
+
+void
+sed_river_attach_susp_grid( Sed_riv r , Sed_cell_grid g )
+{
+   eh_require( r );
+   g_dataset_id_set_data_full( r , SED_CUBE_SUSP_GRID , g , (GDestroyNotify)sed_cube_destroy_in_suspension );
+}
+
+Sed_cell_grid
+sed_river_get_susp_grid( Sed_riv r )
+{
+   return g_dataset_id_get_data( r , SED_CUBE_SUSP_GRID );
+}
+
+void
+sed_river_detach_susp_grid( Sed_riv r )
+{
+   g_dataset_id_remove_data( r , SED_CUBE_SUSP_GRID );
+}
+
+Sed_cube
+sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk )
+{
+   Sed_cell_grid new_grid = sed_cube_create_in_suspension( s );
+
+   s->river = g_list_prepend( s->river , new_trunk );
+
+   sed_river_attach_susp_grid( new_trunk , new_grid );
 
    return s;
 }
 
+Sed_cube
+sed_cube_remove_river( Sed_cube s , Sed_riv r )
+{
+   if ( r )
+   {
+      g_dataset_destroy( r );
+
+      if ( sed_river_left (r) ) sed_cube_remove_river( s , sed_river_left(r)  );
+      if ( sed_river_right(r) ) sed_cube_remove_river( s , sed_river_right(r) );
+
+      /* If the river is a trunk, remove it from the list of trunks */
+      s->river = g_list_remove( s->river , r );
+
+      sed_river_destroy( r );
+   }
+   return s;
+}
+
+Sed_cube
+sed_cube_remove_all_trunks( Sed_cube s )
+{
+
+   if ( s && s->river )
+   {
+      Sed_riv* all = sed_cube_all_trunks( s );
+      Sed_riv* r;
+
+      if ( all )
+      {
+         for ( r=all ; *r ; r++ )
+            sed_cube_remove_river( s , *r );
+
+         eh_free( all );
+      }
+
+      eh_require( s->river == NULL );
+   }
+   return s;
+}
+/*
 Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no )
 {
    Sed_cell_grid this_grid = g_list_nth_data( s->in_suspension , river_no );
@@ -1423,13 +1626,18 @@ Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no )
    s->in_suspension = g_list_delete_link( s->in_suspension ,
                                           g_list_nth( s->in_suspension ,
                                                       river_no ) );
+
    return s;
 }
-
+*/
 Sed_riv
 sed_cube_nth_river( Sed_cube s , gint n )
 {
-   return g_list_nth( s->river , n )->data;
+   Sed_riv r = NULL;
+
+   if ( s ) r = g_list_nth_data( s->river , n );
+
+   return r;
 }
 
 /*
@@ -2243,33 +2451,48 @@ Eh_ind_2 get_shift_from_exit_pos( Eh_pt_2 exit_pos , double dx , double dy )
    return shift;
 }
 
-gssize *sed_cube_river_path_id( Sed_cube c   ,
-                                Sed_riv river ,
-                                gboolean down_stream )
+gssize*
+sed_cube_river_path_id( Sed_cube c    ,
+                        Sed_riv river ,
+                        gboolean down_stream )
 {
-   Eh_ind_2 hinge = sed_river_hinge( river );
-   double   angle = sed_river_angle( river );
-   GList *path, *this_link;
-   gssize i, n_y;
-   gssize *path_id;
+   gssize *path_id = NULL;
 
-   path = sed_cube_find_line_path( c , &hinge , angle );
-   n_y = g_list_length( path );
-   path_id = eh_new( gssize , n_y+1 );
+   eh_require( c     );
+   eh_require( river );
 
-   if ( down_stream )
-      path = g_list_reverse( path );
-
-   for ( i=0,this_link=path ; this_link ; this_link=this_link->next,i++ )
+   if ( c && river )
    {
-      path_id[i] = eh_grid_sub_to_id( c->n_y ,
-                                      ((Eh_ind_2*)(this_link->data))->i ,
-                                      ((Eh_ind_2*)(this_link->data))->j );
-      eh_free( this_link->data );
-   }
-   path_id[n_y] = -1;
+      Eh_ind_2 hinge = sed_river_hinge( river );
+      double   angle = sed_river_angle( river );
+      GList*   path;
 
-   g_list_free( path );
+      path = sed_cube_find_line_path( c , &hinge , angle );
+
+      eh_require( path );
+
+      if ( path )
+      {
+         gint   i;
+         gint   n_y = g_list_length( path );
+         GList* this_link;
+
+         path_id = eh_new( gssize , n_y+1 );
+
+         if ( down_stream ) path = g_list_reverse( path );
+
+         for ( i=0,this_link=path ; this_link ; this_link=this_link->next,i++ )
+         {
+            path_id[i] = eh_grid_sub_to_id( c->n_y ,
+                                            ((Eh_ind_2*)(this_link->data))->i ,
+                                            ((Eh_ind_2*)(this_link->data))->j );
+            eh_free( this_link->data );
+         }
+         path_id[n_y] = -1;
+
+         g_list_free( path );
+      }
+   }
 
    return path_id;
 }
@@ -2510,10 +2733,10 @@ sed_scan_sea_level_curve( const char* file , gint* len , GError** err )
 
    eh_return_val_if_fail( err==NULL || *err==NULL , NULL );
 
-   eh_debug( "Scan the sea-level ile" );
+   eh_debug( "Scan the sea-level file" );
    {
       GError* tmp_err = NULL;
-      gint n_rows;
+      gint    n_rows;
 
       data = eh_dlm_read_swap( file , ";," , &n_rows , len , &tmp_err );
 
@@ -2523,7 +2746,7 @@ sed_scan_sea_level_curve( const char* file , gint* len , GError** err )
          g_set_error( &tmp_err ,
             SED_CUBE_ERROR ,
             SED_CUBE_ERROR_NOT_TWO_COLUMNS ,
-            "%s: Sea-level curve doesn not contain 2 columns (found %d)\n" ,
+            "%s: Sea-level curve does not contain 2 columns (found %d)\n" ,
             file , n_rows );
       else if ( *len<2 )
          g_set_error( &tmp_err ,
@@ -2578,10 +2801,10 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
 
    if ( all_records )
    {
-      gint i;
-      gint n_recs = g_strv_length( (gchar**)all_records );
+      gint            i;
       Eh_symbol_table tab;
-      double* t = eh_new( double , n_recs );
+      gint            n_recs = g_strv_length( (gchar**)all_records );
+      double*         t      = eh_new( double , n_recs );
 
       /* Read the time keys */
       for ( i=0 ; i<n_recs && err==NULL ; i++ )
@@ -2731,7 +2954,6 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
 
    if ( !tmp_err )
    {
-
       //---
       // Calculate the number of rows in the file based on the number of columns
       // and the file size.  If this is not a whole number, something is wrong.
@@ -3116,7 +3338,6 @@ gssize sed_cube_write( FILE *fp , const Sed_cube p )
    {
       gssize i;
       gssize len = sed_cube_size(p);
-      GList *list;
 
       /* Write all of the scalar data */
       n += fwrite( &(p->age)          , sizeof(double) , 1 , fp );
@@ -3147,16 +3368,26 @@ gssize sed_cube_write( FILE *fp , const Sed_cube p )
       n += sed_cell_write( fp , p->erode  );
       n += sed_cell_write( fp , p->remove );
 
-      len = g_list_length( p->river );
+      len = sed_cube_n_branches( p );
       n += fwrite( &len , sizeof(gssize) , 1 , fp );
 
-      // Dump the river mouths.
-      for ( list=p->river ; list ; list=list->next )
-         sed_river_fwrite( fp , list->data );
+      // Dump all rivers and suspension grids.
+      {
+         Sed_riv* all = sed_cube_all_branches( p );
+         Sed_riv* r;
 
-      // Dump the suspension grids.
-      for ( list=p->in_suspension ; list ; list=list->next )
-         eh_grid_dump( fp , list->data );
+         if ( all )
+         {
+            for ( r=all ; *r ; r++ )
+            {
+               sed_river_fwrite( fp , *r                          );
+               eh_grid_dump    ( fp , sed_river_get_susp_grid(*r) );
+            }
+
+            eh_free( all );
+         }
+
+      }
    }
    
    return n;
@@ -3174,11 +3405,10 @@ Sed_cube sed_cube_read( FILE *fp )
 
    eh_require( fp )
    {
-      gssize i, j;
-      gssize len;
-      GList *list;
-      Sed_riv this_river;
-      Eh_grid this_grid;
+      gint    i, j;
+      gint    len;
+      Sed_riv r;
+      Eh_grid g;
 
       //---
       // Load in the scalar information into the Sed_cube.
@@ -3208,16 +3438,13 @@ Sed_cube sed_cube_read( FILE *fp )
       fread( &len , sizeof(int) , 1 , fp );
       for ( i=0 ; i<len ; i++ )
       {
-         this_river = sed_river_new( NULL );
-         sed_river_fread( fp , this_river );
-         sed_cube_add_river( p , this_river );
-      }
+         r = sed_river_new( NULL );
+         sed_river_fread( fp , r );
+         sed_cube_add_trunk( p , r );
 
-      for ( list=p->in_suspension ; list ; list=list->next )
-      {
-         this_grid = eh_grid_load( fp );
-         eh_grid_copy( list->data , this_grid );
-         eh_grid_destroy( this_grid , TRUE );
+         g = eh_grid_load( fp );
+         eh_grid_copy( sed_river_get_susp_grid(r) , g );
+         eh_grid_destroy( g , TRUE );
       }
 
       sed_cube_set_shore( p );
@@ -3226,30 +3453,32 @@ Sed_cube sed_cube_read( FILE *fp )
    return p;
 }
 
-gssize sed_cube_column_id( const Sed_cube c , double x , double y )
+gssize
+sed_cube_column_id( const Sed_cube c , double x , double y )
 {
-   gssize i, j;
-   gssize row_ind, col_ind;
+   gssize id = -1;
 
-   if (    y > sed_column_y_position( c->col[0][c->n_y-1] ) 
-        || y < sed_column_y_position( c->col[0][0] )
-        || x > sed_column_x_position( c->col[c->n_x-1][0] ) 
-        || x < sed_column_x_position( c->col[0][0] ) )
-      return -1;
+   eh_require( c );
 
-   for ( j=0 ;
-         j<c->n_y && sed_column_y_position( c->col[0][j] ) <= y ;
-         j++ );
+   if ( c && sed_cube_is_in_domain_pos(c,x,y) )
+   {
+      gint i, j;
+      gint row_ind = 0;
+      gint col_ind = 0;
 
-   col_ind = (j==0)?0:j-1;
+      for ( j=0 ; j<c->n_y && sed_column_y_position( c->col[0][j] ) <= y ; j++ );
+      col_ind = (j==0)?0:j-1;
 
-   for ( i=0 ;
-         i<c->n_x && sed_column_x_position( c->col[i][col_ind] ) <= x ;
-         i++ );
+      if ( !sed_cube_is_1d(c) )
+      {
+         for ( i=0 ; i<c->n_x && sed_column_x_position( c->col[i][col_ind] ) <= x ; i++ );
+         row_ind = (i==0)?0:i-1;
+      }
 
-   row_ind = (i==0)?0:i-1;
+      id = eh_grid_sub_to_id( c->n_y , row_ind , col_ind );
+   }
 
-   return eh_grid_sub_to_id( c->n_y , row_ind , col_ind );
+   return id;
 }
 
 gssize *sed_cube_find_column_below( Sed_cube c , double z )
@@ -3300,6 +3529,7 @@ output vector, y must be allocated enough size to hold the elevation data.
 @param y        A pointer to an array of y-positions.
 @param len      Number of positions (length of x, and y).
 @param z        A pointer to an array of elevations.
+@param error    A GError
 
 @return The number of elevation data read.
 
@@ -3365,6 +3595,7 @@ elevations are held in GArray's rather than standard arrays.
 
 @param file     A name of an elevation file.
 @param y_array  A GArray of y-positions.
+@param error    A GError
 
 @return A GArray of the elevation data.
 
@@ -3478,7 +3709,8 @@ Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id )
 
 @return TRUE if the subscript is within the domain
 */
-gboolean sed_cube_is_in_domain( Sed_cube p , gssize i , gssize j )
+gboolean
+sed_cube_is_in_domain( Sed_cube p , gssize i , gssize j )
 {
    return is_in_domain( p->n_x , p->n_y , i , j );
 }
@@ -3490,13 +3722,35 @@ gboolean sed_cube_is_in_domain( Sed_cube p , gssize i , gssize j )
 
 @return TRUE if the id is within the domain
 */
-gboolean sed_cube_is_in_domain_id( Sed_cube p , gssize id )
+gboolean
+sed_cube_is_in_domain_id( Sed_cube p , gssize id )
 {
    eh_return_val_if_fail( p!=NULL , FALSE );
    return id>=0 && id<sed_cube_size(p);
 }
 
-gboolean sed_cube_is_1d( Sed_cube p )
+gboolean
+sed_cube_is_in_domain_pos( Sed_cube c , double x , double y )
+{
+   gboolean is_ok = TRUE;
+
+   eh_return_val_if_fail( c!=NULL , FALSE );
+
+   if (    y > sed_column_y_position( c->col[0][c->n_y-1] ) 
+        || y < sed_column_y_position( c->col[0][0] ) )
+         is_ok = FALSE;
+   else if ( !sed_cube_is_1d(c) )
+   {
+      if (    x > sed_column_x_position( c->col[c->n_x-1][0] ) 
+           || x < sed_column_x_position( c->col[0][0] ) )
+         is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+sed_cube_is_1d( Sed_cube p )
 {
    eh_return_val_if_fail( p!=NULL , FALSE );
    return p->n_x == 1;
@@ -3525,14 +3779,12 @@ sed_cube_fprint( FILE* fp , Sed_cube c )
       for ( i=0 ; i<sed_cube_size(c) ; i++ )
       {
          z = sed_cube_base_height(c,0,i);
-         if ( z < min_z )
-            min_z = z;
-         if ( z > max_z )
-            max_z = z;
+         if ( z < min_z ) min_z = z;
+         if ( z > max_z ) max_z = z;
       }
 
-      n == fprintf( fp , "No. x-columns = %d\n" , sed_cube_n_x(c) );
-      n == fprintf( fp , "No. y-columns = %d\n" , sed_cube_n_y(c) );
+      n += fprintf( fp , "No. x-columns = %d\n" , sed_cube_n_x(c) );
+      n += fprintf( fp , "No. y-columns = %d\n" , sed_cube_n_y(c) );
 
       n += fprintf( fp , "Max elevation = %f\n" , max_z );
       n += fprintf( fp , "Min elevation = %f\n" , min_z );
@@ -3551,8 +3803,8 @@ sed_cube_to_cell( Sed_cube c , Sed_cell d )
 
    if ( c )
    {
-      gint i;
-      gint len     = sed_cube_size(c);
+      gint     i;
+      gint     len = sed_cube_size(c);
       Sed_cell top = sed_cell_new_env();
 
       if ( !d )

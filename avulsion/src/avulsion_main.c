@@ -132,7 +132,6 @@ int main( int argc , char *argv[] )
 
    if ( header )
    {
-      gint i;
       fprintf( stdout , "# Minimum angle      = %f\n" , min_angle/S_RADS_PER_DEGREE );
       fprintf( stdout , "# Maximum angle      = %f\n" , max_angle/S_RADS_PER_DEGREE );
       fprintf( stdout , "# Standard deviation = %f\n" , std_dev/S_RADS_PER_DEGREE   );
@@ -235,7 +234,6 @@ int avulsion_full( )
       gint i;
       Avulsion_st* data;
       Sed_riv new_river;
-      double     d_theta    = G_PI/n_rivers;
       Sed_hydro* hydro_data = sed_hydro_scan( NULL , NULL );
       double**   river_data = NULL;
 
@@ -274,7 +272,7 @@ int avulsion_full( )
          sed_river_set_hinge        ( new_river , sed_cube_n_x(cube)/2 , 0 );
          sed_river_set_hydro        ( new_river , hydro_data[0] );
          sed_river_set_avulsion_data( new_river , data );
-         sed_cube_add_river         ( cube      , new_river );
+         sed_cube_add_trunk         ( cube      , new_river );
       }
 
       eh_free_2( river_data );
@@ -375,12 +373,14 @@ void deposit_sediment_helper( Sed_riv this_river , Sed_cube c )
    sed_cell_destroy( deposit_cell );
 }
 
-void sed_merge_all_rivers( Sed_cube c , double eps )
+void
+sed_merge_all_rivers( Sed_cube c , double eps )
 {
    sed_cube_set_river_list( c , merge_rivers( sed_cube_river_list(c) , eps ) );
 }
 
-GList *merge_rivers( GList *rivers , double eps )
+GList
+*merge_rivers( GList *rivers , double eps )
 {
    double d_theta;
    Sed_riv this_river, last_river;

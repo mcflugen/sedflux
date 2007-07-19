@@ -1,0 +1,15 @@
+[ subsidence ]
+active:                                 yes
+logging:                                yes
+repeat interval:                        always
+subsidence file:                        subsidence.seq
+
+['measuring station']
+active:                                 yes
+logging:                                yes
+repeat interval:                        always
+parameter to measure:                   elevation
+position wrt river mouth:               no
+position of station:                    all
+filename:                               elevation.bin
+

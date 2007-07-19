@@ -1,3 +1,29 @@
+%% Plot a sedflux property image
+%
+% Plot a sedflux profile as a 2D image.
+%
+% Optional parameter/value pairs:
+%   - xlabel : Label for the x-axis. [string]
+%   - ylabel : Label for the y-axis. [string]
+%   - zlabel : Label for the z-axis. [string]
+%   - xslice : Plot image along constant x-slice. [Double]
+%   - yslice : Plot image along constant y-slice. [Double]
+%   - zslice : Plot image along constant z-slice. [Double]
+%   - property : The name of the property to image. [String]
+%   - sealevel : Elevation of sea level. [Double]
+%   - colorbar : Indicate that a colorbar should be included. [boolean]
+%   - time : The time of the image. [double]
+%   - clim : Scale colors between these limits. [vector double]
+%
+% \param x         X-locations of the pixel centers of C
+% \param y         Y-locations of the pixel centers of C
+% \param z         Z-locations of the pixel centers of C
+% \param c         Matrix to image (as in the Matlab image command)
+% \param varargin  Parameter/value pairs
+% 
+% \returns A handle to the new image
+%
+
 function h_img = plot_2d_sedflux_image( x , y , z , c , varargin )
 
 axis_font_size  = 12;
@@ -64,7 +90,8 @@ if ( ~isempty(z_label) ), zlabel( z_label , 'fontsize' , label_font_size ); end
 map = get_property_colormap( property_id );
 set( h_fig , 'colormap' , map );
 
-if ( ~isempty( colorbar_is_on ) )
+%if ( ~isempty( colorbar_is_on ) )
+if ( colorbar_is_on )
 
       % If this already is a sedflux-2d-image and there is a colorbar, then
       % there is no need to change the height of the image as it should
@@ -95,8 +122,9 @@ end
 axes( h_ax );
 
 if ( ~isempty( time ) )
-   text( .05 , .9 , [ 'Time = ' num2str(time) ' years' ] , ...
-         'units' , 'normalized' , 'fontsize' , label_font_size );
+   text( .95 , .9 , [ 'Time = ' num2str(time) ' years' ] , ...
+         'units' , 'normalized' , 'fontsize' , label_font_size , ...
+         'horizontalalignment' , 'right' );
 end
 
 

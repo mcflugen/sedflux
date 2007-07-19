@@ -1,3 +1,20 @@
+%% Create a MATLAB movie of a measuring station file
+%
+% Optional paramter/value pairs:
+%   - sealevel : Elevation of sea level. [double]
+%   - holdframe : Once this frame is plotted, overlay subsequent
+%                 plots. [boolean]
+%   - zlim : Specify the limits of the axis in the z-direction. [vector double]
+%   - zdir : Specify the direction of the z-axis.  Either 'norm' or 'rev'. [string]
+%   - view : Specify the camera view. [vector double]
+%   - diff : Take time derivatives of measurments. [boolean]
+%   - surf : Plot data using surf command rather than image. [boolean]
+%   - refslice : Specify a reference time slice from which all data are
+%                differenced from. [int]
+%   - hook : Function to run after the data are plotted.  The function should accept
+%            a handle to an axis as its only input parameter. [function_handle]
+%   - skip : Skip this number of measurements between frames. [int]
+%
 function M=film_measuring_station_surface( filename , varargin )
 % FILM_PROPERTY_SLICE   Make a film from a series of sedflux slices.
 %

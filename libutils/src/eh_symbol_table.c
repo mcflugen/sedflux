@@ -14,6 +14,12 @@ typedef struct
 }
 aligned_st G_GNUC_INTERNAL;
 
+GQuark
+eh_symbol_table_error_quark( void )
+{
+   return g_quark_from_static_string( "eh-symbol-table-error-quark" );
+}
+
 //---
 // Start of local functions
 //---
@@ -28,10 +34,9 @@ void eh_symbol_table_free_label( gpointer label )
 
 guint eh_str_case_hash(gconstpointer key)
 {
-   char *new_key = g_strdup((char*)key);
+   gchar* new_key = g_ascii_strup( key , -1 );
    guint ans;
 
-   g_strup(new_key);
    ans = g_str_hash(new_key);
    eh_free(new_key);
 
@@ -40,7 +45,7 @@ guint eh_str_case_hash(gconstpointer key)
 
 gboolean eh_str_case_equal(gconstpointer a, gconstpointer b)
 {
-   return (g_strcasecmp((char*)a,(char*)b)==0)?TRUE:FALSE;
+   return (g_ascii_strcasecmp((char*)a,(char*)b)==0)?TRUE:FALSE;
 }
 
 void eh_destroy_key( gpointer key , gpointer value , gpointer user_data)
@@ -137,7 +142,8 @@ void eh_symbol_table_replace( Eh_symbol_table s , char* key , char* value )
    g_hash_table_replace(s->t,g_strdup(key),g_strdup(value));
 }
 
-char *eh_symbol_table_lookup(Eh_symbol_table s, const char *key)
+char*
+eh_symbol_table_lookup(Eh_symbol_table s, const char *key)
 {
    char *value = (char*)g_hash_table_lookup(s->t,key);
    if ( value )
@@ -211,6 +217,39 @@ eh_symbol_table_has_labels( Eh_symbol_table s , gchar** labels )
    return has_all_labels;
 }
 
+gboolean
+eh_symbol_table_require_labels( Eh_symbol_table s , gchar** labels , GError** error )
+{
+   gboolean has_all_labels = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( labels )
+   {
+      GError* tmp_err = NULL;
+      gchar** err_s   = NULL;
+      gchar** this_label;
+
+      for ( this_label=labels ; *this_label ; this_label++ )
+      {
+         if ( !eh_symbol_table_has_label( s , *this_label ) )
+            eh_strv_append( &err_s , g_strdup_printf( "Label not found: %s" , *this_label ) );
+      }
+
+      if ( err_s )
+      {
+         eh_set_error_strv( &tmp_err , EH_SYM_TABLE_ERROR , EH_SYM_TABLE_ERROR_MISSING_LABEL , err_s );
+
+         g_propagate_error( error , tmp_err );
+         g_strfreev       ( err_s );
+
+         has_all_labels = FALSE;
+      }
+   }
+
+   return has_all_labels;
+}
+
 gchar*
 eh_symbol_table_value( Eh_symbol_table s , const gchar* label )
 {
@@ -259,6 +298,22 @@ eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
+double*
+eh_symbol_table_dbl_range( Eh_symbol_table s , gchar* label )
+{
+   gchar* str = eh_symbol_table_value( s , label );
+   double* ans;
+
+   if ( str )
+      ans = eh_str_to_dbl_range( str , NULL );
+   else
+      ans = NULL;
+
+   eh_free( str );
+
+   return ans;
+}
+
 double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , gchar* label , gint* len , const gchar* delims )
 {
    double* dbl_array = NULL;
@@ -289,15 +344,63 @@ double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , gchar* label , gint
    return dbl_array;
 }
 
-double eh_symbol_table_time_value( Eh_symbol_table s , gchar* label )
+double
+eh_symbol_table_time_value( Eh_symbol_table s , gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    double ans;
 
    if ( str )
-      ans = strtotime( str );
+      ans = eh_str_to_time_in_years( str , NULL );
    else
       ans = eh_nan();
+
+   eh_free( str );
+
+   return ans;
+}
+
+double*
+eh_symbol_table_time_array_value( Eh_symbol_table s , gchar* label , gint* len , const gchar* delims )
+{
+   double* dbl_array = NULL;
+
+   eh_require( s     );
+   eh_require( label );
+
+   if ( s && label )
+   {
+      gchar** str_array = eh_symbol_table_values( s , label , delims );
+
+      if ( str_array )
+      {
+         gint i;
+         gchar** str;
+
+         dbl_array = eh_new( double , g_strv_length( str_array ) );
+
+         for ( str=str_array,i=0 ; *str ; str++,i++ )
+            dbl_array[i] = eh_str_to_time_in_years( *str , NULL );
+
+         *len = i;
+      }
+
+      eh_free( str_array );
+   }
+
+   return dbl_array;
+}
+
+double*
+eh_symbol_table_time_range( Eh_symbol_table s , gchar* label )
+{
+   gchar*  str = eh_symbol_table_value( s , label );
+   double* ans;
+
+   if ( str )
+      ans = eh_str_to_time_range( str , NULL );
+   else
+      ans = NULL;
 
    eh_free( str );
 
@@ -310,7 +413,7 @@ gboolean eh_symbol_table_bool_value( Eh_symbol_table s , gchar* label )
    gboolean ans;
 
    if ( str )
-      ans = strtobool( str );
+      ans = eh_str_to_boolean( str , NULL );
 
    eh_free( str );
 

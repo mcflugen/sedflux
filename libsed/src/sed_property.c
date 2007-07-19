@@ -2,20 +2,20 @@
 
 typedef struct
 {
-   char* name;             ///< The name of the property
-   char* ext;              ///< The file extension for the property
-   Sed_cell_property_func f;    ///< The function used to get the property from a Sed_cell
-   gssize n_args;          ///< Number of args for the property function
+   gchar*                 name;   ///< The name of the property
+   gchar*                 ext;    ///< The file extension for the property
+   Sed_cell_property_func f;      ///< The function used to get the property from a Sed_cell
+   gssize                 n_args; ///< Number of args for the property function
 } Sed_property_static;
 
 /** Class to describe a sediment property of a Sed_cell
 */
 CLASS( Sed_property )
 {
-   char* name;             ///< The name of the property
-   char* ext;              ///< The file extension for the property
-   Sed_cell_property_func f;    ///< The function used to get the property from a Sed_cell
-   gssize n_args;          ///< Number of args for the property function
+   gchar*                 name;   ///< The name of the property
+   gchar*                 ext;    ///< The file extension for the property
+   Sed_cell_property_func f;      ///< The function used to get the property from a Sed_cell
+   gssize                 n_args; ///< Number of args for the property function
 };
 
 //const Sed_property S_AGE = sed_property_new_full( "age" , "age" , &sed_cell_age , 1 );
@@ -86,7 +86,8 @@ Sed_property sed_property_new_full( char* name , char* ext , Sed_cell_property_f
 
    \return The sediment property.
 */
-Sed_property sed_property_new( const char *name )
+Sed_property
+sed_property_new( const char *name )
 {
    Sed_property prop = NULL;
 
@@ -94,9 +95,9 @@ Sed_property sed_property_new( const char *name )
 
    if ( name )
    {
-      gssize i;
-      gboolean found = FALSE;
-      char **split_name = g_strsplit( name , "=" , -1 );
+      gssize   i;
+      gboolean found      = FALSE;
+      gchar**  split_name = g_strsplit( name , "=" , -1 );
 
       for ( i=0 ; !found && all_properties[i].name ; i++ )
          if ( g_ascii_strcasecmp( split_name[0] , all_properties[i].name )==0 )

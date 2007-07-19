@@ -137,7 +137,7 @@ double eh_get_opt_dbl( Eh_args *args , char *label , double default_val );
 // fp          : a file pointer.
 // message     : a null terminated list of text line to print.  a new line character is
 //             : added to the end of each line weather there is already one there or not.
-void eh_print_message( FILE *fp , char *message[] );
+gint eh_print_message( FILE *fp , char *message[] );
 
 void eh_print_all_opts( Eh_args *args , char *prog_name , FILE *fp );
 

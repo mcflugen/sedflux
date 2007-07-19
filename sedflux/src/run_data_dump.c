@@ -21,34 +21,22 @@
 #define SED_DATA_DUMP_PROC_NAME "data dump"
 #define EH_LOG_DOMAIN SED_DATA_DUMP_PROC_NAME
 
+#include <string.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "data_dump.h"
-#include <string.h>
+#include "my_processes.h"
 
-Sed_process_info run_data_dump(gpointer ptr,Sed_cube prof)
+Sed_process_info
+run_data_dump( Sed_process proc , Sed_cube prof )
 {
-   Data_dump_t *data=(Data_dump_t*)ptr;
+   Data_dump_t*     data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    int i;
    char str[S_NAMEMAX], *filename;
    gchar* cube_name;
    Sed_property_file fp;
    Sed_property_file_attr attr;
    Sed_property property;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
 
    data->count++;
    sprintf(str,"%04d",data->count);
@@ -93,110 +81,129 @@ eh_warning( "property file attributes are not being used." );
    }
    eh_free( cube_name );
 
-   return SED_EMPTY_INFO;
+   return info;
 }
 
-#define S_KEY_DIR       "output directory"
-#define S_KEY_VRES      "vertical resolution"
-#define S_KEY_HRES      "horizontal resolution"
-#define S_KEY_Y_LIM     "vertical limits"
-#define S_KEY_X_LIM     "horizontal limits"
-#define S_KEY_PROPERTY  "property"
+#define DATA_DUMP_KEY_DIR       "output directory"
+#define DATA_DUMP_KEY_VRES      "vertical resolution"
+#define DATA_DUMP_KEY_HRES      "horizontal resolution"
+#define DATA_DUMP_KEY_Y_LIM     "vertical limits"
+#define DATA_DUMP_KEY_X_LIM     "horizontal limits"
+#define DATA_DUMP_KEY_PROPERTY  "property"
 
-gboolean init_data_dump(Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* data_dump_req_labels[] =
 {
-   Data_dump_t *data=(Data_dump_t*)ptr;
-   int i;
-   char **property;
-   char **x_lim_str, **y_lim_str;
-   Sed_property property_val;
+   DATA_DUMP_KEY_DIR      ,
+   DATA_DUMP_KEY_VRES     ,
+   DATA_DUMP_KEY_HRES     ,
+   DATA_DUMP_KEY_Y_LIM    ,
+   DATA_DUMP_KEY_X_LIM    ,
+   DATA_DUMP_KEY_PROPERTY ,
+   NULL
+};
+
+gboolean
+init_data_dump( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Data_dump_t* data    = sed_process_new_user_data( p , Data_dump_t );
+   GError*      tmp_err = NULL;
+   gboolean     is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
    
-   if ( symbol_table == NULL )
+   if ( eh_symbol_table_require_labels( tab , data_dump_req_labels , &tmp_err ) )
    {
-      if ( data->property )
-         g_array_free( data->property , TRUE );
-      eh_free( data->output_dir );
-      data->initialized = FALSE;
-      return TRUE;
-   }
+      data->property   = g_array_new( FALSE , FALSE , sizeof(Sed_property) );
+      data->output_dir = eh_symbol_table_value( tab , DATA_DUMP_KEY_DIR );
 
-   data->property = g_array_new( FALSE , FALSE , sizeof(Sed_property) );
-   data->output_dir = eh_symbol_table_value( symbol_table , S_KEY_DIR );
+      // ---
+      // read the vertical and horizontal resolutions.  if the key word, 'full'
+      // is given for either resolution, use the full resolution for that 
+      // direction.
+      // ---
+      if ( strcasecmp( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_VRES ) , "full" ) == 0 )
+         data->vertical_resolution = -1;
+      else
+         data->vertical_resolution = eh_symbol_table_dbl_value( tab , DATA_DUMP_KEY_VRES );
 
-   // ---
-   // read the vertical and horizontal resolutions.  if the key word, 'full'
-   // is given for either resolution, use the full resolution for that 
-   // direction.
-   // ---
-   if ( strcasecmp( eh_symbol_table_lookup( symbol_table , S_KEY_VRES ) ,
-                    "full" ) 
-        == 0 )
-      data->vertical_resolution = -1;
-   else
-      data->vertical_resolution = eh_symbol_table_dbl_value( symbol_table , S_KEY_VRES );
+      if ( strcasecmp( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_HRES ) , "full" ) == 0 )
+         data->horizontal_resolution = -1;
+      else
+         data->horizontal_resolution = eh_symbol_table_dbl_value( tab , DATA_DUMP_KEY_HRES );
 
-   if ( strcasecmp( eh_symbol_table_lookup( symbol_table , S_KEY_HRES ) ,
-                    "full" )
-        == 0 )
-      data->horizontal_resolution = -1;
-   else
-      data->horizontal_resolution = eh_symbol_table_dbl_value( symbol_table , S_KEY_VRES );
+      // ---
+      // read the x and y limits of the output file.  if the key word, 'tight'
+      // is given for either limits, use limits that will encompass all of the
+      // data in that direction.
+      // ---
+      if ( strcasecmp( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_Y_LIM ) , "tight") == 0 ) {
+         data->y_lim_min = -G_MAXDOUBLE;
+         data->y_lim_max =  G_MAXDOUBLE;
+      }
+      else
+      {
+         gchar** y_lim_str = g_strsplit( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_Y_LIM ) , "," , 2 );
+         data->y_lim_min = strtod( y_lim_str[0] , NULL );
+         data->y_lim_max = strtod( y_lim_str[1] , NULL );
+      }
 
-   // ---
-   // read the x and y limits of the output file.  if the key word, 'tight'
-   // is given for either limits, use limits that will encompass all of the
-   // data in that direction.
-   // ---
-   if ( strcasecmp( eh_symbol_table_lookup( symbol_table , S_KEY_Y_LIM ) ,
-                    "tight")
-        == 0 )
-   {
-      data->y_lim_min = -G_MAXDOUBLE;
-      data->y_lim_max =  G_MAXDOUBLE;
-   }
-   else
-   {
-      y_lim_str = g_strsplit( eh_symbol_table_lookup( symbol_table ,
-                                                      S_KEY_Y_LIM ) ,
-                              "," , 2 );
-      data->y_lim_min = strtod( y_lim_str[0] , NULL );
-      data->y_lim_max = strtod( y_lim_str[1] , NULL );
-   }
+      if ( strcasecmp( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_X_LIM ) , "tight" ) == 0 )
+      {
+         data->x_lim_min = -G_MAXDOUBLE;
+         data->x_lim_max =  G_MAXDOUBLE;
+      }
+      else
+      {
+         gchar** x_lim_str = g_strsplit( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_X_LIM ) , "," , 2 );
+         data->x_lim_min = strtod( x_lim_str[0] , NULL );
+         data->x_lim_max = strtod( x_lim_str[1] , NULL );
+      }
 
-   if ( strcasecmp( eh_symbol_table_lookup( symbol_table , S_KEY_X_LIM ) ,
-                    "tight" )
-        == 0 )
-   {
-      data->x_lim_min = -G_MAXDOUBLE;
-      data->x_lim_max =  G_MAXDOUBLE;
-   }
-   else
-   {
-      x_lim_str = g_strsplit( eh_symbol_table_lookup( symbol_table ,
-                                                      S_KEY_X_LIM ) ,
-                              "," , 2 );
-      data->x_lim_min = strtod( x_lim_str[0] , NULL );
-      data->x_lim_max = strtod( x_lim_str[1] , NULL );
-   }
+      // ---
+      // read the property labels.  they are comma delimited so we cycle through
+      // the list of them.
+      // ---
+      {
+         gint         i;
+         gchar**      property = g_strsplit( eh_symbol_table_lookup( tab , DATA_DUMP_KEY_PROPERTY ) , "," , -1 );
+         Sed_property property_val;
 
-   // ---
-   // read the property labels.  they are comma delimited so we cycle through
-   // the list of them.
-   // ---
-   property = g_strsplit( eh_symbol_table_lookup( symbol_table ,
-                                                  S_KEY_PROPERTY ) ,
-                          "," , -1 );
-   for ( i=0 ; property[i] ; i++ )
-   {
-      property_val = sed_property_new( property[i] );
-      g_array_append_val( data->property , property_val );
-   }
-   g_strfreev(property);
+         for ( i=0 ; property[i] ; i++ )
+         {
+            property_val = sed_property_new( property[i] );
+            g_array_append_val( data->property , property_val );
+         }
 
+         g_strfreev(property);
+      }
    
 //   if ( !try_dir(data->output_dir) )
-   if ( !eh_open_dir(data->output_dir) )
-      eh_exit( EXIT_FAILURE );
+      if ( !tmp_err ) eh_open_dir( data->output_dir , &tmp_err );
+   }
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+destroy_data_dump( Sed_process p )
+{
+   if ( p )
+   {
+      Data_dump_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         if ( data->property ) g_array_free( data->property , TRUE );
+         eh_free( data->output_dir );
+         eh_free( data             );
+      }
+   }
 
    return TRUE;
 }

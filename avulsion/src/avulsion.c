@@ -112,7 +112,7 @@ avulsion_scale_std_dev_up( double std_dev , double min_angle , double max_angle 
 Sed_riv
 sed_river_set_avulsion_data( Sed_riv r , Avulsion_st* data )
 {
-   g_dataset_id_set_data_full( r , AVULSION_DATA , data , avulsion_destroy );
+   g_dataset_id_set_data_full( r , AVULSION_DATA , data , (GDestroyNotify)avulsion_destroy );
    return r;
 }
 
@@ -135,7 +135,7 @@ sed_river_impart_avulsion_data( Sed_riv r )
 Sed_riv
 sed_river_unset_avulsion_data( Sed_riv r )
 {
-   g_dataset_remove_data( r , AVULSION_DATA );
+   g_dataset_id_remove_data( r , AVULSION_DATA );
    return r;
 }
 
@@ -221,7 +221,7 @@ sed_cube_avulse_river_helper( Sed_riv r , Sed_cube c )
 Sed_cube
 sed_cube_avulse_all_rivers( Sed_cube c )
 {
-   return sed_cube_foreach_river( c , &sed_cube_avulse_river_helper , c );
+   return sed_cube_foreach_river( c , (GFunc)&sed_cube_avulse_river_helper , c );
 }
 
 

@@ -1,3 +1,39 @@
+%%
+% \brief Read data from a SEDFLUX property file.
+%
+% Read data and header information from a sedflux output property
+% file.  Depending on the version of Sedflux that created the
+% output file, and the specified parameter/value pairs, the returned
+% value is either a 2 or 3 dimensional array
+%
+% A series of parameter value pairs can be passed that control
+% the way the data are presented.  Possible parameters are:
+%  - Both SEDFLUX3D and SEDFLUX2D
+%   -# time     : Give the time associated with this profile.  A label
+%                 is placed on the image that gives this time.  This is
+%                 typically used when making a movie from a series of
+%                 profiles. [scalar]
+%   -# skip     : Read only every skip-th column. [scalar]
+%   -# dim      : Logical value that indicates if the returned data should
+%                 be dimensionalized or scaled within a uint8. [scalar]
+%   -# cols     : Read only these sediment columns. [scalar or vector]
+%   -# water    : The value that denotes water. [scalar]
+%   -# rock     : The value that denotes bedrock. [scalar]
+%   -# clim     : Define the limits of the property. [vector]
+%   -# mask     : Logical array that indicates which values should be
+%                 imaged and which should be masked.  The size of the
+%                 mask should be the same as that of the image.  [Vector]
+%   -# func     : Function called to process the data before plotting.
+%                 The function should accept a matrix as its only
+%                 parameter. [function_handle]
+%
+% \param file_name    Name of the property file
+% \param varargin     A series of parameter/value pairs
+%
+% \return [data,hdr] The data and header information from the
+%         Sedflux property file
+%
+
 function [data, hdr] = read_property( file_name , varargin )
 % READ_PROPERTY   Read a sedflux property file.
 %
@@ -9,7 +45,6 @@ function [data, hdr] = read_property( file_name , varargin )
 
 valid_args = { 'skip'   , 'double'          , 0 ; ...
                'dim'    , 'logical'         , true ; ...
-               'format' , 'char'            , [] ; ...
                'cols'   , 'double'          , [] ; ...
                'water'  , 'double'          , [] ; ...
                'rock'   , 'double'          , [] ; ...
@@ -21,7 +56,6 @@ values = parse_varargin( valid_args , varargin );
 
 skip          = values{strmatch( 'skip'   , {valid_args{:,1}} , 'exact' )};
 dim           = values{strmatch( 'dim'    , {valid_args{:,1}} , 'exact' )};
-format        = values{strmatch( 'format' , {valid_args{:,1}} , 'exact' )};
 col_no        = values{strmatch( 'cols'   , {valid_args{:,1}} , 'exact' )};
 new_water_val = values{strmatch( 'water'  , {valid_args{:,1}} , 'exact' )};
 new_rock_val  = values{strmatch( 'rock'   , {valid_args{:,1}} , 'exact' )};

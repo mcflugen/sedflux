@@ -25,19 +25,21 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "failure.h"
+//#include "failure.h"
 #include "bing.h"
-
-#include "debris_flow.h"
+//#include "debris_flow.h"
+#include "my_processes.h"
 
 #define MAX_TRIES (1)
 
 #define BING_LOCAL_MODEL
 #undef BING_OLD_LOCAL_MODEL
 
-Sed_process_info run_debris_flow( gpointer ptr , Sed_cube p )
+Sed_process_info
+run_debris_flow( Sed_process proc , Sed_cube p )
 {
-   Debris_flow_t *data=(Debris_flow_t*)ptr;
+   Debris_flow_t*   data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    Sed_cell c, flow_cell;
    int i;
    int i_start, i_end;
@@ -48,21 +50,6 @@ Sed_process_info run_debris_flow( gpointer ptr , Sed_cube p )
    double *deposit;
    Sed_cube fail;
    bing_t bing_const;
-   Sed_process_info info = SED_EMPTY_INFO;
-
-   if ( p == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
 
 /*
    prof = sed_create_empty_profile( sed_cube_n_y(p) , p->sed );
@@ -83,7 +70,9 @@ Sed_process_info run_debris_flow( gpointer ptr , Sed_cube p )
    prof->sealevel   = p->sea_level;
    prof->constants  = p->constants;
 */
-   fail = data->failure;
+
+   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   //fail = data->failure;
 
    deposit = eh_new( double , sed_cube_n_y(p) );
 
@@ -233,25 +222,55 @@ Sed_process_info run_debris_flow( gpointer ptr , Sed_cube p )
 #define S_KEY_DT             "time step"
 #define S_KEY_MAX_TIME       "maximum run time"
 
-gboolean init_debris_flow(Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_debris_flow( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Debris_flow_t *data=(Debris_flow_t*)ptr;
-   if ( symbol_table == NULL )
-   {
-      data->initialized = FALSE;
-      return TRUE;
-   }
+   Debris_flow_t* data    = sed_process_new_user_data( p , Debris_flow_t );
+   GError*        tmp_err = NULL;
+   gchar**        err_s   = NULL;
+   gboolean       is_ok   = TRUE;
 
-   data->yield_strength      = eh_symbol_table_dbl_value( symbol_table , S_KEY_YIELD_STRENGTH );
-   data->viscosity           = eh_symbol_table_dbl_value( symbol_table , S_KEY_VISCOSITY      );
-   data->numerical_viscosity = eh_symbol_table_dbl_value( symbol_table , S_KEY_NUM_VISCOSITY  );
-   data->dt                  = eh_symbol_table_dbl_value( symbol_table , S_KEY_DT             );
-   data->max_time            = eh_symbol_table_dbl_value( symbol_table , S_KEY_MAX_TIME       );
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->yield_strength      = eh_symbol_table_dbl_value( tab , S_KEY_YIELD_STRENGTH );
+   data->viscosity           = eh_symbol_table_dbl_value( tab , S_KEY_VISCOSITY      );
+   data->numerical_viscosity = eh_symbol_table_dbl_value( tab , S_KEY_NUM_VISCOSITY  );
+   data->dt                  = eh_symbol_table_dbl_value( tab , S_KEY_DT             );
+   data->max_time            = eh_symbol_table_dbl_value( tab , S_KEY_MAX_TIME       );
+
+   eh_check_to_s( data->yield_strength>=0      , "Yield strength positive"      , &err_s );
+   eh_check_to_s( data->viscosity>=0           , "Viscosity positive"           , &err_s );
+   eh_check_to_s( data->numerical_viscosity>=0 , "Numerical viscosity positive" , &err_s );
+   eh_check_to_s( data->dt>0                   , "Time step positive"           , &err_s );
+   eh_check_to_s( data->max_time>0             , "Maximum run time positive"    , &err_s );
 
 // there is no failure sediment yet.
    data->failure = NULL;
 
-   return 0;
+   if ( !tmp_err && err_s )
+      eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+destroy_debris_flow( Sed_process p )
+{
+   if ( p )
+   {
+      Debris_flow_t* data = sed_process_user_data( p );
+
+      if ( data )
+         eh_free( data );
+   }
+
+   return TRUE;
 }
 
 gboolean dump_debris_flow_data( gpointer ptr , FILE *fp )

@@ -26,26 +26,13 @@
 #include <math.h>
 
 #include "utils.h"
-#include "tide.h"
+#include "my_processes.h"
 
-Sed_process_info run_tide(gpointer ptr,Sed_cube prof)
+Sed_process_info
+run_tide( Sed_process proc , Sed_cube prof )
 {
-   Tide_t *data=(Tide_t*)ptr;
+   Tide_t*          data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
 
    if ( data->tidal_period<0 )
       data->tidal_period = sed_cube_time_step_in_days( prof );
@@ -65,27 +52,51 @@ Sed_process_info run_tide(gpointer ptr,Sed_cube prof)
 #define S_KEY_TIDE_RANGE  "tidal range"
 #define S_KEY_TIDE_PERIOD "tidal period"
 
-gboolean init_tide( Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_tide( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Tide_t *data=(Tide_t*)ptr;
-   char *str;
+   Tide_t*  data    = sed_process_new_user_data( p , Tide_t );
+   GError*  tmp_err = NULL;
+   gchar**  err_s   = NULL;
+   gboolean is_ok   = TRUE;
+   gchar*   str;
 
-   if ( symbol_table == NULL )
-   {
-      data->initialized = FALSE;
-      return TRUE;
-   }
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
 
-   data->tidal_range  = eh_symbol_table_dbl_value( symbol_table , S_KEY_TIDE_RANGE  );
-   str                = eh_symbol_table_lookup   ( symbol_table , S_KEY_TIDE_PERIOD );
+   data->tidal_range  = eh_symbol_table_dbl_value( tab , S_KEY_TIDE_RANGE  );
+   str                = eh_symbol_table_lookup   ( tab , S_KEY_TIDE_PERIOD );
 
-   if ( strcasecmp( str , "time step" )==0 )
-      data->tidal_period = -1;
+   if ( g_ascii_strcasecmp( str , "time step" )==0 ) data->tidal_period = -1;
    else
    {
-      data->tidal_period = g_strtod( str , NULL );
-      data->tidal_period = -1;
+      data->tidal_period = eh_str_to_dbl( str , &tmp_err );
+
       g_message( "The tidal period must be set to 'time step'.  Resetting." );
+      data->tidal_period = -1;
+   }
+
+   eh_check_to_s( data->tidal_range>=0 , "Tidal range positive" , &err_s );
+
+   if ( !tmp_err && err_s )
+      eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+destroy_tide( Sed_process p )
+{
+   if ( p )
+   {
+      Tide_t* data = sed_process_user_data( p );
+      
+      if ( data ) eh_free( data );
    }
 
    return TRUE;

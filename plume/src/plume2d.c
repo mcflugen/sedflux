@@ -30,7 +30,7 @@ gboolean plume3d( Plume_inputs *plume_const , Plume_river river       ,
                   int n_grains              , Plume_sediment *sedload ,
                   Eh_dbl_grid *deposit      , Plume_data *data );
 
-Plume_data *init_plume_data( Plume_data *data )
+Plume_data *plume_data_init( Plume_data *data )
 {
    data->x_len = 0;
    data->y_len = 0;

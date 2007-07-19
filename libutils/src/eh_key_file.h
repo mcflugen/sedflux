@@ -67,10 +67,10 @@ gboolean*     eh_key_file_get_bool_values  ( Eh_key_file f           ,
 double        eh_key_file_get_dbl_value    ( Eh_key_file f ,
                                              const gchar* group_name ,
                                              const gchar* key );
-double*       eh_key_file_get_dbl_array( Eh_key_file f           ,
+double*       eh_key_file_get_dbl_array( Eh_key_file      f          ,
                                              const gchar* group_name ,
                                              const gchar* key        ,
-                                             gssize* len );
+                                             gint*        len );
 double*       eh_key_file_get_dbl_values   ( Eh_key_file f           ,
                                              const gchar* group_name ,
                                              const gchar* key );

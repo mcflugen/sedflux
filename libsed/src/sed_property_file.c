@@ -182,7 +182,9 @@ gssize sed_property_file_write( Sed_property_file sed_fp , Sed_cube p )
    if ( sed_fp && p )
    {
       Eh_ndgrid g;
-      double lower_left[3], upper_right[3], resolution[3];
+      double    lower_left[3];
+      double    upper_right[3];
+      double    resolution[3];
 
       lower_left[0]  = sed_fp->attr->x_lim[0];
       lower_left[1]  = sed_fp->attr->y_lim[0];
@@ -377,8 +379,8 @@ Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
    eh_free( y_cols );
 
    n_rows = sed_cube_n_rows_between( p , dz , lower_left_z , upper_right_z , cols );
-   g_3 = eh_ndgrid_malloc( 3 , sizeof(double) , n_x_cols , n_y_cols , n_rows );
-   g = eh_ndgrid_to_grid( g_3 );
+   g_3    = eh_ndgrid_malloc( 3 , sizeof(double) , n_x_cols , n_y_cols , n_rows );
+   g      = eh_ndgrid_to_grid( g_3 );
 
    eh_dbl_array_grid( eh_ndgrid_x(g_3,0) , eh_ndgrid_n(g_3,0) , lower_left_x , dx );
    eh_dbl_array_grid( eh_ndgrid_x(g_3,1) , eh_ndgrid_n(g_3,1) , lower_left_y , dy );
@@ -590,7 +592,8 @@ gssize *sed_cube_y_cols_between( Sed_cube p , double dy , double bottom , double
    return id;
 }
 
-gssize sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double upper , gssize *col_id )
+gssize
+sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double upper , gssize *col_id )
 {
    gssize n_rows = 0;
 
@@ -598,8 +601,8 @@ gssize sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double u
    {
       gssize id, n;
       gssize row_0, row_1;
-      gssize bottom_row = G_MAXINT32;
-      gssize top_row    = G_MININT32;
+      gssize bottom_row    = G_MAXINT32;
+      gssize top_row       = G_MININT32;
       double rows_per_cell = sed_cube_z_res(p)/dz;
 
       for ( id=col_id[0],n=0 ; col_id[n]>=0 ; id=col_id[++n] )
@@ -610,6 +613,7 @@ gssize sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double u
          eh_set_min( bottom_row , row_0 );
          eh_set_max( top_row    , row_1 );
       }
+
       eh_lower_bound( bottom_row , lower/dz );
       eh_upper_bound( top_row    , upper/dz );
 

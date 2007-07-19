@@ -244,13 +244,14 @@ char* eh_opt_str_value( Eh_opt_context c , char* label )
    return rtn;
 }
 
-gboolean eh_opt_bool_value( Eh_opt_context c , char *label )
+gboolean
+eh_opt_bool_value( Eh_opt_context c , char *label )
 {
    char *value = eh_opt_value( c , label );
    gboolean rtn = FALSE;
 
    if ( value )
-      rtn = strtobool(value);
+      rtn = eh_str_to_boolean( value , NULL );
 
    return rtn;
 }
@@ -265,7 +266,7 @@ int eh_opt_key_value( Eh_opt_context c , char *label , char *keys[] )
       gssize i;
 
       for ( i=0 ; keys[i] ; i++ )
-         if ( g_strcasecmp( value , keys[i] )==0 )
+         if ( g_ascii_strcasecmp( value , keys[i] )==0 )
          {
             rtn = i;
             break;

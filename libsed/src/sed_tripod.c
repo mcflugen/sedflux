@@ -436,7 +436,7 @@ double sed_measure_cube_river_mouth( Sed_cube p , gssize i , gssize j )
 {
    if ( sed_cube_is_in_domain(p,i,j) )
    {
-      gssize len = sed_cube_number_of_rivers( p );
+      gssize len = sed_cube_n_rivers( p );
       gssize n;
       Sed_riv this_river;
       gboolean found=FALSE;

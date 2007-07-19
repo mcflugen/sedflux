@@ -74,7 +74,8 @@ START_TEST ( test_sed_hydro_add_cell )
 
    load_0 = sed_hydro_total_load( a );
 
-   sed_hydro_add_cell( a , c , volume );
+   sed_cell_resize( c , volume );
+   sed_hydro_add_cell( a , c );
 
    load_1 = sed_hydro_total_load( a );
 
@@ -100,18 +101,21 @@ START_TEST ( test_sed_hydro_subtract_cell )
    sed_hydro_set_velocity( a , 1.23 );
    sed_hydro_set_duration( a , 33   );
 
-   sed_hydro_add_cell( a , c , volume );
+   sed_cell_resize( c , volume );
+   sed_hydro_add_cell( a , c );
 
    load_0 = sed_hydro_total_load( a );
 
-   sed_hydro_subtract_cell( a , c , volume/5. );
+   sed_cell_resize( c , volume/5. );
+   sed_hydro_subtract_cell( a , c );
 
    load_1    = sed_hydro_total_load( a );
    cell_load = sed_cell_density( c )*volume/5.;
 
    fail_unless( eh_compare_dbl( load_1 , load_0-cell_load , 1e-12 ) , "" );
 
-   sed_hydro_subtract_cell( a , c , volume );
+   sed_cell_resize( c , volume );
+   sed_hydro_subtract_cell( a , c );
 
    load_1 = sed_hydro_total_load( a );
 

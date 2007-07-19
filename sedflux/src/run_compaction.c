@@ -24,39 +24,25 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "sed_sedflux.h"
-#include "compaction.h"
+#include "my_processes.h"
 
-#define WITH_THREADS
+#undef WITH_THREADS
 
 #define N_THREADS 5
 
 void thread_compact( void *data , void *user_data );
 int compact(Sed_column,double);
 
-Sed_process_info run_compaction(gpointer ptr, Sed_cube p)
+Sed_process_info
+run_compaction( Sed_process proc , Sed_cube p )
 {
-   Compaction_t *data=(Compaction_t*)ptr;
    Sed_process_info info = SED_EMPTY_INFO;
-   int i;
-   
-   if ( p == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
 
 #if !defined(WITH_THREADS)
 
    {
-      gssize len = sed_cube_size(p);
+      gint i;
+      gint len = sed_cube_size(p);
       for ( i=0 ; i<len ; i++ )
          compact( sed_cube_col(p,i) , sed_cube_age_in_years(p) );
    }
@@ -77,7 +63,8 @@ Sed_process_info run_compaction(gpointer ptr, Sed_cube p)
 
       eh_require( error==NULL );
       {
-         int *queue;
+         gint   i;
+         gint*  queue;
          gssize len = sed_cube_size(p);
 
          queue = eh_new( int , len );
@@ -95,17 +82,6 @@ Sed_process_info run_compaction(gpointer ptr, Sed_cube p)
 #endif
 
    return info;
-}
-
-gboolean init_compaction(Eh_symbol_table symbol_table,gpointer ptr)
-{
-   Compaction_t *data=(Compaction_t*)ptr;
-   if ( symbol_table == NULL )
-   {
-      data->initialized = FALSE;
-      return TRUE;
-   }
-   return TRUE;
 }
 
 int pthread_mutex_spinlock(pthread_mutex_t *mutex);

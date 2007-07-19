@@ -24,36 +24,22 @@
 #include <stdio.h>
 
 #include "utils.h"
-#include "quake.h"
 #include "sed_sedflux.h"
+#include "my_processes.h"
 
-Sed_process_info run_quake(gpointer ptr,Sed_cube prof)
+double earthquake(double,double);
+
+gboolean init_quake_data( Sed_process proc , Sed_cube prof , GError** error );
+
+Sed_process_info
+run_quake( Sed_process proc , Sed_cube prof )
 {
-   Quake_t *data=(Quake_t*)ptr;
-   double earthquake(double,double);
-   double a, acceleration, time_step;
+   Quake_t *    data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
+   double a, acceleration, time_step;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-         g_rand_free( data->rand );
-      }
-      return SED_EMPTY_INFO;
-   }
-   
-   if ( !data->initialized )
-   {
-      if ( data->rand_seed>0 )
-         data->rand = g_rand_new_with_seed( data->rand_seed );
-      else
-         data->rand = g_rand_new( );
-
-      data->last_time = sed_cube_age_in_years(prof);
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_quake_data( proc , prof , NULL );
 
    a               = exp(-1./data->mean_quake);
    time_step       = sed_cube_age_in_years( prof ) - data->last_time;
@@ -90,19 +76,66 @@ Sed_process_info run_quake(gpointer ptr,Sed_cube prof)
 #define S_KEY_VAR_QUAKE  "variance of 100 year quake"
 #define S_KEY_SEED       "seed for random number generator"
 
-gboolean init_quake( Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_quake( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Quake_t *data=(Quake_t*)ptr;
+   Quake_t* data    = sed_process_new_user_data( p , Quake_t );
+   GError*  tmp_err = NULL;
+   gchar**  err_s   = NULL;
+   gboolean is_ok   = TRUE;
 
-   if ( symbol_table == NULL )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->rand       = NULL;
+
+   data->mean_quake = eh_symbol_table_dbl_value( tab , S_KEY_MEAN_QUAKE );
+   data->var_quake  = eh_symbol_table_dbl_value( tab , S_KEY_VAR_QUAKE  );
+   data->rand_seed  = eh_symbol_table_int_value( tab , S_KEY_SEED       );
+
+   eh_check_to_s( data->mean_quake>=0. , "Magnitude of average earthquake positive" , &err_s );
+   eh_check_to_s( data->var_quake>=0.  , "Variance of average earthquake positive"  , &err_s );
+
+   if ( err_s ) eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
+   if ( tmp_err )
    {
-      data->initialized=FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   data->mean_quake = eh_symbol_table_dbl_value( symbol_table , S_KEY_MEAN_QUAKE );
-   data->var_quake  = eh_symbol_table_dbl_value( symbol_table , S_KEY_VAR_QUAKE  );
-   data->rand_seed  = eh_symbol_table_int_value( symbol_table , S_KEY_SEED       );
+   return is_ok;
+}
+
+gboolean
+init_quake_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Quake_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      if ( data->rand_seed>0 ) data->rand = g_rand_new_with_seed( data->rand_seed );
+      else                     data->rand = g_rand_new( );
+
+      data->last_time = sed_cube_age_in_years( prof );
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_quake( Sed_process p )
+{
+   if ( p )
+   {
+      Quake_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         g_rand_free( data->rand );
+
+         eh_free( data );
+      }
+   }
 
    return TRUE;
 }

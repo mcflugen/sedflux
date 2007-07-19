@@ -25,37 +25,30 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "isostasy.h"
-#include "processes.h"
+#include "subside.h"
+#include "my_processes.h"
 
-void subside_point_load      ( Eh_dbl_grid g , double load , double h ,
-                               double E       , int i_load  , int j_load );
-void subside_half_plane_load ( Eh_dbl_grid g , double load , double h , double E );
-double get_flexure_parameter ( double h       , double E    , gssize n_dim );
+void     subside_point_load      ( Eh_dbl_grid g , double load , double h ,
+                                   double E       , int i_load  , int j_load );
+void     subside_half_plane_load ( Eh_dbl_grid g , double load , double h , double E );
+double   get_flexure_parameter   ( double h       , double E    , gssize n_dim );
+gboolean init_isostasy_data      ( Sed_process proc , Sed_cube prof );
 
-Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
+Sed_process_info
+run_isostasy( Sed_process proc , Sed_cube prof )
 {
-   Isostasy_t *data=(Isostasy_t*)ptr;
+   Isostasy_t*      data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    double full_n_x, full_n_y;
-   int small_n_x, small_n_y;
+   gint   small_n_x, small_n_y;
    double x_reduction, y_reduction;
    double C;
    double time, time_step;
    Eh_dbl_grid dw_iso;
    double total_dw = 0;
-   Sed_process_info info = SED_EMPTY_INFO;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         eh_grid_destroy( data->last_dw_iso , TRUE );
-         eh_grid_destroy( data->last_load   , TRUE );
-
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_isostasy_data( proc , prof );
 
    if ( sed_mode_is_3d() )
    {
@@ -78,16 +71,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
         / x_reduction
         / y_reduction;
 
-   if ( !data->initialized )
-   {
-      data->last_dw_iso = eh_grid_new( double , sed_cube_n_x(prof) , sed_cube_n_y(prof) );
-      data->last_load   = sed_cube_load_grid( prof , NULL );
-      eh_dbl_grid_scalar_mult( data->last_load , C );
-      data->last_half_load = sed_cube_water_pressure( prof , 0 , sed_cube_n_y(prof)-1 );
-
-      data->last_time     = sed_cube_age_in_years(prof);
-      data->initialized   = TRUE;
-   }
+   eh_dbl_grid_scalar_mult( data->last_load , C );
 
    full_n_x = sed_cube_n_x(prof);
    full_n_y = sed_cube_n_y(prof);
@@ -100,6 +84,8 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
    time            = sed_cube_age_in_years(prof);
    time_step       = time - data->last_time;
    data->last_time = time;
+
+   dw_iso = eh_grid_new( double , full_n_x , full_n_y );
 
    //---
    // First we calculate the total deflection to equilibrium.  Keep updating
@@ -128,7 +114,6 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
 
       last_load_full = eh_grid_dup( data->last_load );
 
-      dw_iso = eh_grid_new( double , full_n_x , full_n_y );
       eh_debug( "Subside the basin" );
       do
       {
@@ -170,10 +155,11 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
          // Skip the subsidence if there is no load change.  However, the load
          // can now be less than zero.
          //---
+         eh_debug( "Calculate deflections" );
          {
             Eh_dbl_grid v_0 = eh_grid_dup( this_load_small );
-            double eet = data->eet;
-            double y   = data->youngs_modulus;
+            double      eet = data->eet;
+            double      y   = data->youngs_modulus;
 
             eh_dbl_grid_subtract( v_0 , last_load_small );
 
@@ -184,6 +170,7 @@ Sed_process_info run_isostasy( gpointer ptr , Sed_cube prof )
                double half_load = this_half_load - data->last_half_load;
                subside_half_plane_load( this_dw_small , half_load , eet , y );
             }
+
             eh_grid_destroy( v_0 , TRUE );
          }
 /*
@@ -295,7 +282,6 @@ iter++;
    //---
    eh_grid_destroy( data->last_load , TRUE );
    data->last_load = sed_cube_load_grid( prof , NULL );
-   eh_dbl_grid_scalar_mult( data->last_load , C );
 
    eh_grid_destroy( dw_iso , TRUE );
 
@@ -308,28 +294,90 @@ iter++;
    return info;
 }
 
-#define S_KEY_D               "flexural rigity of the crust"
-#define S_KEY_EET             "effective elastic thickness"
-#define S_KEY_YOUNGS_MODULUS  "Youngs modulus"
-#define S_KEY_RELAXATION_TIME "relaxation time"
+#define ISOSTASY_KEY_EET             "effective elastic thickness"
+#define ISOSTASY_KEY_YOUNGS_MODULUS  "Youngs modulus"
+#define ISOSTASY_KEY_RELAXATION_TIME "relaxation time"
 
-gboolean init_isostasy( Eh_symbol_table symbol_table,gpointer ptr)
+static gchar* isostasy_req_labels[] =
 {
-   Isostasy_t *data=(Isostasy_t*)ptr;
+   ISOSTASY_KEY_EET             ,
+   ISOSTASY_KEY_YOUNGS_MODULUS  ,
+   ISOSTASY_KEY_RELAXATION_TIME ,
+   NULL
+};
 
-   if ( symbol_table == NULL )
+gboolean
+init_isostasy( Sed_process p , Eh_symbol_table tab , GError** error )
+{
+   Isostasy_t* data    = sed_process_new_user_data( p , Isostasy_t );
+   GError*     tmp_err = NULL;
+   gchar**     err_s   = NULL;
+   gboolean    is_ok   = TRUE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->last_dw_iso     = NULL;
+   data->last_load       = NULL;
+   data->last_half_load  = 0.;
+
+   eh_symbol_table_require_labels( tab , isostasy_req_labels , &tmp_err );
+
+   if ( !tmp_err )
    {
-      data->initialized = FALSE;
-      return TRUE;
+      data->relaxation_time = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_RELAXATION_TIME );
+      data->eet             = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_EET             );
+      data->youngs_modulus  = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_YOUNGS_MODULUS  );
+
+      eh_check_to_s( data->relaxation_time>=0  , "Relaxation time positive"             , &err_s );
+      eh_check_to_s( data->eet>=0              , "Effective elastic thickness positive" , &err_s );
+      eh_check_to_s( data->youngs_modulus>=0   , "Young's Modulus positive"             , &err_s );
+
+      if ( !tmp_err && err_s )
+         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+
    }
-/*
-   data->D               = g_strtod( eh_symbol_table_lookup( symbol_table ,
-                                                             S_KEY_D ) , 
-                                     NULL);
-*/
-   data->relaxation_time = eh_symbol_table_dbl_value( symbol_table , S_KEY_RELAXATION_TIME );
-   data->eet             = eh_symbol_table_dbl_value( symbol_table , S_KEY_EET             );
-   data->youngs_modulus  = eh_symbol_table_dbl_value( symbol_table , S_KEY_YOUNGS_MODULUS  );
+
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+init_isostasy_data( Sed_process proc , Sed_cube prof )
+{
+   Isostasy_t* data = sed_process_user_data( proc );
+
+   if ( data )
+   {
+      data->last_dw_iso    = eh_grid_new( double , sed_cube_n_x(prof) , sed_cube_n_y(prof) );
+      data->last_load      = sed_cube_load_grid( prof , NULL );
+
+      data->last_half_load = sed_cube_water_pressure( prof , 0 , sed_cube_n_y(prof)-1 );
+      data->last_time      = sed_cube_age_in_years(prof);
+   }
+
+   return TRUE;
+}
+
+gboolean
+destroy_isostasy( Sed_process p )
+{
+   if ( p )
+   {
+      Isostasy_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         eh_grid_destroy( data->last_dw_iso , TRUE );
+         eh_grid_destroy( data->last_load   , TRUE );
+
+         eh_free( data );
+      }
+   }
 
    return TRUE;
 }

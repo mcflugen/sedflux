@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "sakura.h"
+#include "sakura_local.h"
+
 /*
 double **dmatrix(int nrl, int nrh, int ncl, int nch)
 {
@@ -216,7 +218,7 @@ double dudt( double u, double ul, double ur, double ull, double urr, double hl, 
 	if (hm < HMIN)
 			ufric = 0;
 	else
-			ufric= Cd * SQ(u)/hm;
+			ufric= Cd * eh_sqr(u)/hm;
 	
 	uvisco = nu * (1 + 2.5 * cm) * (ur - 2 * u + ul)/dx/dx;
 	
@@ -349,7 +351,7 @@ void outputData(FILE *fp, int NNODES, double totTime, double *U, double *HH, dou
  */
 void getTime(double totTime, int *day, int *hr, int *min, double *sec)
 {
-	*day	= (int)totTime/DAY;
+	*day	= (int)totTime/S_SECONDS_PER_DAY;
 	*hr	= (int)(totTime - ((double)(*day) * DAY))/3600;
 	*min	= (int)(totTime - ((double)(*day) * DAY) - ((double)(*hr) * 3600.0))/60;
 	*sec	= totTime - ((double)(*day) * DAY) - ((double)(*hr) * 3600.0) - ((double)(*min) * 60);

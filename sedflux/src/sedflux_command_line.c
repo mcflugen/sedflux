@@ -154,19 +154,19 @@ sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** er
 
    /* Create the working directory */
    if ( g_mkdir_with_parents( *working_dir , 0 ) == -1 )
-      g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_DIR , strerror(errno) );
+      eh_set_file_error_from_errno( &tmp_err , *working_dir , errno );
 
    /* Make sure the working directory is writable */
    if ( !tmp_err && g_access( *working_dir , R_OK|W_OK|X_OK ) == -1 )
-      g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_DIR , strerror(errno) );
+      eh_set_file_error_from_errno( &tmp_err , *working_dir , errno );
 
    /* Move to the working directory */
    if ( !tmp_err && g_chdir( *working_dir )!=0 )
-      g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_DIR , strerror(errno) );
+      eh_set_file_error_from_errno( &tmp_err , *working_dir , errno );
 
    /* Make sure the initialization file is readable */
    if ( !tmp_err && g_access( *init_file , R_OK ) == -1 )
-      g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_INIT_FILE , strerror(errno) );
+      eh_set_file_error_from_errno( &tmp_err , *init_file , errno );
 
    if ( tmp_err )
    {
@@ -357,8 +357,6 @@ fill_sedflux_info_file( Eh_project p , const gchar* cmd_str , const gchar* desc 
    //---
    eh_require( options )
    {
-      int i;
-
       eh_require( command );
       eh_require( options );
 

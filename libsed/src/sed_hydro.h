@@ -61,6 +61,7 @@ Sed_hydro_error;
 
 #include "sed_sediment.h"
 #include "sed_cell.h"
+#include "sed_hydrotrend.h"
 
 #define HYDRO_INLINE        (1<<0)
 #define HYDRO_HYDROTREND    (1<<1)
@@ -68,6 +69,7 @@ Sed_hydro_error;
 #define HYDRO_BUFFER_LEN    (365)
 #define HYDRO_N_SIG_VALUES  (10)
 
+/*
 typedef struct
 {
    int n_grains;
@@ -76,13 +78,14 @@ typedef struct
    unsigned char *comment;
 }
 Hydro_header G_GNUC_INTERNAL;
+*/
 
-typedef Hydro_header* (*Hydro_read_header_func)(Sed_hydro_file);
+typedef Sed_hydrotrend_header* (*Hydro_read_header_func)(Sed_hydro_file);
 typedef Sed_hydro (*Hydro_read_record_func)(Sed_hydro_file);
 typedef double (*Hydro_get_val_func)(Sed_hydro);
 
-Hydro_header* sed_hydro_read_header                ( FILE *fp );
-Hydro_header* sed_hydro_read_header_from_byte_order( FILE *fp , gint order );
+Sed_hydrotrend_header* sed_hydro_read_header                ( FILE *fp );
+Sed_hydrotrend_header* sed_hydro_read_header_from_byte_order( FILE *fp , gint order );
 Sed_hydro     sed_hydro_read_record                ( FILE *fp , int n_grains );
 Sed_hydro     sed_hydro_read_record_from_byte_order( FILE *fp , int n_grains , gint order );
 
@@ -90,11 +93,12 @@ gssize        sed_hydro_write_record              ( FILE *fp , Sed_hydro rec , g
 gssize        sed_hydro_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order );
 
 void          sed_hydro_fprint_default_inline_file( FILE *fp );
-gssize        sed_hydro_fprint( FILE* fp , Sed_hydro rec );
+gssize        sed_hydro_array_fprint( FILE* fp , Sed_hydro* rec_a );
+gssize        sed_hydro_fprint      ( FILE* fp , Sed_hydro  rec   );
 //Sed_hydro     sed_hydro_init( char *file );
 Sed_hydro*    sed_hydro_scan( const gchar* file , GError** error );
 
-Hydro_header* sed_hydro_scan_inline_header( FILE *fp );
+Sed_hydrotrend_header* sed_hydro_scan_inline_header( FILE *fp );
 gssize        sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
 
 Sed_hydro     sed_hydro_new             ( gssize n_grains );
@@ -115,6 +119,7 @@ double*       sed_hydro_copy_concentration   ( double* dest , Sed_hydro a );
 double        sed_hydro_nth_concentration    ( Sed_hydro a , gssize n );
 Sed_hydro     sed_hydro_adjust_mass            ( Sed_hydro a , double f   );
 double        sed_hydro_flow_density           ( Sed_hydro a , double rho );
+gboolean      sed_hydro_is_hyperpycnal         ( Sed_hydro a );
 double*       sed_hydro_fraction               ( Sed_hydro a );
 double        sed_hydro_suspended_concentration( Sed_hydro a );
 double        sed_hydro_suspended_flux       ( Sed_hydro a );
@@ -122,12 +127,18 @@ double        sed_hydro_suspended_volume_flux( Sed_hydro a );
 double        sed_hydro_water_flux           ( Sed_hydro a );
 double        sed_hydro_suspended_load       ( Sed_hydro a );
 double        sed_hydro_total_load           ( Sed_hydro a );
+double        sed_hydro_array_suspended_load ( Sed_hydro* arr );
+double        sed_hydro_array_total_load     ( Sed_hydro* arr );
 Sed_hydro     sed_hydro_set_nth_concentration( Sed_hydro a , gssize n , double val );
 Sed_hydro     sed_hydro_set_velocity         ( Sed_hydro a , double val );
 Sed_hydro     sed_hydro_set_width            ( Sed_hydro a , double val );
 Sed_hydro     sed_hydro_set_depth            ( Sed_hydro a , double val );
 Sed_hydro     sed_hydro_set_bedload          ( Sed_hydro a , double val );
 Sed_hydro     sed_hydro_set_duration         ( Sed_hydro a , double val );
+Sed_hydro     sed_hydro_set_time             ( Sed_hydro a , double t_0 );
+Sed_hydro*    sed_hydro_array_set_time( Sed_hydro* arr , double t_0 );
+Sed_hydro     sed_hydro_set_time             ( Sed_hydro a , double val );
+Sed_hydro*    sed_hydro_array_set_time       ( Sed_hydro* arr , double t_0 );
 double        sed_hydro_duration_in_seconds  ( Sed_hydro a );
 double        sed_hydro_velocity             ( Sed_hydro a );
 double        sed_hydro_width                ( Sed_hydro a );
@@ -135,19 +146,29 @@ double        sed_hydro_depth                ( Sed_hydro a );
 double        sed_hydro_bedload              ( Sed_hydro a );
 double        sed_hydro_duration             ( Sed_hydro a );
 
-Sed_hydro     sed_hydro_add_cell( Sed_hydro a         , const Sed_cell s ,
-                                  double volume_in_m3 );
-Sed_hydro     sed_hydro_subtract_cell( Sed_hydro a         , const Sed_cell s ,
-                                       double volume_in_m3 );
-Sed_hydro     sed_hydro_average_records( Sed_hydro* rec , gssize n_recs );
-double        sed_hydro_sum_durations( Sed_hydro* rec , gssize n_recs );
-Sed_hydro*    sed_hydro_process_records( Sed_hydro* rec , gssize n_recs , gssize n_sig_values );
+Sed_hydro     sed_hydro_add_cell             ( Sed_hydro a    , const Sed_cell s );
+Sed_hydro     sed_hydro_subtract_cell        ( Sed_hydro a    , const Sed_cell s );
+Sed_hydro     sed_hydro_average_records      ( Sed_hydro* rec , gssize n_recs );
+double        sed_hydro_sum_durations        ( Sed_hydro* rec , gssize n_recs );
+
+Sed_hydro*    sed_hydro_array_eventize_number  ( Sed_hydro* rec_a , gssize n_events );
+Sed_hydro*    sed_hydro_array_eventize_fraction( Sed_hydro* rec_a , double f        );
+Sed_hydro*    sed_hydro_array_eventize         ( Sed_hydro* rec_a , double f        , gboolean insert );
+Sed_hydro*    sed_hydro_process_records        ( Sed_hydro* rec_a        ,
+                                                 gssize     n_recs       ,
+                                                 gssize     n_sig_values ,
+                                                 gboolean   insert_mean_values );
+
+Sed_hydro*    sed_hydro_array_sort              ( Sed_hydro* rec_a , GCompareFunc f );
+Sed_hydro*    sed_hydro_array_sort_by_time      ( Sed_hydro* arr );
+Sed_hydro*    sed_hydro_array_sort_by_suspended_load( Sed_hydro* arr );
+Sed_hydro*    sed_hydro_array_sort_by_total_load( Sed_hydro* arr );
 
 Sed_hydro_file sed_hydro_file_set_wrap( Sed_hydro_file fp , gboolean wrap_is_on );
 Sed_hydro_file sed_hydro_file_set_buffer_length( Sed_hydro_file fp , gssize len );
 Sed_hydro_file sed_hydro_file_set_sig_values( Sed_hydro_file fp , int n_sig_values );
 
-Hydro_header*  sed_hydro_file_header( Sed_hydro_file fp );
+Sed_hydrotrend_header*  sed_hydro_file_header( Sed_hydro_file fp );
 Sed_hydro      sed_hydro_file_read_record( Sed_hydro_file fp );
 Sed_hydro_file sed_hydro_file_new( const char *filename , int type , gboolean wrap_is_on );
 Sed_hydro_file sed_hydro_file_destroy( Sed_hydro_file fp );

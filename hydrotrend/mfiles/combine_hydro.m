@@ -1,4 +1,10 @@
-function x = combine_hydro( file_filter )
+function x = combine_hydro( file_filter , varargin )
+
+   valid_args = { 'format' , 'char' , 'native' };
+
+   values = parse_varargin( valid_args , varargin );
+
+   format = values{ strmatch( 'format' , {valid_args{:,1}} , 'exact' )};
 
 filename = [];
 if ( iscell( file_filter ) )
@@ -26,7 +32,7 @@ qb_tot = 0;
 qs_tot = num2cell( zeros(n_grain,1) );
 for i=1:length( filename )
    disp( ['Reading file: ' filename{i}]);
-   data  = read_hydro( filename{i} );
+   data  = read_hydro( filename{i} , 'format' , format );
    
    [v,w,d,qb] = deal( data{1:4} );
 

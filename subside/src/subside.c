@@ -55,7 +55,7 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
    eh_require( v_0 );
 
    if ( !g_thread_supported() ) g_thread_init(NULL);
-#define WITH_THREADS
+#undef WITH_THREADS
 #ifndef WITH_THREADS
    if ( w && v_0 )
    {

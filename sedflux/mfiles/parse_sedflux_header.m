@@ -1,3 +1,13 @@
+%% Parse the header information in a sedflux property file
+%
+% A series of parameter/value pairs that make up the header
+% of a property file is parsed
+%
+% \param fid   File id of the sedflux property file
+%
+% \return A structure of labels and values that contains
+%         strings of the header information
+%
 function hdr=parse_sedflux_header( fid )
 
    str = fgets( fid );

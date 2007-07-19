@@ -1,4 +1,5 @@
 #include <glib.h>
+#include "utils.h"
 #include "sed_sedflux.h"
 
 static gchar*   out_file   = NULL;

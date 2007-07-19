@@ -1,3 +1,14 @@
+%% Parse a series of parameter/value pairs
+%
+% Parse the varargin parameter from a matlab function as a
+% series of parameter/value pairs.
+%
+% \param valid_parameters   A cell array that defines the valid
+%                           parameters
+% \param input_params       Names of the input parameters
+%
+%
+
 function value = parse_varargin( valid_parameters , input_params )
 
 param_name       = {valid_parameters{:,1}};

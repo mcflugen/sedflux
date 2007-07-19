@@ -118,19 +118,21 @@ Sed_column sed_column_resize           ( Sed_column c , gssize n );
 Sed_column sed_column_resize_cell      ( Sed_column c , gssize i , double t );
 Sed_column sed_column_compact_cell     ( Sed_column c , gssize i , double t );
 double     sed_column_add_cell         ( Sed_column c , const Sed_cell cell );
-double     sed_column_append_cell      ( Sed_column c , const Sed_cell cell );
+double     sed_column_stack_cell       ( Sed_column c , const Sed_cell cell );
+double     sed_column_stack_cell_loc   ( Sed_column c , const Sed_cell cell );
 Sed_cell   sed_column_top_cell         ( const Sed_column c );
 Sed_cell   sed_column_nth_cell         ( const Sed_column c , gssize i );
 
 
 Sed_cell sed_column_extract_top_cell(Sed_column,double,Sed_cell);
-Sed_column sed_column_remove_top_cell(Sed_column,double);
 Sed_cell sed_column_extract_top(Sed_column,double,Sed_cell);
 Sed_cell sed_column_extract_top_fill( Sed_column col  ,
                                       double t ,
                                       Sed_cell fill   ,
                                       Sed_cell dest );
+Sed_column sed_column_remove_top     ( Sed_column col , double t );
 Sed_column sed_column_remove_top_cell(Sed_column,double);
+Sed_cell   sed_column_extract_top    ( Sed_column , double , Sed_cell );
 Sed_cell sed_column_separate_top(Sed_column,double,double[],Sed_cell);
 Sed_cell sed_column_separate_top_amounts( Sed_column col ,
                                           double total_t ,
@@ -213,6 +215,18 @@ Sed_column sed_column_set_z_res          ( Sed_column c , double new_dz );
 double     sed_column_position           ( const Sed_column c  ) G_GNUC_DEPRECATED;
 Sed_column sed_column_set_position       ( Sed_column , double ) G_GNUC_DEPRECATED;
 double     sed_column_depth              ( const Sed_column  c ) G_GNUC_DEPRECATED;
+
+Sed_cell   sed_column_extract_top_cell_loc( Sed_column c );
+Sed_cell*  sed_column_extract_cells_above ( Sed_column c , double z );
+Sed_cell*  sed_column_extract_top_n_cells ( Sed_column c , gint n_cells );
+
+Sed_column sed_column_stack_cells        ( Sed_column c , Sed_cell* cells );
+Sed_column sed_column_stack_cells_loc    ( Sed_column c , Sed_cell* cells );
+
+double     sed_column_stack_cell_real    ( Sed_column c , Sed_cell cell , gboolean update_pressure );
+double     sed_column_stack_cell_loc_real( Sed_column c , Sed_cell cell , gboolean update_pressure );
+double     sed_column_stack_cell         ( Sed_column c , Sed_cell cell );
+double     sed_column_stack_cell_loc     ( Sed_column c , Sed_cell cell );
 
 #endif /* sed_column.h is included */
 

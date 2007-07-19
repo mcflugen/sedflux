@@ -1,5 +1,5 @@
-EXTRA_DIST = sakura.input sakura.flood sakura.bathy sakura.data
-pkgdata_DATA = sakura.input sakura.flood sakura.bathy sakura.data
+EXTRA_DIST = sakura_param.kvf sakura_flood.kvf sakura_bathy.csv
+pkgdata_DATA = sakura_param.kvf sakura_flood.kvf sakura_bathy.csv
 
 #doc: force_rebuild
 #	mkdir ./doc

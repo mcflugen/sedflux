@@ -130,7 +130,7 @@ int plumeout2( Plume_enviro* , Plume_grid* , double , double** , int , int , dou
 int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid );
 int plumelog( Plume_enviro* , Plume_grid* , Plume_options* , Plume_mass_bal* );
 
-Plume_data *init_plume_data( Plume_data* );
+Plume_data *plume_data_init( Plume_data* );
 void destroy_plume_data( Plume_data* );
 
 #endif // plumeinput.h is included

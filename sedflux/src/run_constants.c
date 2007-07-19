@@ -25,26 +25,13 @@
 #include <math.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "run_constants.h"
+#include "my_processes.h"
 
 Sed_process_info
-run_constants( gpointer ptr , Sed_cube prof )
+run_constants( Sed_process proc , Sed_cube prof )
 {
-   Constants_t *data=(Constants_t*)ptr;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
+   Constants_t*     data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
 
    {
       Sed_constants c;
@@ -74,7 +61,7 @@ run_constants( gpointer ptr , Sed_cube prof )
    eh_message( "density of quartz    : %f" , sed_cube_constants(prof).rho_quartz  );
    eh_message( "density of mantle    : %f" , sed_cube_constants(prof).rho_mantle  );
 
-   return SED_EMPTY_INFO;
+   return info;
 }
 
 #define S_KEY_CONST_GRAVITY     "acceleration due to gravity"
@@ -87,34 +74,48 @@ run_constants( gpointer ptr , Sed_cube prof )
 #define S_KEY_CONST_RHO_MANTLE  "density of mantle"
 
 gboolean
-init_constants( Eh_symbol_table tab , gpointer ptr )
+init_constants( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Constants_t *data=(Constants_t*)ptr;
-   GError* err = NULL;
+   Constants_t* data    = sed_process_new_user_data( p , Constants_t );
+   GError*     tmp_err = NULL;
+   gboolean    is_ok   = TRUE;
 
-   if ( tab == NULL )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( !tmp_err ) data->gravity     = eh_symbol_table_input_value( tab , S_KEY_CONST_GRAVITY     , &tmp_err );
+   if ( !tmp_err ) data->rho_sea_h2o = eh_symbol_table_input_value( tab , S_KEY_CONST_RHO_SEA_H2O , &tmp_err );
+   if ( !tmp_err ) data->rho_h2o     = eh_symbol_table_input_value( tab , S_KEY_CONST_RHO_H2O     , &tmp_err );
+   if ( !tmp_err ) data->salinity    = eh_symbol_table_input_value( tab , S_KEY_CONST_SALINITY    , &tmp_err );
+   if ( !tmp_err ) data->rho_quartz  = eh_symbol_table_input_value( tab , S_KEY_CONST_RHO_QUARTZ  , &tmp_err );
+   if ( !tmp_err ) data->rho_mantle  = eh_symbol_table_input_value( tab , S_KEY_CONST_RHO_MANTLE  , &tmp_err );
+
+   if ( tmp_err )
    {
-      eh_input_val_destroy( data->gravity     );
-      eh_input_val_destroy( data->rho_sea_h2o );
-      eh_input_val_destroy( data->rho_h2o     );
-      eh_input_val_destroy( data->salinity    );
-      eh_input_val_destroy( data->rho_quartz  );
-      eh_input_val_destroy( data->rho_mantle  );
-      data->initialized = FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
-   
-   if (    (data->gravity     = eh_symbol_table_input_value(tab,S_KEY_CONST_GRAVITY ,&err)    ) == NULL
-        || (data->rho_sea_h2o = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_SEA_H2O ,&err)) == NULL
-        || (data->rho_h2o     = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_H2O ,&err)    ) == NULL
-        || (data->salinity    = eh_symbol_table_input_value(tab,S_KEY_CONST_SALINITY,&err)    ) == NULL
-        || (data->rho_quartz  = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_QUARTZ,&err)  ) == NULL
-        || (data->rho_mantle  = eh_symbol_table_input_value(tab,S_KEY_CONST_RHO_MANTLE,&err)  ) == NULL )
+
+   return is_ok;
+}
+
+gboolean
+destroy_constants( Sed_process p )
+{
+   if ( p )
    {
-      fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit( EXIT_FAILURE );
+      Constants_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         eh_input_val_destroy( data->gravity     );
+         eh_input_val_destroy( data->rho_sea_h2o );
+         eh_input_val_destroy( data->rho_h2o     );
+         eh_input_val_destroy( data->salinity    );
+         eh_input_val_destroy( data->rho_quartz  );
+         eh_input_val_destroy( data->rho_mantle  );
+         eh_free             ( data              );
+      }
    }
 
    return TRUE;
 }
-

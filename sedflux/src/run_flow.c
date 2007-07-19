@@ -18,43 +18,24 @@
 //
 //---
 
-#define SED_FLOW_PROC_NAME "flow"
-#define EH_LOG_DOMAIN SED_FLOW_PROC_NAME
+#define EH_LOG_DOMAIN FLOW_PROCESS_NAME_S
 
 #include <stdio.h>
 #include "sed_sedflux.h"
-#include "run_flow.h"
+#include "my_processes.h"
 
 void run_exponential_flow( Sed_column c , double time_now_in_years );
 void run_terzaghi_flow( Sed_column c , double time_now_in_years );
 void run_darcy_flow( Sed_column c , double dt_in_years );
 
-Sed_process_info run_flow(gpointer ptr, Sed_cube p)
+Sed_process_info
+run_flow( Sed_process proc , Sed_cube p )
 {
-   Flow_t *data=(Flow_t*)ptr;
-   double dt_in_years;
-   double time_now;
+   Flow_t*          data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
+   double           dt_in_years;
+   double           time_now;
    
-   if ( p == NULL )
-   {
-      if ( data->initialized )
-      {
-//         eh_free( data->old_load );
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-//      data->len       = p->size;
-//      data->old_load  = eh_new0( double , p->size );
-      data->last_time = 0;
-
-      data->initialized = TRUE;
-   }
-
    time_now    = sed_cube_age_in_years( p );
    dt_in_years = time_now - data->last_time;
 
@@ -63,18 +44,10 @@ Sed_process_info run_flow(gpointer ptr, Sed_cube p)
 
    switch ( data->method )
    {
-      case FLOW_EXPONENTIAL:
-         eh_message( "method : %s" , "EXPONENTIAL" );
-         break;
-      case FLOW_TERZAGHI:
-         eh_message( "method : %s" , "TERZAGHI" );
-         break;
-      case FLOW_DARCY:
-         eh_message( "method : %s" , "DARCY" );
-         break;
-      default:
-         eh_message( "method : %s" , "UNKNOWN" );
-         eh_require_not_reached();
+      case FLOW_ALGORITHM_EXPONENTIAL: eh_message( "method : %s" , "EXPONENTIAL" ); break;
+      case FLOW_ALGORITHM_TERZAGHI:    eh_message( "method : %s" , "TERZAGHI" );    break;
+      case FLOW_ALGORITHM_DARCY:       eh_message( "method : %s" , "DARCY" );       break;
+      default:                         eh_message( "method : %s" , "UNKNOWN" ); eh_require_not_reached();
    }
 
    {
@@ -90,13 +63,13 @@ Sed_process_info run_flow(gpointer ptr, Sed_cube p)
          {
             switch ( data->method )
             {
-               case FLOW_EXPONENTIAL:
+               case FLOW_ALGORITHM_EXPONENTIAL:
                   run_exponential_flow( this_col , time_now );
                   break;
-               case FLOW_TERZAGHI:
+               case FLOW_ALGORITHM_TERZAGHI:
                   run_terzaghi_flow( this_col , time_now );
                   break;
-               case FLOW_DARCY:
+               case FLOW_ALGORITHM_DARCY:
                   run_darcy_flow( this_col , dt_in_years );
                   break;
                default:
@@ -112,31 +85,46 @@ Sed_process_info run_flow(gpointer ptr, Sed_cube p)
    return info;
 }
 
-#define S_KEY_METHOD "method"
-
-gboolean init_flow( Eh_symbol_table symbol_table,gpointer ptr)
+gboolean
+init_flow( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Flow_t *data=(Flow_t*)ptr;
-   char *key;
+   Flow_t*  data    = sed_process_new_user_data( p , Flow_t );
+   GError*  tmp_err = NULL;
+   gboolean is_ok   = TRUE;
+   gchar*   key;
 
-   if ( symbol_table == NULL )
+   data->last_time = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   key = eh_symbol_table_lookup( tab , FLOW_KEY_METHOD );
+
+   if      ( g_ascii_strcasecmp( key , "EXPONENTIAL" )==0 ) data->method = FLOW_ALGORITHM_EXPONENTIAL;
+   else if ( g_ascii_strcasecmp( key , "DARCY"       )==0 ) data->method = FLOW_ALGORITHM_DARCY;
+   else if ( g_ascii_strcasecmp( key , "TERZAGHI"    )==0 ) data->method = FLOW_ALGORITHM_TERZAGHI;
+   else
+      g_set_error( &tmp_err ,
+                   SEDFLUX_ERROR ,
+                   SEDFLUX_ERROR_BAD_ALGORITHM ,
+                   "Invalid fluid flow algorithm (exponential, darcy, or terzaghi): %s" , key );
+
+   if ( tmp_err )
    {
-      data->initialized = FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   key = eh_symbol_table_lookup( symbol_table , S_KEY_METHOD );
+   return is_ok;
+}
 
-   if ( g_ascii_strcasecmp( key , "EXPONENTIAL" )==0 )
-      data->method = FLOW_EXPONENTIAL;
-   else if ( g_ascii_strcasecmp( key , "DARCY" )==0 )
-      data->method = FLOW_DARCY;
-   else if ( g_ascii_strcasecmp( key , "TERZAGHI" )==0 )
-      data->method = FLOW_TERZAGHI;
-   else
+gboolean
+destroy_flow( Sed_process p )
+{
+   if ( p )
    {
-      eh_warning( "Unkown keyword for flow: %s" , key );
-      return FALSE;
+      Flow_t* data = sed_process_user_data( p );
+
+      if ( data ) eh_free( data );
    }
 
    return TRUE;

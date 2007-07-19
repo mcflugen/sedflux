@@ -1,3 +1,9 @@
+%% Read header information from a sedflux tripod (measuring station) file
+%
+% \param fid   File id of the tripod file
+%
+% \returns A structure that contains the header information
+%
 function hdr = read_tripod_header( fid )
 % READ_PROPERTY_HEAEDER   Read a sedflux header file.
 %

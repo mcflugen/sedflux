@@ -27,16 +27,18 @@
 #include <glib.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "run_xshore.h"
-#include "processes.h"
+#include "my_processes.h"
+#include "xshore.h"
 
 gboolean is_worth_running( Sed_ocean_storm s );
 
+gboolean init_xshore_data( Sed_process proc , Sed_cube prof , GError** error );
+
 Sed_process_info
-run_xshore( gpointer ptr , Sed_cube prof )
+run_xshore( Sed_process proc , Sed_cube prof )
 {
-   Xshore_t *data=(Xshore_t*)ptr;
-   Sed_process_info p_info = SED_EMPTY_INFO;
+   Xshore_t*        data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
    double dt;
    double start_time, end_time, current_time;
    double xshore_current;
@@ -46,25 +48,13 @@ run_xshore( gpointer ptr , Sed_cube prof )
    Sed_cell along_shore_sediment;
    Sed_ocean_storm this_storm;
    GSList *this_link;
-   Xshore_info info;
+   Xshore_info x_info;
 
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   if ( !data->initialized )
-   {
-      data->last_time = sed_cube_age_in_years( prof );
-      data->initialized = TRUE;
-   }
+   if ( sed_process_run_count(proc)==0 )
+      init_xshore_data( proc , prof , NULL );
 
    if ( sed_mode_is_3d() )
-      return p_info;
+      return info;
    
    start_time      = data->last_time;
    end_time        = sed_cube_age_in_years( prof );
@@ -113,16 +103,16 @@ run_xshore( gpointer ptr , Sed_cube prof )
 //   if ( sed_cube_wave_height( prof ) > .1 )
       if ( is_worth_running( this_storm ) )
       {
-         info = xshore( prof                 ,
-                        along_shore_sediment ,
-                        xshore_current       ,
-                        this_storm );
+         x_info = xshore( prof                 ,
+                          along_shore_sediment ,
+                          xshore_current       ,
+                          this_storm );
       }
       else
       {
-         info.added = NULL;
-         info.lost  = NULL;
-         info.dt    = NULL;
+         x_info.added = NULL;
+         x_info.lost  = NULL;
+         x_info.dt    = NULL;
       }
 
       sed_cube_set_sea_level( prof , this_sea_level );
@@ -131,12 +121,12 @@ run_xshore( gpointer ptr , Sed_cube prof )
 
       if ( TRUE )
       {
-         if ( info.added )
+         if ( x_info.added )
          {
-            mass_added = sed_cell_mass( info.added )
+            mass_added = sed_cell_mass( x_info.added )
                        * sed_cube_x_res( prof )
                        * sed_cube_y_res( prof );
-            mass_lost  = sed_cell_mass( info.lost )
+            mass_lost  = sed_cell_mass( x_info.lost )
                        * sed_cube_x_res( prof )
                        * sed_cube_y_res( prof );
 //            sed_cell_resize( info.added , sed_cell_thickness(info.added)*2 );
@@ -144,29 +134,29 @@ run_xshore( gpointer ptr , Sed_cube prof )
          }
          else
          {
-            mass_added     = 0;
-            mass_lost      = 0;
-            info.bruun_a   = 0;
-            info.bruun_m   = 0;
-            info.bruun_h_b = 0;
-            info.bruun_y_0 = 0;
-            info.bruun_y_b = 0;
-            info.z_0       = 0;
+            mass_added       = 0;
+            mass_lost        = 0;
+            x_info.bruun_a   = 0;
+            x_info.bruun_m   = 0;
+            x_info.bruun_h_b = 0;
+            x_info.bruun_y_0 = 0;
+            x_info.bruun_y_b = 0;
+            x_info.z_0       = 0;
          }
 
-         p_info.mass_added = mass_added;
-         p_info.mass_lost  = mass_lost;
+         info.mass_added = mass_added;
+         info.mass_lost  = mass_lost;
          mass_after = sed_cube_mass( prof );
 
          eh_message( "time step (days)                : %f" , sed_ocean_storm_duration(this_storm) );
          eh_message( "cross shore current (m/s)       : %f" , xshore_current );
          eh_message( "incoming wave height (m)        : %f" , sed_ocean_storm_wave_height( this_storm ) );
-         eh_message( "closure depth (m)               : %f" , info.z_0 );
-         eh_message( "Bruun a (-)                     : %f" , info.bruun_a   );
-         eh_message( "Bruun m (-)                     : %f" , info.bruun_m   );
-         eh_message( "Bruun closure depth (m)         : %f" , info.bruun_h_b );
-         eh_message( "Bruun start (m)                 : %f" , info.bruun_y_0 );
-         eh_message( "Bruun end (m)                   : %f" , info.bruun_y_b );
+         eh_message( "closure depth (m)               : %f" , x_info.z_0 );
+         eh_message( "Bruun a (-)                     : %f" , x_info.bruun_a   );
+         eh_message( "Bruun m (-)                     : %f" , x_info.bruun_m   );
+         eh_message( "Bruun closure depth (m)         : %f" , x_info.bruun_h_b );
+         eh_message( "Bruun start (m)                 : %f" , x_info.bruun_y_0 );
+         eh_message( "Bruun end (m)                   : %f" , x_info.bruun_y_b );
 //         eh_message( "along shore sediment added (kg) : %f" , sed_cell_mass( info.added ) );
 //         eh_message( "sediment lost (kg)              : %f" , sed_cell_mass( info.lost  ) );
          eh_message( "mass before (kg)                : %f" , mass_before );
@@ -175,9 +165,9 @@ run_xshore( gpointer ptr , Sed_cube prof )
 
          eh_message( "mass balance (kg)               : %f" , (mass_after-mass_added)-mass_before );
 
-         sed_cell_destroy( info.added );
-         sed_cell_destroy( info.lost );
-         eh_free( info.dt );
+         sed_cell_destroy( x_info.added );
+         sed_cell_destroy( x_info.lost );
+         eh_free( x_info.dt );
          lost = NULL;
       }
       else
@@ -199,7 +189,7 @@ run_xshore( gpointer ptr , Sed_cube prof )
 
    sed_cell_destroy( along_shore_sediment );
 
-   return p_info;
+   return info;
 }
 
 gboolean
@@ -212,26 +202,52 @@ is_worth_running( Sed_ocean_storm s )
 #define S_KEY_XSHORE_VEL              "Cross shore current"
 
 gboolean
-init_xshore( Eh_symbol_table tab , gpointer ptr )
+init_xshore( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   Xshore_t *data=(Xshore_t*)ptr;
-   GError* err = NULL;
+   Xshore_t* data    = sed_process_new_user_data( p , Xshore_t );
+   GError*   tmp_err = NULL;
+   gboolean  is_ok   = TRUE;
 
-   if ( tab == NULL )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   data->last_time      = 0.;
+
+   data->sediment_type  = eh_symbol_table_int_value  ( tab , S_KEY_ALONG_SHORE_SEDIMENT_NO );
+   data->xshore_current = eh_symbol_table_input_value( tab , S_KEY_XSHORE_VEL , &tmp_err);
+
+   if ( tmp_err )
    {
-      eh_input_val_destroy( data->xshore_current );
-      data->initialized = FALSE;
-      return TRUE;
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
    }
 
-   data->sediment_type = eh_symbol_table_int_value( tab , S_KEY_ALONG_SHORE_SEDIMENT_NO );
+   return is_ok;
+}
 
-   if ( (data->xshore_current = eh_symbol_table_input_value(tab,S_KEY_XSHORE_VEL ,&err)) == NULL )
+gboolean
+init_xshore_data( Sed_process proc , Sed_cube prof , GError** error )
+{
+   Xshore_t* data = sed_process_user_data( proc );
+
+   if ( data )
+      data->last_time = sed_cube_age_in_years( prof );
+
+   return TRUE;
+}
+
+gboolean
+destroy_xshore( Sed_process p )
+{
+   if ( p )
    {
-      fprintf( stderr , "Unable to read input values: %s" , err->message );
-      eh_exit( EXIT_FAILURE );
+      Xshore_t* data = sed_process_user_data( p );
+      
+      if ( data )
+      {
+         eh_input_val_destroy( data->xshore_current );
+         eh_free             ( data                 );
+      }
    }
-
 
    return TRUE;
 }

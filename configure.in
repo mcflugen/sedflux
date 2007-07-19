@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.24],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.25],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -15,6 +15,8 @@ AC_HEADER_STDC
 AC_C_CONST
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+
+AC_CHECK_HEADERS(ieeefp.h)
 
 m4_define([glib_required_version],[2.12.0])
 m4_define([gtk_required_version],[2.2.0])
@@ -37,6 +39,7 @@ AM_PATH_GLIB_2_0( glib_required_version , :,
 *** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
   gobject gmodule-no-export gthread)
 
+FLEX_VERSION="not installed"
 DOXYGEN_VERSION="not installed"
 CHECK_VERSION="not installed"
 GTK_VERSION="not installed"
@@ -158,9 +161,23 @@ if test -x$enable_doxygen != xno ; then
 *** have doxygen, make sure it is in your path. ])
    fi
 
+   AC_CHECK_LIB(fl,[main])
+   if test x$HAVE_LIBFL != x ; then
+
+      AC_CHECK_PROGS( FLEX , flex )
+      if test x$FLEX != x ; then
+         FLEX_VERSION=`$FLEX --version`
+         enable_flex=yes
+      fi
+
+   fi
+
 fi
 
 AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doxygen = xyes )
+AM_CONDITIONAL(ENABLE_FLEX, test x$enable_flex = xyes )
+
+AC_CHECK_FUNCS( log2 )
 
 cflags_set="$CFLAGS"
 
@@ -185,6 +202,7 @@ AC_CONFIG_FILES([Makefile \
            libsed/Makefile libsed/src/Makefile libsed/share/Makefile \
            avulsion/Makefile avulsion/src/Makefile \
            bing/Makefile bing/src/Makefile \
+           bio/Makefile bio/src/Makefile bio/data/Makefile \
            compact/Makefile compact/src/Makefile compact/data/Makefile \
            diffusion/Makefile diffusion/src/Makefile diffusion/data/Makefile \
            failure/Makefile failure/src/Makefile \
@@ -225,6 +243,7 @@ Configuration:
   With gtk+-2.0:              ${GTK_VERSION}
   With check:                 ${CHECK_VERSION}
   With doxygen:               ${DOXYGEN_VERSION}
+  With flex:                  ${FLEX_VERSION}
   HTML path:                  ${HTML_DIR}
   BLAS path:                  ${with_blas_dir}
   BLAS LIBS:                  ${BLAS_LIBS}

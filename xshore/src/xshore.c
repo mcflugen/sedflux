@@ -1289,7 +1289,6 @@ if ( du[i][n] > 10 )
 //      gssize* bruun_ind = eh_new( gssize , sed_cube_n_y(p)+1 );
 //      gssize ind_len = get_zone_indices( p , 0 , data->h_b , 0 , S_WATER_DEPTH_FUNC , bruun_ind );
       double total = 0;
-      gssize* bruun_ind = data->ind;
       gssize    ind_len = data->ind_len;
 
       {

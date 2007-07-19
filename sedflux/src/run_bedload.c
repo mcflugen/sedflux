@@ -27,8 +27,7 @@
 #include <math.h>
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "bedload.h"
-#include "processes.h"
+#include "my_processes.h"
 
 #define BED_LOAD_SPREADING_ANGLE (14.*S_RADS_PER_DEGREE)
 
@@ -47,9 +46,11 @@ Bed_load_data;
 gboolean bed_load_2d_domain( double x , double y , Bed_load_data *user_data );
 gboolean bed_load_1d_domain( double x , double y , Bed_load_data *user_data );
 
-Sed_process_info run_bedload( gpointer p , Sed_cube prof )
+Sed_process_info
+run_bedload( Sed_process p , Sed_cube prof )
 {
-   Bedload_dump_t *data=(Bedload_dump_t*)p;
+   Bedload_dump_t*  data = sed_process_user_data(p);
+   Sed_process_info info = SED_EMPTY_INFO;
    gssize i, j;
    gssize bed_load_n_x, bed_load_n_y;
    gssize low_x, low_y, high_x, high_y;
@@ -62,24 +63,9 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    Sed_riv this_river;
    Sed_cell_grid in_suspension;
    Bed_load_data bed_load_data;
-   Sed_process_info info = SED_EMPTY_INFO;
-
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return info;
-   }
-   
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
 
    this_river    = sed_cube_river_by_name( prof , data->river_name );
-   in_suspension = sed_cube_in_suspension( prof , sed_cube_river_id(prof,this_river) );
+   in_suspension = sed_cube_in_suspension( prof , this_river );
 
    if ( sed_mode_is_3d() )
       river_mouth = sed_cube_river_mouth_position( prof , this_river );
@@ -215,23 +201,61 @@ Sed_process_info run_bedload( gpointer p , Sed_cube prof )
    return info;
 }
 
-#define S_KEY_DUMP_LEN   "distance to dump bedload"
-#define S_KEY_RATIO      "ratio of flood plain to bedload rate"
-#define S_KEY_RIVER_NAME "river name"
+#define BEDLOAD_KEY_DUMP_LEN   "distance to dump bedload"
+#define BEDLOAD_KEY_RATIO      "ratio of flood plain to bedload rate"
+#define BEDLOAD_KEY_RIVER_NAME "river name"
 
-gboolean init_bedload( Eh_symbol_table symbol_table , gpointer p )
+static gchar* bedload_req_labels[] =
 {
-   Bedload_dump_t *data=(Bedload_dump_t*)p;
-   if ( symbol_table == NULL )
+   BEDLOAD_KEY_DUMP_LEN   ,
+   BEDLOAD_KEY_RATIO      ,
+   BEDLOAD_KEY_RIVER_NAME ,
+   NULL
+};
+
+gboolean
+init_bedload( Sed_process p , Eh_symbol_table t , GError** error )
+{
+   Bedload_dump_t* data    = sed_process_new_user_data( p , Bedload_dump_t );
+   GError*         tmp_err = NULL;
+   gboolean        is_ok   = TRUE;
+   gchar**         err_s   = NULL;
+
+   if ( eh_symbol_table_require_labels( t , bedload_req_labels , &tmp_err ) )
    {
-      eh_free( data->river_name );
-      data->initialized = FALSE;
-      return TRUE;
+      data->bed_load_dump_length = eh_symbol_table_dbl_value( t , BEDLOAD_KEY_DUMP_LEN   );
+      data->bedload_ratio        = eh_symbol_table_dbl_value( t , BEDLOAD_KEY_RATIO      );
+      data->river_name           = eh_symbol_table_value    ( t , BEDLOAD_KEY_RIVER_NAME );
+
+      eh_check_to_s( data->bed_load_dump_length>0 , "Dump length positive"   , &err_s );
+      eh_check_to_s( data->bedload_ratio>=0       , "Bedload ratio positive" , &err_s );
+
+      if ( !tmp_err && err_s )
+         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
    }
 
-   data->bed_load_dump_length = eh_symbol_table_dbl_value( symbol_table , S_KEY_DUMP_LEN   );
-   data->bedload_ratio        = eh_symbol_table_dbl_value( symbol_table , S_KEY_RATIO      );
-   data->river_name           = eh_symbol_table_value    ( symbol_table , S_KEY_RIVER_NAME );
+   if ( tmp_err )
+   {
+      g_propagate_error( error , tmp_err );
+      is_ok = FALSE;
+   }
+
+   return is_ok;
+}
+
+gboolean
+destroy_bedload( Sed_process p )
+{
+   if ( p )
+   {
+      Bedload_dump_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         eh_free( data->river_name );
+         eh_free( data             );
+      }
+   }
 
    return TRUE;
 }

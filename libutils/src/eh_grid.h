@@ -5,8 +5,6 @@
 #include <glib.h>
 #include "eh_types.h"
 
-#if !defined( OLD_NDGRID )
-
 new_handle( Eh_grid );
 derived_handle( Eh_grid , Eh_dbl_grid );
 derived_handle( Eh_grid , Eh_int_grid );
@@ -39,6 +37,7 @@ double*     eh_grid_y                ( Eh_grid g );
 void*       eh_grid_row              ( Eh_grid g , gssize row );
 void**      eh_grid_data             ( Eh_grid g );
 double**    eh_dbl_grid_data         ( Eh_grid g );
+double**    eh_dbl_grid_data_start   ( Eh_grid g );
 void*       eh_grid_data_start       ( Eh_grid g );
 
 Eh_grid     eh_grid_set_data         ( Eh_grid g , void** new_data );
@@ -93,6 +92,10 @@ Eh_dbl_grid eh_dbl_grid_rotate       ( Eh_dbl_grid g   , double angle  ,
 Eh_dbl_grid eh_dbl_grid_reduce       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
 Eh_dbl_grid eh_dbl_grid_expand       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
 Eh_dbl_grid eh_dbl_grid_remesh       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
+
+void        interpolate_2            ( Eh_dbl_grid source , Eh_dbl_grid dest ) G_GNUC_DEPRECATED;
+void        interpolate_2_bad_val    ( Eh_dbl_grid source , Eh_dbl_grid dest , double bad_val ) G_GNUC_DEPRECATED;
+
 Eh_grid_id* eh_dbl_grid_line_ids     ( Eh_dbl_grid g   , gssize i_0 , gssize j_0 ,
                                                          gssize i_1 , gssize j_1 );
 gssize      eh_grid_path_len         ( gssize* p );
@@ -115,6 +118,9 @@ Eh_dbl_grid eh_dbl_grid_new_set      ( gint n_x , gint n_y , double** d );
 #define eh_grid_new( t , n_x , n_y ) eh_grid_malloc( (n_x) , (n_y) , sizeof(t) )
 #define eh_grid_new_uniform( t , n_x , n_y , dx , dy ) eh_grid_malloc_uniform( (n_x) , (n_y) , sizeof(t) , dx , dy )
 
-#endif
+//#define eh_create_grid( type , n_x , n_y ) \
+//           ( eh_malloc_grid(n_x,n_y,sizeof(type) ) )
+//#define eh_index_grid( type , g , i , j ) ( ((type*)((Eh_grid*)(g))->data[i])[j] )
+
 
 #endif

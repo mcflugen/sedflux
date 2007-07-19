@@ -28,7 +28,6 @@
 #include "utils.h"
 #include "eh_project.h"
 #include "sed_sedflux.h"
-#include "processes.h"
 #include "sedflux.h"
 
 int
@@ -59,7 +58,7 @@ main( int argc , char *argv[] )
    sedflux_set_signal_action();
 
    /* Run sedflux!!! */
-   success = sedflux( p->init_file , 0 );
+   success = sedflux( p->init_file );
 
    eh_free( p );
 

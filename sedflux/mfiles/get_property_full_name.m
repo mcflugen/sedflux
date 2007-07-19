@@ -1,3 +1,10 @@
+%% Get the full name of a property
+% 
+% \param nick_name The nickname of the propery. [string]
+%
+% \returns [full_name,units] The full name (as a string) and
+%          and the units (as a string) of the property.
+%
 function [full_name,units] = get_property_full_name( nick_name )
 
    nick_name = lower( nick_name );

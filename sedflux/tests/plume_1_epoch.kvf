@@ -30,7 +30,7 @@ active:                                 yes
 logging:                                yes
 repeat interval:                        always
 background ocean concentration:         0.
-velocity of coastal current (m/s):      -5.
+velocity of coastal current (m/s):      -.5
 maximum plume width (km):               15.
 number of grid nodes in cross-shore:    21
 number of grid nodes in river mouth:    3

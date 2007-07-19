@@ -2,6 +2,7 @@ INCLUDES                 = -I$(top_srcdir)/libutils/src \
                            -I$(top_srcdir)/libsed/src \
                            -I$(top_srcdir)/sakura/src \
                            -I$(top_srcdir)/avulsion/src \
+                           -I$(top_srcdir)/bio/src \
                            -I$(top_srcdir)/diffusion/src \
                            -I$(top_srcdir)/subside/src \
                            -I$(top_srcdir)/xshore/src \
@@ -19,6 +20,7 @@ AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
                            $(top_builddir)/libsed/src/libsedflux.la \
                            $(top_builddir)/sakura/src/libsakura.la \
                            $(top_builddir)/avulsion/src/libavulsion.la \
+                           $(top_builddir)/bio/src/libbio.la \
                            $(top_builddir)/diffusion/src/libdiffusion.la \
                            $(top_builddir)/subside/src/libsubside.la \
                            $(top_builddir)/xshore/src/libxshore.la \
@@ -41,6 +43,7 @@ lib_LTLIBRARIES           = libsedflux-2.0.la
 libsedflux_2_0_la_SOURCES = \
                             sedflux_signal.c \
                             sedflux_command_line.c \
+                            run_bioturbation.c \
                             run_constants.c \
                             run_squall.c \
                             run_cpr.c \
@@ -69,7 +72,10 @@ libsedflux_2_0_la_SOURCES = \
                             run_turbidity_current.c \
                             run_plume.c \
                             sedflux.c \
-                            init.c
+                            init.c \
+                            my_sedflux.c \
+                            sedflux_esmf.c \
+                            sedflux_esmf.F90
 
 sedflux_SOURCES           = main.c
 
@@ -77,33 +83,38 @@ sedflux_SOURCES           = main.c
 include_HEADERS           = sedflux.h
 
 noinst_HEADERS            = \
-                            cpr.h \
-                            run_squall.h \
-                            run_flow.h \
-                            bbl.h \
-                            run_diffusion.h \
-                            bedload.h \
-                            debris_flow.h \
-                            data_dump.h \
-                            sealevel.h \
-                            isostasy.h \
-                            river.h \
-                            run_new_process.h \
-                            measuring_station.h \
-                            subsidence.h \
-                            storms.h \
-                            processes.h \
-                            turbidity_current.h \
-                            run_avulsion.h \
-                            failure_proc.h \
-                            compaction.h \
-                            erosion.h \
-                            run_plume.h \
-                            quake.h \
-                            tide.h \
-                            slump.h \
-                            run_constants.h \
-                            run_xshore.h
+                            my_sedflux.h \
+                            my_processes.h
+
+#noinst_HEADERS            = \
+#                            cpr.h \
+#                            run_squall.h \
+#                            run_flow.h \
+#                            bbl.h \
+#                            run_diffusion.h \
+#                            bedload.h \
+#                            debris_flow.h \
+#                            data_dump.h \
+#                            sealevel.h \
+#                            isostasy.h \
+#                            river.h \
+#                            run_new_process.h \
+#                            measuring_station.h \
+#                            subsidence.h \
+#                            storms.h \
+#                            processes.h \
+#                            turbidity_current.h \
+#                            run_avulsion.h \
+#                            failure_proc.h \
+#                            compaction.h \
+#                            erosion.h \
+#                            run_plume.h \
+#                            quake.h \
+#                            tide.h \
+#                            slump.h \
+#                            run_constants.h \
+#                            run_xshore.h \
+#                            my_sedflux.h
 
 #install-exec-local:
 #	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \

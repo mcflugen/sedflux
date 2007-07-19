@@ -21,23 +21,20 @@
 #define win_assert( exp ) if ( !(exp) ) { assert_error; } else
 void API_ENTRY report_win_assert( char *file_name , int line_no );
 
-#undef USE_MY_VTABLE
+#define USE_MY_VTABLE
+
+gpointer API_ENTRY eh_malloc         ( gsize    w_size   , Class_Desc desc , const char* file    , int line_no );
+gpointer API_ENTRY eh_realloc        ( gpointer old      , gsize w_size , const char *file , int line_no );
+void     API_ENTRY eh_walk_heap      ( void );
+gboolean API_ENTRY eh_is_ptr_ok      ( gpointer mem    );
+gpointer API_ENTRY eh_malloc_c_style ( gsize    w_size );
+gpointer API_ENTRY eh_calloc_c_style ( gsize    n_blocks , gsize n_block_bytes );
+gpointer API_ENTRY eh_realloc_c_style( gpointer mem      , gsize w_size );
 
 #if defined( USE_MY_VTABLE )
-gpointer API_ENTRY eh_malloc   ( gsize w_size        , Class_Desc desc ,
-                                 const char* file    , int line_no );
-gpointer API_ENTRY eh_realloc  ( gpointer old     , gsize w_size ,
-                                 const char *file , int line_no );
-void*    API_ENTRY eh_free_mem ( gpointer mem );
-
-void     API_ENTRY eh_walk_heap( void );
-void     API_ENTRY eh_heap_dump( const char *file );
-gboolean API_ENTRY eh_is_ptr_ok( gpointer mem );
-
-gpointer API_ENTRY eh_malloc_c_style ( gsize w_size );
-gpointer API_ENTRY eh_calloc_c_style ( gsize n_blocks , gsize n_block_bytes );
-void     API_ENTRY eh_free_c_style   ( gpointer mem );
-gpointer API_ENTRY eh_realloc_c_style( gpointer mem , gsize w_size );
+void*    API_ENTRY eh_free_mem       ( gpointer    mem  );
+void     API_ENTRY eh_heap_dump      ( const char* file );
+void     API_ENTRY eh_free_c_style   ( gpointer    mem  );
 
 #define eh_new( type , n ) ( (type*)eh_malloc( ((gsize)(sizeof(type)))*((gsize)(n)) , \
                                                 G_STRINGIFY(type) , \
@@ -64,6 +61,9 @@ gpointer API_ENTRY eh_realloc_c_style( gpointer mem , gsize w_size );
 #define eh_heap_dump( file )       ( g_mem_profile() )
 
 #endif
+
+void** eh_alloc_2    ( gssize m , gssize n , gssize size );
+void   eh_free_void_2( void **p );
 
 #endif
 

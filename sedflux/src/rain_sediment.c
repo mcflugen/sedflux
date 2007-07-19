@@ -22,13 +22,12 @@
 
 #include "utils.h"
 #include "sed_sedflux.h"
-#include "bbl.h"
 #include "muds.h"
 
-Sed_cell **construct_deposit_array_3( Sed_cube p         ,
-                                      double fraction    ,
-                                      Sed_cell **deposit ,
-                                      int river_no );
+Sed_cell **construct_deposit_array_3( Sed_cube   p        ,
+                                      double     fraction ,
+                                      Sed_cell** deposit  ,
+                                      Sed_riv    r );
 int rain_3( Sed_cube p , Sed_cell **deposit );
 double get_tidal_time_step( double t0 ,
                             double tidal_range ,
@@ -40,105 +39,109 @@ double get_tidal_time( double dz ,
                        gboolean waning );
 double get_tidal_level( double t , double tidal_range , double tidal_period );
 
-int rain_sediment_3( Sed_cube p , int algorithm , int river_no )
+gint
+rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
 {
-   gssize i;
-   double time_step, time_left;
-   double time_elapsed=0.;
-   double fraction;
-   double depth;
-   double tidal_dt, tidal_range, tidal_period;
-   double sea_level;
-   double v_res, dz;
-   Sed_cell **deposit;
-   Sed_cell_grid in_suspension;
-   Sed_cell erode_cell;
-   Sed_riv this_river;
-   Eh_ind_2 mouth_pos;
-   int error=0;
+   gint error = 0;
 
-   in_suspension = sed_cube_in_suspension( p , river_no );
-   time_step     = sed_cube_time_step_in_days( p );
-   time_left     = time_step;
-   v_res         = sed_cube_z_res( p );
-   tidal_range   = sed_cube_tidal_range( p );
-   tidal_period  = time_step;
-   sea_level     = sed_cube_sea_level( p );
+   eh_require( p          );
+   eh_require( this_river );
 
-   this_river = sed_cube_nth_river( p , river_no );
-   this_river = sed_cube_find_river_mouth( p , this_river );
-   mouth_pos  = sed_river_mouth( this_river );
-
-   if ( sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) < 0 )
-      return error;
-
-   deposit = eh_new_2( Sed_cell , sed_cube_n_x(p) , sed_cube_n_y(p) );
-   for ( i=0 ; i<sed_cube_size(p) ; i++ )
-      deposit[0][i] = sed_cell_new_env();
-   erode_cell = sed_cell_new_env();
-
-   // Add sediment to profile.  Start depositing at the river mouth.
-   while (    time_left>1e-3
-           && sed_cube_is_in_domain( p , mouth_pos.i , mouth_pos.j ) 
-           && sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) > 0 )
+   if ( p && this_river )
    {
-      // The water depth at the river mouth.
-      depth = sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j )+1e-5;
+      Eh_ind_2 mouth_pos;
 
-      // The fraction of the water column that is going to get filled.
-      fraction = depth
-               / sed_cell_thickness( sed_cell_grid_val(in_suspension,0,0) );
-
-      eh_clamp( fraction , 1e-5 , 1. );
-
-      if ( tidal_range>0 )
-      {
-         tidal_dt = get_tidal_time_step( time_elapsed ,
-                                         tidal_range  ,
-                                         tidal_period ,
-                                         v_res );
-         if ( tidal_dt<time_left*fraction )
-            fraction = tidal_dt/time_left;
-      }
-
-      // construct an array of cells to pass to the deposit routine.
-      construct_deposit_array_3( p , fraction , deposit , river_no );
-
-      // call the appropriate deposit routine.
-      error = rain_3( p , deposit );
-
-      // clear the deposit array.
-      for ( i=0 ; i<sed_cube_size(p) ; i++ )
-         sed_cell_clear( deposit[0][i] );
-
-      // this is the time required to deposit this sediment.
-      time_left    = time_left*(1.-fraction);
-      time_elapsed = time_step-time_left;
-
-      // get the new sea level.
-      dz = get_tidal_level( time_elapsed , tidal_range , tidal_period );
-
-      // adjust sea level and river mouth.
-      sed_cube_set_sea_level( p , sea_level+dz );
       this_river = sed_cube_find_river_mouth( p , this_river );
+      mouth_pos  = sed_river_mouth( this_river );
 
-      mouth_pos = sed_river_mouth( this_river );
+      if ( sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) >= 0 )
+      {
+         const double  v_res         = sed_cube_z_res            ( p );
+         const double  sea_level     = sed_cube_sea_level        ( p );
+         const double  tidal_range   = sed_cube_tidal_range      ( p );
+         const double  time_step     = sed_cube_time_step_in_days( p );
+         Sed_cell      erode_cell    = sed_cell_new_env();
+         Sed_cell_grid in_suspension = sed_cube_in_suspension( p , this_river );
+         Sed_cell_grid deposit_grid  = sed_cell_grid_new_env( sed_cube_n_x(p) , sed_cube_n_y(p) );
+         Sed_cell**    deposit       = eh_grid_data( deposit_grid );
+         double        time_elapsed  = 0.;
+         double        time_left     = time_step;
+         const double  tidal_period  = time_step;
+         gint i;
+         double fraction;
+         double depth;
+         double tidal_dt;
+         double dz;
+
+         eh_require( erode_cell    );
+         eh_require( in_suspension );
+         eh_require( deposit_grid  );
+         eh_require( deposit       );
+
+         // Add sediment to profile.  Start depositing at the river mouth.
+         while (    time_left>1e-3
+                 && sed_cube_is_in_domain( p , mouth_pos.i , mouth_pos.j ) 
+                 && sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) > 0 )
+         {
+            // The water depth at the river mouth.
+            depth = sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j )+1e-5;
+
+            // The fraction of the water column that is going to get filled.
+
+            fraction = depth / sed_cell_size( sed_cell_grid_val(in_suspension,0,0) );
+
+            eh_clamp( fraction , 1e-5 , 1. );
+
+            if ( tidal_range>0 )
+            {
+               tidal_dt = get_tidal_time_step( time_elapsed ,
+                                               tidal_range  ,
+                                               tidal_period ,
+                                               v_res );
+               if ( tidal_dt<time_left*fraction )
+                  fraction = tidal_dt/time_left;
+            }
+
+            // construct an array of cells to pass to the deposit routine.
+            construct_deposit_array_3( p , fraction , deposit , this_river );
+
+            // call the appropriate deposit routine.
+            error = rain_3( p , deposit );
+
+            // clear the deposit array.
+            sed_cell_grid_clear( deposit_grid );
+
+            // this is the time required to deposit this sediment.
+            time_left    = time_left*(1.-fraction);
+            time_elapsed = time_step-time_left;
+
+            // get the new sea level.
+            dz = get_tidal_level( time_elapsed , tidal_range , tidal_period );
+
+            // adjust sea level and river mouth.
+            sed_cube_set_sea_level( p , sea_level+dz );
+            this_river = sed_cube_find_river_mouth( p , this_river );
+
+            eh_require( this_river );
+
+            mouth_pos = sed_river_mouth( this_river );
+         }
+
+         sed_cube_set_sea_level( p , sea_level );
+
+         sed_cell_destroy     ( erode_cell   );
+         sed_cell_grid_destroy( deposit_grid );
+      }
    }
-
-   sed_cube_set_sea_level( p , sea_level );
-
-   for ( i=0 ; i<sed_cube_size(p) ; i++ )
-      sed_cell_destroy( deposit[0][i] );
-   eh_free_2( deposit );
-   sed_cell_destroy( erode_cell );
 
    return error;
 }
 
-Sed_cell **construct_deposit_array_3( Sed_cube p         ,
-                                      double fraction    ,
-                                      Sed_cell **deposit ,
-                                      int river_no )
+Sed_cell**
+construct_deposit_array_3( Sed_cube   p        ,
+                           double     fraction ,
+                           Sed_cell** deposit  ,
+                           Sed_riv    this_river )
 {
    int i, j;
    double deposit_amount;
@@ -147,11 +150,9 @@ Sed_cell **construct_deposit_array_3( Sed_cube p         ,
    double water_depth;
    Sed_cell erode_cell;
    Sed_cell_grid in_suspension;
-   Sed_riv this_river;
    Eh_ind_2 mouth_pos;
 
-   in_suspension = sed_cube_in_suspension( p , river_no );
-   this_river    = sed_cube_nth_river( p , river_no );
+   in_suspension = sed_cube_in_suspension( p , this_river );
    erode_cell    = sed_cell_new_env( );
 
    mouth_pos = sed_river_mouth( this_river );
@@ -160,7 +161,7 @@ Sed_cell **construct_deposit_array_3( Sed_cube p         ,
    {
       for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
       {
-         deposit_amount = sed_cell_thickness(
+         deposit_amount = sed_cell_size(
                              sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) )
                         * fraction;
    
@@ -184,7 +185,7 @@ Sed_cell **construct_deposit_array_3( Sed_cube p         ,
 //            sed_add_cell_to_cell( p->erode , erode_cell , sed_size( p->sed ) );
    
          }
-         remain_amount = sed_cell_thickness(
+         remain_amount = sed_cell_size(
                             sed_cell_grid_val(in_suspension,i-mouth_pos.i,j-mouth_pos.j) )
                        - deposit_amount;
    

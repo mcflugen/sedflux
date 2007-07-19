@@ -1,4 +1,10 @@
-function x = concat_hydro( file_filter )
+function x = concat_hydro( file_filter , varargin )
+
+   valid_args = { 'format' , 'char' , 'native' };
+
+   values = parse_varargin( valid_args , varargin );
+
+   format = values{ strmatch( 'format' , {valid_args{:,1}} , 'exact' )};
 
 filename = [];
 if ( iscell( file_filter ) )
@@ -24,7 +30,7 @@ disp( ['Found ' num2str(length(filename)) ' files'] );
 x = [];
 for i=1:length( filename )
    disp( ['Reading file: ' filename{i}]);
-   h = read_hydro( filename{i} );
+   h = read_hydro( filename{i} , 'format' , format );
 size(h)
    x = [x cell2mat(h)];
 end

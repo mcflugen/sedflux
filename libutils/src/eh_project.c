@@ -101,7 +101,8 @@ Eh_project eh_project_set_info_val( Eh_project p     ,
    return p;
 }
 
-Eh_project eh_project_add_info_val( Eh_project p , char* key , const gchar* val )
+Eh_project
+eh_project_add_info_val( Eh_project p , char* key , const gchar* val )
 {
    char* group_name = construct_project_group_name( p );
 
@@ -110,7 +111,7 @@ Eh_project eh_project_add_info_val( Eh_project p , char* key , const gchar* val 
    //---
    // If the key already exists, add the new value to the list.
    //
-   // If the key doesn't exits create it and add the value.
+   // If the key doesn't exit create it and add the value.
    //---
    if ( g_key_file_has_key( p->info_file , group_name , key , NULL ) )
    {

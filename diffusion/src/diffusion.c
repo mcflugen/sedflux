@@ -281,9 +281,9 @@ Sed_cell *diffuse_sediment( Sed_cube prof     , double k_max ,
          if ( fabs(du[i]) > 0 )
          {
             sed_column_separate_top( sed_cube_col(prof,remove_index) ,
-                                          fabs(du[i]) ,
-                                          alpha_grain ,
-                                          add_cell );
+                                     fabs(du[i]) ,
+                                     alpha_grain ,
+                                     add_cell );
             if ( options&DIFFUSION_OPT_LAND )
                sed_cell_move_fraction( add_cell ,
                                        in_susp ,
@@ -338,12 +338,12 @@ Sed_cell *diffuse_sediment( Sed_cube prof     , double k_max ,
          {
             if ( u[i]-sed_cube_top_height(prof,0,i) > 1e-5 )
             {
-               sed_cell_set_facies( bedload_cell , facies );
-               sed_cell_set_age( bedload_cell ,
-                                 sed_cube_age_in_years(prof) );
-               sed_cell_resize( bedload_cell ,
-                                u[i] - sed_cube_top_height(prof,0,i) );
+               sed_cell_set_facies( bedload_cell , facies                               );
+               sed_cell_set_age   ( bedload_cell , sed_cube_age_in_years(prof)          );
+               sed_cell_resize    ( bedload_cell , u[i] - sed_cube_top_height(prof,0,i) );
+
                sed_column_add_cell( sed_cube_col(prof,i) , bedload_cell );
+
                sed_cell_add( added_fill , bedload_cell );
             }
          }
@@ -917,7 +917,7 @@ eh_message( "add the diffused sediment" );
             sed_cell_set_facies( add_cell , facies );
 
             water_depth = sed_cube_water_depth( prof , i , j );
-            if ( sed_cell_thickness(add_cell) > water_depth )
+            if ( sed_cell_size(add_cell) > water_depth )
                sed_cell_resize( add_cell , eh_max( water_depth , 0 ) );
 
             sed_column_add_cell( sed_cube_col_ij(prof,i,j) , add_cell );

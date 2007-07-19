@@ -1,3 +1,24 @@
+%% Read data from a sedflux measuring station file
+%
+% The measuring station data is read into a 3D matrix.  The dimensions
+% of the matrix will be (n_x,n_y,n_t).  Where n_x, and n_y are the
+% number of nodes in the x and y directions, respectively and n_t
+% is the number of sample times.
+%
+% The locations of the stations is given as a two row matrix.  The first
+% row indicates the x-values and the second row the y-values.
+%
+% Optional paramter/value pairs:
+%   - timeslice : Read only data sampled at this time.  The value
+%                 is an index (starting at 1) to the sample. [int]
+%   - diff      : Indicate if a time derivative of the data be taken. [boolean]
+%
+% \param filename   Name of the measuring station file
+% \param varargin   Optional parameter/value pairs
+%
+% \returns [data,loc,time,hdr] Measuring station data, location, sample time,
+%          and header information.
+%
 function [data,loc,time,hdr] = read_measuring_station_cube( filename  , varargin )
 % READ_MEASURING_STATION   Read the data from a sedflux measuring station file.
 %
@@ -7,29 +28,27 @@ function [data,loc,time,hdr] = read_measuring_station_cube( filename  , varargin
 %
 
 valid_args = { 'timeslice'  , 'double' , [] ; ...
-               'diff'       , 'logical' , false ; ...
-               'skip'       , 'double' , 0 };
+               'diff'       , 'logical' , false } ;
 
 values = parse_varargin( valid_args , varargin );
 
 time_slice      = values{strmatch( 'timeslice' , {valid_args{:,1}} , 'exact' )};
 time_derivative = values{strmatch( 'diff'      , {valid_args{:,1}} , 'exact' )};
-skip            = values{strmatch( 'skip'      , {valid_args{:,1}} , 'exact' )};
 
-%%%
-%%% read the header information.  close the file so that we can reopen it
-%%% with the correct byte order (which we get from the first reading of the
-%%% header).
-%%%
+%
+% read the header information.  close the file so that we can reopen it
+% with the correct byte order (which we get from the first reading of the
+% header).
+%
 
 fid   = fopen( filename , 'r' );
 hdr   = read_tripod_header( fid );
 fclose(fid);
 
-%%%
-%%% read the byte order that the data were written with.  reopen the file
-%%% with the specified byte order.
-%%%
+%
+% read the byte order that the data were written with.  reopen the file
+% with the specified byte order.
+%
 
 if ( hdr.byte_order == 4321 )
    fid = fopen( filename , 'r' , 'ieee-be' );
@@ -38,16 +57,14 @@ else
 end
 hdr   = read_tripod_header( fid );
 
-%%%
-%%% read the number of elements in each record.  then read all of the records.
-%%%
+%
+% read the number of elements in each record.  then read all of the records.
+%
 n     = fread( fid , 1 , 'int32' );
 
-skip_bytes = (skip+1)*n*8;
-
-%%%
-%%% Determine that number of records in the file.
-%%%
+%
+% Determine that number of records in the file.
+%
 here      = ftell( fid );
 fseek( fid , 0 , 'eof' );
 there     = ftell( fid );
@@ -57,7 +74,6 @@ fseek( fid , here , 'bof' );
 
 if ( isempty( time_slice ) )
 
-%   a = fread( fid , [n floor(n_records/skip)] , [num2str(n) '*double=>double'] , skip_bytes );
    a = fread( fid , [n n_records] , 'double' );
 
 %   a = fread( fid , [n 50] , 'double' );

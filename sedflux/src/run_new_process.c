@@ -28,31 +28,14 @@
 #include <limits.h>
 #include <string.h>
 #include "sed_sedflux.h"
-#include "run_new_process.h"
 #include "utils.h"
-#include "processes.h"
+#include "my_processes.h"
 
 Sed_process_info
-run_new_process( gpointer ptr , Sed_cube prof )
+run_new_process( Sed_process proc , Sed_cube prof )
 {
-   New_process_t*    data =(New_process_t*)ptr;
-   Sed_process_info  info = SED_EMPTY_INFO;
-
-   /* Free resources for this instance */
-   if ( prof == NULL )
-   {
-      if ( data->initialized )
-      {
-         data->initialized = FALSE;
-      }
-      return SED_EMPTY_INFO;
-   }
-
-   /* Initialize the data for this instance */
-   if ( !data->initialized )
-   {
-      data->initialized = TRUE;
-   }
+   New_process_t*   data = sed_process_user_data(proc);
+   Sed_process_info info = SED_EMPTY_INFO;
 
    /* Do something to the Sed_cube */
    {
@@ -70,18 +53,45 @@ run_new_process( gpointer ptr , Sed_cube prof )
 #define S_KEY_PARAM_NAME_1 "parameter"
 #define S_KEY_PARAM_NAME_2 "another parameter"
 
-gboolean init_new_process( Eh_symbol_table symbol_table , gpointer ptr )
+gboolean
+init_new_process( Sed_process p , Eh_symbol_table tab , GError** error )
 {
-   New_process_t *data=(New_process_t*)ptr;
+   New_process_t* data    = sed_process_new_user_data( p , New_process_t );
+   GError*        tmp_err = NULL;
+   gboolean       is_ok   = TRUE;
 
-   if ( symbol_table==NULL )
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( data )
    {
-      data->initialized = FALSE;
-      return TRUE;
+      /* Get the parameter values from the Eh_symbol_table */
+
+      /* If there is an error, report it */
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         is_ok = FALSE;
+      }
    }
 
-   /* Get the parameter values from the Eh_symbol_table */
+   return is_ok;
+}
+
+gboolean
+destroy_new_process( Sed_process p )
+{
+   if ( p )
+   {
+      New_process_t* data = sed_process_user_data( p );
+
+      if ( data )
+      {
+         /* Free resources used by data ... */
+
+         /* ... and the data itself */
+         eh_free( data );
+      }
+   }
 
    return TRUE;
 }
-

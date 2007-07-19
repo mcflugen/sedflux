@@ -8,15 +8,15 @@
 */
 CLASS( Eh_input_val )
 {
-   Eh_input_val_type type; //< The type of Eh_input_val.  This defines the way the value changes.
-   FILE *fp;               //< Pointer to a user-specified file, if necessary.  NULL, otherwise.
-   char *file;             //< The name of a user-specified file, if necessary.  NULL, otherwise.
-   double *x;              //< Array of x-values for a time series or a user-defined CDF
-   double *y;              //< Array of y-values for a time series or a user-defined CDF
-   double len;             //< Length of \a x and \a y
-   GRand* rand;            //< A random number generator, if necessary.  NULL, otherwise.
-   double data[2];         //< Data used to calculate a new value
-   double val;             //< The current value of the Eh_input_val
+   Eh_input_val_type type;    //< The type of Eh_input_val.  This defines the way the value changes.
+   FILE*             fp;      //< Pointer to a user-specified file, if necessary.  NULL, otherwise.
+   gchar*            file;    //< The name of a user-specified file, if necessary.  NULL, otherwise.
+   double*           x;       //< Array of x-values for a time series or a user-defined CDF
+   double*           y;       //< Array of y-values for a time series or a user-defined CDF
+   double            len;     //< Length of \a x and \a y
+   GRand*            rand;    //< A random number generator, if necessary.  NULL, otherwise.
+   double            data[2]; //< Data used to calculate a new value
+   double            val;     //< The current value of the Eh_input_val
 };
 
 GQuark
@@ -149,14 +149,14 @@ Eh_input_val eh_input_val_set( const char *input_str , GError** err )
                             EH_INPUT_VAL_ERROR ,
                             EH_INPUT_VAL_ERROR_X_NOT_MONOTONIC ,
                             "%s: The first column must be monotonically increasing\n" ,
-                            file , n_rows );
+                            file );
             else if (    type == EH_INPUT_VAL_RAND_USER
                       && !eh_dbl_array_is_monotonic_up( data[1] , n_cols ) )
                g_set_error( &tmp_error ,
                             EH_INPUT_VAL_ERROR ,
                             EH_INPUT_VAL_ERROR_F_NOT_MONOTONIC ,
                             "%s: The second column must be monotonically increasing\n" ,
-                            file , n_rows );
+                            file );
             else if (    type == EH_INPUT_VAL_RAND_USER
                       && !(data[1][0]<=0 && data[1][n_cols-1]>=1. ) )
                g_set_error( &tmp_error ,

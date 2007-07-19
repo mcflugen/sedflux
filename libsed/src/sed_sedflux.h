@@ -18,8 +18,8 @@
 //
 //---
 
-#ifndef __SEDFLUX_IS_INCLUDED__
-# define __SEDFLUX_IS_INCLUDED__
+#ifndef __SED_IS_INCLUDED__
+# define __SED_IS_INCLUDED__
 
 #include <stdio.h>
 #include <limits.h>
@@ -28,7 +28,6 @@
 #include "utils.h"
 
 #include "datadir_path.h"
-
 #include "sed_const.h"
 #include "sed_hydro.h" 
 #include "sed_sediment.h"
@@ -40,5 +39,6 @@
 #include "sed_process.h"
 #include "sed_epoch.h"
 #include "sed_river.h"
+#include "sed_signal.h"
 
 #endif

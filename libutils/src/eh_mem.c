@@ -481,5 +481,42 @@ void API_ENTRY report_win_assert( char *file_name , int line_no )
    }
 }
 
+void**
+eh_alloc_2( gssize m , gssize n , gssize size )
+{
+   void **p=NULL;
+
+   if ( m>0 && n>0 && size>0 )
+   {
+      p = eh_new( void* , m );
 
 
+      if ( p )
+      {
+         p[0] = eh_new( gchar ,  m*n*size );
+
+         if ( p[0] )
+         {
+            gint i;
+            for ( i=1 ; i<m ; i++ )
+               p[i] = (gint8*)(p[i-1])+size*n;
+         }
+         else
+            eh_error( "Failed to allocate %d bytes" , n*m*size );
+      }
+      else
+         eh_error( "Failed to allocate %d bytes" , n*sizeof(void*) );
+   }
+
+   return p;
+}
+
+void
+eh_free_void_2( void **p )
+{
+   if ( p )
+   {
+      if ( p[0] ) eh_free( p[0] );
+      eh_free( p );
+   }
+}
