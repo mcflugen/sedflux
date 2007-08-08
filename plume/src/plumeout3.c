@@ -170,9 +170,10 @@ int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid 
                   * (eh_grid_y(deposit_grid[nn])[1] - eh_grid_y(deposit_grid[nn])[0]);
 
 
-         if ( mass_out>0 && fabs( mass_out-mass_in )>1e-5 )
+         //if ( mass_out>0 && fabs( mass_out-mass_in )>1e-5 )
+         if ( mass_out>0 && !eh_compare_dbl( mass_in , mass_out , 1e-5 ) )
             eh_dbl_grid_scalar_mult( deposit_grid[nn] , mass_in/mass_out );
-         else
+         else if ( mass_out<0 )
             eh_require_not_reached();
 
       }

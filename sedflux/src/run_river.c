@@ -52,7 +52,8 @@ run_river( Sed_process proc , Sed_cube prof )
       //---
       // Set the cube time step to be that of the river.
       //---
-      if ( data->type & (HYDRO_USE_BUFFER|HYDRO_INLINE) )
+//      if ( data->type & (HYDRO_USE_BUFFER|HYDRO_INLINE) )
+      if ( data->type==SED_HYDRO_INLINE || data->buffer_is_on )
          sed_cube_set_time_step( prof , 
                                  sed_hydro_duration_in_seconds(river_data)/S_SECONDS_PER_YEAR );
       dt = sed_cube_time_step_in_seconds( prof );
@@ -74,6 +75,7 @@ run_river( Sed_process proc , Sed_cube prof )
              * sed_cell_size( sed_cube_to_add(prof) );
 
       sed_cell_resize   ( sed_cube_to_add(prof) , volume );
+
       sed_hydro_add_cell( river_data , sed_cube_to_add(prof) );
       sed_cell_clear    ( sed_cube_to_add(prof) );
 
@@ -157,31 +159,53 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
       data->filename   = eh_symbol_table_value ( tab , RIVER_KEY_RIVER_FILE );
       data->river_name = eh_symbol_table_value ( tab , RIVER_KEY_RIVER_NAME );
 
-      data->location = 0;
-      data->type     = 0;
-      if      ( strcasecmp( str , "SEASON"     )==0 ) data->type |= HYDRO_INLINE;
-      else if ( strcasecmp( str , "HYDROTREND" )==0 ) data->type |= HYDRO_HYDROTREND;
-      else if ( strcasecmp( str , "EVENT"      )==0 ) data->type |= (HYDRO_HYDROTREND|HYDRO_USE_BUFFER);
-      else if ( strcasecmp( str , "INLINE"     )==0 )
+      data->location     = 0;
+      data->type         = 0;
+      data->buffer_is_on = FALSE;
+
+      data->type = sed_hydro_str_to_type( str );
+
+      if (    g_ascii_strcasecmp( str , "EVENT"  )==0
+           || g_ascii_strcasecmp( str , "BUFFER" )==0 
+           && data->type == SED_HYDRO_HYDROTREND )
       {
-         eh_warning( "Keyword INLINE no longer used.  Use SEASON instead." );
-         data->type |= HYDRO_INLINE;
+         data->buffer_is_on = TRUE;
       }
-      else if ( strcasecmp( str , "REFRESH" )==0 )
-      {
-         eh_warning( "Keyword REFRESH no longer used.  Use HYDROTREND instead." );
-         data->type |= (HYDRO_HYDROTREND);
-      }
-      else if ( strcasecmp( str , "BUFFER" )==0 )
-      {
-         eh_warning( "Keyword BUFFER no longer used.  Use EVENT instead ." );
-         data->type |= (HYDRO_HYDROTREND|HYDRO_USE_BUFFER);
-      }
-      else
+
+      if ( data->type==SED_HYDRO_UNKNOWN )
          g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM ,
                       "Invalid river type key (season, hydrotrend, or event): %s" , str );
 
       if ( !tmp_err ) eh_touch_file( data->filename , O_RDONLY , &tmp_err );
+
+      if ( !tmp_err )
+      {
+         Sed_hydro_file_type t = sed_hydro_file_guess_type( data->filename , &tmp_err );
+
+         if ( !tmp_err )
+         {
+            if (    ( t==SED_HYDRO_HYDROTREND_BE && G_BYTE_ORDER!=G_BIG_ENDIAN    )
+                 || ( t==SED_HYDRO_HYDROTREND_LE && G_BYTE_ORDER!=G_LITTLE_ENDIAN ) )
+               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
+                            "Byte-order of river file type doesn't match machine's: "
+                            "Machine is %s but file is %s" ,
+                               G_BYTE_ORDER==G_BIG_ENDIAN?"big-endian":"little-endian" ,
+                               G_BYTE_ORDER==G_BIG_ENDIAN?"little-endian":"big-endian" );
+         }
+
+         if ( t==SED_HYDRO_HYDROTREND_BE || t==SED_HYDRO_HYDROTREND_LE ) t = SED_HYDRO_HYDROTREND;
+
+         if ( !tmp_err && t!=data->type )
+         {
+            if ( t==SED_HYDRO_UNKNOWN )
+               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_UNKNOWN_FILE_TYPE ,
+                            "Could not determine file type of river file: %s" , data->filename );
+            else
+               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
+                            "River file type doesn't match the specified type: "
+                            "Specified type is %s but file is type %s" , sed_hydro_type_to_s(data->type) , sed_hydro_type_to_s(t) );
+         }
+      }
    }
 
    if ( tmp_err )
@@ -202,7 +226,7 @@ init_river_data( Sed_process proc , Sed_cube prof , GError** error )
    {
       data->total_mass            = 0;
       data->total_mass_from_river = 0;
-      data->fp_river              = sed_hydro_file_new( data->filename , data->type , TRUE );
+      data->fp_river              = sed_hydro_file_new( data->filename , data->type , data->buffer_is_on , TRUE , error );
       data->this_river            = sed_river_new     ( data->river_name );
 
       eh_require( data->fp_river );
@@ -233,7 +257,8 @@ destroy_river( Sed_process p )
    return TRUE;
 }
 
-gboolean dump_river_data( gpointer ptr , FILE *fp )
+gboolean
+dump_river_data( gpointer ptr , FILE *fp )
 {
    River_t *data = (River_t*)ptr;
    guint len;

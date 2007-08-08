@@ -92,6 +92,7 @@ gssize eh_fwrite_int64_to_be( const void *ptr , gssize size , gssize nitems , FI
 
 #else
 
+
 gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
 {
    gssize n = 0;
@@ -178,6 +179,87 @@ gssize eh_fwrite_int64_to_le( const void *ptr , gssize size , gssize nitems , FI
 
 #endif
 
+#ifndef HAVE_GETLINE
+# ifdef HAVE_FGETLN
+
+gssize
+getline( gchar** lineptr , gsize *n , FILE* stream )
+{
+   gssize result = -1;
+   gsize  len;
+   gchar* s = fgetln( stream , &len );
+
+   if ( s || feof(stream) )
+   {
+      if ( len+1>*n )
+      {
+         *lineptr = eh_renew( gchar* , *lineptr , len+1 );
+         *n       = len+1;
+      }
+
+      memcpy( *lineptr , s , len );
+      (*lineptr)[len] = '\0';
+
+      if ( !feof(stream) )
+         result   = len;
+      else
+         result   = -1;
+   }
+
+   return result;
+}
+# else /* don't have fgetln */
+gssize
+getline( gchar** lineptr , gsize *n , FILE* stream )
+{
+   gssize result = -1;
+
+   if ( *lineptr==NULL || *n==0 )
+   {
+      *n       = 120;
+      *lineptr = eh_new( gchar , *n );
+   }
+
+   if ( *lineptr )
+   {
+      gchar* p;
+      gchar* t     = NULL;
+      gint   start = ftell( stream );
+
+      p = fgets( *lineptr , *n-1 , stream ); /* Read in a block of characters */
+      if ( p )
+         t = (gchar*)memchr( p , '\n' , *n-1 ); /* Look for the delimiter */
+
+      if ( !feof(stream) && !t ) /* Delimeter not found */
+      {
+         gint len = *n;
+
+         for ( p+=len ; p && !t ; p+=120,len+=120 )
+         {
+            *lineptr  = eh_renew( gchar , *lineptr , len+120 ); /* Extend the length of the string */
+            *n        = len+120;
+            p         = fgets( p , 120 , stream ); /* Read the next block of bytes */
+
+            if ( p )
+               t = (gchar*)memchr( p , '\n' , 120 ); /* Look for the delimiter */
+         }
+      }
+
+      if ( ferror(stream) || feof(stream) )
+         result = -1;
+      else
+      {
+         result = strlen( *lineptr );
+         fseek( stream , start+result , SEEK_SET ); /* Move the file pointer to after the delimeter */
+      }
+   }
+
+   return result;
+}
+# endif
+#endif /* don't have getline */
+
+
 #include <stdio.h>
 //#include <values.h>
 #include <string.h>
@@ -203,8 +285,10 @@ eh_scan_str( FILE* fp , GError** error )
    if ( fp )
    {
       size_t  n;
-      gchar*  s       = fgetln( fp , &n );
+      gchar*  s;
       GError* tmp_err = NULL;
+
+      getline( &s , &n , fp );
 
       if ( s )
       {

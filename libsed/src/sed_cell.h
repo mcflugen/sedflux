@@ -198,5 +198,10 @@ Sed_cell**       sed_cell_grid_data      ( Sed_cell_grid g                      
 gboolean sed_cell_is_same  ( Sed_cell a , Sed_cell b );
 gboolean sed_cell_is_valid ( Sed_cell a );
 
+Sed_cell* sed_cell_array_free        ( Sed_cell* a );
+double    sed_cell_array_mass        ( Sed_cell* a );
+gint      sed_cell_array_fprint      ( FILE* fp , Sed_cell* a );
+Sed_cell* sed_cell_array_delete_empty( Sed_cell* a );
+
 #endif /* sed_cell.h is included */
 

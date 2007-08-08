@@ -34,6 +34,18 @@ START_TEST ( test_cell_new )
 }
 END_TEST
 
+START_TEST( test_cell_new_classed )
+{
+   Sed_cell c = sed_cell_new_classed( NULL , 27.2 , S_SED_TYPE_SAND|S_SED_TYPE_SILT|S_SED_TYPE_CLAY );
+
+   fail_unless( sed_cell_is_valid(c) );
+   fail_unless( sed_cell_mass(c)>=0  );
+   fail_unless( !sed_cell_is_empty(c) );
+
+   sed_cell_destroy(c);
+}
+END_TEST
+
 START_TEST (test_cell_destroy)
 {
    {
@@ -473,14 +485,64 @@ START_TEST ( test_cell_is_valid )
 }
 END_TEST
 
+START_TEST( test_cell_array_delete_empty )
+{
+   Sed_cell* a      = NULL;
+   double    f_0[5] = { .4 , .0 , .2 , .2 , .2 };
+   Sed_cell  b      = NULL;
+   gint      i;
+
+   for ( i=0 ; i<10 ; i++ )
+   {
+      b = sed_cell_new_sized( 5 , i+1 , f_0 );
+      eh_strv_append( &a , b );
+   }
+
+   fail_unless( g_strv_length( a )==10 );
+
+   sed_cell_clear( a[2] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( g_strv_length( a )==9 , "Error deleting element" );
+
+   sed_cell_clear( a[0] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( g_strv_length( a )==8 , "Error deleting first element" );
+
+   sed_cell_clear( a[2] );
+   sed_cell_clear( a[3] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( g_strv_length( a )==6 , "Error deleting successive elements" );
+
+   sed_cell_clear( a[5] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( g_strv_length( a )==5 , "Error deleting last element" );
+
+   sed_cell_clear( a[3] );
+   sed_cell_clear( a[4] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( g_strv_length( a )==3 , "Error deleting last two element" );
+
+   sed_cell_clear( a[0] );
+   sed_cell_clear( a[1] );
+   sed_cell_clear( a[2] );
+   a = sed_cell_array_delete_empty( a );
+   fail_unless( a==NULL , "Error deleting all elements" );
+
+   sed_cell_array_free( a );
+}
+END_TEST
+
 Suite *sed_cell_suite( void )
 {
    Suite *s = suite_create( "Sed_cell" );
-   TCase *test_case_core = tcase_create( "Core" );
+   TCase *test_case_core  = tcase_create( "Core" );
+   TCase *test_case_array = tcase_create( "Cell Array" );
 
-   suite_add_tcase( s , test_case_core );
+   suite_add_tcase( s , test_case_core  );
+   suite_add_tcase( s , test_case_array );
 
-   tcase_add_test( test_case_core , test_cell_new          );
+   tcase_add_test( test_case_core , test_cell_new         );
+   tcase_add_test( test_case_core , test_cell_new_classed );
    tcase_add_test( test_case_core , test_cell_destroy);
    tcase_add_test( test_case_core , test_cell_cmp);
    tcase_add_test( test_case_core , test_cell_copy);
@@ -496,6 +558,7 @@ Suite *sed_cell_suite( void )
    tcase_add_test( test_case_core , test_cell_separate_fraction );
    tcase_add_test( test_case_core , test_cell_is_valid );
 
+   tcase_add_test( test_case_array , test_cell_array_delete_empty );
 
    return s;
 }

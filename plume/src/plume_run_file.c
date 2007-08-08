@@ -95,7 +95,7 @@ dx = 12.5;
    {
       gssize i;
       double dt;
-      Sed_hydro_file f = sed_hydro_file_new( river_file , HYDRO_HYDROTREND , TRUE );
+      Sed_hydro_file f = sed_hydro_file_new( river_file , SED_HYDRO_HYDROTREND , FALSE , TRUE , NULL );
 //      Sed_hydro_file f = sed_hydro_file_new( river_file , HYDRO_HYDROTREND|HYDRO_USE_BUFFER , TRUE );
       Sed_hydro river;
       double mass_in  = 0;

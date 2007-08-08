@@ -127,7 +127,7 @@ START_TEST ( test_sed_column_rebin )
    Sed_column c_0;
    double mass_0, mass_1;
 
-   sed_column_append_cell( c , cell );
+   sed_column_stack_cell( c , cell );
 
    mass_0 = sed_column_mass ( c );
    c_0    = sed_column_rebin( c );
@@ -250,6 +250,33 @@ START_TEST ( test_sed_column_set_z_res )
 }
 END_TEST
 
+START_TEST ( test_sed_column_stack_cells_loc )
+{
+   Sed_cell*  c_arr   = NULL;
+   Sed_column c       = sed_column_new( 5 );
+   double     mass_in = 0;
+   gint       i;
+
+   for ( i=0 ; i<10 ; i++ )
+   {
+      eh_strv_append( &c_arr , sed_cell_new_classed( NULL , 1. , S_SED_TYPE_SAND ) );
+      mass_in += sed_cell_mass( c_arr[i] );
+   }
+
+   sed_column_stack_cells_loc( c , c_arr );
+
+   fail_unless( sed_column_len(c)==g_strv_length(c_arr)                     , "Column not resized correctly" );
+   fail_unless( eh_compare_dbl( sed_column_mass(c)      , mass_in , 1e-12 ) , "Column mass should match cell mass" );
+   fail_unless( eh_compare_dbl( sed_column_thickness(c) , 10.     , 1e-12 ) , "Column thickness should match cell thickness" );
+
+   for ( i=0 ; i<10 ; i++ )
+      fail_if( sed_column_nth_cell(c,i)!=c_arr[i] , "Sed_cell locations should be set" );
+
+   eh_free( c_arr );
+   sed_column_destroy( c );
+}
+END_TEST
+
 START_TEST ( test_sed_column_add_cell )
 {
    Sed_column c = sed_column_new( 5 );
@@ -366,14 +393,14 @@ START_TEST ( test_sed_column_add_cell_large )
 }
 END_TEST
 
-START_TEST ( test_sed_column_append_cell )
+START_TEST ( test_sed_column_stack_cell )
 {
    Sed_column c   = sed_column_new( 5 );
    Sed_cell s     = sed_cell_new_classed( NULL , .5 , S_SED_TYPE_SAND );
    double mass_in = sed_cell_mass( s );
    double t;
 
-   t = sed_column_append_cell( c , s );
+   t = sed_column_stack_cell( c , s );
 
    fail_unless( fabs( t - .5 ) < 1e-12                     , "Added thickness should be returned" );
    fail_unless( sed_column_len(c)==1                       , "Column not resized correctly" );
@@ -383,7 +410,7 @@ START_TEST ( test_sed_column_append_cell )
 
    sed_cell_resize( s , 128 );
    mass_in += sed_cell_mass( s );
-   t = sed_column_append_cell( c , s );
+   t = sed_column_stack_cell( c , s );
    
    fail_unless( fabs( t - 128. ) < 1e-12                     , "Added thickness should be returned" );
    fail_unless( sed_column_len(c)==2                         , "Column not resized correctly" );
@@ -708,9 +735,9 @@ END_TEST
 START_TEST ( test_sed_column_top_index )
 {
    Sed_column c = sed_column_new( 5 );
-   Sed_cell cell = sed_cell_new_classed( NULL , 3.14 , S_SED_TYPE_SAND&S_SED_TYPE_SILT );
+   Sed_cell cell = sed_cell_new_classed( NULL , 3.14 , S_SED_TYPE_SAND|S_SED_TYPE_SILT );
    gssize top_ind;
-   
+
    sed_column_add_cell( c , cell );
    
    top_ind = sed_column_top_index( c );
@@ -1436,6 +1463,76 @@ START_TEST ( test_sed_column_chop_above )
 }
 END_TEST
 
+START_TEST ( test_sed_column_extract_above_0 )
+{
+   Sed_cell* c_arr = NULL;
+   Sed_column c  = sed_column_new( 5 );
+   Sed_cell cell = sed_cell_new_classed( NULL , 20 , S_SED_TYPE_SAND );
+
+   sed_column_set_base_height( c , 123 );
+
+   sed_column_add_cell( c , cell );
+
+   c_arr = sed_column_extract_cells_above( c , 140 );
+
+   fail_unless( c_arr!=NULL                                   , "Returned array is null" );
+   fail_unless( g_strv_length(c_arr)==3                       , "Incorrect number of cells extracted" );
+   fail_unless( fabs( sed_column_base_height(c)-123 ) < 1e-23 , "Extract doesn't change base height" );
+   fail_unless( fabs( sed_column_top_height(c) -140 ) < 1e-23 , "Top height not correct" );
+
+   sed_cell_array_free( c_arr );
+   sed_cell_destroy   ( cell );
+   sed_column_destroy ( c    );
+}
+END_TEST
+
+START_TEST ( test_sed_column_extract_above_1 )
+{
+   Sed_cell* c_arr = NULL;
+   Sed_column c  = sed_column_new( 5 );
+   Sed_cell cell = sed_cell_new_classed( NULL , 20 , S_SED_TYPE_SAND );
+
+   sed_column_set_base_height( c , 123 );
+
+   sed_column_add_cell( c , cell );
+
+   c_arr = sed_column_extract_cells_above( c , 125.1 );
+
+   fail_unless( c_arr!=NULL                                     , "Returned array is null" );
+   fail_unless( g_strv_length(c_arr)==18                        , "Incorrect number of cells extracted" );
+   fail_unless( fabs( sed_column_base_height(c)-123   ) < 1e-23 , "Extract doesn't change base height" );
+   fail_unless( fabs( sed_column_top_height(c) -125.1 ) < 1e-23 , "Top height not correct" );
+
+   sed_cell_array_free( c_arr );
+   sed_cell_destroy   ( cell );
+   sed_column_destroy ( c    );
+}
+END_TEST
+
+START_TEST ( test_sed_column_extract_above_2 )
+{
+   Sed_cell* c_arr = NULL;
+   Sed_column c  = sed_column_new( 5 );
+   Sed_cell cell = sed_cell_new_classed( NULL , 20 , S_SED_TYPE_SAND );
+
+   sed_column_set_base_height( c , 123 );
+
+   sed_column_add_cell( c , cell );
+
+   c_arr = sed_column_extract_cells_above( c , 120.1 );
+
+   fail_unless( c_arr!=NULL                                   , "Returned array is null" );
+   fail_unless( g_strv_length(c_arr)==20                      , "Incorrect number of cells extracted" );
+   fail_unless( sed_column_is_empty(c)                        , "Column should have been emptied" );
+   fail_unless( fabs( sed_column_base_height(c)-123 ) < 1e-23 , "Extract doesn't change base height" );
+   fail_unless( fabs( sed_column_top_height(c) -123 ) < 1e-23 , "Top height not correct" );
+
+   sed_cell_array_free( c_arr );
+   sed_cell_destroy   ( cell );
+   sed_column_destroy ( c    );
+}
+END_TEST
+
 START_TEST ( test_sed_column_chop_below )
 {
    Sed_column c_0;
@@ -1773,10 +1870,11 @@ Suite *sed_column_suite( void )
    tcase_add_test( test_case_core , test_sed_column_destroy  );
    tcase_add_test( test_case_core , test_sed_column_copy     );
    tcase_add_test( test_case_core , test_sed_column_clear    );
+   tcase_add_test( test_case_core , test_sed_column_stack_cells_loc );
    tcase_add_test( test_case_core , test_sed_column_add_cell );
    tcase_add_test( test_case_core , test_sed_column_add_cell_small );
    tcase_add_test( test_case_core , test_sed_column_add_cell_large );
-   tcase_add_test( test_case_core , test_sed_column_append_cell );
+   tcase_add_test( test_case_core , test_sed_column_stack_cell );
    tcase_add_test( test_case_core , test_sed_column_resize_cell );
    tcase_add_test( test_case_core , test_sed_column_compact_cell );
    tcase_add_test( test_case_core , test_sed_column_height );
@@ -1843,6 +1941,9 @@ Suite *sed_column_suite( void )
    tcase_add_test( test_case_limits , test_sed_column_chomp_above );
    tcase_add_test( test_case_limits , test_sed_column_chomp_below );
    tcase_add_test( test_case_limits , test_sed_column_chomp_null );
+   tcase_add_test( test_case_limits , test_sed_column_extract_above_0 );
+   tcase_add_test( test_case_limits , test_sed_column_extract_above_1 );
+   tcase_add_test( test_case_limits , test_sed_column_extract_above_2 );
    tcase_add_test( test_case_limits , test_sed_column_chop_above );
    tcase_add_test( test_case_limits , test_sed_column_chop_below );
    tcase_add_test( test_case_limits , test_sed_column_chop_null );

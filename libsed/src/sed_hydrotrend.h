@@ -44,23 +44,33 @@ gssize                 sed_hydrotrend_write_header( FILE* fp       ,
                                                     gint n_samples ,
                                                     gchar* comment_s );
 
+gint sed_hydrotrend_byte_order( const gchar* file , GError** error );
 gint sed_hydrotrend_guess_byte_order( FILE* fp );
 
 // Read and write HydroTrend records
-Sed_hydro          sed_hydrotrend_read_record( FILE* fp , int n_grains );
-Sed_hydro          sed_hydrotrend_read_record_from_byte_order( FILE *fp , int n_grains , gint order );
-Sed_hydro*         sed_hydrotrend_read_records( FILE* fp , gint rec_0 , gint n_recs , gint byte_order , GError** error );
-gssize             sed_hydrotrend_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
-Sed_hydro*         sed_hydrotrend_read( gchar* file , gint byte_order , int* n_seasons , GError** error );
+Sed_hydro          sed_hydrotrend_read_next_rec( FILE* fp , int n_grains );
+Sed_hydro          sed_hydrotrend_read_next_rec_from_byte_order( FILE *fp , int n_grains , gint order );
+Sed_hydro*         sed_hydrotrend_read_recs( FILE* fp , gint rec_0 , gint n_recs , gint byte_order , GError** error );
+gssize             sed_hydrotrend_read_next_n_recs( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
+
+Sed_hydro*         sed_hydrotrend_read       ( const gchar* file       ,
+                                               gint         byte_order ,
+                                               int*         n_seasons  ,
+                                               GError**     error );
+Sed_hydro*         sed_hydrotrend_read_n_recs( const gchar* file       ,
+                                               gint         n_recs     ,
+                                               gint         byte_order ,
+                                               int*         n_seasons  ,
+                                               GError** error );
 
 gssize             sed_hydrotrend_write_record( FILE *fp , Sed_hydro rec );
 gssize             sed_hydrotrend_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order );
 gssize             sed_hydrotrend_write( gchar* file , Sed_hydro* rec_a , gint n_seasons , gchar* comment_s , GError** error );
 gssize             sed_hydro_array_write_hydrotrend_records( FILE* fp , Sed_hydro* rec_a );
 
-gint               sed_hydrotrend_fseek( FILE* fp , gint offset , gint whence , gint byte_order );
+gint               sed_hydrotrend_fseek      ( FILE* fp , gint offset , gint whence , gint byte_order );
 gint               sed_hydrotrend_record_size( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
-gint               sed_hydrotrend_n_grains( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
-gint               sed_hydrotrend_data_start( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
+gint               sed_hydrotrend_n_grains   ( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
+gint               sed_hydrotrend_data_start ( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
 
 #endif /* hydrotrend.h is included */

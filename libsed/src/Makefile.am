@@ -115,7 +115,7 @@ libsedflux_la_LIBADD     = -lgthread-2.0 -lglib-2.0
 libsedflux_la_LDFLAGS    = -version-info 1:1
 
 
-EXTRA_DIST               = sedflux.pc.in
+EXTRA_DIST               = sedflux.pc.in sed_sedflux.h
 
 pkgconfigdir             = $(libdir)/pkgconfig
 pkgconfig_DATA           = sedflux.pc

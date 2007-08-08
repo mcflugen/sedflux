@@ -52,6 +52,7 @@ CLASS ( Sed_process )
    double           stop;
 
    gint             run_count;
+   gboolean         is_set;
 
    Sed_process*     parent;
    Sed_process*     child;
@@ -620,7 +621,8 @@ sed_process_queue_run_process_now( Sed_process_queue q , const gchar* name , Sed
    {
       GList* link = sed_process_queue_find( q , name );
 
-      g_list_foreach( SED_PROCESS_LINK(link->data)->obj_list , (GFunc)sed_process_run_now , cube );
+      if ( link && link->data )
+         g_list_foreach( SED_PROCESS_LINK(link->data)->obj_list , (GFunc)sed_process_run_now , cube );
    }
 
    return q;
@@ -653,6 +655,7 @@ Sed_process sed_process_create( const char*  name   ,
    p->stop         =  G_MAXDOUBLE;
 
    p->run_count    = 0;
+   p->is_set       = FALSE;
 
    p->parent       = NULL;
    p->child        = NULL;
@@ -729,6 +732,7 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
       d->stop     = s->stop;
 
       d->run_count= s->run_count;
+      d->is_set   = s->is_set;
 
       d->parent   = s->parent;
       d->child    = s->child;
@@ -752,7 +756,6 @@ sed_process_destroy( Sed_process p )
 {
    if ( p )
    {
-
       if ( p->f_destroy ) p->f_destroy( p );
 
       g_array_free(p->next_event,TRUE);
@@ -858,7 +861,7 @@ sed_process_run_now( Sed_process a , Sed_cube p )
 {
    gboolean rtn_val = TRUE;
 
-   if ( a && a->f_run )
+   if ( a && a->f_run && a->is_set )
    {
       gchar*           log_name;
       Sed_process_info info;
@@ -899,7 +902,6 @@ sed_process_run_now( Sed_process a , Sed_cube p )
       }
       else
       {
-         //info = a->f_run( a->data , p );
          info = a->f_run( a , p );
 
          a->info->mass_total_added += info.mass_added;
@@ -914,7 +916,6 @@ sed_process_run_now( Sed_process a , Sed_cube p )
       a->run_count++;
    }
 
-
    return rtn_val;
 }
 
@@ -922,6 +923,7 @@ void
 sed_process_init( Sed_process p , Eh_symbol_table t , GError** error )
 {
    if ( p->f_init ) p->f_init( p , t , error );
+   p->is_set = TRUE;
 }
 
 #define SED_KEY_TAG         "process tag"
@@ -1106,6 +1108,7 @@ sed_process_fprint( FILE *fp , Sed_process p )
       }
 
       n += fprintf( fp,"run count     = %d\n" , p->run_count );
+      n += fprintf( fp,"is set        = %d\n" , p->is_set    );
 
       if ( sed_process_interval_is_always(p) )
          n += fprintf( fp,"interval      = %s\n" , "Always" );
@@ -1305,6 +1308,12 @@ sed_process_run_count( Sed_process p )
    return p->run_count;
 }
 
+gboolean
+sed_process_is_set( Sed_process p )
+{
+   eh_return_val_if_fail( p , FALSE );
+   return p->is_set;
+}
 gpointer
 sed_process_user_data( Sed_process p )
 {
@@ -1315,11 +1324,16 @@ sed_process_user_data( Sed_process p )
 gpointer
 sed_process_malloc_user_data( Sed_process p , gssize n_bytes )
 {
+   gpointer data = NULL;
+
    if ( p )
    {
-      if ( !p->data ) p->data = eh_new( gchar , n_bytes );
+      if ( !p->data )
+         p->data = eh_new( gchar , n_bytes );
+      data = p->data;
    }
-   return p->data;
+
+   return data;
 }
 
 /** Compare the names of two processes

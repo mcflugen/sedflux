@@ -1,12 +1,12 @@
 [ subsidence ]
 active:                                 yes
-logging:                                yes
+logging:                                no
 repeat interval:                        always
-subsidence file:                        subsidence.seq
+subsidence file:                        subsidence_1d.seq
 
 ['measuring station']
 active:                                 yes
-logging:                                yes
+logging:                                no
 repeat interval:                        always
 parameter to measure:                   elevation
 position wrt river mouth:               no

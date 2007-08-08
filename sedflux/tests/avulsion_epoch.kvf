@@ -16,6 +16,7 @@ active:                                 yes
 logging:                                no
 repeat interval:                        always
 standard deviation (deg):               5.
+seed for random number generator:       1973
 minimum angle (deg):                    0
 maximum angle (deg):                    180
 hinge point:                            50,0

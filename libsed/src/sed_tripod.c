@@ -153,6 +153,9 @@ double* sed_tripod_measure( Sed_tripod t , Sed_cube c , Eh_pt_2* pos , double* d
    if ( t && c )
    {
 
+      eh_require( t->x    );
+      eh_require( t->x->f );
+
       if ( pos )
       {
          gssize i, i_measure, j_measure;
@@ -196,7 +199,8 @@ Sed_tripod_attr sed_tripod_attr_destroy( Sed_tripod_attr a )
    return NULL;
 }
 
-Sed_measurement sed_measurement_new( const char* name )
+Sed_measurement
+sed_measurement_new( const char* name )
 {
    Sed_measurement m = NULL;
 
@@ -216,6 +220,13 @@ Sed_measurement sed_measurement_new( const char* name )
             m->f = all_measurements[i].f;
             found = TRUE;
          }
+
+      if ( !found )
+      {
+         eh_free( m->name );
+         eh_free( m );
+         m = NULL;
+      }
    }
 
    return m;
@@ -308,12 +319,13 @@ double sed_measure_cube_basement( Sed_cube p , gssize i , gssize j )
       return eh_nan();
 }
 
-double sed_measure_cube_grain_size( Sed_cube p , gssize i , gssize j )
+double
+sed_measure_cube_grain_size( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
-      Sed_column col = sed_cube_col_ij( p,i,j );
-      gssize i_top   = sed_column_top_index( col );
+      Sed_column col   = sed_cube_col_ij( p,i,j );
+      gssize     i_top = sed_column_top_index( col );
 
       return sed_cell_grain_size_in_phi( sed_column_nth_cell( col , i_top ) );
    }
@@ -324,7 +336,7 @@ double sed_measure_cube_grain_size( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_age( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -337,7 +349,7 @@ double sed_measure_cube_age( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_sand_fraction( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -349,7 +361,7 @@ double sed_measure_cube_sand_fraction( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_silt_fraction( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -361,7 +373,7 @@ double sed_measure_cube_silt_fraction( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_clay_fraction( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -373,7 +385,7 @@ double sed_measure_cube_clay_fraction( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_mud_fraction( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -386,7 +398,7 @@ double sed_measure_cube_mud_fraction( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_density( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -398,7 +410,7 @@ double sed_measure_cube_density( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_porosity( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -410,7 +422,7 @@ double sed_measure_cube_porosity( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_permeability( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -422,7 +434,7 @@ double sed_measure_cube_permeability( Sed_cube p , gssize i , gssize j )
 
 double sed_measure_cube_facies( Sed_cube p , gssize i , gssize j )
 {
-   if ( sed_cube_is_in_domain(p,i,j) && sed_cube_thickness(p,i,j)>0 )
+   if ( sed_cube_is_in_domain(p,i,j) && !sed_cube_col_is_empty(p,i,j) )
    {
       Sed_column col = sed_cube_col_ij( p,i,j );
       gssize i_top   = sed_column_top_index( col );
@@ -549,7 +561,7 @@ gssize sed_tripod_write( Sed_tripod t , Sed_cube cube )
 {
    gssize n = 0;
 
-   eh_require( t );
+   eh_require( t    );
    eh_require( cube );
 
    if ( t && cube )
@@ -585,7 +597,6 @@ gssize sed_tripod_write( Sed_tripod t , Sed_cube cube )
             location[i].x = sed_cube_col_x( cube , i );
             location[i].y = sed_cube_col_y( cube , i );
          }
-
 
       //---
       // Make the measurement.

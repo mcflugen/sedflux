@@ -283,9 +283,11 @@ int plumecheck( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
    
    if( !(opt->fjrd || opt->strt) && grid->ndx != 1)
    {
+/*
       fprintf(stderr," \n PlumeCheck: Warning \n");
       fprintf(stderr,"  Curved centerlines must have ndx == 1 \n");
       fprintf(stderr,"  ndx reset to 1 \n");
+*/
       grid->ndx = 1;
       grid->dx = grid->dy;
    }

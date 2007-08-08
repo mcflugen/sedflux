@@ -66,6 +66,7 @@ sedflux_parse_command_line( int argc , char *argv[] , GError** error )
       GOptionContext* context = g_option_context_new( "Run basin filling model sedflux-2.0" );
 
       g_option_context_add_main_entries( context , command_line_entries , NULL );
+      g_option_context_add_group( context , bio_get_option_group() );
 
       g_option_context_parse( context , &argc , &argv , &tmp_err );
 
@@ -131,7 +132,8 @@ sedflux_parse_command_line( int argc , char *argv[] , GError** error )
    return p;
 }
 
-GQuark sedflux_error_quark( void )
+GQuark
+sedflux_error_quark( void )
 {
    return g_quark_from_static_string( "sedflux-error-quark" );
 }

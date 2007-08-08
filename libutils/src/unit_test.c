@@ -19,6 +19,7 @@ int main( void )
    n += test_symbol_table();
    n += test_input_val();
    n += test_utils();
+   n += test_io();
 
    fprintf( stdout , "-----------------------------------\n\n" );
    if ( n==0 )

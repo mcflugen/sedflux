@@ -156,7 +156,9 @@ sed_river_avulse( Sed_riv r )
       double       last_angle = sed_river_angle        ( r );
       Avulsion_st* data       = sed_river_avulsion_data( r );
 
-      if ( data )
+      eh_require( data );
+
+      if ( data && data->std_dev>0 )
       {
          GRand* rand       = data->rand;
          double std_dev    = data->std_dev;
@@ -170,8 +172,6 @@ sed_river_avulse( Sed_riv r )
 
          sed_river_set_angle( r , angle );
       }
-      else
-         eh_require_not_reached();
    }
 
    return r;

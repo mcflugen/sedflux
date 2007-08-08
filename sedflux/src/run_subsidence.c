@@ -202,8 +202,6 @@ init_subsidence_data( Sed_process proc , Sed_cube prof , GError** error )
                                     sed_cube_n_y(prof) ,
                                     &tmp_err );
 
-
-
       eh_free( y );
 
       if ( tmp_err )
@@ -227,9 +225,12 @@ destroy_subsidence( Sed_process p )
       {
          gint i;
 
-         for ( i=0 ; i<data->subsidence_seq->len ; i++ )
-            eh_grid_destroy( data->subsidence_seq->data[i] , TRUE );
-         eh_destroy_sequence( data->subsidence_seq , FALSE );
+         if ( data->subsidence_seq )
+         {
+            for ( i=0 ; i<data->subsidence_seq->len ; i++ )
+               eh_grid_destroy( data->subsidence_seq->data[i] , TRUE );
+            eh_destroy_sequence( data->subsidence_seq , FALSE );
+         }
 
          eh_free( data->filename );
          eh_free( data           );

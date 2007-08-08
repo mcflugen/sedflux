@@ -43,7 +43,7 @@ if ( with_time )
 end
 
 if ( overlay )
-   burial_depth = true;
+   burial_depth = false;
 end
 
 [ core depth property_id ] = get_property_core( filename , position , ...
@@ -60,7 +60,6 @@ for i=1:length(core)
    if ( overlay )
       hold on
       [xx,yy] = stairs( depth{i} , core{i}+position(i)-mean(core{i}) );
-      h(i) = plot( yy , xx , 'color' , c_order(i,:) );
 %      plot( [ position(i) position(i) ] , [ min(depth{i}) max(depth{i}) ] , ...
 %            'k' )
       if ( ~isempty( sand_val ) )
@@ -69,9 +68,9 @@ for i=1:length(core)
          area( core_sand+position(i)-mean(core{i}) , depth{i} , ...
                'facecolor' , [1 1 .8] , 'edgecolor' , 'none' )
       end
+      h(i) = plot( yy , xx , 'color' , c_order(i,:) );
    else
       [xx,yy] = stairs( depth{i} , core{i} );
-      h(i) = plot( yy , xx , 'color' , c_order(i,:) );
       if ( ~isempty( sand_val ) )
          hold on
          core_sand = core{i};
@@ -79,6 +78,7 @@ for i=1:length(core)
          area( core_sand , depth{i} , ...
                'facecolor' , [1 1 .8] , 'edgecolor' , 'none' )
       end
+      h(i) = plot( yy , xx , 'color' , c_order(i,:) );
    end
    hold on
 end
@@ -106,7 +106,7 @@ position = shiftdim(position);
 
 labels = num2str(position);
 labels = [labels char(ones(size(labels,1),1)*' km')];
-legend(labels)
+legend(h,labels)
 
 if ( overlay )
    for i=1:length(core)

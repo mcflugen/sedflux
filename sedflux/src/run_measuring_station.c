@@ -85,6 +85,8 @@ init_met_station( Sed_process p , Eh_symbol_table tab , GError** error )
       data->filename         = eh_symbol_table_value     ( tab , MET_KEY_FILENAME  );
       data->parameter        = sed_measurement_new( data->parameter_str );
 
+      eh_require( data->parameter );
+
       pos_s                  = eh_symbol_table_lookup( tab , MET_KEY_POSITION );
 
       if ( g_ascii_strcasecmp( pos_s , "all" ) == 0 )

@@ -193,7 +193,7 @@ END_TEST
 
 START_TEST ( test_sed_hydro_file_new_inline )
 {
-   Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_INLINE_FILE , HYDRO_INLINE , TRUE );
+   Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_INLINE_FILE , SED_HYDRO_INLINE , FALSE , TRUE , NULL );
    Sed_hydro a = sed_hydro_file_read_record( f );
    Sed_hydro b = sed_hydro_file_read_record( f );
 
@@ -221,7 +221,7 @@ END_TEST
 
 START_TEST ( test_sed_hydro_file_new_binary )
 {
-   Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE , HYDRO_HYDROTREND , TRUE );
+   Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE , SED_HYDRO_HYDROTREND , FALSE , TRUE , NULL );
    Sed_hydro a = sed_hydro_file_read_record( f );
 
    {
@@ -250,8 +250,8 @@ START_TEST ( test_sed_hydro_file_new_buffer )
    {
       Sed_hydro a;
       Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE ,
-                                             HYDRO_HYDROTREND|HYDRO_USE_BUFFER ,
-                                             TRUE );
+                                             SED_HYDRO_HYDROTREND ,
+                                             TRUE , TRUE , NULL );
       double dt;
 
       for ( dt=0 ; dt<365 ; )
@@ -270,8 +270,8 @@ START_TEST ( test_sed_hydro_file_new_buffer )
       gssize i;
       Sed_hydro b;
       Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE ,
-                                             HYDRO_HYDROTREND    ,
-                                             TRUE );
+                                             SED_HYDRO_HYDROTREND ,
+                                             FALSE , TRUE , NULL );
 
       for ( i=0,b_load=0 ; i<365 ; i++ )
       {

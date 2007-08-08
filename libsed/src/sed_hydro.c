@@ -41,7 +41,7 @@ CLASS ( Sed_hydro_file )
 {
    FILE *fp;
    gchar* file;
-   gint type;
+   Sed_hydro_file_type type;
    gboolean wrap_is_on;
    Sed_hydro *buf_set;
    Sed_hydro *buf_cur;
@@ -160,6 +160,12 @@ sed_hydro_init( char *file )
 Sed_hydro*
 sed_hydro_scan( const gchar* file , GError** error )
 {
+   return sed_hydro_scan_n_records( file , -1 , error );
+}
+
+Sed_hydro*
+sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error )
+{
    Sed_hydro* hydro_arr = NULL;
 
    eh_require( error==NULL || *error==NULL );
@@ -167,6 +173,7 @@ sed_hydro_scan( const gchar* file , GError** error )
    if ( !file )
       file = SED_HYDRO_TEST_INLINE_FILE;
 
+   if ( n_recs!=0 )
    {
       gchar*          name_used = g_strdup( file );
       GError*         tmp_err   = NULL;
@@ -178,11 +185,15 @@ sed_hydro_scan( const gchar* file , GError** error )
       {
          gint            i;
          Eh_symbol_table group;
+         const gint      len = eh_key_file_size( key_file );
 
-         hydro_arr = eh_new0( Sed_hydro , eh_key_file_size(key_file)+1 );
+         if      ( n_recs<0   ) n_recs = len;
+         else if ( n_recs>len ) n_recs = len;
+
+         hydro_arr = eh_new0( Sed_hydro , n_recs+1 );
 
          for ( group = eh_key_file_pop_group( key_file ), i=0 ;
-               group && !tmp_err ;
+               group && !tmp_err && i<n_recs ;
                group = eh_key_file_pop_group( key_file ), i++ )
          {
             hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
@@ -215,6 +226,8 @@ sed_hydro_scan( const gchar* file , GError** error )
 
    return hydro_arr;
 }
+
+
 
 #define SED_HYDRO_LABEL_DURATION        "Duration"
 #define SED_HYDRO_LABEL_BEDLOAD         "Bedload"
@@ -327,6 +340,100 @@ sed_hydro_check( Sed_hydro a , GError** err )
    return is_ok;
 }
 
+const gchar __hydro_unknown_type_s[]       = "Unknown";
+const gchar __hydro_inline_type_s[]        = "Inline";
+const gchar __hydro_hydrotrend_type_s[]    = "Hydrotrend";
+const gchar __hydro_hydrotrend_be_type_s[] = "Hydrotrend (big-endian)";
+const gchar __hydro_hydrotrend_le_type_s[] = "Hydrotrend (little-endian)";
+
+const gchar*
+sed_hydro_type_to_s( Sed_hydro_file_type t )
+{
+   const gchar* s;
+
+   switch ( t )
+   {
+      case SED_HYDRO_INLINE        : s = __hydro_inline_type_s ; break;
+      case SED_HYDRO_HYDROTREND    : s = __hydro_hydrotrend_type_s ; break;
+      case SED_HYDRO_HYDROTREND_BE : s = __hydro_hydrotrend_be_type_s ; break;
+      case SED_HYDRO_HYDROTREND_LE : s = __hydro_hydrotrend_le_type_s ; break;
+      default                      : s = __hydro_unknown_type_s;
+   }
+
+   return s;
+}
+
+Sed_hydro_file_type
+sed_hydro_str_to_type( const gchar* type_s )
+{
+   Sed_hydro_file_type t = SED_HYDRO_UNKNOWN;
+
+   if ( type_s )
+   {
+      if      (    g_ascii_strcasecmp( type_s , "SEASON" )==0
+                || g_ascii_strcasecmp( type_s , "INLINE" )==0 )
+         t = SED_HYDRO_INLINE;
+      else if (    g_ascii_strcasecmp( type_s , "HYDROTREND" )==0
+                || g_ascii_strcasecmp( type_s , "EVENT"      )==0
+                || g_ascii_strcasecmp( type_s , "BUFFER"     )==0 )
+         t = SED_HYDRO_HYDROTREND;
+   }
+
+   return t;
+}
+
+Sed_hydro_file_type
+sed_hydro_file_guess_type( const gchar* file , GError** error )
+{
+   Sed_hydro_file_type type = SED_HYDRO_UNKNOWN;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( file )
+   {
+      GError* tmp_err = NULL;
+      FILE*   fp      = eh_fopen_error( file , "r" , &tmp_err );
+
+      if ( !tmp_err )
+      {
+         gchar      str[1000];
+         gboolean   is_ascii = TRUE;
+         gint       n        = fread( str , sizeof(gchar) , 1000 , fp );
+         Sed_hydro* arr      = NULL;
+         gint       i;
+
+         /* Look for binary characters */
+         for ( i=0 ; i<n && is_ascii ; i++ )
+         {
+            if ( !g_ascii_isgraph(str[i]) && !g_ascii_isspace(str[i]) )
+               is_ascii = FALSE;
+         }
+
+         fclose( fp );
+
+         if ( is_ascii ) /* Try to read it as a key value file */
+         {
+            arr = sed_hydro_scan_n_records( file , 10 , &tmp_err );
+            if ( !tmp_err ) type = SED_HYDRO_INLINE;
+         }
+         else /* Try to read it as a hydrotrend file */
+         {
+            arr = sed_hydrotrend_read_n_recs( file , 10 , G_BIG_ENDIAN , NULL , &tmp_err );
+            if ( arr ) type = SED_HYDRO_HYDROTREND_BE;
+            else
+            {
+               arr = sed_hydrotrend_read_n_recs( file , 10 , G_LITTLE_ENDIAN , NULL , &tmp_err );
+               if ( arr ) type = SED_HYDRO_HYDROTREND_LE;
+            }
+         }
+
+         sed_hydro_array_destroy( arr );
+      }
+   }
+
+   return type;
+}
+
 /*
 Sed_hydro
 sed_hydro_scan( FILE *fp )
@@ -381,7 +488,8 @@ Hydro_header *sed_hydro_scan_inline_header( FILE *fp )
 
 \return A newly-created Sed_hydro.  Use sed_hydro_destroy to free.
 */
-Sed_hydro sed_hydro_new( gssize n_grains )
+Sed_hydro
+sed_hydro_new( gssize n_grains )
 {
    Sed_hydro rec;
 
@@ -518,13 +626,15 @@ sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
 
    if ( a && fp )
    {
+      gint32 n_grains = a->n_grains;
+
       if ( order == G_BYTE_ORDER )
       {
          n += fwrite( &(a->velocity) , sizeof(double) , 1 , fp );
          n += fwrite( &(a->width   ) , sizeof(double) , 1 , fp );
          n += fwrite( &(a->depth   ) , sizeof(double) , 1 , fp );
          n += fwrite( &(a->bedload ) , sizeof(double) , 1 , fp );
-         n += fwrite( &(a->n_grains) , sizeof(int)    , 1 , fp );
+         n += fwrite( &(n_grains)    , sizeof(gint32) , 1 , fp );
          n += fwrite(   a->conc      , sizeof(double) , a->n_grains , fp );
          n += fwrite( &(a->duration) , sizeof(double) , 1 , fp );
          n += fwrite( &(a->t)        , sizeof(double) , 1 , fp );
@@ -535,7 +645,7 @@ sed_hydro_write_to_byte_order( FILE *fp , Sed_hydro a , gint order )
          n += eh_fwrite_dbl_swap  ( &(a->width   ) , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(a->depth   ) , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(a->bedload ) , sizeof(double) , 1 , fp );
-         n += eh_fwrite_int32_swap( &(a->n_grains) , sizeof(gint32) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(n_grains)    , sizeof(gint32) , 1 , fp );
          n += eh_fwrite_dbl_swap  (   a->conc      , sizeof(double) , a->n_grains , fp );
          n += eh_fwrite_dbl_swap  ( &(a->duration) , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(a->t)        , sizeof(double) , 1 , fp );
@@ -835,7 +945,6 @@ sed_hydro_array_set_time( Sed_hydro* arr , double t_0 )
          sed_hydro_set_time( *a , t );
 
          t += sed_hydro_duration( *a );
-         a += 1;
       }
    }
    return arr;
@@ -1410,7 +1519,8 @@ Sed_hydrotrend_header *sed_hydro_file_header( Sed_hydro_file fp )
    return fp->hdr;
 }
 
-Sed_hydro sed_hydro_file_read_record( Sed_hydro_file fp )
+Sed_hydro
+sed_hydro_file_read_record( Sed_hydro_file fp )
 {
    return (*(fp->read_record))( fp );
 }
@@ -1423,81 +1533,99 @@ Sed_hydro sed_hydro_file_read_record( Sed_hydro_file fp )
 
 \return A new Sed_hydro_file.  Use sed_hydro_file_destroy to free.
 */
-Sed_hydro_file sed_hydro_file_new( const char *filename , int type , gboolean wrap_is_on )
+Sed_hydro_file
+sed_hydro_file_new( const char*         filename     ,
+                    Sed_hydro_file_type type         ,
+                    gboolean            buffer_is_on ,
+                    gboolean            wrap_is_on   ,
+                    GError** error )
 {
-   int inline_mask     = HYDRO_INLINE;
-   int hydrotrend_mask = HYDRO_HYDROTREND;
-   int buffer_mask     = HYDRO_USE_BUFFER;
    Sed_hydro_file fp;
 
-   NEW_OBJECT( Sed_hydro_file , fp );
+   eh_require( error==NULL || *error==NULL );
 
-   // the 'b' (binary) option for fopen is supposed to be ignored.  however,
-   // on some windows machines, it seems to be necessary.
-   if ( strcmp( filename , "-" )==0 )
-      fp->fp = stdin;
-   else
+   if ( filename )
    {
-      if ( inline_mask&type )
-         fp->fp = fopen( filename , "r" );
-      else
-         fp->fp = fopen( filename , "rb" );
-   }
-   if ( !fp->fp )
-      eh_error( "Could not open file (%s)" , filename );
+      GError* tmp_err = NULL;
 
-   fp->file = g_strdup( filename );
+      NEW_OBJECT( Sed_hydro_file , fp );
 
-   // there are two types of river files (currently) - inline and hydrotrend.
-   // if using a hydrotrend file, there are two methods for reading - buffered
-   // or unbuffered.
-   if ( inline_mask&type )
-   {
-      fp->type         = HYDRO_INLINE;
-      fp->buf_set      = NULL;
-      fp->buf_cur      = NULL;
-      fp->buffer_len   = 0;
-      fp->n_sig_values = 0;
-//      fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_inline_header;
-      fp->read_hdr     = NULL;
-      fp->read_record  = (Hydro_read_record_func)&_hydro_read_inline_record;
-
-      fp->header_start = ftell(fp->fp);
-      fp->hdr          = NULL;
-      fp->data_start   = ftell(fp->fp);
-   }
-   else if ( hydrotrend_mask&type )
-   {
-      fp->type            = HYDRO_HYDROTREND;
-      if ( buffer_mask&type )
-      {
-         fp->buf_set      = eh_new0( Sed_hydro , HYDRO_BUFFER_LEN+1 );
-         fp->buf_cur      = fp->buf_set;
-         fp->buffer_len   = HYDRO_BUFFER_LEN;
-         fp->n_sig_values = HYDRO_N_SIG_VALUES;
-         fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_hydrotrend_header;
-         fp->read_record  = (Hydro_read_record_func)&_hydro_read_hydrotrend_record_buffer;
-      }
+      // the 'b' (binary) option for fopen is supposed to be ignored.  however,
+      // on some windows machines, it seems to be necessary.
+      if ( strcmp( filename , "-" )==0 )
+         fp->fp = stdin;
       else
       {
-         fp->buf_set      = NULL;
-         fp->buf_cur      = NULL;
-         fp->buffer_len   = 0;
-         fp->n_sig_values = 0;
-         fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_hydrotrend_header;
-         fp->read_record  = (Hydro_read_record_func)&_hydro_read_hydrotrend_record;
+         if ( type==SED_HYDRO_INLINE ) fp->fp = eh_fopen_error( filename , "r"  , &tmp_err );
+         else                          fp->fp = eh_fopen_error( filename , "rb" , &tmp_err );
       }
 
-      fp->header_start = ftell(fp->fp);
-      fp->hdr          = (*(fp->read_hdr))(fp);
-      fp->data_start   = ftell(fp->fp);
+      if ( !tmp_err )
+      {
+         fp->file = g_strdup( filename );
 
+         // there are two types of river files (currently) - inline and hydrotrend.
+         // if using a hydrotrend file, there are two methods for reading - buffered
+         // or unbuffered.
+         if ( type==SED_HYDRO_INLINE )
+         {
+            fp->type         = SED_HYDRO_INLINE;
+            fp->buf_set      = NULL;
+            fp->buf_cur      = NULL;
+            fp->buffer_len   = 0;
+            fp->n_sig_values = 0;
+//            fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_inline_header;
+            fp->read_hdr     = NULL;
+            fp->read_record  = (Hydro_read_record_func)&_hydro_read_inline_record;
+
+            fp->header_start = ftell(fp->fp);
+            fp->hdr          = NULL;
+            fp->data_start   = ftell(fp->fp);
+         }
+         else if (    type==SED_HYDRO_HYDROTREND 
+                   || type==SED_HYDRO_HYDROTREND_BE
+                   || type==SED_HYDRO_HYDROTREND_LE )
+         {
+            fp->type            = SED_HYDRO_HYDROTREND;
+
+            if ( buffer_is_on )
+            {
+               fp->buf_set      = eh_new0( Sed_hydro , HYDRO_BUFFER_LEN+1 );
+               fp->buf_cur      = fp->buf_set;
+               fp->buffer_len   = HYDRO_BUFFER_LEN;
+               fp->n_sig_values = HYDRO_N_SIG_VALUES;
+               fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_hydrotrend_header;
+               fp->read_record  = (Hydro_read_record_func)&_hydro_read_hydrotrend_record_buffer;
+            }
+            else
+            {
+               fp->buf_set      = NULL;
+               fp->buf_cur      = NULL;
+               fp->buffer_len   = 0;
+               fp->n_sig_values = 0;
+               fp->read_hdr     = (Hydro_read_header_func)&_hydro_read_hydrotrend_header;
+               fp->read_record  = (Hydro_read_record_func)&_hydro_read_hydrotrend_record;
+            }
+
+            fp->header_start = ftell(fp->fp);
+            fp->hdr          = (*(fp->read_hdr))(fp);
+            fp->data_start   = ftell(fp->fp);
+
+         }
+         else
+            eh_require_not_reached();
+
+         fp->data_size    = sizeof(float);
+         fp->wrap_is_on   = wrap_is_on;
+      }
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         eh_free( fp );
+         fp = NULL;
+      }
    }
-   else
-      eh_error( "Unrecognized type, %d\n" , type );
-
-   fp->data_size    = sizeof(float);
-   fp->wrap_is_on   = wrap_is_on;
 
    return fp;
 }
@@ -1579,7 +1707,8 @@ Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
    return rec;
 }
 
-Sed_hydrotrend_header *_hydro_read_hydrotrend_header( Sed_hydro_file fp )
+Sed_hydrotrend_header*
+_hydro_read_hydrotrend_header( Sed_hydro_file fp )
 {
    return sed_hydrotrend_read_header( fp->fp );
 }
@@ -1591,7 +1720,7 @@ Sed_hydro _hydro_read_hydrotrend_record( Sed_hydro_file fp )
    // read the record using the appropriate function.  if we encounter the end of
    // the file, start reading from the beginning of the data.  if wrap is off,
    // return with an error.
-   rec = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
+   rec = sed_hydrotrend_read_next_rec( fp->fp , fp->hdr->n_grains );
    if ( feof(fp->fp) )
    {
       if ( fp->wrap_is_on )
@@ -1635,7 +1764,7 @@ Sed_hydro *sed_hydro_file_fill_buffer( Sed_hydro_file fp )
 
    for ( i=0 ; i<buffer_len ; i++ )
    {
-      temp_buffer[i] = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
+      temp_buffer[i] = sed_hydrotrend_read_next_rec( fp->fp , fp->hdr->n_grains );
 
       if ( feof(fp->fp) )
       {
@@ -1643,7 +1772,7 @@ Sed_hydro *sed_hydro_file_fill_buffer( Sed_hydro_file fp )
          {
             clearerr(fp->fp);
             fseek( fp->fp , fp->data_start , SEEK_SET );
-            temp_buffer[i] = sed_hydrotrend_read_record( fp->fp , fp->hdr->n_grains );
+            temp_buffer[i] = sed_hydrotrend_read_next_rec( fp->fp , fp->hdr->n_grains );
          }
          else
             eh_error( "Encountered end of the file");

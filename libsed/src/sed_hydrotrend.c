@@ -36,15 +36,13 @@ sed_hydrotrend_read_header_from_byte_order( FILE *fp , gint order )
       gint n;
       gssize (*fread_int)(void*,size_t,size_t,FILE*);
 
-      if ( order==G_BYTE_ORDER )
-         fread_int = fread;
-      else
-         fread_int = eh_fread_int32_swap;
-   
-      hdr = eh_new( Sed_hydrotrend_header , 1 );
+      if ( order==G_BYTE_ORDER ) fread_int = fread;
+      else                       fread_int = eh_fread_int32_swap;
 
       if ( fread_int( &n , sizeof(int)  , 1 , fp )==1 && (n>=0 && n<2048 ) )
       {
+         hdr = eh_new( Sed_hydrotrend_header , 1 );
+
          hdr->comment = eh_new( char , n+1 );
          fread( hdr->comment , sizeof(char) , n , fp );
          hdr->comment[n] = '\0';
@@ -53,15 +51,20 @@ sed_hydrotrend_read_header_from_byte_order( FILE *fp , gint order )
               || fread_int( &(hdr->n_seasons) , sizeof(int)  , 1 , fp )!=1 || hdr->n_seasons<=0
               || fread_int( &(hdr->n_samples) , sizeof(int)  , 1 , fp )!=1 || hdr->n_samples<=0 )
          {
-            eh_message( "Trouble reading hydrotrend header." );
-            eh_message( "Is the byte of the hydrotrend file the same as that" );
-            eh_message( "on the machine you are running sedflux?" );
-            eh_message( "The byte order of your system is %s" ,
-                        (G_BYTE_ORDER==G_BIG_ENDIAN)?"big-endian":"little-endian" );
-            eh_error( "Could not read hydrotrend file." );
+            eh_free( hdr->comment );
+            eh_free( hdr );
+            hdr = NULL;
          }
       }
 
+      if ( !hdr )
+      {
+         eh_debug( "Trouble reading hydrotrend header." );
+         eh_debug( "Is the byte of the hydrotrend file the same as that" );
+         eh_debug( "on the machine you are running sedflux?" );
+         eh_debug( "The byte order of your system is %s" ,
+                   (G_BYTE_ORDER==G_BIG_ENDIAN)?"big-endian":"little-endian" );
+      }
    }
 
    return hdr;
@@ -107,6 +110,45 @@ sed_hydrotrend_write_header( FILE* fp       ,
 }
 
 gint
+sed_hydrotrend_byte_order( const gchar* file , GError** error )
+{
+   gint order = 0;
+
+   eh_require( error==NULL || *error==NULL );
+
+   if ( file )
+   {
+      GError* tmp_err = NULL;
+      FILE*   fp      = eh_fopen_error( file , "r" , &tmp_err );
+
+      if ( !tmp_err )
+      {
+         Sed_hydrotrend_header* h = NULL;
+
+         h = sed_hydrotrend_read_header_from_byte_order( fp , G_BIG_ENDIAN );
+         if ( h )
+            order = G_BIG_ENDIAN;
+         else
+         {
+            rewind( fp );
+            h = sed_hydrotrend_read_header_from_byte_order( fp , G_LITTLE_ENDIAN );
+            order = G_LITTLE_ENDIAN;
+         }
+
+         if ( h )
+         {
+            eh_free( h->comment );
+            eh_free( h          );
+         }
+
+         fclose( fp );
+      }
+   }
+
+   return order;
+}
+
+gint
 sed_hydrotrend_guess_byte_order( FILE* fp )
 {
    gint byte_order = -1;
@@ -125,10 +167,8 @@ sed_hydrotrend_guess_byte_order( FILE* fp )
 
          if ( n>=0 || n<2048 )
          {
-            if ( G_BYTE_ORDER==G_BIG_ENDIAN )
-               byte_order = G_LITTLE_ENDIAN;
-            else
-               byte_order = G_BIG_ENDIAN;
+            if ( G_BYTE_ORDER==G_BIG_ENDIAN ) byte_order = G_LITTLE_ENDIAN;
+            else                              byte_order = G_BIG_ENDIAN;
          }
       }
 
@@ -146,9 +186,9 @@ sed_hydrotrend_guess_byte_order( FILE* fp )
 \return A newly-created Sed_hydro.  Use sed_hydro_destroy to free.
 */
 Sed_hydro
-sed_hydrotrend_read_record( FILE* fp , int n_grains )
+sed_hydrotrend_read_next_rec( FILE* fp , int n_grains )
 {
-   return sed_hydrotrend_read_record_from_byte_order( fp , n_grains , G_BYTE_ORDER );
+   return sed_hydrotrend_read_next_rec_from_byte_order( fp , n_grains , G_BYTE_ORDER );
 }
 
 
@@ -161,7 +201,7 @@ sed_hydrotrend_read_record( FILE* fp , int n_grains )
 \return A newly allocated Sed_hydro that contains the read data
 */
 Sed_hydro
-sed_hydrotrend_read_record_from_byte_order( FILE *fp , int n_grains , gint order )
+sed_hydrotrend_read_next_rec_from_byte_order( FILE *fp , int n_grains , gint order )
 {
    int n;
    float* fval = eh_new( float , 4+n_grains );
@@ -202,7 +242,7 @@ sed_hydrotrend_read_record_from_byte_order( FILE *fp , int n_grains , gint order
 \return A NULL-terminated Sed_hydro array that contains the HydroTrend data
 */
 Sed_hydro*
-sed_hydrotrend_read_records( FILE* fp , gint rec_0 , gint n_recs , gint byte_order , GError** error )
+sed_hydrotrend_read_recs( FILE* fp , gint rec_0 , gint n_recs , gint byte_order , GError** error )
 {
    Sed_hydro* rec_a = NULL;
 
@@ -223,7 +263,7 @@ sed_hydrotrend_read_records( FILE* fp , gint rec_0 , gint n_recs , gint byte_ord
       rec_a = eh_new( Sed_hydro , n_recs+1 );
 
       for ( n=0 ; n<n_recs ; n++ )
-         rec_a[n] = sed_hydrotrend_read_record_from_byte_order( fp , n_grains , byte_order );
+         rec_a[n] = sed_hydrotrend_read_next_rec_from_byte_order( fp , n_grains , byte_order );
       rec_a[n] = NULL;
    }
 
@@ -291,13 +331,13 @@ sed_hydrotrend_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order
 \return The number of records read.
 */
 gssize
-sed_hydrotrend_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs )
+sed_hydrotrend_read_next_n_recs( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs )
 {
    gssize n = 0;
    
    do
    {
-      rec[n] = sed_hydrotrend_read_record( fp , n_grains );
+      rec[n] = sed_hydrotrend_read_next_rec( fp , n_grains );
    }
    while ( rec[n] && (++n)<n_recs );
 
@@ -305,13 +345,19 @@ sed_hydrotrend_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_
 }
 
 Sed_hydro*
-sed_hydrotrend_read( gchar* file , gint byte_order , int* n_seasons , GError** error )
+sed_hydrotrend_read( const gchar* file , gint byte_order , int* n_seasons , GError** error )
+{
+   return sed_hydrotrend_read_n_recs( file , -1 , byte_order , n_seasons , error );
+}
+
+Sed_hydro*
+sed_hydrotrend_read_n_recs( const gchar* file , gint n_recs , gint byte_order , int* n_seasons , GError** error )
 {
    Sed_hydro* arr = NULL;
 
    eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
-   if ( file )
+   if ( file && n_recs!=0 )
    {
       GError* err    = NULL;
       FILE*   fp     = eh_fopen_error( file , "r" , &err );
@@ -322,26 +368,32 @@ sed_hydrotrend_read( gchar* file , gint byte_order , int* n_seasons , GError** e
 
          h = sed_hydrotrend_read_header_from_byte_order( fp , byte_order );
 
-         arr = sed_hydrotrend_read_records( fp , 0 , h->n_samples , byte_order , &err );
-
-         if ( n_seasons )
-            *n_seasons = h->n_seasons;
-
-         eh_free( h );
-
-         if ( !err )
+         if ( h )
          {
-            gint n_read = g_strv_length( (gchar**)arr );
+            if      ( n_recs<0            ) n_recs = h->n_samples;
+            else if ( n_recs>h->n_samples ) n_recs = h->n_samples;
 
-            if ( n_read != h->n_samples )
+            arr = sed_hydrotrend_read_recs( fp , 0 , n_recs , byte_order , &err );
+
+            if ( n_seasons ) *n_seasons = h->n_seasons;
+
+            if ( !err )
             {
-               eh_warning( "Number of items read does not match number of items in header" );
-               eh_debug( "Number of items in header : %d" , h->n_samples );
-               eh_debug( "Number of items read      : %d" , n_read       );
+               gint n_read = g_strv_length( (gchar**)arr );
+
+               if ( n_read != n_recs )
+               {
+                  eh_warning( "Number of items read does not match number of items in header" );
+                  eh_debug( "Number of items in header : %d" , h->n_samples );
+                  eh_debug( "Number of items read      : %d" , n_read       );
+               }
             }
+            else
+               g_propagate_error( error , err );
+
+            eh_free( h->comment );
+            eh_free( h          );
          }
-         else
-            g_propagate_error( error , err );
       }
       else
          g_propagate_error( error , err );
@@ -485,6 +537,8 @@ sed_hydrotrend_record_size( FILE* fp , gint byte_order , Sed_hydrotrend_header* 
 
          h = sed_hydrotrend_read_header_from_byte_order( fp , byte_order );
 
+         eh_require( h );
+
          n = ( h->n_grains + 4 )*sizeof(float);
 
          fseek( fp , where , SEEK_SET );
@@ -521,6 +575,8 @@ sed_hydrotrend_n_grains( FILE* fp , gint byte_order , Sed_hydrotrend_header* h )
          rewind( fp );
 
          h = sed_hydrotrend_read_header_from_byte_order( fp , byte_order );
+
+         eh_require( h );
 
          n = h->n_grains;
 
@@ -559,6 +615,8 @@ sed_hydrotrend_data_start( FILE* fp , gint byte_order , Sed_hydrotrend_header* h
          rewind( fp );
 
          h = sed_hydrotrend_read_header_from_byte_order( fp , byte_order );
+
+         eh_require( h );
 
          n = ftell( fp );
 

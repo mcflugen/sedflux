@@ -11,4 +11,5 @@ lib_LTLIBRARIES          = libbio.la
 libbio_la_SOURCES        = bio.c bio_sed_interface.c
 
 bio_LDADD                = -lbio -lglib-2.0 -lm
+include_HEADERS          = bio.h
 

@@ -60,6 +60,10 @@ gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , F
 
 #endif
 
+#if !defined( HAVE_GETLINE )
+gssize getline( gchar** lineptr , gsize *n , FILE* stream );
+#endif
+
 gint read_double_vector(FILE *fp,double *val,int len);
 gint read_time_vector( FILE *fp , double *val , int len );
 gint read_int_vector(FILE *fp,int *val,int len);

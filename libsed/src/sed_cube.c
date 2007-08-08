@@ -270,7 +270,8 @@ sed_cube_new_from_file( const gchar* file , GError** error )
    return p;
 }
 
-Sed_cube sed_cube_free( Sed_cube s , gboolean free_data )
+Sed_cube
+sed_cube_free( Sed_cube s , gboolean free_data )
 {
    if ( s )
    {
@@ -305,6 +306,7 @@ Sed_cube sed_cube_free_river( Sed_cube p )
    if ( p )
    {
       GList *list;
+
       for ( list=p->river ; list ; list=list->next )
          sed_river_destroy( list->data );
       p->river = NULL;
@@ -609,7 +611,7 @@ double sed_cube_x_slope( const Sed_cube s , gssize i , gssize j )
    double slope;
 
    eh_require( s );
-   eh_require( is_in_domain( s->n_x , s->n_y , i , j ) );
+   eh_require( eh_is_in_domain( s->n_x , s->n_y , i , j ) );
 
    if ( s->n_x < 2 )
       return 0;
@@ -631,7 +633,7 @@ double sed_cube_y_slope( const Sed_cube s , gssize i , gssize j )
    double slope;
 
    eh_require( s );
-   eh_require( is_in_domain( s->n_x , s->n_y , i , j ) );
+   eh_require( eh_is_in_domain( s->n_x , s->n_y , i , j ) );
 
    if ( s->n_y < 2 )
       return 0;
@@ -651,7 +653,7 @@ double sed_cube_y_slope( const Sed_cube s , gssize i , gssize j )
 double sed_cube_y_slope_fast( const Sed_cube s , gssize i , gssize j )
 {
    eh_require( s );
-   eh_require( is_in_domain( s->n_x , s->n_y , i , j ) );
+   eh_require( eh_is_in_domain( s->n_x , s->n_y , i , j ) );
 
    return (   sed_cube_water_depth( s , i , j+1 )
             - sed_cube_water_depth( s , i , j   ) )
@@ -836,7 +838,6 @@ sed_cube_all_trunks( Sed_cube s )
 
       for ( l=r_list ; l ; l=l->next )
          eh_strv_append( (gchar***)&all , l->data );
-
    }
 
    return all;
@@ -1136,6 +1137,12 @@ double sed_cube_load( const Sed_cube p , gssize i , gssize j )
 double sed_cube_thickness( const Sed_cube p , gssize i , gssize j )
 {
    return sed_column_thickness( p->col[i][j] );
+}
+
+gboolean
+sed_cube_col_is_empty( const Sed_cube p , gssize i , gssize j )
+{
+   return sed_column_is_empty( p->col[i][j] );
 }
 
 double sed_cube_base_height( const Sed_cube p , gssize i , gssize j )
@@ -1583,7 +1590,7 @@ sed_cube_remove_river( Sed_cube s , Sed_riv r )
 {
    if ( r )
    {
-      g_dataset_destroy( r );
+      sed_river_detach_susp_grid( r );
 
       if ( sed_river_left (r) ) sed_cube_remove_river( s , sed_river_left(r)  );
       if ( sed_river_right(r) ) sed_cube_remove_river( s , sed_river_right(r) );
@@ -1599,7 +1606,6 @@ sed_cube_remove_river( Sed_cube s , Sed_riv r )
 Sed_cube
 sed_cube_remove_all_trunks( Sed_cube s )
 {
-
    if ( s && s->river )
    {
       Sed_riv* all = sed_cube_all_trunks( s );
@@ -1953,7 +1959,7 @@ int sed_cube_find_shore_edge( Sed_cube s , gssize i , gssize j )
    //---
    // If this column is below sea level, then it is not a shore edge.
    //---
-   if (    !is_in_domain( s->n_x , s->n_y , i , j )
+   if (    !eh_is_in_domain( s->n_x , s->n_y , i , j )
         || sed_column_is_below( s->col[i][j] , s->sea_level ) )
       return shore_edge;
 
@@ -1962,19 +1968,19 @@ int sed_cube_find_shore_edge( Sed_cube s , gssize i , gssize j )
    // which neighbour cells are below sea level.  Turn on the appropriate
    // edge bit for each shore edge.
    //---
-   if (    is_in_domain( s->n_x , s->n_y , i , west )
+   if (    eh_is_in_domain( s->n_x , s->n_y , i , west )
         && sed_column_is_below( s->col[i][west]  , s->sea_level ) )
       shore_edge |= S_WEST_EDGE;
 
-   if (    is_in_domain( s->n_x , s->n_y , i , east )
+   if (    eh_is_in_domain( s->n_x , s->n_y , i , east )
         && sed_column_is_below( s->col[i][east]  , s->sea_level ) )
       shore_edge |= S_EAST_EDGE;
 
-   if (    is_in_domain( s->n_x , s->n_y , i , north )
+   if (    eh_is_in_domain( s->n_x , s->n_y , i , north )
         && sed_column_is_below( s->col[north][j] , s->sea_level ) )
       shore_edge |= S_NORTH_EDGE;
 
-   if (    is_in_domain( s->n_x , s->n_y , i , south )
+   if (    eh_is_in_domain( s->n_x , s->n_y , i , south )
         && sed_column_is_below( s->col[south][j] , s->sea_level ) )
       shore_edge |= S_SOUTH_EDGE;
    
@@ -2002,7 +2008,7 @@ Eh_ind_2 *sed_cube_find_adjacent_shore_edge( Sed_cube s ,
    if ( sed_cube_is_shore_edge( s , this_index.i , this_index.j , new_edge ) )
       return eh_ind_2_dup( &this_index , NULL );
 
-   if ( !is_in_domain( s->n_x , s->n_y , this_index.i , this_index.j ) )
+   if ( !eh_is_in_domain( s->n_x , s->n_y , this_index.i , this_index.j ) )
       return NULL;
 
    //---
@@ -2064,7 +2070,7 @@ gboolean sed_cube_is_shore_edge( Sed_cube s , gssize i , gssize j , int edge )
 {
    Eh_ind_2 shift = sed_shift_index_over_edge( i , j , edge );
    
-   if ( !is_in_domain( s->n_x , s->n_y , shift.i , shift.j ) )
+   if ( !eh_is_in_domain( s->n_x , s->n_y , shift.i , shift.j ) )
       return FALSE;
 
    if (   sed_column_is_below( s->col[i][j]             , s->sea_level )
@@ -2121,7 +2127,7 @@ GList *sed_cube_find_columns_custom( Sed_cube s              ,
    pos_in_cell.y = .5*s->dy;
 
    eh_require( s );
-   eh_require( is_in_domain( s->n_x , s->n_y , i , j ) );
+   eh_require( eh_is_in_domain( s->n_x , s->n_y , i , j ) );
 
    //---
    // If the first column satisies the stop criterion, return a NULL list.
@@ -2137,7 +2143,7 @@ GList *sed_cube_find_columns_custom( Sed_cube s              ,
    // satisfied.  Also, watch for flow from one cell, to another, and then
    // back the the first cell.  Stop the search once this occurs.
    //---
-   while (     is_in_domain( s->n_x , s->n_y , i , j )
+   while (     eh_is_in_domain( s->n_x , s->n_y , i , j )
            && !stop_func( s , i , j , data ) )
    {
 
@@ -2165,7 +2171,7 @@ GList *sed_cube_find_columns_custom( Sed_cube s              ,
       // If this new cell is within the domain, add the column to the list of
       // columns.  To avoid a infinite loop, stop the search if this cell is
       // already in the list.
-      if ( is_in_domain( s->n_x , s->n_y , i , j ) )
+      if ( eh_is_in_domain( s->n_x , s->n_y , i , j ) )
       {
          if ( column_list->data != s->col[i][j] )
             column_list = g_list_prepend( column_list , s->col[i][j] );
@@ -2525,7 +2531,7 @@ sed_cube_find_line_path( Sed_cube c          ,
 
    eh_require( c );
    eh_require( hinge_pos );
-   eh_require( is_in_domain( c->n_x , c->n_y , hinge_pos->i , hinge_pos->j ) );
+   eh_require( eh_is_in_domain( c->n_x , c->n_y , hinge_pos->i , hinge_pos->j ) );
 
    i = hinge_pos->i;
    j = hinge_pos->j;
@@ -2538,7 +2544,7 @@ sed_cube_find_line_path( Sed_cube c          ,
    max_iter = c->n_x*c->n_y+1;
 
    for ( n=0 ;
-            is_in_domain( c->n_x , c->n_y , i , j )
+            eh_is_in_domain( c->n_x , c->n_y , i , j )
          && sed_column_is_above( c->col[i][j] , c->sea_level-1e-3 )
          && n<max_iter ;
          n++ )
@@ -2551,7 +2557,7 @@ sed_cube_find_line_path( Sed_cube c          ,
       i += shift.i;
       j += shift.j;
 
-      if ( is_in_domain( c->n_x , c->n_y , i , j ) )
+      if ( eh_is_in_domain( c->n_x , c->n_y , i , j ) )
       {
          river_pos = eh_ind_2_create( i , j );
 
@@ -2926,6 +2932,7 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
    gint n_x, n_y, n_t;
    double t;
    GError* tmp_err = NULL;
+   gboolean is_wrong_byte_order = FALSE;
 
    eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
@@ -2942,6 +2949,19 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
       //---
       fread( &n_y , sizeof(gint32) , 1 , fp );
       fread( &n_x , sizeof(gint32) , 1 , fp );
+
+      //---
+      // A simple check for the wrong byte order
+      //---
+      if ( n_x<=0 || n_y<=0 || n_x>10000000 || n_y>10000000 )
+      {
+         rewind( fp );
+
+         eh_fread_int32_swap( &n_y , sizeof(gint32) , 1 , fp );
+         eh_fread_int32_swap( &n_x , sizeof(gint32) , 1 , fp );
+
+         is_wrong_byte_order = TRUE;
+      }
 
       if ( n_x<=0 || n_y<=0 )
       {
@@ -2987,11 +3007,13 @@ Eh_sequence *sed_get_floor_sequence_3( const char *file ,
 
       for ( n=0 ; n<n_t ;  n++ )
       {
-         fread( &t , sizeof(double) , 1 , fp );
+         if ( is_wrong_byte_order ) eh_fread_dbl_swap( &t , sizeof(double) , 1 , fp );
+         else                       fread            ( &t , sizeof(double) , 1 , fp );
 
          grid = eh_grid_new( double , n_x , n_y );
 
-         fread( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
+         if ( is_wrong_byte_order ) eh_fread_dbl_swap( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
+         else                       fread            ( eh_grid_data_start(grid) , sizeof(double) , n_x*n_y , fp );
 
          for ( i=0 ; i<n_x ; i++ )
             eh_grid_x(grid)[i] = i*dx;
@@ -3712,7 +3734,7 @@ Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id )
 gboolean
 sed_cube_is_in_domain( Sed_cube p , gssize i , gssize j )
 {
-   return is_in_domain( p->n_x , p->n_y , i , j );
+   return eh_is_in_domain( p->n_x , p->n_y , i , j );
 }
 
 /** Is id within the domain of a Sed_cube

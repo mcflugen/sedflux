@@ -96,11 +96,6 @@ int main(int argc,char *argv[])
          break;
    }
    
-   if ( use_buf )
-      type = HYDRO_HYDROTREND|HYDRO_USE_BUFFER;
-   else
-      type = HYDRO_HYDROTREND;
-
    if ( verbose )
    {
       fprintf(stderr,"--- head ---\n");
@@ -113,7 +108,7 @@ int main(int argc,char *argv[])
       fprintf(stderr,"buffer       : %d\n",use_buf);
    }
 
-   fp = sed_hydro_file_new( infile , type , TRUE );
+   fp = sed_hydro_file_new( infile , SED_HYDRO_HYDROTREND , use_buf , TRUE , NULL );
    sed_hydro_file_set_sig_values( fp , n_sig );
    sed_hydro_file_set_buffer_length( fp , buf_len );
 

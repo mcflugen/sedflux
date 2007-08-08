@@ -987,7 +987,7 @@ sed_epoch_queue_run( Sed_epoch_queue q , Sed_cube p )
             sed_process_queue_summary( stdout , proc_q );
 
             sed_epoch_destroy        ( epoch  );
-            sed_cube_free_river      ( p      );
+//            sed_cube_free_river      ( p      );
          }
          else
             eh_require_not_reached();
@@ -1021,7 +1021,7 @@ sed_epoch_queue_tic( Sed_epoch_queue   epoch_q ,
 
          sed_process_queue_summary( stdout , proc_q );
 
-         sed_cube_free_river      ( p      );
+//         sed_cube_free_river      ( p      );
       }
    }
 

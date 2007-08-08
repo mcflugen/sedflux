@@ -988,34 +988,36 @@ Solve the system of linear equations for \f$ x \f$ in,
 @param n   the number of equations in the system.
 
 */
-double *tridiag( double *l , double *d , double *u , double *b , double *x , int n )
+double*
+tridiag( double *l , double *d , double *u , double *b , double *x , int n )
 {
-   int i;
-   double beta, *gamma;
-
-   gamma = eh_new( double , n );
-
-   if ( d[0] == 0.0 )
-      return NULL;
-
-   x[0] = b[0]/d[0];
-   beta = d[0];
-
-   for ( i=1 ; i<n ; i++ )
+   if ( !eh_compare_dbl( d[0] , 0. , 1e-12 ) )
    {
-      gamma[i] = u[i-1]/beta;
-      beta = d[i] - l[i]*gamma[i];
-      if ( beta == 0.0 )
-         return NULL;
-      x[i] = (b[i]-l[i]*x[i-1])/beta;
-   }
+      gint    i;
+      double  beta  = d[0];
+      double* gamma = eh_new( double , n );
 
-   for ( i=n-2 ; i>=0 ; i-- )
-   {
-      x[i] -= gamma[i+1]*x[i+1];
-   }
+      x[0] = b[0]/d[0];
 
-   eh_free( gamma );
+      for ( i=1 ; i<n ; i++ )
+      {
+         gamma[i] = u[i-1]/beta;
+         beta     = d[i] - l[i]*gamma[i];
+         if ( beta == 0.0 )
+         {
+            eh_free( gamma );
+            return NULL;
+         }
+         x[i] = (b[i]-l[i]*x[i-1])/beta;
+      }
+
+      for ( i=n-2 ; i>=0 ; i-- )
+         x[i] -= gamma[i+1]*x[i+1];
+
+      eh_free( gamma );
+   }
+   else
+      x = NULL;
 
    return x;
 }
@@ -2972,4 +2974,70 @@ if ( sum<0 )
    return;
 }
 
+#include <math.h>
+#include "utils.h"
+
+double*
+eh_dbl_array_diffuse_implicit( double* x , gint len , double c )
+{
+   if ( x )
+   {
+      double* l = eh_new( double , len );
+      double* d = eh_new( double , len );
+      double* u = eh_new( double , len );
+      double* b = eh_dbl_array_dup( x , len );
+
+      eh_dbl_array_set( l , len , -c      );
+      eh_dbl_array_set( d , len , 1.+2.*c );
+      eh_dbl_array_set( u , len , -c      );
+      eh_dbl_array_set( x , len , 0.      );
+
+      l[len-1] = -c;
+      d[len-1] = 1+c;
+      u[0]     = -c;
+      d[0]     = 1+c;
+
+      tridiag( l , d , u , b , x , len );
+
+      eh_free( l );
+      eh_free( d );
+      eh_free( u );
+      eh_free( b );
+   }
+}
+
+double*
+eh_dbl_array_diffuse_explicit( double* x , gint len , double c )
+{
+   if ( x )
+   {
+      gint i, n;
+      double*      x_new  = eh_dbl_array_dup( x , len );
+      const gint   top_i  = len-1;
+
+      for ( i=1 ; i<top_i ; i++ )
+         x_new[i] += c * ( x[i-1] - 2.*x[i] + x[i+1] );
+
+      x_new[0]     += c * ( -x[0]     + x[1]       );
+      x_new[top_i] += c * ( -x[top_i] + x[top_i-1] );
+
+      eh_dbl_array_copy( x , x_new , len );
+
+      eh_free( x_new );
+   }
+
+   return x;
+}
+
+double*
+eh_dbl_array_diffuse( double* x , gint len , double c , Eh_num_method method )
+{
+   switch ( method )
+   {
+      case EH_NUM_IMPLICIT: eh_dbl_array_diffuse_implicit( x , len , c ); break;
+      case EH_NUM_EXPLICIT: eh_dbl_array_diffuse_explicit( x , len , c ); break;
+      default: eh_require_not_reached();
+   }
+   return x;
+}
 

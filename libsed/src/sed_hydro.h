@@ -63,11 +63,21 @@ Sed_hydro_error;
 #include "sed_cell.h"
 #include "sed_hydrotrend.h"
 
-#define HYDRO_INLINE        (1<<0)
-#define HYDRO_HYDROTREND    (1<<1)
-#define HYDRO_USE_BUFFER    (1<<2)
+//#define HYDRO_INLINE        (1<<0)
+//#define HYDRO_HYDROTREND    (1<<1)
+//#define HYDRO_USE_BUFFER    (1<<2)
 #define HYDRO_BUFFER_LEN    (365)
 #define HYDRO_N_SIG_VALUES  (10)
+
+typedef enum
+{
+   SED_HYDRO_INLINE        ,
+   SED_HYDRO_HYDROTREND    ,
+   SED_HYDRO_HYDROTREND_BE ,
+   SED_HYDRO_HYDROTREND_LE ,
+   SED_HYDRO_UNKNOWN
+}
+Sed_hydro_file_type;
 
 /*
 typedef struct
@@ -96,7 +106,8 @@ void          sed_hydro_fprint_default_inline_file( FILE *fp );
 gssize        sed_hydro_array_fprint( FILE* fp , Sed_hydro* rec_a );
 gssize        sed_hydro_fprint      ( FILE* fp , Sed_hydro  rec   );
 //Sed_hydro     sed_hydro_init( char *file );
-Sed_hydro*    sed_hydro_scan( const gchar* file , GError** error );
+Sed_hydro*    sed_hydro_scan          ( const gchar* file , GError** error );
+Sed_hydro*    sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error );
 
 Sed_hydrotrend_header* sed_hydro_scan_inline_header( FILE *fp );
 gssize        sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
@@ -104,6 +115,9 @@ gssize        sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains
 Sed_hydro     sed_hydro_new             ( gssize n_grains );
 Sed_hydro     sed_hydro_new_from_table  ( Eh_symbol_table t , GError** error );
 gboolean      sed_hydro_check           ( Sed_hydro a , GError** err );
+const gchar*  sed_hydro_type_to_s( Sed_hydro_file_type t );
+Sed_hydro_file_type sed_hydro_str_to_type( const gchar* type_s );
+Sed_hydro_file_type sed_hydro_file_guess_type( const gchar* file , GError** error );
 Sed_hydro     sed_hydro_copy            ( Sed_hydro dest , Sed_hydro src );
 Sed_hydro     sed_hydro_dup             ( Sed_hydro src );
 gboolean      sed_hydro_is_same         ( Sed_hydro a    , Sed_hydro b );
@@ -170,7 +184,11 @@ Sed_hydro_file sed_hydro_file_set_sig_values( Sed_hydro_file fp , int n_sig_valu
 
 Sed_hydrotrend_header*  sed_hydro_file_header( Sed_hydro_file fp );
 Sed_hydro      sed_hydro_file_read_record( Sed_hydro_file fp );
-Sed_hydro_file sed_hydro_file_new( const char *filename , int type , gboolean wrap_is_on );
+Sed_hydro_file sed_hydro_file_new( const char*         filename     ,
+                                   Sed_hydro_file_type type         ,
+                                   gboolean            buffer_is_on ,
+                                   gboolean            wrap_is_on   ,
+                                   GError** error );
 Sed_hydro_file sed_hydro_file_destroy( Sed_hydro_file fp );
 Sed_hydro*     sed_hydro_file_fill_buffer( Sed_hydro_file fp );
 

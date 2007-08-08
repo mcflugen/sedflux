@@ -4,6 +4,10 @@
 #include <glib.h>
 #include "eh_types.h"
 
+#define EH_MEM_LEAK_START { glong __s = eh_mem_in_use(), __e;
+#define EH_MEM_LEAK_END_WARN  __e = eh_mem_in_use(); if ( __e!=__s ) { eh_watch_lng( __s ); eh_watch_lng(__e);  } }
+#define EH_MEM_LEAK_END_FATAL __e = eh_mem_in_use(); if ( __e!=__s ) { eh_watch_lng( __s ); eh_watch_lng(__e);  eh_exit(0); } }
+
 #define eh_compiler_require(exp) extern char _compiler_require[(exp)?1:-1]
 
 #define API_ENTRY
@@ -32,6 +36,7 @@ gpointer API_ENTRY eh_calloc_c_style ( gsize    n_blocks , gsize n_block_bytes )
 gpointer API_ENTRY eh_realloc_c_style( gpointer mem      , gsize w_size );
 
 #if defined( USE_MY_VTABLE )
+glong    API_ENTRY eh_mem_in_use( void );
 void*    API_ENTRY eh_free_mem       ( gpointer    mem  );
 void     API_ENTRY eh_heap_dump      ( const char* file );
 void     API_ENTRY eh_free_c_style   ( gpointer    mem  );

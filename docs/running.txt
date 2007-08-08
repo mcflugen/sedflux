@@ -200,7 +200,7 @@ The process-specific parameters are:
 Unlike the propery file process that writes a series of files, sedflux creates only one measuring
 station file for every measured parameter.
 
-The MATLAB function used to plot a property file is plot_property.  If we have called out simulation
+The MATLAB function used to plot a property file is plot_property.  If we have called our simulation
 'My_Simulation', we might use the following to look at some output,
 \code
 >> plot_property( 'My_Simulation0001.grain' )

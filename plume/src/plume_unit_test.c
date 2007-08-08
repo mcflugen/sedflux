@@ -219,7 +219,7 @@ START_TEST ( test_approx_from_file )
       Sed_type this_type;
       gssize n, i;
       gssize n_grains = sed_sediment_env_size();
-      Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE , HYDRO_HYDROTREND , TRUE );
+      Sed_hydro_file f = sed_hydro_file_new( SED_HYDRO_TEST_FILE , SED_HYDRO_HYDROTREND , FALSE , TRUE , NULL );
       Sed_hydro river;
       double dt;
       double l;

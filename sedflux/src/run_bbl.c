@@ -76,6 +76,8 @@ run_bbl( Sed_process p , Sed_cube prof )
          // remove any remaining suspended sediment from the model.
          for ( r=all ; *r ; r++ )
             sed_cell_grid_clear( sed_cube_in_suspension( prof , *r ) );
+
+         eh_free( all );
       }
    }
 

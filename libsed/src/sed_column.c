@@ -52,7 +52,8 @@ CLASS( Sed_column )
 
 @see sed_column_destroy
 */
-Sed_column sed_column_new( gssize n_bins )
+Sed_column
+sed_column_new( gssize n_bins )
 {
    Sed_column s = NULL;
    
@@ -1260,7 +1261,8 @@ Get a pointer to the Sed_cell that is n cells from the bottom of a Sed_column.
 @return A pointer to the n-th Sed_cell of a Sed_column.
 
 */
-Sed_cell sed_column_nth_cell( const Sed_column col , gssize n )
+Sed_cell
+sed_column_nth_cell( const Sed_column col , gssize n )
 {
    Sed_cell cell = NULL;
 
@@ -1833,7 +1835,8 @@ vertical resolution of the column.
 
 @return The number of sediment bins within the top of a Sed_column.
 */
-gssize sed_column_top_nbins( Sed_column s , double z )
+gssize
+sed_column_top_nbins( Sed_column s , double z )
 {
    gssize n_bins = 0;
 
@@ -1841,7 +1844,7 @@ gssize sed_column_top_nbins( Sed_column s , double z )
 
    if ( s && !sed_column_is_empty(s) )
    {
-      double t       = z - sed_column_base_height( s );
+      double t = z - sed_column_base_height( s );
 
       if ( t>0 )
       {
@@ -1891,11 +1894,13 @@ gssize sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint orde
       if ( order == G_BYTE_ORDER )
       {
          gssize i;
+         gint32 len  = s->len;
+         gint32 size = s->size;
 
          n += fwrite( &(s->z)    , sizeof(double) , 1 , fp );
          n += fwrite( &(s->t)    , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->len)  , sizeof(gssize) , 1 , fp );
-         n += fwrite( &(s->size) , sizeof(gssize) , 1 , fp );
+         n += fwrite( &(len)     , sizeof(gint32) , 1 , fp );
+         n += fwrite( &(size)    , sizeof(gint32) , 1 , fp );
          n += fwrite( &(s->dz)   , sizeof(double) , 1 , fp );
          n += fwrite( &(s->x)    , sizeof(double) , 1 , fp );
          n += fwrite( &(s->y)    , sizeof(double) , 1 , fp );
@@ -1908,11 +1913,13 @@ gssize sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint orde
       else
       {
          gssize i;
+         gint32 len  = s->len;
+         gint32 size = s->size;
 
          n += eh_fwrite_dbl_swap  ( &(s->z)    , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(s->t)    , sizeof(double) , 1 , fp );
-         n += eh_fwrite_int32_swap( &(s->len)  , sizeof(gssize) , 1 , fp );
-         n += eh_fwrite_int32_swap( &(s->size) , sizeof(gssize) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(len)     , sizeof(gint32) , 1 , fp );
+         n += eh_fwrite_int32_swap( &(size)    , sizeof(gint32) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(s->dz)   , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(s->x)    , sizeof(double) , 1 , fp );
          n += eh_fwrite_dbl_swap  ( &(s->y)    , sizeof(double) , 1 , fp );
@@ -1942,18 +1949,23 @@ Sed_column sed_column_read( FILE* fp )
    if ( fp )
    {
       gssize i;
+      gint32 len;
+      gint32 size;
 
       NEW_OBJECT( Sed_column , s );
 
       fread( &(s->z)    , sizeof(double) , 1 , fp );
       fread( &(s->t)    , sizeof(double) , 1 , fp );
-      fread( &(s->len)  , sizeof(gssize) , 1 , fp );
-      fread( &(s->size) , sizeof(gssize) , 1 , fp );
+      fread( &(len)     , sizeof(gint32) , 1 , fp );
+      fread( &(size)    , sizeof(gint32) , 1 , fp );
       fread( &(s->dz)   , sizeof(double) , 1 , fp );
       fread( &(s->x)    , sizeof(double) , 1 , fp );
       fread( &(s->y)    , sizeof(double) , 1 , fp );
       fread( &(s->age)  , sizeof(double) , 1 , fp );
       fread( &(s->sl)   , sizeof(double) , 1 , fp );
+
+      s->len  = len;
+      s->size = size;
 
       s->cell = eh_new( Sed_cell , s->size );
       for ( i=0 ; i<s->size ; i++ )
@@ -2120,7 +2132,8 @@ gssize sed_column_len( const Sed_column col )
    return col->len;
 }
 
-gboolean sed_column_is_empty( const Sed_column col )
+gboolean
+sed_column_is_empty( const Sed_column col )
 {
    eh_return_val_if_fail( col , TRUE );
    return col->len==0;
@@ -2156,7 +2169,8 @@ gboolean sed_column_is_set_index( const Sed_column c , gssize n )
 
 @return The index of the top cell in a Sed_column.
 */
-gssize sed_column_top_index( const Sed_column col )
+gssize
+sed_column_top_index( const Sed_column col )
 {
    eh_return_val_if_fail( col , -1 );
    return col->len-1;
@@ -2168,7 +2182,8 @@ gssize sed_column_top_index( const Sed_column col )
 
 @return The thickness of sediment housed in a Sed_column.
 */
-double sed_column_thickness( const Sed_column col)
+double
+sed_column_thickness( const Sed_column col)
 {
    eh_return_val_if_fail( col , 0 );
    return col->t;
@@ -2302,7 +2317,8 @@ gssize sed_column_index_thickness( const Sed_column col , double t )
 
 @return The index to a Sed_cell that is buried at a specified depth.
 */
-gssize sed_column_index_depth( const Sed_column col , double d )
+gssize
+sed_column_index_depth( const Sed_column col , double d )
 {
    gssize i;
 
@@ -2487,17 +2503,52 @@ sed_column_extract_cells_above( Sed_column col , double z )
 
       if ( n_bins>0 )
       {
-         double dz;
+         double dz_bot;
+         double dz_back;
 
          cell_arr = sed_column_extract_top_n_cells( col , n_bins );
 
          eh_require( cell_arr && cell_arr[0] );
 
-         dz = sed_cell_size( cell_arr[0] );
+         dz_back = z - sed_column_top_height(col);
+         dz_bot  = sed_cell_size( cell_arr[0] ) - dz_back;
 
-         sed_cell_resize    ( cell_arr[0] , z - sed_column_top_height(col) );
-         sed_column_add_cell( col         , cell_arr[0]                    );
-         sed_cell_resize    ( cell_arr[0] , dz                             );
+         if ( dz_back>1e-12 )
+         {
+//eh_require( sed_cell_is_valid(cell_arr[0]) );
+            sed_cell_resize    ( cell_arr[0] , dz_back     );
+//eh_require( sed_cell_is_valid(cell_arr[0]) );
+            sed_column_add_cell( col         , cell_arr[0] );
+
+            if ( dz_bot>1e-12 )
+{
+               sed_cell_resize( cell_arr[0] , dz_bot );
+//eh_require( sed_cell_is_valid(cell_arr[0]) );
+}
+            else
+            {
+               Sed_cell* c;
+               sed_cell_destroy( cell_arr[0] );
+               for ( c=cell_arr ; *c ; c++ ) *c = *(c+1);
+//eh_require( sed_cell_is_valid(cell_arr[0]) );
+            }
+         }
+/*
+         {
+               Sed_cell* c;
+               for ( c=cell_arr ; *c ; c++ )
+                  if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
+                  {
+                     sed_cell_fprint( stderr , *c );
+                     eh_watch_int( n_bins );
+                     eh_watch_int( g_strv_length( cell_arr ) );
+                     eh_watch_dbl( dz_back );
+                     eh_watch_dbl( dz_bot );
+                     eh_watch_int( c-cell_arr );
+sed_cell_array_fprint( stderr , cell_arr );
+                  }
+         }
+*/
       }
    }
 
@@ -2551,7 +2602,14 @@ sed_column_stack_cells( Sed_column dest , Sed_cell* src )
    {
       Sed_cell* c;
       for ( c=src ; *c ; c++ )
+      {
          sed_column_stack_cell( dest , *c );
+if ( sed_cell_is_clear( *c ) )
+{
+   eh_watch_int( c-src );
+   sed_cell_array_fprint( stderr , *src );
+}
+      }
    }
    else
       dest = NULL;
@@ -2568,7 +2626,11 @@ sed_column_stack_cells_loc( Sed_column dest , Sed_cell* src )
    {
       Sed_cell* c;
       for ( c=src ; *c ; c++ )
+{
+if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
+   eh_watch_int( c-src );
          sed_column_stack_cell_loc( dest , *c );
+}
    }
    else
       dest = NULL;
@@ -2621,6 +2683,14 @@ sed_column_stack_cell_loc_real( Sed_column col , Sed_cell cell , gboolean update
 
    if ( col && cell )
    {
+/*
+if ( !sed_cell_is_valid(cell) || sed_cell_is_empty(cell) || sed_cell_is_clear(cell) )
+{
+   sed_cell_fprint( stderr , cell );
+   eh_watch_ptr( cell );
+eh_exit(0);
+}
+*/
       amount_to_add = sed_cell_size( cell );
 
       sed_column_resize( col , col->len + 1 );
@@ -2644,6 +2714,7 @@ sed_column_stack_cell_loc_real( Sed_column col , Sed_cell cell , gboolean update
                                    + cell_load );
       }
 
+      eh_require( sed_cell_is_valid(col->cell[col->len-1]) );
    }
 
    return amount_to_add;

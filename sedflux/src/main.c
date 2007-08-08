@@ -55,17 +55,17 @@ main( int argc , char *argv[] )
    sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
 
    /* Setup the signal handling */
-   sedflux_set_signal_action();
+   sed_signal_set_action();
 
    /* Run sedflux!!! */
    success = sedflux( p->init_file );
 
    eh_free( p );
 
-   if ( success )
-      eh_exit( EXIT_SUCCESS );
-   else
-      eh_exit( EXIT_FAILURE );
+   if ( g_getenv("SED_MEM_CHECK") ) eh_heap_dump( "heap_dump.txt" );
+
+   if ( success ) eh_exit( EXIT_SUCCESS );
+   else           eh_exit( EXIT_FAILURE );
 
    return EXIT_SUCCESS;
 }

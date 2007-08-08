@@ -87,7 +87,6 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
             depth = sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j )+1e-5;
 
             // The fraction of the water column that is going to get filled.
-
             fraction = depth / sed_cell_size( sed_cell_grid_val(in_suspension,0,0) );
 
             eh_clamp( fraction , 1e-5 , 1. );

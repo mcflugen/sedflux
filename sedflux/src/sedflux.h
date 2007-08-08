@@ -38,6 +38,8 @@ void       sedflux_signal_set       ( Sedflux_sig_num sig );
 typedef enum
 {
    SEDFLUX_ERROR_BAD_PARAM ,
+   SEDFLUX_ERROR_UNKNOWN_FILE_TYPE ,
+   SEDFLUX_ERROR_BAD_FILE_TYPE ,
    SEDFLUX_ERROR_BAD_ALGORITHM ,
    SEDFLUX_ERROR_BAD_DIR ,
    SEDFLUX_ERROR_BAD_INIT_FILE ,

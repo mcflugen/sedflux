@@ -15,14 +15,15 @@ river name:                             Ebro
 
 [ avulsion ]
 active:                                 yes
-logging:                                yes
+logging:                                no
 repeat interval:                        always
 standard deviation (deg):               25.
+seed for random number generator:       1973
 minimum angle (deg):                    0
 maximum angle (deg):                    180
 hinge point:                            50,0
 fraction of sediment remaining in plane: 1.
-river can branch?:                      yes
+river can branch?:                      no
 river name:                             Ebro
 
 [ plume ]

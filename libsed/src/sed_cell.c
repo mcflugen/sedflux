@@ -52,13 +52,13 @@ have a single number of sediment types that does not change.
 */
 CLASS ( Sed_cell )
 {
-   gssize n;          ///< the number of grain types is the cell.
-   double *f;         ///< the fraction of each grain size in the cell.
-   double t_0;        ///< the initial thickness of the cell, before any compaction has occured.
-   double t;          ///< the current thickness of the cell.
-   double age;        ///< the average age of the sediemnt in the cell.
-   double pressure;   ///< the excess porewater pressure in the cell.
-   Sed_facies facies; ///< the facies designation of the cell.
+   gssize     n;        ///< the number of grain types is the cell.
+   double*    f;        ///< the fraction of each grain size in the cell.
+   double     t_0;      ///< the initial thickness of the cell, before any compaction has occured.
+   double     t;        ///< the current thickness of the cell.
+   double     age;      ///< the average age of the sediemnt in the cell.
+   double     pressure; ///< the excess porewater pressure in the cell.
+   Sed_facies facies;   ///< the facies designation of the cell.
 };
 
 #include <stdlib.h>
@@ -122,8 +122,8 @@ sed_cell_new_sized( gssize n , double t , double* f )
 {
    Sed_cell c = sed_cell_new( n );
 
-   sed_cell_resize      ( c , t );
    sed_cell_set_fraction( c , f );
+   sed_cell_resize      ( c , t );
 
    return c;
 }
@@ -184,7 +184,8 @@ sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class )
       double* f = eh_new0( double , len );
 
       for ( i=0 ; i<len ; i++ )
-         if ( sed_type_is_size_class( sed_sediment_type( s , i ) , class ) )
+         //if ( sed_type_is_size_class( sed_sediment_type( s , i ) , class ) )
+         if ( class & sed_type_size_class(sed_sediment_type(s,i)) )
             f[i] = 1.;
 
       eh_dbl_array_normalize( f , len );
@@ -557,7 +558,12 @@ sed_cell_add( Sed_cell a , const Sed_cell b )
          gssize n;
          gssize len = sed_cell_n_types( b );
          double ratio = a->t / b->t;
-      
+/*
+         if ( !sed_cell_is_valid(b) )
+            sed_cell_fprint( stderr , b );
+*/
+         eh_require_critical( sed_cell_is_valid(b) );
+
          eh_require( sed_cell_is_compatible( a , b ) );
 
          for ( n=0 ; n<len ; n++ )
@@ -569,6 +575,8 @@ sed_cell_add( Sed_cell a , const Sed_cell b )
          a->pressure = (a->pressure*ratio + b->pressure) / (ratio + 1.);
          a->facies   = a->facies | b->facies;
       }
+
+//      eh_require_critical( sed_cell_is_valid(a) );
    }
 
    return a;
@@ -761,7 +769,7 @@ is removed with the same make-up of the original cell.
 */
 Sed_cell
 sed_cell_separate_thickness( Sed_cell in ,
-                             double t    ,
+                             double   t  ,
                              Sed_cell out )
 {
    eh_require( in );
@@ -2024,9 +2032,9 @@ sed_cell_read( FILE *fp )
    eh_require( fp );
 
    {
-      gssize n;
+      gint32 n;
 
-      fread( &n             , sizeof(gssize)        , 1 , fp );
+      fread( &n             , sizeof(gint32)        , 1 , fp );
 
       eh_require( n>0 );
 
@@ -2318,7 +2326,7 @@ sed_cell_is_same( Sed_cell a , Sed_cell b )
    {
       if (    sed_cell_n_types(a) != sed_cell_n_types(b)
            || fabs( sed_cell_size(a)-sed_cell_size(b) )>1e-6
-           || fabs( sed_cell_age(a) - sed_cell_age(b) ) >1e-6
+           || fabs( sed_cell_age(a) - sed_cell_age(b) )>1e-6
            || sed_cell_facies(a) != sed_cell_facies(b) )
          same = FALSE;
       else
@@ -2368,6 +2376,74 @@ sed_cell_is_valid( Sed_cell c )
       is_valid = FALSE;
 
    return is_valid;
+}
+
+Sed_cell*
+sed_cell_array_free( Sed_cell* a )
+{
+   if ( a )
+   {
+      Sed_cell* p = a;
+      for ( ; *p ; p++ ) sed_cell_destroy( *p );
+      eh_free( a );
+   }
+   return NULL;
+}
+
+double
+sed_cell_array_mass( Sed_cell* a )
+{
+   double m = 0;
+
+   if ( a )
+   {
+      Sed_cell* p = a;
+      for ( ; *p ; p++ ) m += sed_cell_mass( *p );
+   }
+
+   return m;
+}
+
+gint
+sed_cell_array_fprint( FILE* fp , Sed_cell* a )
+{
+   gint n = 0;
+   if ( a )
+   {
+      Sed_cell* c = a;
+      for ( ; *c ; c++ ) n += sed_cell_fprint( fp , *c );
+   }
+   else
+      n += fprintf( fp , "(empty cell array)\n" );
+
+   return n;
+}
+
+Sed_cell*
+sed_cell_array_delete_empty( Sed_cell* a )
+{
+   if ( a )
+   {
+      Sed_cell* c = a;
+      Sed_cell* p = a;
+
+      for ( ; *c ; c++ )
+         if ( sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
+            sed_cell_destroy(*c);
+         else
+         {
+            *p = *c;
+            p++;
+         }
+      *p = NULL;
+
+      if ( *a==NULL )
+      {
+         eh_free( a );
+         a = NULL;
+      }
+   }
+   return a;
 }
 
 /*@}*/ /* End Sed_cell group */

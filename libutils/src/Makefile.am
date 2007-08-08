@@ -99,7 +99,9 @@ unit_test_SOURCES      = \
                          eh_project_unit_test.c \
                          eh_num_unit_test.c \
                          eh_symbol_table_unit_test.c \
-                         eh_input_val_unit_test.c
+                         eh_input_val_unit_test.c \
+                         eh_io_unit_test.c
+
 unit_test_LDADD        = -lutils @GLIB_LIBS@ @CHECK_LIBS@ -lm
 
 unit_test_CFLAGS       = @CHECK_CFLAGS@

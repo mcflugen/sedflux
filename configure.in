@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.25],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.26],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -32,6 +32,16 @@ PKG_PROG_PKG_CONFIG([0.20])
 ### Check for the required version of GLIB-2.0
 ###
 #PKG_CHECK_MODULES(GLIB,[glib-2.0 >= glib_required_version])
+AC_ARG_VAR(LIBINTL_DIR,[Path to libintl])
+AC_ARG_WITH(libintl-dir,
+   AC_HELP_STRING([--with-libintl-dir=PATH], [path to libintl]))
+if test x$with_libintl_dir != x ; then
+   GLIB_ADD_TO_VAR(LIBS, -L${with_libintl_dir} , -L${with_libintl_dir})
+else
+   GLIB_ADD_TO_VAR(LIBS, -L${LIBINTL_DIR} , -L${LIBINTL_DIR})
+fi
+
+AC_CHECK_LIB(intl,[main],,AC_MSG_ERROR([Failed to find -lintl required by glib-2.0 in ${with_libintl_dir} : ${LIBS}]) )
 
 AM_PATH_GLIB_2_0( glib_required_version , :,
    AC_MSG_ERROR([
@@ -177,7 +187,9 @@ fi
 AM_CONDITIONAL(ENABLE_DOXYGEN, test x$enable_doxygen = xyes )
 AM_CONDITIONAL(ENABLE_FLEX, test x$enable_flex = xyes )
 
-AC_CHECK_FUNCS( log2 )
+AC_CHECK_FUNCS( log2 , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_LOG2,-DHAVE_LOG2)])
+AC_CHECK_FUNCS( fgetln , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_FGETLN,-DHAVE_FGETLN)])
+AC_CHECK_FUNCS( getline , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_GETLINE,-DHAVE_GETLINE)])
 
 cflags_set="$CFLAGS"
 
@@ -221,7 +233,6 @@ AC_CONFIG_FILES([Makefile \
               hydrotrend/data/Makefile hydrotrend/mfiles/Makefile \
            sedutils/Makefile sedutils/src/Makefile \
            inflow/src/runinflow \
-           sakura/src/runsakura \
            sedflux/src/runsedflux \
            sedflux/src/sedflux-run-batch \
            sedflux/tests/sedflux-run-test \

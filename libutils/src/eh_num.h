@@ -187,4 +187,15 @@ void eh_rebin_dbl_array_bad_val( double *x     , double *y     , gssize len     
                                  double *x_bin , double *y_bin , gssize len_bin ,
                                  double bad_val );
 
+typedef enum
+{
+   EH_NUM_IMPLICIT ,
+   EH_NUM_EXPLICIT
+}
+Eh_num_method;
+
+double* eh_dbl_array_diffuse_implicit( double* x , gint len , double c );
+double* eh_dbl_array_diffuse_explicit( double* x , gint len , double c );
+double* eh_dbl_array_diffuse         ( double* x , gint len , double c , Eh_num_method method );
+
 #endif

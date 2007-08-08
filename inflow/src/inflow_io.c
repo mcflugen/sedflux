@@ -328,7 +328,7 @@ inflow_set_flood_data( Sed_hydro h , double rho_river_water )
       r->q        = sed_hydro_water_flux         ( h );
       r->rho_flow = sed_hydro_flow_density       ( h , rho_river_water );
       r->fraction = sed_hydro_fraction           ( h );
-      r->n_grains = sed_hydro_size               ( h );
+      r->n_grains = sed_hydro_size               ( h ) - 1;
    }
 
    return r;

@@ -41,9 +41,7 @@ sedflux_LDADD             = -lsedflux-2.0 -lgthread-2.0 -lglib-2.0
 lib_LTLIBRARIES           = libsedflux-2.0.la
 
 libsedflux_2_0_la_SOURCES = \
-                            sedflux_signal.c \
                             sedflux_command_line.c \
-                            run_bioturbation.c \
                             run_constants.c \
                             run_squall.c \
                             run_cpr.c \
@@ -74,8 +72,9 @@ libsedflux_2_0_la_SOURCES = \
                             sedflux.c \
                             init.c \
                             my_sedflux.c \
-                            sedflux_esmf.c \
-                            sedflux_esmf.F90
+                            sedflux_esmf.c
+
+EXTRA_DIST                = sedflux_esmf.F90
 
 sedflux_SOURCES           = main.c
 

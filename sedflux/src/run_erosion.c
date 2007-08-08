@@ -78,7 +78,6 @@ run_erosion( Sed_process proc , Sed_cube p )
          eh_debug( "Eroding along river %s" , sed_river_name_loc( *r ) );
 
          eroded_sed = erode_river_profile( p , *r , data->slope , data->method );
-
          sed_cell_destroy( eroded_sed );
 /*
          river_path = sed_cube_river_path_id( p , *r , TRUE );
@@ -397,7 +396,6 @@ diffuse_profile( Sed_cube river_profile , Sed_hydro river_data )
       k_land  = get_paola_diffusion( river_data , width , time_fraction , PAOLA_BRAIDED )
               * S_SECONDS_PER_DAY
               * sed_cube_storm( river_profile );
-      
    //         k_land = 200;
    //         dt = 15;
 /*
@@ -407,7 +405,7 @@ diffuse_profile( Sed_cube river_profile , Sed_hydro river_data )
       lost_cell = diffuse_sediment( river_profile , k_land ,
                                     0             , dt     ,
                                     DIFFUSION_OPT_LAND|DIFFUSION_OPT_FILL );
-             
+
       // convert time step to seconds.
    //         dt = sed_get_profile_time_step_in_seconds(p);
       if ( lost_cell )
@@ -424,6 +422,8 @@ diffuse_profile( Sed_cube river_profile , Sed_hydro river_data )
          sed_cell_separate_cell( lost_cell[1] , lost_cell[3] );
       
 //         dt *= S_SECONDS_PER_DAY;
+
+         eroded_sed = sed_cell_new_env();
 
          sed_cell_add   ( eroded_sed , lost_cell[1] );
          sed_cell_add   ( eroded_sed , lost_cell[2] );

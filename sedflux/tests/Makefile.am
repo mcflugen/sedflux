@@ -7,6 +7,8 @@ EXTRA_DIST      = \
                   avulsion_init.kvf \
                   bbl_epoch.kvf \
                   bbl_init.kvf \
+                  bio_epoch.kvf \
+                  bio_init.kvf \
                   bedload_epoch.kvf \
                   bedload_init.kvf \
                   compaction_epoch.kvf \

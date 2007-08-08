@@ -6,7 +6,7 @@ void eh_exit         ( int code );
 void eh_exit_on_error( GError* error , const gchar* format , ... );
 
 gint     eh_fprint_version_info( FILE* fp , const gchar* prog , gint maj , gint min , gint micro );
-gboolean is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j ) G_GNUC_DEPRECATED;
+gboolean eh_is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j );
 
 typedef struct { double day, month, year; } Eh_date_t;
 double eh_date_to_years( Eh_date_t* d );

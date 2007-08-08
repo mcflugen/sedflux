@@ -3,6 +3,7 @@
 
 #include "sed_sedflux.h"
 #include "my_processes.h"
+#include "bio.h"
 
 /** Global variable that lists all of the process that sedflux will run 
 
@@ -26,11 +27,11 @@ static Sed_process_init_t my_proc_defs[] =
 
    /* The rest of the processes */
    { "bedload dumping"   , init_bedload       , run_bedload     , destroy_bedload     } ,
-   { "plume"             , init_plume         , run_plume       , NULL                } ,
+   { "plume"             , init_plume         , run_plume       , destroy_plume       } ,
    { "diffusion"         , init_diffusion     , run_diffusion   , destroy_diffusion   } ,
    { "xshore"            , init_xshore        , run_xshore      , destroy_xshore      } ,
    { "squall"            , init_squall        , run_squall      , destroy_squall      } ,
-   { "bioturbation"      , init_bioturbation  , run_bioturbation, destroy_bioturbation} ,
+   { "bioturbation"      , bio_init           , bio_run         , bio_destroy } ,
    { "compaction"        , NULL               , run_compaction  , NULL                } ,
    { "flow"              , init_flow          , run_flow        , destroy_flow        } ,
    { "isostasy"          , init_isostasy      , run_isostasy    , destroy_isostasy    } ,

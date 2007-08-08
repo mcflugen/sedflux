@@ -384,7 +384,7 @@ destroy_plume( Sed_process p )
    if ( p )
    {
       Plume_t* data = sed_process_user_data( p );
-      
+
       if ( data )
       {
          eh_free( data->hypo_name  );

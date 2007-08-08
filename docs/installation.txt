@@ -7,11 +7,12 @@ programs follows with the version numbers that I used.  It is possible that olde
 work but I have not checked if this is the case.
 
 \par Required
-- pkg-config (0.20)
+- pkg-config (0.21)
 - automake   (1.9.6)
-- autoconf   (2.60)
+- autoconf   (2.61)
 - gcc        (2.95.3)
-- glib-2.0   (2.12.4)
+- glib-2.0   (2.12.12)
+- libtool    (1.5.24)
 
 \par Optional
 - check      (0.9.4)
@@ -78,6 +79,22 @@ your PKG_CONFIG_PATH environment variable to include the pkg-config files for th
 an example,
 \code
 > setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+\endcode
+
+\par Problem
+PKG_CONFIG_PATH is set correctly but configure still says that my version of glib is not correct.
+
+\par Answer
+Locate the path to the library files for your latest version of glib-2.0.  Make sure that this
+path is listed before (or at all) the older library files in your LD_LIBRARY_PATH environment
+variable.  To check the contents of LD_LIBRARY_PATH,
+\code
+> echo $LD_LIBRARY_PATH
+\endcode
+If the glib libraries (libglib-2.0.so, libgthread-2.0.so, etc.) are in /usr/local/lib, you can
+set LD_LIBRARY_PATH as,
+\code
+> setenv LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 \endcode
 
 \section sec_build Build

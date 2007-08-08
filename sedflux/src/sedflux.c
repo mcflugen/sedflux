@@ -175,9 +175,6 @@ sedflux_finalize( Sed_epoch_queue q , Sed_cube p )
       eh_debug( "Destroy sediment environment" );
       sed_sediment_unset_env( );
 
-      if ( g_getenv("SED_MEM_CHECK") )
-         eh_heap_dump( "heap_dump.txt" );
-
       success = TRUE;
    }
 

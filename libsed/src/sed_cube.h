@@ -182,6 +182,7 @@ double sed_cube_water_depth(const Sed_cube p , gssize i , gssize j );
 double sed_cube_load(const Sed_cube p , gssize i , gssize j );
 double sed_cube_water_pressure( const Sed_cube p , gssize i , gssize j );
 double sed_cube_thickness( const Sed_cube p , gssize i , gssize j );
+gboolean sed_cube_col_is_empty( const Sed_cube p , gssize i , gssize j );
 double sed_cube_base_height( const Sed_cube p , gssize i , gssize j );
 
 Sed_cube sed_cube_dup( Sed_cube c );

@@ -22,7 +22,7 @@ typedef char* Class_Desc;
 
 //   static Class_Desc _CD( type ) = { #type } ; typedef struct tag##base_type type
 
-#undef USE_MY_VTABLE
+#define USE_MY_VTABLE
 #if defined( USE_MY_VTABLE )
 
 #define NEW_OBJECT( type , obj ) \
@@ -32,8 +32,9 @@ typedef char* Class_Desc;
 
 #else
 
-#define NEW_OBJECT( type , obj ) \
-   ( obj = (type)g_malloc( sizeof(*obj) ) )
+//#define NEW_OBJECT( type , obj ) \
+//   ( obj = (type)g_malloc( sizeof(*obj) ) )
+#define NEW_OBJECT( type , obj ) ( obj = g_slice_new( type ) )
 #define FREE_OBJECT( obj ) ( g_free( obj ) )
 
 #endif

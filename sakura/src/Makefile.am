@@ -13,8 +13,7 @@ libsakura_la_SOURCES      = sakura.c sakura_io.c sakura_sedflux_interface.c saku
 
 LDADD                     = -lglib-2.0
 
-sakura_SOURCES            = sakura_main.c sakura.c sakura_io.c sakura_utils.c sakura_local.h
+sakura_SOURCES            = sakura_main.c sakura.c sakura_io.c sakura_utils.c sakura_local.h sakura_utils.h
 sakura_CFLAGS             = -DSAKURA_STANDALONE
 sakura_LDADD              = -lglib-2.0
-
 

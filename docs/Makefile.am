@@ -17,6 +17,34 @@ DOC_FILES        = \
                    modules.txt \
                    visualizing.txt
 
+IMAGE_FILES      = \
+                   adriatic-x-section-mask.jpg \
+                   adriatic-x-section-mask.eps \
+                   adriatic-x-section-time.jpg \
+                   adriatic-x-section-time.eps \
+                   adriatic-x-section.jpg \
+                   adriatic-x-section.eps \
+                   elevation-3d.jpg \
+                   elevation-3d.eps \
+                   x-section-3d-property.eps \
+                   x-section-3d-property.jpg \
+                   x-section.eps \
+                   x-section.jpg \
+                   bioturbation_core.eps \
+                   bioturbation_core.jpg \
+                   eel-bioturbation-off.jpg \
+                   eel-bioturbation-off.eps \
+                   eel-bioturbation-diffusion.jpg \
+                   eel-bioturbation-diffusion.eps \
+                   eel-bioturbation-conveyor.jpg \
+                   eel-bioturbation-conveyor.eps \
+                   eel-core-bioturbation-off.jpg \
+                   eel-core-bioturbation-off.eps \
+                   eel-core-bioturbation-diffusion.jpg \
+                   eel-core-bioturbation-diffusion.eps \
+                   eel-core-bioturbation-conveyor.jpg \
+                   eel-core-bioturbation-conveyor.eps
+
 MATLAB_FILES     = \
                    sedflux/mfiles/plot_property.m \
                    sedflux/mfiles/read_property.m \
@@ -32,8 +60,10 @@ MATLAB_FILES     = \
 
 EXTRA_DIST       = \
                    $(DOC_FILES) \
+                   $(IMAGE_FILES) \
                    mtoc.l \
                    sedflux-doxyfile.in
+
 pkgdata_DATA     = 
 
 DOC_STAMPS=html-build.stamp

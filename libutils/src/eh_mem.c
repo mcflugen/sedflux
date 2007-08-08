@@ -4,13 +4,15 @@
 
 USE_WIN_ASSERT
 
-#define EH_MEM_TABLE_SIZE (4096)
+#define EH_MEM_TABLE_SIZE (40960)
 static glong profile_data_malloc[EH_MEM_TABLE_SIZE];
 static glong profile_data_realloc[EH_MEM_TABLE_SIZE];
 static glong profile_data_free[EH_MEM_TABLE_SIZE];
 static glong  total_alloc   = -1;
 static glong  total_realloc = 0;
 static glong  total_free    = 0;
+
+static glong  total_in_use  = 0;
 
 typedef enum
 {
@@ -22,7 +24,8 @@ Eh_mem_job;
 
 #include <stdlib.h>
 
-void eh_mem_profile_log( Eh_mem_job job , gulong size )
+void
+eh_mem_profile_log( Eh_mem_job job , gulong size )
 {
    if ( size>0 )
    {
@@ -65,7 +68,8 @@ void eh_mem_profile_log( Eh_mem_job job , gulong size )
    }
 }
 
-void eh_mem_profile_fprint( FILE* fp )
+void
+eh_mem_profile_fprint( FILE* fp )
 {
    glong i;
    glong t_alloc, t_realloc, t_free, t_left;
@@ -102,7 +106,7 @@ void eh_mem_profile_fprint( FILE* fp )
 #define DO_ALIGN( x ) (((x)+ALIGNMENT-1)&~(ALIGNMENT-1))
 
 eh_compiler_require( IS_POWER_2(ALIGNMENT) );
-
+/*
 new_handle( Heap_Prefix );
 new_handle( Heap_Postfix );
 
@@ -124,15 +128,40 @@ typedef struct tag_Heap_Postfix
    Heap_Prefix prefix;
 }
 Postfix;
+*/
+/*
+typedef struct Heap_Prefix*  Heap_Prefix;
+typedef struct Heap_Postfix* Heap_Postfix;
+#define new_handle( Handle ) typedef struct tag_##Handle *Handle
+*/
+typedef struct Heap_Prefix*  Heap_Prefix;
+typedef struct Heap_Postfix* Heap_Postfix;
+
+typedef struct Heap_Prefix
+{
+   char pad[4];
+   Heap_Prefix prev;
+   Heap_Prefix next;
+   Heap_Postfix postfix;
+   char *file_name;
+   gint32 line_no;
+   void *mem;
+   Class_Desc class_desc;
+} Prefix;
+
+typedef struct Heap_Postfix
+{
+   Heap_Prefix prefix;
+} Postfix;
 
 eh_compiler_require( !(sizeof(Prefix)%ALIGNMENT) );
 
 static Heap_Prefix heap_head = NULL;
 
-void     LOCAL add_to_linked_list      ( Heap_Prefix );
-void     LOCAL remove_from_linked_list ( Heap_Prefix );
-gboolean LOCAL verify_heap_pointer     ( void* );
-gsize    LOCAL render_desc             ( Heap_Prefix , char* );
+G_GNUC_INTERNAL void     add_to_linked_list      ( Heap_Prefix );
+G_GNUC_INTERNAL void     remove_from_linked_list ( Heap_Prefix );
+G_GNUC_INTERNAL gboolean verify_heap_pointer     ( void* );
+G_GNUC_INTERNAL gsize    render_desc             ( Heap_Prefix , char* );
 
 #include <stdlib.h>
 
@@ -166,6 +195,7 @@ gpointer API_ENTRY eh_malloc( gsize w_size     ,
       /* Update profile data */
       eh_mem_profile_log( EH_MEM_PROFILE_MALLOC , w_size );
 
+      total_in_use += w_size;
    }
    else
    {
@@ -224,6 +254,7 @@ void* API_ENTRY eh_free_mem( gpointer mem )
       free( prefix );
 
       eh_mem_profile_log( EH_MEM_PROFILE_FREE , w_size );
+      total_in_use -= w_size;
    }
 
    return NULL;
@@ -275,6 +306,10 @@ gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
          /* Update profile data */
          eh_mem_profile_log( EH_MEM_PROFILE_FREE    , old_bytes );
          eh_mem_profile_log( EH_MEM_PROFILE_REALLOC , w_size    );
+
+         total_in_use -= old_bytes;
+         total_in_use += w_size;
+
       }
    }
    else
@@ -324,6 +359,32 @@ void API_ENTRY eh_walk_heap( void )
    }
 }
 
+glong
+eh_mem_in_use( void )
+{
+   return total_in_use;
+/*
+   glong total = 0;
+
+   if ( heap_head )
+   {
+      Heap_Prefix cur = heap_head;
+      while ( verify_heap_pointer( &cur[1] ) )
+      {
+         total += (size_t)(cur->postfix) - (size_t)cur->mem;
+
+         cur = cur->next;
+         if ( cur == heap_head )
+         {
+            break;
+         }
+      }
+   }
+
+   return total;
+*/
+}
+
 #if defined( USE_MY_VTABLE )
 
 void API_ENTRY eh_heap_dump( const char *file )
@@ -352,7 +413,10 @@ void API_ENTRY eh_heap_dump( const char *file )
 
          if ( strlen(buffer)>0 )
             fprintf( fp , "%s\n" , buffer );
+
          cur = cur->next;
+
+
          if ( cur == heap_head )
          {
             break;
@@ -370,9 +434,10 @@ void API_ENTRY eh_heap_dump( const char *file )
    fclose( fp );
 
 }
+
 #endif
 
-void LOCAL add_to_linked_list( Heap_Prefix add )
+void add_to_linked_list( Heap_Prefix add )
 {
    if ( heap_head )
    {
@@ -390,7 +455,7 @@ void LOCAL add_to_linked_list( Heap_Prefix add )
    heap_head = add;
 }
 
-void LOCAL remove_from_linked_list( Heap_Prefix remove )
+void remove_from_linked_list( Heap_Prefix remove )
 {
    (remove->prev)->next = remove->next;
    (remove->next)->prev = remove->prev;
@@ -401,24 +466,34 @@ void LOCAL remove_from_linked_list( Heap_Prefix remove )
    }
 }
 
-gboolean LOCAL verify_heap_pointer( void *mem )
+gboolean
+verify_heap_pointer( void *mem )
 {
    gboolean ok = FALSE;
 
    if ( mem )
    {
-      eh_require_msg( eh_is_ptr_ok( mem ) , "Pointer is aligned" )
+/*
+if ( mem==25217568 )
+{
+   gchar buffer[2048];
+   render_desc( (Heap_Prefix)mem-1 , buffer );
+   eh_watch_str( buffer );
+}
+*/
+
+      if ( eh_is_ptr_ok(mem) )
       {
          Heap_Prefix prefix = (Heap_Prefix)mem - 1;
-         eh_require_msg( prefix->mem == mem , "No underwrite" )
+
+         if ( prefix->mem == mem )
          {
-            eh_require_msg(
-               prefix->postfix->prefix == prefix , "No overwrite" )
-            {
-               ok = TRUE;
-            }
+            if ( prefix->postfix->prefix == prefix ) ok = TRUE;
+            else fprintf( stderr , "(%08lx: %d) Pointer overwrite\n"      , mem , mem );
          }
+         else    fprintf( stderr , "(%08lx: %d) Pointer underwrite\n"     , mem , mem );
       }
+      else       fprintf( stderr , "(%08lx) Pointer is not aligned\n" , mem );
    }
 
    return ok;
@@ -429,18 +504,20 @@ gboolean API_ENTRY eh_is_ptr_ok( gpointer mem )
    return ((mem) && (!((size_t)mem&(ALIGNMENT-1))));
 }
 
-gsize LOCAL render_desc( Heap_Prefix prefix , char* buffer )
+gsize
+render_desc( Heap_Prefix prefix , char* buffer )
 {
    gulong bytes = 0;
+
+   buffer[0] = '\0';
 
    if ( prefix->mem == &prefix[1] )
    {
       bytes = (size_t)(prefix->postfix) - (size_t)prefix->mem;
 
-      if ( prefix->class_desc )
+      //if ( prefix->class_desc )
       {
-
-         sprintf( buffer , "%08lx " , prefix->mem );
+         sprintf( buffer , "%08lx" , prefix->mem );
          if ( prefix->file_name )
          {
             sprintf( buffer+strlen(buffer) ,

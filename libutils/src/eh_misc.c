@@ -118,7 +118,7 @@ eh_fprint_version_info( FILE*        fp   ,
 @return TRUE if the coordinate is within the domain.
 */
 gboolean
-is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j )
+eh_is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j )
 {
    return i>=0 && j>=0 && i<n_i && j<n_j;
 }

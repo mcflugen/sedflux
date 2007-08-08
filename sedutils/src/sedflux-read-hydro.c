@@ -208,7 +208,7 @@ main(int argc,char *argv[])
 
       for ( i=start ; i<top_rec ; i+=buf_len )
       {
-         all_recs = sed_hydrotrend_read_records( fp_in , i , buf_len , from , &error );
+         all_recs = sed_hydrotrend_read_recs( fp_in , i , buf_len , from , &error );
          big_recs = sed_hydro_array_eventize( all_recs , fraction , !just_events );
 
          write_dlm_data( big_recs );

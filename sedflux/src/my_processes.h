@@ -226,7 +226,8 @@ typedef struct
 {
    Sed_hydro_file   fp_river;
    char*            filename;
-   int              type;
+   Sed_hydro_file_type type;
+   gboolean         buffer_is_on;
    int              location;
    double           total_mass;
    double           total_mass_from_river;

@@ -1108,7 +1108,7 @@ double sed_type_inv_grain_size_in_meters( const Sed_type t )
 
 double sed_type_grain_size_in_phi( const Sed_type t )
 {
-   return -log2(t->gz/1000.);
+   return -log2(t->gz*1e-3);
 }
 
 double sed_type_is_sand( const Sed_type t )
@@ -1152,7 +1152,8 @@ Sed_size_class sed_type_grain_size_in_wentworth( const Sed_type t )
    return sed_size_class( sed_type_grain_size_in_phi( t ) );
 }
 
-Sed_size_class sed_type_size_class( const Sed_type t )
+Sed_size_class
+sed_type_size_class( const Sed_type t )
 {
    return sed_size_class( sed_type_grain_size_in_phi( t ) );
 }
@@ -1423,7 +1424,8 @@ double sed_calculate_consolidation( double c_v , double d , double z , double t 
    return 1-u;
 }
 
-double sed_type_is_size_class( Sed_type t , Sed_size_class size )
+double
+sed_type_is_size_class( Sed_type t , Sed_size_class size )
 {
    return size & sed_type_size_class( t );
 }
@@ -1463,7 +1465,8 @@ Returns the Wentworth size class for a grain size in phi units.
 
 \see sed_cell_size_class , Sed_size_class .
 */
-Sed_size_class sed_size_class( const double phi )
+Sed_size_class
+sed_size_class( const double phi )
 {
    if ( phi <= S_SED_TYPE_VERY_FINE_SAND_PHI )
       return S_SED_TYPE_SAND;

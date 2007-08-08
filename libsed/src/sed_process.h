@@ -158,6 +158,7 @@ gboolean       sed_process_interval_is_always ( Sed_process p );
 gboolean       sed_process_interval_is_at_end ( Sed_process p );
 gchar*         sed_process_name               ( Sed_process p );
 gint           sed_process_run_count          ( Sed_process p );
+gboolean       sed_process_is_set             ( Sed_process p );
 gpointer       sed_process_user_data          ( Sed_process p );
 gpointer       sed_process_malloc_user_data   ( Sed_process p , gssize n_bytes );
 gboolean       sed_process_name_is_same       ( Sed_process a , Sed_process b );
