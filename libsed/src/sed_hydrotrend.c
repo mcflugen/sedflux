@@ -70,6 +70,40 @@ sed_hydrotrend_read_header_from_byte_order( FILE *fp , gint order )
    return hdr;
 }
 
+gssize
+sed_hydrotrend_write_header_to_byte_order( FILE*  fp        ,
+                                           gint   n_grains  ,
+                                           gint   n_seasons ,
+                                           gint   n_samples ,
+                                           gchar* comment_s ,
+                                           gint   order )
+{
+   gssize n = 0;
+
+   if ( fp )
+   {
+      gint len;
+      gssize (*fwrite_int)(void*,size_t,size_t,FILE*);
+
+      if ( !comment_s )
+         comment_s = g_strdup( "No comment" );
+
+      len = strlen( comment_s );
+
+      if ( order==G_BYTE_ORDER ) fwrite_int = fwrite;
+      else                       fwrite_int = eh_fwrite_int32_swap;
+
+      n += fwrite_int( &len      , sizeof(int)  , 1   , fp );
+      n += fwrite    ( comment_s , sizeof(char) , len , fp );
+
+      n += fwrite_int( &n_grains  , sizeof(int)  , 1  , fp );
+      n += fwrite_int( &n_seasons , sizeof(int)  , 1  , fp );
+      n += fwrite_int( &n_samples , sizeof(int)  , 1  , fp );
+   }
+
+   return n;
+}
+
 /** Write the header of a HydroTrend file
 
 \param fp        A HydroTrend file
@@ -442,6 +476,22 @@ sed_hydrotrend_write( gchar* file , Sed_hydro* rec_a , gint n_seasons , gchar* c
    return n;
 }
 
+gssize
+sed_hydro_array_write_hydrotrend_records_to_byte_order( FILE* fp , Sed_hydro* rec_a , gint order )
+{
+   gssize n = 0;
+
+   if ( fp && rec_a )
+   {
+      Sed_hydro* rec;
+
+      for ( rec=rec_a ; *rec ; rec++ )
+         sed_hydrotrend_write_record_to_byte_order( fp , *rec , order );
+   }
+
+   return n;
+}
+
 /** Write records to a HydroTrend file
 
 \param fp   A HydroTrend file
@@ -452,17 +502,7 @@ sed_hydrotrend_write( gchar* file , Sed_hydro* rec_a , gint n_seasons , gchar* c
 gssize
 sed_hydro_array_write_hydrotrend_records( FILE* fp , Sed_hydro* rec_a )
 {
-   gssize n = 0;
-
-   if ( fp && rec_a )
-   {
-      Sed_hydro* rec;
-
-      for ( rec=rec_a ; *rec ; rec++ )
-         sed_hydrotrend_write_record( fp , *rec );
-   }
-
-   return n;
+   return sed_hydro_array_write_hydrotrend_records_to_byte_order( fp , rec_a , G_BYTE_ORDER );
 }
 
 /** Reposition a file-position indicator of a HydroTrend file

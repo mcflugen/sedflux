@@ -135,7 +135,7 @@ int muddy(Sed_cube prof,Sed_cell *in_suspension_cell, double *wave , double dura
 // set the wave length so that the orbital velocities match at depth = wave_length/20.
    wave_length = 5.*sed_gravity()*pow(wave_period*sinh(M_PI/10.)/M_PI,2.);
 
-   n_grains = sed_sediment_env_size( );
+   n_grains = sed_sediment_env_n_types( );
    dx = sed_cube_y_res( prof );
 
    max_load = eh_new( double , sed_cube_n_y(prof) );

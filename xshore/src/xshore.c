@@ -89,7 +89,7 @@ void update_bruun_zone_data( Bruun_data* data )
       double h_b_left, h_b_right, x_b_left;
       gssize i_0 = data->ind[0];
       gssize i_b = data->ind[data->ind_len-1];
-      gssize n_grains = sed_sediment_env_size();
+      gssize n_grains = sed_sediment_env_n_types();
       Sed_wave this_wave;
 
       eh_require( i_0 >= 0 );
@@ -316,7 +316,7 @@ Xshore_info xshore( Sed_cube p               ,
          bruun_zone_data.ind      = g_memdup( bruun_ind[0] , sizeof(gssize)*bruun_zone_data.ind_len );
          bruun_zone_data.w        = deep_water_wave;
          bruun_zone_data.u_0      = xshore_current;
-         bruun_zone_data.k        = g_new( double , sed_sediment_env_size() );
+         bruun_zone_data.k        = g_new( double , sed_sediment_env_n_types() );
 
          update_bruun_zone_data( &bruun_zone_data );
 
@@ -397,7 +397,7 @@ Xshore_info xshore( Sed_cube p               ,
       gssize i;
       double t;
       double       t_total = sed_ocean_storm_duration(storm);
-      gssize      n_grains = sed_sediment_env_size();
+      gssize      n_grains = sed_sediment_env_n_types();
       Sed_cell  total_lost = sed_cell_new( n_grains );
       Sed_cell total_added = sed_cell_new( n_grains );
       Sed_cell          in = sed_cell_new( n_grains );
@@ -798,7 +798,7 @@ double get_time_step( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun_data*
    }
 */
    {
-      gssize n_grains = sed_sediment_env_size();
+      gssize n_grains = sed_sediment_env_n_types();
       double* w_s = sed_sediment_property( NULL , &sed_type_settling_velocity );
       Sed_wave this_wave = sed_gravity_wave_new( deep_wave , data->h_b , NULL );
 
@@ -1082,13 +1082,13 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
    eh_require( deep_wave          );
    eh_require( u_0>=0             );
 
-   du = eh_new_2( double , sed_cube_n_y(p) , sed_sediment_env_size() );
+   du = eh_new_2( double , sed_cube_n_y(p) , sed_sediment_env_n_types() );
 
    eh_require( du )
    {
       gssize i, n;
       double u_om, d_max, qy;
-      gssize     n_grains  = sed_sediment_env_size();
+      gssize     n_grains  = sed_sediment_env_n_types();
       Sed_wave this_wave   = sed_wave_new( 0 , 0 , 0 );
       double  wave_period  = sed_wave_period( deep_wave );
       double breaker_depth = get_breaking_wave_depth( deep_wave );
@@ -1168,7 +1168,7 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
 
    {
       gssize i, n;
-      gssize n_grains  = sed_sediment_env_size();
+      gssize n_grains  = sed_sediment_env_n_types();
       gssize* bruun_ind = data->ind;
       gssize  ind_len = data->ind_len;
 /*
@@ -1181,7 +1181,7 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
                                          bruun_ind );
 */
       double y_b, y_0, y;
-      double* k_max = eh_new( double , sed_sediment_env_size() );
+      double* k_max = eh_new( double , sed_sediment_env_n_types() );
 
       if ( ind_len>0 )
       {
@@ -1218,7 +1218,7 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
    if ( in )
    {
       gssize n;
-      gssize n_grains = sed_sediment_env_size();
+      gssize n_grains = sed_sediment_env_n_types();
       double t        = sed_cell_size(in);
 
       for ( n=0 ; n<n_grains ; n++ )
@@ -1245,7 +1245,7 @@ Sed_cell move_sediment( Sed_cube p            ,
    eh_require( du   );
    eh_require( lost );
 
-   n_grains = sed_sediment_env_size();
+   n_grains = sed_sediment_env_n_types();
 
    // Convert the fluxes to amounts.  Create a temporary array to hold
    // the removed sediment.

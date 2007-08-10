@@ -38,6 +38,12 @@ Sed_hydrotrend_header;
 // Read and write HydroTend header information.
 Sed_hydrotrend_header* sed_hydrotrend_read_header( FILE *fp );
 Sed_hydrotrend_header* sed_hydrotrend_read_header_from_byte_order( FILE *fp , gint order );
+gssize                 sed_hydrotrend_write_header_to_byte_order( FILE*  fp        ,
+                                                                  gint   n_grains  ,
+                                                                  gint   n_seasons ,
+                                                                  gint   n_samples ,
+                                                                  gchar* comment_s ,
+                                                                  gint   order );
 gssize                 sed_hydrotrend_write_header( FILE* fp       ,
                                                     gint n_grains  ,
                                                     gint n_seasons ,
@@ -66,6 +72,7 @@ Sed_hydro*         sed_hydrotrend_read_n_recs( const gchar* file       ,
 gssize             sed_hydrotrend_write_record( FILE *fp , Sed_hydro rec );
 gssize             sed_hydrotrend_write_record_to_byte_order( FILE *fp , Sed_hydro rec , gint order );
 gssize             sed_hydrotrend_write( gchar* file , Sed_hydro* rec_a , gint n_seasons , gchar* comment_s , GError** error );
+gssize             sed_hydro_array_write_hydrotrend_records_to_byte_order( FILE* fp , Sed_hydro* rec_a , gint order );
 gssize             sed_hydro_array_write_hydrotrend_records( FILE* fp , Sed_hydro* rec_a );
 
 gint               sed_hydrotrend_fseek      ( FILE* fp , gint offset , gint whence , gint byte_order );

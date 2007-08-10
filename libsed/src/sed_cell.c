@@ -104,7 +104,7 @@ sed_cell_new_env( void )
    Sed_cell c = NULL;
 
    if ( sed_sediment_env_is_set() )
-      c = sed_cell_new( sed_sediment_env_size() );
+      c = sed_cell_new( sed_sediment_env_n_types() );
 
    return c;
 }
@@ -2142,7 +2142,7 @@ Sed_cell_grid
 sed_cell_grid_new_env( gsize n_x , gsize n_y )
 {
    Sed_cell_grid g = sed_cell_grid_new( n_x , n_y );
-   return sed_cell_grid_init( g , sed_sediment_env_size() );
+   return sed_cell_grid_init( g , sed_sediment_env_n_types() );
 }
 
 /** \brief Initalize a two-dimensional array of Sed_cell's.

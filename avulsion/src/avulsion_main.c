@@ -345,7 +345,7 @@ void deposit_sediment_helper( Sed_riv this_river , Sed_cube c )
 
    {
       gssize n;
-      gssize len = sed_sediment_env_size();
+      gssize len = sed_sediment_env_n_types();
       double* f = eh_new( double , len );
 
       f[0] = eh_get_fuzzy_dbl( 0 , 1 );

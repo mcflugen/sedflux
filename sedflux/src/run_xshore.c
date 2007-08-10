@@ -62,7 +62,7 @@ run_xshore( Sed_process proc , Sed_cube prof )
    data->last_time = sed_cube_age_in_years( prof );
 
    {
-      double *along_shore_fraction = eh_new0( double , sed_sediment_env_size() );
+      double *along_shore_fraction = eh_new0( double , sed_sediment_env_n_types() );
 
       along_shore_fraction[data->sediment_type] = 1.;
 

@@ -108,8 +108,8 @@ run_plume_hypo( Sed_process proc , Sed_cube prof )
    if ( sed_process_run_count(proc)==0 )
       init_plume_hypo_data( proc , prof , NULL );
 
-   n_grains      = sed_sediment_env_size();
-   n_susp_grains = sed_sediment_env_size()-1;
+   n_grains      = sed_sediment_env_n_types();
+   n_susp_grains = sed_sediment_env_n_types()-1;
 
    {
       gssize  i;
@@ -498,11 +498,11 @@ init_plume_hypo_data( Sed_process proc , Sed_cube prof , GError** error )
       data->last_deposit_grid = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
       data->deposit_grid      = sed_cell_grid_new( 2*sed_cube_n_x(prof) , 2*sed_cube_n_y(prof) );
 
-      sed_cell_grid_init( data->deposit_grid      , sed_sediment_env_size() );
-      sed_cell_grid_init( data->last_deposit_grid , sed_sediment_env_size() );
+      sed_cell_grid_init( data->deposit_grid      , sed_sediment_env_n_types() );
+      sed_cell_grid_init( data->last_deposit_grid , sed_sediment_env_n_types() );
 
       memset( &data->last_river_data , 0 , sizeof(Plume_river) );
-      data->last_river_data.Cs = eh_new0( double , sed_sediment_env_size()-1 );
+      data->last_river_data.Cs = eh_new0( double , sed_sediment_env_n_types()-1 );
 
       data->plume_data = eh_new( Plume_data , 1 );
       plume_data_init( data->plume_data );

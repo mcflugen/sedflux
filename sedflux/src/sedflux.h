@@ -22,19 +22,6 @@ typedef struct
 }
 Sedflux_param_st;
 
-typedef gint32 Sedflux_sig_num;
-
-#define SEDFLUX_SIG_NONE (0)
-#define SEDFLUX_SIG_QUIT (1)
-#define SEDFLUX_SIG_DUMP (2)
-#define SEDFLUX_SIG_CPR  (4)
-#define SEDFLUX_SIG_INT  (8)
-
-int        sedflux_set_signal_action( void                );
-gboolean   sedflux_signal_is_pending( Sedflux_sig_num sig );
-void       sedflux_signal_reset     ( Sedflux_sig_num sig );
-void       sedflux_signal_set       ( Sedflux_sig_num sig );
-
 typedef enum
 {
    SEDFLUX_ERROR_BAD_PARAM ,

@@ -62,7 +62,7 @@ Run the Storms 2003 wave model.
 */
 gboolean squall( Sed_cube p , double time_step_in_years )
 {
-   int i, j, k, n, n_grains = sed_sediment_env_size();
+   int i, j, k, n, n_grains = sed_sediment_env_n_types();
    int *zone;
    int i_w, i_s, i_c, i_l, i_m, i_0;
    double h_w, h_c;
@@ -904,7 +904,7 @@ double *get_moveable_grains( double water_depth ,
    if ( sed )
       n_grains = sed_sediment_n_types( sed );
    else
-      n_grains = sed_sediment_env_size( );
+      n_grains = sed_sediment_env_n_types( );
 
 //eh_make_note( water_depth*=5 );
 /*

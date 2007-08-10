@@ -56,6 +56,14 @@
 //    ndx
 //    O1, O2, O3
 //---
+/*
+static gchar* err_msg[] = {
+   [PLUME_ERROR_LOW_Q]    = "River discharge is too low" ,
+   [PLUME_ERROR_HIGH_Q]   = "River discharge is too high" ,
+   [PLUME_ERROR_LOW_VEL]  = "River velocity is too low" ,
+   [PLUME_ERROR_HIGH_VEL] = "River velocity is too high" ,
+};
+*/
 
 int plumecheck( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
 {
@@ -66,7 +74,16 @@ int plumecheck( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
    Plume_sediment *sedload = env->sed;
 
    err = 0;
-
+/*
+   if ( river->Q<1.    ) error = PLUME_ERROR_LOW_Q;
+   if ( river->Q>1e6   ) error = PLUME_ERROR_HIGH_Q;
+   if ( river->u0<.01  ) error = PLUME_ERROR_LOW_VEL;
+   if ( river->u0>10   ) error = PLUME_ERROR_HIGH_VEL;
+   if ( river->b0<1    ) error = PLUME_ERROR_LOW_WIDTH;
+   if ( river->b0>1e5  ) error = PLUME_ERROR_HIGH_WIDTH;
+   if ( river->rma>80  ) error = PLUME_ERROR_LOW_ANGLE;
+   if ( river->rma<-80 ) error = PLUME_ERROR_HIGH_ANGLE;
+*/
    // Check river parameters
    if( river->Q < 1.0 || river->Q > 1e6 )
    {

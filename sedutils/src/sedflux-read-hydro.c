@@ -22,13 +22,13 @@
 #include "utils.h"
 #include "sed_sedflux.h"
 
-void write_dlm_data( Sed_hydro* a );
-
 static gchar*   in_file    = NULL;
 static gchar*   out_file   = NULL;
+static gint     in_type    = 0;
+static gint     out_type   = 0;
 static double   dt         = 365.;
-static double   fraction   = .9;
-static gint     n_recs     = 1;
+static double   fraction   = 1.;
+static gint     n_recs     = -1;
 static gint     buf_len    = 365;
 static gint     events     = 5;
 static gint     start      = 0;
@@ -40,29 +40,76 @@ static gboolean info       = FALSE;
 static gint     to         = G_BYTE_ORDER;
 static gint     from       = G_BYTE_ORDER;
 
-gboolean parse_byte_order( const gchar* name , const gchar* value , gpointer data , GError** error );
+static gboolean parse_file_type ( const gchar* name , const gchar* value , gpointer data , GError** error );
+static gboolean parse_byte_order( const gchar* name , const gchar* value , gpointer data , GError** error );
+
+static void     write_data( FILE* fp , Sed_hydro* a , gint type , gint order );
 
 GOptionEntry entries[] =
 {
-   { "in-file"     , 'i' , 0 , G_OPTION_ARG_FILENAME , &in_file   , "Input file"           , "<file>" } ,
-   { "dt"          , 'T' , 0 , G_OPTION_ARG_DOUBLE   , &dt        , "Duration (days)"      , "TIME" } ,
-   { "fraction"    , 'f' , 0 , G_OPTION_ARG_DOUBLE   , &fraction  , "Fraction of sediment" , "FRAC" } ,
-   { "n-recs"      , 'N' , 0 , G_OPTION_ARG_INT      , &n_recs    , "Number of records"    , "N" } ,
-   { "buffer"      , 'l' , 0 , G_OPTION_ARG_INT      , &buf_len   , "Buffer length"        , "LEN" } ,
-   { "events"      , 'n' , 0 , G_OPTION_ARG_INT      , &events    , "Number of events"     , "N" } ,
-   { "start-rec"   , 's' , 0 , G_OPTION_ARG_INT      , &start     , "Start record"         , "N" } ,
-   { "just-events" , 'e' , 0 , G_OPTION_ARG_NONE     , &just_events , "Don't include non-floods"       , NULL } ,
-   { "verbose"     , 'V' , 0 , G_OPTION_ARG_INT      , &verbosity , "Verbosity level"      , "n" } ,
-   { "version"     , 'v' , 0 , G_OPTION_ARG_NONE     , &version   , "Version number"       , NULL } ,
-   { "debug"       , 'd' , 0 , G_OPTION_ARG_NONE     , &debug     , "Write debug messages" , NULL } ,
-
-   { "info"        ,  0  , 0 , G_OPTION_ARG_NONE     , &info           , "Print file info"       , NULL } ,
-
-   { "swap"        ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Swap byte order"      , NULL } ,
-   { "to"          ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Destination byte order" , "[big|little]" } ,
-   { "from"        ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Source byte order"      , "[big|little]" } ,
+   { "in-file"     , 'i' , 0 , G_OPTION_ARG_FILENAME , &in_file         , "Input file"               , "<file>" } ,
+   { "in-type"     ,  0  , 0 , G_OPTION_ARG_CALLBACK , &parse_file_type , "Input file type"          , "TYPE" } ,
+   { "out-type"    ,  0  , 0 , G_OPTION_ARG_CALLBACK , &parse_file_type , "Output file type"         , "TYPE" } ,
+   { "dt"          , 'T' , 0 , G_OPTION_ARG_DOUBLE   , &dt              , "Duration (days)"          , "TIME" } ,
+   { "fraction"    , 'f' , 0 , G_OPTION_ARG_DOUBLE   , &fraction        , "Fraction of sediment"     , "FRAC" } ,
+   { "n-recs"      , 'N' , 0 , G_OPTION_ARG_INT      , &n_recs          , "Number of records"        , "N" } ,
+   { "buffer"      , 'l' , 0 , G_OPTION_ARG_INT      , &buf_len         , "Buffer length"            , "LEN" } ,
+   { "events"      , 'n' , 0 , G_OPTION_ARG_INT      , &events          , "Number of events"         , "N" } ,
+   { "start-rec"   , 's' , 0 , G_OPTION_ARG_INT      , &start           , "Start record"             , "N" } ,
+   { "just-events" , 'e' , 0 , G_OPTION_ARG_NONE     , &just_events     , "Don't include non-floods" , NULL } ,
+   { "verbose"     , 'V' , 0 , G_OPTION_ARG_INT      , &verbosity       , "Verbosity level"          , "n" } ,
+   { "version"     , 'v' , 0 , G_OPTION_ARG_NONE     , &version         , "Version number"           , NULL } ,
+   { "debug"       , 'd' , 0 , G_OPTION_ARG_NONE     , &debug           , "Write debug messages"     , NULL } ,
+   { "info"        ,  0  , 0 , G_OPTION_ARG_NONE     , &info            , "Print file info"          , NULL } ,
+   { "swap"        ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Swap byte order"          , NULL } ,
+   { "to"          ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Destination byte order"   , "[big|little]" } ,
+   { "from"        ,  0  , 0 , G_OPTION_ARG_CALLBACK , parse_byte_order , "Source byte order"        , "[big|little]" } ,
    { NULL }
 };
+
+gboolean
+parse_file_type( const gchar* name , const gchar* value , gpointer data , GError** error )
+{
+   gboolean success = FALSE;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( name && value )
+   {
+      GError* tmp_err = NULL;
+      gint    format  = -1;
+
+      if      ( g_ascii_strcasecmp( value , "hydrotrend" )==0 ) format  = 0;
+      else if ( g_ascii_strcasecmp( value , "ascii"      )==0 ) format  = 1;
+      else
+      {
+         g_set_error( &tmp_err ,
+                      G_OPTION_ERROR ,
+                      G_OPTION_ERROR_BAD_VALUE ,
+                      "Unknown file format (%s): must be either HYDROTREND or ASCII" , value );
+      }
+
+      if      ( g_ascii_strcasecmp( name , "--in-type" )==0  ) in_type  = format;
+      else if ( g_ascii_strcasecmp( name , "--out-type" )==0 ) out_type = format;
+      else
+      {
+         g_set_error( &tmp_err ,
+                      G_OPTION_ERROR ,
+                      G_OPTION_ERROR_FAILED , 
+                      "Invalid option name (%s)" , name );
+      }
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         success = FALSE;
+      }
+      else
+         success = TRUE;
+   }
+
+   return success;
+}
 
 gboolean
 parse_byte_order( const gchar* name , const gchar* value , gpointer data , GError** error )
@@ -150,11 +197,8 @@ main(int argc,char *argv[])
    if ( !g_option_context_parse( context , &argc , &argv , &error ) )
       eh_error( "Error parsing command line arguments: %s" , error->message );
 
-   if ( version )
-      eh_fprint_version_info( stdout , "sedflux-read-hydro" , 0 , 1 , 0 ), exit(0);
-
-   if ( debug )
-      g_setenv( "SEDFLUX_READ_HYDRO" , "TRUE" , TRUE );
+   if ( version ) eh_fprint_version_info( stdout , "sedflux-read-hydro" , 0 , 1 , 0 ), exit(0);
+   if ( debug   ) g_setenv( "SEDFLUX_READ_HYDRO" , "TRUE" , TRUE );
 
    eh_set_verbosity_level( verbosity );
 
@@ -169,7 +213,7 @@ main(int argc,char *argv[])
 
    }
 
-   if ( from!=sed_hydrotrend_guess_byte_order( fp_in ) )
+   if ( from!=sed_hydrotrend_byte_order(in_file,NULL ) )
       eh_error( "\"From\" byte order doesn't appear to match the file byte order" );
 
    if ( info )
@@ -201,25 +245,35 @@ main(int argc,char *argv[])
    eh_info( "Destination byte order : %s" , byte_order_s(to  ) );
 
    {
-      gint i;
-      Sed_hydro* all_recs;
-      Sed_hydro* big_recs;
-      gint top_rec = start + n_recs*buf_len;
+      Sed_hydrotrend_header* h = sed_hydrotrend_read_header_from_byte_order( fp_in , from );
 
-      for ( i=start ; i<top_rec ; i+=buf_len )
+      if ( h )
       {
-         all_recs = sed_hydrotrend_read_recs( fp_in , i , buf_len , from , &error );
-         big_recs = sed_hydro_array_eventize( all_recs , fraction , !just_events );
+         gint       i;
+         Sed_hydro* all_recs = NULL;
+         Sed_hydro* big_recs = NULL;
+         gint       top_rec  = 0;
 
-         write_dlm_data( big_recs );
+         if ( n_recs<=0   ) n_recs = h->n_samples - start;
+         if ( out_type==0 ) sed_hydrotrend_write_header_to_byte_order( fp_out , h->n_grains , h->n_seasons , n_recs , h->comment , to );
 
-         eh_info( "Block start            : %d" , i                                        );
-         eh_info( "Total load             : %f" , sed_hydro_array_suspended_load(all_recs) );
-         eh_info( "Modeled load           : %f" , sed_hydro_array_suspended_load(big_recs) );
-         eh_info( "Number of events       : %d" , g_strv_length( (gchar**)big_recs )       );
+         top_rec = start + n_recs*buf_len;
 
-         all_recs = sed_hydro_array_destroy( all_recs );
-         big_recs = sed_hydro_array_destroy( big_recs );
+         for ( i=start ; i<top_rec ; i+=buf_len )
+         {
+            all_recs = sed_hydrotrend_read_recs( fp_in , i , buf_len , from , &error );
+
+            big_recs = sed_hydro_array_eventize( all_recs , fraction , !just_events );
+            write_data( fp_out , big_recs , out_type , to );
+
+            eh_info( "Block start            : %d" , i                                        );
+            eh_info( "Total load             : %f" , sed_hydro_array_suspended_load(all_recs) );
+            eh_info( "Modeled load           : %f" , sed_hydro_array_suspended_load(big_recs) );
+            eh_info( "Number of events       : %d" , g_strv_length( (gchar**)big_recs )       );
+
+            all_recs = sed_hydro_array_destroy( all_recs );
+            big_recs = sed_hydro_array_destroy( big_recs );
+         }
       }
    }
 
@@ -230,16 +284,23 @@ main(int argc,char *argv[])
 }
 
 void
-write_dlm_data( Sed_hydro* a )
+write_data( FILE* fp , Sed_hydro* a , gint type , gint order )
 {
    if ( a )
    {
-      Sed_hydro* r;
-      double     t;
-      for ( r=a ; *r ; r++ )
-         for ( t=0 ; t<sed_hydro_duration(*r) ; t++ )
-            fprintf( stdout , "%f\n" , sed_hydro_water_flux(*r) );
-            //fprintf( stdout , "%f\n" , sed_hydro_suspended_load(*r)/sed_hydro_duration(*r) );
+      if      ( type==0 )
+         sed_hydro_array_write_hydrotrend_records_to_byte_order( fp , a , order );
+      else if ( type==1 )
+      {
+         Sed_hydro* r;
+         double     t;
+         for ( r=a ; *r ; r++ )
+            for ( t=0 ; t<sed_hydro_duration(*r) ; t++ )
+               fprintf( fp , "%f\n" , sed_hydro_water_flux(*r) );
+               //fprintf( fp , "%f\n" , sed_hydro_suspended_load(*r)/sed_hydro_duration(*r) );
+      }
+      else
+         eh_require_not_reached();
    }
    return;
 }

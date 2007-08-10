@@ -109,7 +109,7 @@ inflow_erode_sediment( Sed_cube         p          ,
    if ( p && erosion_in_m )
    {
       gint i,  len;
-      gint n,  n_grains = sed_sediment_env_size();
+      gint n,  n_grains = sed_sediment_env_n_types();
       double** erosion  = eh_new( double* , n_grains );
       double   total_t;
       double   dx       = bathy_data->x[1] - bathy_data->x[0];
@@ -146,7 +146,7 @@ inflow_deposit_sediment( Sed_cube p                  ,
    if ( p && deposit_in_m )
    {
       gint i,  len          = bathy_data->len;
-      gint n,  n_grains     = sed_sediment_env_size();
+      gint n,  n_grains     = sed_sediment_env_n_types();
       double*  deposit_at_x = eh_new( double , n_grains );
       double** deposit      = eh_new( double* , n_grains );
       Sed_cell deposit_cell = sed_cell_new_env( );
@@ -305,7 +305,7 @@ inflow_set_sediment_data_from_env( )
    Inflow_sediment_st* s = eh_new( Inflow_sediment_st , 1 );
    gint n;
 
-   s->n_grains      = sed_sediment_env_size();
+   s->n_grains      = sed_sediment_env_n_types();
    s->size_equiv    = sed_sediment_property( NULL , &sed_type_grain_size_in_meters );
    s->lambda        = sed_sediment_property( NULL , &sed_type_lambda_in_per_seconds );
    s->bulk_density  = sed_sediment_property( NULL , &sed_type_rho_sat );
@@ -348,7 +348,7 @@ sed_get_phe( Inflow_phe_query_st* data , Sed_cube p )
    double volume;
    int i, n, n_grains;
    
-   n_grains = sed_sediment_env_size();
+   n_grains = sed_sediment_env_n_types();
    avg      = sed_cell_new_env( );
 
    if ( depth > 0 )

@@ -1224,7 +1224,7 @@ double sed_column_add_vec( Sed_column c , const double* t )
 
    if ( c && t )
    {
-      Sed_cell cell = sed_cell_new( sed_sediment_env_size() );
+      Sed_cell cell = sed_cell_new( sed_sediment_env_n_types() );
 
       sed_cell_add_amount( cell , t );
       rtn = sed_column_add_cell( c , cell );
@@ -1427,7 +1427,7 @@ Sed_cell sed_column_extract_top_fill( Sed_column col ,
    eh_require( col );
 
    if ( !dest )
-      dest = sed_cell_new( sed_sediment_env_size() );
+      dest = sed_cell_new( sed_sediment_env_n_types() );
    else
       sed_cell_clear( dest );
 
@@ -1561,7 +1561,7 @@ Sed_cell sed_column_separate_top( Sed_column col  ,
                                   double f[]      ,
                                   Sed_cell rem_cell )
 {
-   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_size() );
+   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_n_types() );
 
    sed_column_extract_top    ( col      , t        , lag_cell );
    sed_cell_separate_fraction( lag_cell , f        , rem_cell );
@@ -1576,7 +1576,7 @@ Sed_cell sed_column_separate_top_amounts( Sed_column col ,
                                           double t[]     ,
                                           Sed_cell rem_cell )
 {
-   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_size() );
+   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_n_types() );
 
    sed_column_extract_top  ( col      , total_t  , lag_cell );
    sed_cell_separate_amount( lag_cell , t        , rem_cell );
@@ -1618,7 +1618,7 @@ eh_watch_dbl( m_1 );
 eh_watch_dbl( sed_cell_mass(rem_cell) );
 //eh_watch_dbl( sed_cell_mass(fill) );
 eh_watch_dbl( total_t );
-eh_dbl_array_fprint( stderr , t , sed_sediment_env_size() );
+eh_dbl_array_fprint( stderr , t , sed_sediment_env_n_types() );
       exit(0);
 }
 */
@@ -1648,7 +1648,7 @@ Sed_cell sed_column_top( const Sed_column col ,
    eh_return_val_if_fail( col , NULL );
 
    if ( !dest )
-      dest = sed_cell_new( sed_sediment_env_size() );
+      dest = sed_cell_new( sed_sediment_env_n_types() );
    sed_cell_clear( dest );
 
    if ( !sed_column_is_empty(col) )
@@ -1710,7 +1710,7 @@ double sed_column_top_property_0( Sed_property property ,
    {
       Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_size() );
+      avg = sed_cell_new( sed_sediment_env_n_types() );
 
       avg = sed_column_top( s , top , avg );
       val = sed_property_measure( property , avg );
@@ -1784,7 +1784,7 @@ double sed_column_top_rho( const Sed_column s , double top )
    {
       Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_size() );
+      avg = sed_cell_new( sed_sediment_env_n_types() );
 
       avg = sed_column_top(s,top,avg);
       rho = sed_cell_density( avg );
@@ -1815,7 +1815,7 @@ double sed_column_top_age( const Sed_column s , double top )
    {
       Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_size() );
+      avg = sed_cell_new( sed_sediment_env_n_types() );
       sed_column_top(s,top,avg);
       age = sed_cell_age(avg);
       sed_cell_destroy(avg);
@@ -2359,7 +2359,7 @@ Sed_cell sed_cell_add_column( Sed_cell dest , const Sed_column src )
       gssize i;
 
       if ( !dest )
-         dest = sed_cell_new( sed_sediment_env_size() );
+         dest = sed_cell_new( sed_sediment_env_n_types() );
 
       for ( i=0 ; i<src->len ; i++ )
          sed_cell_add( dest , src->cell[i] );

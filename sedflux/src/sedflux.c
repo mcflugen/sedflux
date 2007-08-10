@@ -78,7 +78,7 @@ sedflux_setup( gchar* command_s )
    sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
 
    /* Setup the signal handling */
-   sedflux_set_signal_action();
+   sed_signal_set_action();
 
    return p;
 }

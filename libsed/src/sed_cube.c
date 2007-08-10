@@ -367,7 +367,7 @@ sed_cube_create_in_suspension( Sed_cube s )
    {
       in_suspension = sed_cell_grid_new( 2*s->n_x , 2*s->n_y );
 
-      sed_cell_grid_init( in_suspension , sed_sediment_env_size() );
+      sed_cell_grid_init( in_suspension , sed_sediment_env_n_types() );
 
       //---
       // in_suspension is twice as large in each dimension than the cube.  the

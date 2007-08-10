@@ -137,7 +137,7 @@ run_bedload( Sed_process p , Sed_cube prof )
       }
 
    {
-      double* just_bedload = eh_new0( double , sed_sediment_env_size() );
+      double* just_bedload = eh_new0( double , sed_sediment_env_n_types() );
 
       just_bedload[0] = 1.;
 

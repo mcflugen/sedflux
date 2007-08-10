@@ -118,7 +118,7 @@ Plume_river plume_init_plume_river( Sed_hydro river )
    Plume_river riv;
 
    {
-      riv.Cs = eh_new( double , sed_sediment_env_size() );
+      riv.Cs = eh_new( double , sed_sediment_env_n_types() );
       for ( n=0 ; n<n_grains ; n++ )
          riv.Cs[n] = sed_hydro_nth_conc( river , n );
       riv.u0 = sed_hydro_velocity(river);
@@ -158,7 +158,7 @@ Eh_dbl_grid* plume_init_plume_grid( Eh_cell_grid deposit )
 
    {
       gssize n;
-      gssize n_grains = sed_sediment_env_size();
+      gssize n_grains = sed_sediment_env_n_types();
 
       grid = eh_new( Eh_dbl_grid , n_grains-1 );
       for ( n=0 ; n<4 ; n++ )
@@ -180,7 +180,7 @@ gboolean plume_3d( Plume_inputs* plume_const , Sed_hydro river ,
    Plume_sediment* sedload = plume_init_plume_sediment( sed_sediment_env() );
    Eh_dbl_grid*       grid = plume_init_plume_grid    ( deposit            );
 
-   plume3d( plume_const , riv , sed_sediment_env_size() , sedload , grid , data );
+   plume3d( plume_const , riv , sed_sediment_env_n_types() , sedload , grid , data );
 
    plume_fill_cell_grid( deposit , grid );
 

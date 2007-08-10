@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.26],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.27],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -41,7 +41,7 @@ else
    GLIB_ADD_TO_VAR(LIBS, -L${LIBINTL_DIR} , -L${LIBINTL_DIR})
 fi
 
-AC_CHECK_LIB(intl,[main],,AC_MSG_ERROR([Failed to find -lintl required by glib-2.0 in ${with_libintl_dir} : ${LIBS}]) )
+#AC_CHECK_LIB(intl,[main],,AC_MSG_ERROR([Failed to find -lintl required by glib-2.0 in ${with_libintl_dir} : ${LIBS}]) )
 
 AM_PATH_GLIB_2_0( glib_required_version , :,
    AC_MSG_ERROR([

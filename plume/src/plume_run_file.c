@@ -88,7 +88,7 @@ dx = 12.5;
    {
       dep = eh_grid_new( Sed_cell , 1 , len );
       eh_grid_set_y_lin( dep , 0 , dx );
-      sed_cell_grid_init( dep , sed_sediment_env_size() );
+      sed_cell_grid_init( dep , sed_sediment_env_n_types() );
    }
 
    if ( river_file )

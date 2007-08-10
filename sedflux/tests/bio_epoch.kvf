@@ -1,0 +1,62 @@
+[ bbl ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+algorithm (none|muds):                  none
+external sediment source file:          none
+
+[ river ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+river values:                           season
+river file:                             bench_river.kvf
+river name:                             Ebro
+
+[ avulsion ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+standard deviation (deg):               25.
+seed for random number generator:       1973
+minimum angle (deg):                    0
+maximum angle (deg):                    180
+hinge point:                            50,0
+fraction of sediment remaining in plane: 1.
+river can branch?:                      yes
+river name:                             Ebro
+
+[ plume ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+hypopycnal plume model:                 'hypopycnal plume'
+hyperpycnal plume model:                <none>
+
+[ 'hypopycnal plume' ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+background ocean concentration:         0.
+velocity of coastal current (m/s):      .5
+maximum plume width (km):               15.
+number of grid nodes in cross-shore:    21
+number of grid nodes in river mouth:    3
+
+['measuring station']
+active:                                 yes
+logging:                                no
+repeat interval:                        10y
+parameter to measure:                   elevation
+position wrt river mouth:               no
+position of station:                    all
+filename:                               elevation.bin
+
+[ bioturbation ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+depth of bioturbation (m):              .1
+bioturbation diffusion coefficient:     .00001
+
+

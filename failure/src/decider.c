@@ -55,7 +55,7 @@ int decider( const Sed_cube p , double threshold )
    eh_require( sed_cube_is_1d(p) );
 
    {
-      gssize n_grains = sed_sediment_env_size( );
+      gssize n_grains = sed_sediment_env_n_types( );
       gssize i;
       Sed_cell fail = sed_cell_new( n_grains );
       Sed_cell c    = sed_cell_new( n_grains );

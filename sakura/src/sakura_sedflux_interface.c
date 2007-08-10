@@ -121,7 +121,7 @@ sakura_erode_sediment( Sed_cube         p          ,
    if ( p && erosion_in_m )
    {
       gint i,  len;
-      gint n,  n_grains = sed_sediment_env_size();
+      gint n,  n_grains = sed_sediment_env_n_types();
       double** erosion  = eh_new( double* , n_grains );
       double   total_t;
       double   dx       = bathy_data->x[1] - bathy_data->x[0];
@@ -158,7 +158,7 @@ sakura_deposit_sediment( Sed_cube p                  ,
    if ( p && deposit_in_m )
    {
       gint i,  len          = bathy_data->len;
-      gint n,  n_grains     = sed_sediment_env_size();
+      gint n,  n_grains     = sed_sediment_env_n_types();
       double*  deposit_at_x = eh_new( double , n_grains );
       double** deposit      = eh_new( double* , n_grains );
       Sed_cell deposit_cell = sed_cell_new_env( );
@@ -304,7 +304,7 @@ sakura_set_sediment_data_from_env( )
    Sakura_sediment_st* s = eh_new( Sakura_sediment_st , 1 );
    gint n;
 
-   s->n_grains      = sed_sediment_env_size();
+   s->n_grains      = sed_sediment_env_n_types();
    s->size_equiv    = sed_sediment_property( NULL , &sed_type_grain_size_in_meters );
    s->lambda        = sed_sediment_property( NULL , &sed_type_lambda_in_per_seconds );
    s->bulk_density  = sed_sediment_property( NULL , &sed_type_rho_sat );
@@ -354,7 +354,7 @@ sakura_sed_get_phe( Sed_cube p , double y , Sakura_phe_st* phe_data )
       gint     ind      = sed_cube_column_id( p , 0 , y );
       double*  phe      = phe_data->phe;
       double   depth    = phe_data->val;
-      gint     n_grains = sed_sediment_env_size();
+      gint     n_grains = sed_sediment_env_n_types();
       gint     n;
 
 /*
@@ -427,7 +427,7 @@ sakura_sed_remove_sediment( Sed_cube p , double y , Sakura_cell_st* s )
    if ( p && s )
    {
       Sed_column col      = sed_cube_col_pos( p , 0 , y );
-      gint       n_grains = sed_sediment_env_size();
+      gint       n_grains = sed_sediment_env_n_types();
       double*    f        = eh_new0( double , n_grains );
       Sed_cell   cell     = NULL;
       double     dz       = s->t / sed_cube_y_res(p);
@@ -452,7 +452,7 @@ sakura_sed_add_sediment( Sed_cube p , double y , Sakura_cell_st* s )
    if ( p && s )
    {
       Sed_column col      = sed_cube_col_pos( p , 0 , y );
-      gint       n_grains = sed_sediment_env_size();
+      gint       n_grains = sed_sediment_env_n_types();
       double*    amount   = eh_new0( double , n_grains );
       double     dz       = s->t / sed_cube_y_res(p);
 

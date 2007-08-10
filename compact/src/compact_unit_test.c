@@ -10,10 +10,10 @@ START_TEST ( test_compact_0 )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
 
       f[0] = 1.;
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }
@@ -53,10 +53,10 @@ START_TEST ( test_compact_1 )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
 
       f[1] = 1.;
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }
@@ -96,10 +96,10 @@ START_TEST ( test_compact_2 )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
 
       f[2] = 1.;
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }
@@ -139,10 +139,10 @@ START_TEST ( test_compact_3 )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
 
       f[3] = 1.;
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }
@@ -182,10 +182,10 @@ START_TEST ( test_compact_4 )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
 
       f[4] = 1.;
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }
@@ -225,12 +225,12 @@ START_TEST ( test_compact_mixed )
    Sed_cell cell;
 
    {
-      double* f = eh_new0( double , sed_sediment_env_size() );
+      double* f = eh_new0( double , sed_sediment_env_n_types() );
       gssize n;
 
-      for ( n=0 ; n<sed_sediment_env_size() ; n++ )
-         f[n] = 1./(double)sed_sediment_env_size();
-      cell = sed_cell_new_sized( sed_sediment_env_size() , 30000 , f );
+      for ( n=0 ; n<sed_sediment_env_n_types() ; n++ )
+         f[n] = 1./(double)sed_sediment_env_n_types();
+      cell = sed_cell_new_sized( sed_sediment_env_n_types() , 30000 , f );
 
       eh_free( f );
    }

@@ -365,7 +365,7 @@ run_hyperpycnal( gpointer ptr , Sed_cube p )
       int max_n_nodes = (sed_cube_n_y(p)+1)
                       * sed_cube_y_res(p)
                       / TURBIDITY_CURRENT_GRID_SPACING;
-      gssize n_grains = sed_sediment_env_size();
+      gssize n_grains = sed_sediment_env_n_types();
       data->n_x = n_grains;
       data->n_y = max_n_nodes;
       data->deposit = eh_new_2( double , n_grains , max_n_nodes );
@@ -422,7 +422,7 @@ run_hyperpycnal( gpointer ptr , Sed_cube p )
 
    dx       = TURBIDITY_CURRENT_GRID_SPACING;
    dt       = TURBIDITY_CURRENT_TIME_INTERVAL;
-   n_grains = sed_sediment_env_size();
+   n_grains = sed_sediment_env_n_types();
 
    // Start the flow at the river mouth.
    {
@@ -944,7 +944,7 @@ void sed_get_phe( gpointer data , gpointer p )
    double volume;
    int i, n, n_grains;
    
-   n_grains = sed_sediment_env_size();
+   n_grains = sed_sediment_env_n_types();
    avg      = sed_cell_new_env( );
 
    if ( depth > 0 )

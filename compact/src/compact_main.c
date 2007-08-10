@@ -193,7 +193,7 @@ Sed_column read_sediment_column(FILE *fp,double dy)
    eh_require( fp     );
    eh_require( dy > 0 );
 
-   n_grains = sed_sediment_env_size();
+   n_grains = sed_sediment_env_n_types();
 
    fscanf(fp,"%d\n",&n_cells);
 
@@ -245,7 +245,7 @@ int write_sediment_column( Sed_column s , FILE *fp )
 {
    gssize i, n;
    Sed_cell this_cell;
-   gssize n_grains = sed_sediment_env_size();
+   gssize n_grains = sed_sediment_env_n_types();
 
    eh_require( s  );
    eh_require( fp );

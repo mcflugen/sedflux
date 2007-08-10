@@ -142,7 +142,7 @@ Sed_cell *diffuse_sediment( Sed_cube prof     , double k_max ,
 //   u_0 = sed_get_floor_from_cube( prof , 0 , j_river );
    u_0 = sed_cube_sea_level( prof );
 
-   n_grains = sed_sediment_env_size( );
+   n_grains = sed_sediment_env_n_types( );
    dx       = sed_cube_y_res( prof );
    
    //---
@@ -459,7 +459,7 @@ Sed_cell *diffuse_sediment_2( Sed_cube prof      , double k_long_max ,
    else
       facies = S_FACIES_DIFFUSED;
    
-   n_grains = sed_sediment_env_size( );
+   n_grains = sed_sediment_env_n_types( );
    dx       = sed_cube_x_res( prof );
    dy       = sed_cube_y_res( prof );
 

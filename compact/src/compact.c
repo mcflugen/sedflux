@@ -62,7 +62,7 @@ int compact( Sed_column s )
 {
    double *load_eff;
    double hydro_static;
-   gssize n_grains = sed_sediment_env_size();
+   gssize n_grains = sed_sediment_env_n_types();
 
    // If there is only one (or no) bins, there is no
    // overlying load and so no compaction.

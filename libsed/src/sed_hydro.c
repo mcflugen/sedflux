@@ -1240,6 +1240,8 @@ sed_hydro_array_eventize( Sed_hydro* rec_a , double f , gboolean insert_mean_val
                                            n_events                      ,
                                            insert_mean_values );
    }
+   else if ( eh_compare_dbl( f , 1. , 1e-12 ) )
+      event_a = sed_hydro_array_dup( rec_a );
 
    return event_a;
 }
