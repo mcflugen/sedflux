@@ -120,6 +120,7 @@ Sed_hydro_file_type sed_hydro_str_to_type( const gchar* type_s );
 Sed_hydro_file_type sed_hydro_file_guess_type( const gchar* file , GError** error );
 Sed_hydro     sed_hydro_copy            ( Sed_hydro dest , Sed_hydro src );
 Sed_hydro     sed_hydro_dup             ( Sed_hydro src );
+Sed_hydro*    sed_hydro_array_dup       ( Sed_hydro* src );
 gboolean      sed_hydro_is_same         ( Sed_hydro a    , Sed_hydro b );
 Sed_hydro     sed_hydro_resize          ( Sed_hydro a    , gssize n );
 gssize        sed_hydro_size            ( Sed_hydro a   );

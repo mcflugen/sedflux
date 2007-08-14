@@ -532,9 +532,30 @@ Sed_hydro sed_hydro_copy( Sed_hydro dest , Sed_hydro src )
    return dest;
 }
 
-Sed_hydro sed_hydro_dup( Sed_hydro src )
+Sed_hydro
+sed_hydro_dup( Sed_hydro src )
 {
    return sed_hydro_copy( NULL , src );
+}
+
+Sed_hydro*
+sed_hydro_array_dup( Sed_hydro* src )
+{
+   Sed_hydro* dest = NULL;
+
+   if ( src )
+   {
+      gint       i;
+      gint       len = g_strv_length( src );
+      Sed_hydro* p   = src;
+
+      dest = eh_new( Sed_hydro , len+1 );
+
+      for ( i=0 ; *p ; p++,i++ ) dest[i] = sed_hydro_dup( *p );
+      dest[len] = NULL;
+   }
+
+   return dest;
 }
 
 /** Compare two Sed_hydro values
