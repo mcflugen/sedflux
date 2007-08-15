@@ -63,11 +63,10 @@ sed_hydro_error_quark( void )
 
 
 //Hydro_header* _hydro_read_inline_header           ( Sed_hydro_file fp );
-Sed_hydro          _hydro_read_inline_record           ( Sed_hydro_file fp );
-Sed_hydrotrend_header* _hydro_read_hydrotrend_header       ( Sed_hydro_file fp );
-Sed_hydro          _hydro_read_hydrotrend_record       ( Sed_hydro_file fp );
-Sed_hydro          _hydro_read_inline_record           ( Sed_hydro_file fp );
-Sed_hydro          _hydro_read_hydrotrend_record_buffer( Sed_hydro_file fp );
+static Sed_hydro              _hydro_read_inline_record           ( Sed_hydro_file fp );
+static Sed_hydrotrend_header* _hydro_read_hydrotrend_header       ( Sed_hydro_file fp );
+static Sed_hydro              _hydro_read_hydrotrend_record       ( Sed_hydro_file fp );
+static Sed_hydro              _hydro_read_hydrotrend_record_buffer( Sed_hydro_file fp );
 
 void
 sed_hydro_fprint_default_inline_file( FILE *fp )
@@ -1694,37 +1693,37 @@ Hydro_header *_hydro_read_inline_header( Sed_hydro_file fp )
 }
 */
 
-Sed_hydro _hydro_read_inline_record( Sed_hydro_file fp )
+static Sed_hydro
+_hydro_read_inline_record( Sed_hydro_file fp )
 {
    Sed_hydro rec = NULL;
 
-   /* Check if the buffer has already been set */
-   if ( fp->buf_set )
+   eh_require( fp );
+
+   /* If the buffer hasn't already been set */
+   if ( !(fp->buf_set) )
+   {
+      /* Fill the buffer with all the records from the file */
+      fp->buf_set = sed_hydro_scan( fp->file , NULL );
+      fp->buf_cur = fp->buf_set;
+   }
+
+   eh_require( fp->buf_set );
+
+   if ( fp->buf_cur )
    {
       /* Duplicate the record at the top of the queue */
       rec = sed_hydro_dup( *(fp->buf_cur) );
+
+      /* Update the pointer to the current record */
       fp->buf_cur++;
 
       /* Rewind the buffer (the buffer is NULL-terminated) */
       if ( *(fp->buf_cur)==NULL )
       {
-         if ( fp->wrap_is_on )
-            fp->buf_cur = fp->buf_set;
-         else
-            eh_error( "Encountered end of file" );
+         if ( fp->wrap_is_on ) fp->buf_cur = fp->buf_set;
+         else                  fp->buf_cur = NULL;
       }
-   }
-   else
-   {
-      GError* error = NULL;
-
-      /* Fill the buffer with all the records from the file */
-      fp->buf_set = sed_hydro_scan( fp->file , &error );
-      if ( !fp->buf_set )
-         eh_error( "Error reading hydro file: %s" , error->message );
-      fp->buf_cur = fp->buf_set;
-
-      rec = sed_hydro_dup( *(fp->buf_cur) );
    }
 
    return rec;

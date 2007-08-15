@@ -252,6 +252,8 @@ run_plume_hyper_inflow( Sed_process proc , Sed_cube p )
       eh_require( flow                                  );
       eh_require( sed_cube_is_in_domain_id(p,ind_start) );
 
+      info.mass_added = sed_hydro_suspended_load( flow );
+
       sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &inflow_const );
 
       flow = sed_hydro_destroy( flow );
@@ -301,6 +303,8 @@ run_plume_hyper_sakura( Sed_process proc , Sed_cube p )
       eh_require( this_river                            );
       eh_require( flow                                  );
       eh_require( sed_cube_is_in_domain_id(p,ind_start) );
+
+      info.mass_added = sed_hydro_suspended_load( flow );
 
       sed_sakura( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &sakura_const );
 

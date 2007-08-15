@@ -263,6 +263,15 @@ sed_river_sediment_load( Sed_riv s )
    return sed_hydro_total_load( s->data );
 }
 
+double
+sed_river_suspended_load( Sed_riv s )
+{
+   eh_return_val_if_fail( s       , 0. );
+   eh_return_val_if_fail( s->data , 0. );
+
+   return sed_hydro_suspended_load( s->data );
+}
+
 Sed_hydro
 sed_river_hydro   ( Sed_riv s )
 {

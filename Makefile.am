@@ -112,6 +112,6 @@ force_rebuild:
 #	cp -r $(top_builddir)/docs/latex $(distdir)/docs
 
 
-nightly: force_rebuild
+nightly: distcheck
 	/Users/huttone/googlecode_upload.py --summary="Nightly build (`date +%d/%m/%C%y`)" -p sedflux -u mcflugen $(distdir).tar.gz
 

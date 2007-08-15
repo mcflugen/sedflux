@@ -76,7 +76,7 @@ sed_inflow( Sed_cube         p       ,
             dt = total_t-t;
 
          daily_flood->duration  = dt;
-         daily_flood->velocity += INFLOW_VELOCITY_RANGE*g_random_double();
+//         daily_flood->velocity += INFLOW_VELOCITY_RANGE*g_random_double();
 
          ok = inflow_wrapper( bathy_data , daily_flood , sediment_data , c , deposit_in_m , erosion_in_m );
 
@@ -119,7 +119,6 @@ inflow_erode_sediment( Sed_cube         p          ,
       {
          eh_dbl_array_mult_each( erosion_in_m[n] , bathy_data->len , bathy_data->width );
          eh_dbl_array_mult     ( erosion_in_m[n] , bathy_data->len , dx/(sed_cube_x_res(p)*sed_cube_y_res(p)) );
-
          erosion[n] = eh_dbl_array_rebin( erosion_in_m[n] , bathy_data->len , bin_size , &len );
       }
 
@@ -127,7 +126,7 @@ inflow_erode_sediment( Sed_cube         p          ,
       for ( i=0 ; i<len ; i++ )
       {
          for ( n=0,total_t=0. ; n<n_grains ; n++ )
-            total_t += erosion[n][i];
+            total_t += fabs( erosion[n][i] );
          sed_column_remove_top( sed_cube_col(p,i+i_start) , total_t );
       }
 

@@ -74,10 +74,13 @@ run_plume( Sed_process proc , Sed_cube p )
       {
          for ( r=all_leaves ; *r ; r++ )
          {
-            eh_debug( "Running plume for river %s" , sed_river_name_loc( *r ) );
+            eh_debug( "The current time is %f years" , sed_cube_age_in_years( p ) );
+            eh_debug( "Running plume for river %s"   , sed_river_name_loc( *r )   );
 
             if ( sed_river_is_hyperpycnal(*r) ) eh_debug( "Plume is hyperpycnal" );
             else                                eh_debug( "Plume is hypopycnal" );
+
+            info.mass_added = sed_river_suspended_load( *r );
 
             sed_process_provide( plume_hyper , PLUME_HYDRO_DATA , *r );
             sed_process_provide( plume_hypo  , PLUME_HYDRO_DATA , *r );
