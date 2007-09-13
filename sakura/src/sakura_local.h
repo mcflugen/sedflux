@@ -57,6 +57,72 @@
 /// Length of a day in seconds.
 # define DAY (86400.)
 //@}
+
+typedef struct
+{
+   double* rho_grain;   //< Grain density
+   double* rho_dep;     //< Bulk deposit density
+   double* u_settling;  //< Settling velocity
+   gint    len;         //< Number of grain types
+}
+Sakura_sediment;
+
+typedef struct
+{
+   double  u;       //< Flow velocity
+   double  h;       //< Flow height
+   double  c;       //< Flow concentration
+   double* c_grain; //< Flow concentration for each grain type
+   gint    n_grain; //< Number of grain types
+}
+Sakura_node;
+
+typedef struct
+{
+   double*  x;       //< Node positions
+   double*  w;       //< Node widths
+   double*  h;       //< Node flow heights
+   double*  u;       //< Node flow velocities
+   double*  c;       //< Node concentrations
+   double** c_grain; //< Node concentrations for each grain type
+
+   double** d;       //< Total deposition at each node
+   double** e;       //< Total erosion at each node
+
+   gint     len;     //< Number of nodes
+   gint     n_grain; //< Number of grain types
+}
+Sakura_array;
+
+Sakura_sediment* sakura_sediment_new           ( gint n_grains );
+Sakura_sediment* sakura_sediment_destroy       ( Sakura_sediment* s );
+Sakura_sediment* sakura_sediment_set_rho_grain ( Sakura_sediment* s , double* x );
+Sakura_sediment* sakura_sediment_set_rho_dep   ( Sakura_sediment* s , double* x );
+Sakura_sediment* sakura_sediment_set_u_settling( Sakura_sediment* s , double* x );
+
+Sakura_array* sakura_array_new    ( gint len , gint n_grain );
+Sakura_array* sakura_array_destroy( Sakura_array* a );
+Sakura_array* sakura_array_copy   ( Sakura_array* d , Sakura_array* s );
+Sakura_array* sakura_array_set_x  ( Sakura_array* a , double* x );
+Sakura_array* sakura_array_set_w  ( Sakura_array* a , double* w );
+Sakura_array* sakura_array_set_bc ( Sakura_array* a , Sakura_node* inflow , Sakura_node* outflow );
+double        sakura_array_mass_in_susp  ( Sakura_array* a , Sakura_sediment* s );
+double        sakura_array_mass_eroded   ( Sakura_array* a , Sakura_sediment* s );
+double        sakura_array_mass_deposited( Sakura_array* a , Sakura_sediment* s );
+
+Sakura_node* sakura_node_new    (                  double u , double c , double h , double* c_grain , gint len );
+Sakura_node* sakura_node_set    ( Sakura_node* x , double u , double c , double h , double* c_grain , gint len );
+Sakura_node* sakura_node_destroy( Sakura_node* x );
+
+gboolean sakura_set_outflow( Sakura_node* out , Sakura_array* a , double x_head , double dt , double dx );
+double sakura_get_sin_slope( Sakura_get_func f , gpointer data , Sakura_array* a , gint i );
+gboolean calculate_mid_vel( Sakura_array* a_mid , Sakura_array* a , gint ind_head , Sakura_const_st* Const );
+gboolean calculate_next_vel( Sakura_array* a_last , Sakura_array* a_mid , Sakura_array* a_next , gint ind_head , Sakura_const_st* Const );
+gboolean compute_c_grain( Sakura_array* a , Sakura_array* a_last , double* u , gint i , double dx , Sakura_const_st* Const , Sakura_sediment* sed );
+gboolean calculate_next_c_and_h( Sakura_array* a_new , Sakura_array* a_last , double* u_temp , gint ind_head , Sakura_const_st* Const , Sakura_sediment* sed );
+gboolean calculate_mid_c_and_h( Sakura_array* a_mid , Sakura_array* a_last , Sakura_array* a_next );
+gint calculate_head_index( Sakura_array* a , double* u , gint ind_head , double dx , double dt , double* x_head );
+
 typedef struct
 {
    double* x;
@@ -197,7 +263,7 @@ double sakura_remove   ( Sakura_arch_st* data , double x , Sakura_cell_st* s );
 double sakura_get_depth( Sakura_arch_st* data , double x );
 
 void   sakura_sed_get_phe        ( Sed_cube p , double y , Sakura_phe_st* phe_data );
-void   sakura_sed_add_sediment   ( Sed_cube p , double y , Sakura_cell_st* s );
+double sakura_sed_add_sediment   ( Sed_cube p , double y , Sakura_cell_st* s );
 double sakura_sed_remove_sediment( Sed_cube p , double y , Sakura_cell_st* s );
 double sakura_sed_get_depth      ( Sed_cube p , double y );
 /*

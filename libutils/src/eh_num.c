@@ -1681,7 +1681,8 @@ double eh_dbl_array_abs_max( const double* x , gsize n )
    return max;
 }
 
-gssize eh_dbl_array_fprint( FILE* fp , double* x , gssize n )
+gssize
+eh_dbl_array_fprint( FILE* fp , double* x , gssize n )
 {
    gssize total_bytes = 0;
 
@@ -1876,7 +1877,8 @@ double eh_dbl_array_var( const double* x , gsize n )
    return var;
 }
 
-double eh_dbl_array_sum( const double *x , gsize n )
+double
+eh_dbl_array_sum( const double *x , gsize n )
 {
    double sum=0;
 
@@ -2742,10 +2744,10 @@ void twofft(double data1[], double data2[], double fft1[], double fft2[],
 double
 eh_dbl_array_mean_weighted( const double x[] , gint len , const double f[] )
 {
-   long i;
-   double sum;
+   gint   i   = 0;
+   double sum = 0;
    
-   for (i=0,sum=0;i<len;i++)
+   for ( ; i<len ; i++ )
       sum += f[i]*x[i];
    
    return sum;

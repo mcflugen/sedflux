@@ -1,0 +1,10 @@
+Package: sedflux
+Version: @VERSION@
+Maintainer: Eric Hutton <huttone@colorado.edu>
+Description: A process-based basin filling model
+Section: science
+Priority: extra
+Essential: no
+Architecture: @DPKG_ARCHITECTURE@
+Suggests: check, doxygen
+

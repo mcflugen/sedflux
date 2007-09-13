@@ -1056,12 +1056,14 @@ fluvial plumes.  Sedimentology, v. 42, pp. 831-838.
 */
 #define SED_BURSIK_CONST_A_3 (1.74)
 #define SED_BURSIK_CONST_H   (7.5)
-double sed_type_settling_velocity( const Sed_type t )
+double
+sed_type_settling_velocity( const Sed_type t )
 {
    return t->w_s;
 }
 
-double sed_removal_rate_to_settling_velocity( double l )
+double
+sed_removal_rate_to_settling_velocity( double l )
 {
    return l * SED_BURSIK_CONST_A_3 * SED_BURSIK_CONST_H;
 }

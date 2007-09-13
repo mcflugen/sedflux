@@ -188,7 +188,11 @@ int interpolate2(double *x,double *y,int len,double *xNew,double *yNew,int lenNe
 /* ---dudt--- *
   * returns (du/dt)
 */
-double dudt( double u, double ul, double ur, double ull, double urr, double hl, double hr, double hm, double cl, double cr, double cm, double ustar, double s, double Ew, double smallh, double dx, double Cd, double nu)
+double
+dudt( double u     , double ul , double ur , double ull , double urr,
+      double hl    , double hr , double hm ,
+      double cl    , double cr , double cm ,
+      double ustar , double s  , double Ew , double smallh , double dx, double Cd, double nu)
 {
 	double dudx, du, ugrav, upress, ufric, uvisco, uright, uleft;
 	double minmod2(double, double);
@@ -201,7 +205,7 @@ double dudt( double u, double ul, double ur, double ull, double urr, double hl, 
 			fprintf(stderr, "error ...negative C in dudt; cm=%f\n",cm); 
 		
 	uright = tvdright(u, u, ul, ur, ull, urr);
-	uleft = tvdleft(u, u, ul, ur, ull, urr);
+	uleft  = tvdleft (u, u, ul, ur, ull, urr);
 	
 	dudx = (uright - uleft)/dx;
 	
@@ -209,20 +213,17 @@ double dudt( double u, double ul, double ur, double ull, double urr, double hl, 
 	ugrav = R * G * s * cm;
 	
 	/* acceleration due to pressure gradient */
-	if (hm < HMIN)
-			upress = R * G * (cm * (hr-hl) + 0.5 * hm * (cr-cl))/dx;
-	else
-			upress = 0.5 * R * G / hm * ( cr * hr * hr - cl * hl * hl ) / dx;
+	if (hm < HMIN) upress = R * G * (cm * (hr-hl) + 0.5 * hm * (cr-cl))/dx;
+	else           upress = 0.5 * R * G / hm * ( cr * hr * hr - cl * hl * hl ) / dx;
 		
 	/* acceleration due to friction; uStar determined from the energy equation*/
-	if (hm < HMIN)
-			ufric = 0;
-	else
-			ufric= Cd * eh_sqr(u)/hm;
+	if (hm < HMIN) ufric = 0;
+	else           ufric= Cd * eh_sqr(u)/hm;
 	
-	uvisco = nu * (1 + 2.5 * cm) * (ur - 2 * u + ul)/dx/dx;
-	
+	uvisco = nu * (1 + 2.5 * cm) * (ur - 2 * u + ul)/(dx*dx);
+
 	du = -u * dudx + ugrav - upress - ufric -uvisco;
+
 	return du;
 }
 

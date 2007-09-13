@@ -88,7 +88,7 @@ gint
 main(int argc,char *argv[])
 {
    gchar*              program_name;
-   GOptionContext*     context = g_option_context_new( "Run hyperpycnal flow model." );
+   GOptionContext*     context;
    GError*             error = NULL;
    double              spreading_angle;
    Eh_dbl_grid         deposit;
@@ -100,6 +100,11 @@ main(int argc,char *argv[])
    Sakura_flood_st**   flood_data;
    Sakura_const_st*    const_data;
    Sakura_sediment_st* sediment_data;
+
+   g_thread_init( NULL );
+   eh_init_glib();
+
+   context = g_option_context_new( "Run hyperpycnal flow model." );
 
    g_option_context_add_main_entries( context , entries , NULL );
 

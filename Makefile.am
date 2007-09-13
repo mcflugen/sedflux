@@ -1,15 +1,9 @@
-#CFLAGS              += @GLIB_CFLAGS@ -I$(top_srcdir)/libutils/src
-
-#libutils_dir         = $(top_builddir)/libutils/src
-#libsed_dir           = $(top_builddir)/libsed/src
-
-#LIBS                += -L$(libutils_dir) -L$(libsed_dir)
-
 ACLOCAL_AMFLAGS      = -I m4
 
 EXTRA_DIST           = bootstrap
 
-SUBDIRS              = rpm \
+SUBDIRS              = deb \
+                       rpm \
                        docs \
                        libutils \
                        libsed  \
@@ -38,70 +32,78 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config-h.in \
 
 #package: $(SUBDIRS)
 
-#libutils: force_rebuild
-#	@cd libutils; make install
+libutils: force_rebuild
+	@cd libutils; make
 
-#libsed: force_rebuild
-#	@cd libsed/src && make datadir.h && cd .. &&  make install
+libsed: libutils
+	@cd libsed/src && make datadir.h && cd .. &&  make
 
-#avulsion: force_rebuild
-#	@cd avulsion; make install
+avulsion: libutils libsed
+	@cd avulsion; make 
 
-#bing: force_rebuild
-#	@cd bing; make install
+bing: libutils libsed
+	@cd bing; make
 
-#compact: force_rebuild
-#	@cd compact; make install
+compact: libutils libsed
+	@cd compact; make
 
-#diffusion: force_rebuild
-#	@cd diffusion; make install
+diffusion: libutils libsed
+	@cd diffusion; make
 
-#failure: force_rebuild
-#	@cd failure; make install
+failure: libutils libsed
+	@cd failure; make
 
-#flow: force_rebuild
-#	@cd flow; make install
+flow: libutils libsed
+	@cd flow; make
 
-#hydrotrend: force_rebuild
-#	@cd hydrotrend; make install
+hydrotrend: libutils libsed
+	@cd hydrotrend; make
 
-#inflow: force_rebuild
-#	@cd inflow; make install
+inflow: libutils libsed
+	@cd inflow; make
 
-#muds: force_rebuild
-#	@cd muds; make install
+muds: libutils libsed
+	@cd muds; make
 
-#plume: force_rebuild
-#	@cd plume; make install
+plume: libutils libsed
+	@cd plume; make
 
-#quake: force_rebuild
-#	@cd quake; make install
+quake: libutils libsed
+	@cd quake; make
 
-#sakura: force_rebuild
-#	@cd sakura; make install
+sakura: libutils libsed
+	@cd sakura; make
 
-#sedflux: force_rebuild
-#	@cd sedflux; make install
+sedflux: libutils libsed
+	@cd sedflux; make
 
-#sedutils: force_rebuild
-#	@cd sedutils; make install
+sedutils: libutils libsed
+	@cd sedutils; make
 
-#squall: force_rebuild
-#	@cd squall; make install
+squall: libutils libsed
+	@cd squall; make
 
-#subside: force_rebuild
-#	@cd subside; make install
+subside: libutils libsed
+	@cd subside; make
 
-#xshore: force_rebuild
-#	@cd xshore; make install
+xshore:  libutils libsed
+	@cd xshore; make
 
-#message: force_rebuild
-#	@echo "---------------------------------------"
-#	@echo "--- Making package $@"
-#	@echo "---------------------------------------"
+message: force_rebuild
+	@echo "---------------------------------------"
+	@echo "--- Making package $@"
+	@echo "---------------------------------------"
 
-#docs: force_rebuild
-#	@cd docs; make install
+docs: force_rebuild
+	@cd docs; make install
+
+dist-deb: force_rebuild
+	cd deb \
+	&& make deb
+
+dist-rpm: force_rebuild
+	cd rpm \
+	&& make rpm
 
 force_rebuild:
 
@@ -111,6 +113,19 @@ force_rebuild:
 #	cp -r $(top_builddir)/docs/html $(distdir)/docs && \
 #	cp -r $(top_builddir)/docs/latex $(distdir)/docs
 
+dist-bin: distdir
+	mkdir -p $(distdir)/_inst
+	mkdir -p $(distdir)/_build
+	db_install_base=`$(am__cd) $(distdir)/_inst && pwd` \
+	   && cd $(distdir)/_build \
+	   && ../configure --srcdir=.. --prefix="$$db_install_base" --disable-shared --enable-static $(DISTCHECK_CONFIGURE_FLAGS) \
+	   && $(MAKE) $(AM_MAKEFLAGS) \
+	   && $(MAKE) $(AM_MAKEFLAGS) install \
+	   && cd .. \
+	   && mv _inst ${PACKAGE}-${VERSION} \
+	   && tar cvfz ../$(top_builddir)/${PACKAGE}_${VERSION}_@DPKG_ARCHITECTURE@.tar.gz ${PACKAGE}-${VERSION} \
+	   && rm -r _build ${PACKAGE}-${VERSION}
+	$(am__remove_distdir)
 
 nightly: distcheck
 	/Users/huttone/googlecode_upload.py --summary="Nightly build (`date +%d/%m/%C%y`)" -p sedflux -u mcflugen $(distdir).tar.gz

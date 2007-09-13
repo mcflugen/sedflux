@@ -76,15 +76,17 @@ typedef struct
 {
    double dt;
    double out_dt;
-   double e_a;
-   double e_b;
-   double sua;
-   double sub;
-   double c_drag;
+
+   double e_a;             ///< Entrainment coefficient, a
+   double e_b;             ///< Entrainment coefficient, b
+   double sua;             ///< Gradient of bottom sediment shear strength
+   double sub;             ///< Bottom sediment shear strength at seafloor
+   double c_drag;          ///< Drag coefficient
+   double rho_river_water; ///< Density of river water
+   double rho_sea_water;   ///< Density of sea water
+
    double tan_phi;
    double mu_water;
-   double rho_river_water;
-   double rho_sea_water;
    double channel_width;
    double channel_len;
    double dep_start;
@@ -101,6 +103,7 @@ typedef struct
 }
 Sakura_const_st;
 
+/*
 gboolean sakura ( double dx         , double dt              , double basin_Len ,
                   int n_nodes       , int n_grains           , double* x      ,
                   double* depth     , double *width            , double Init_U[]  ,
@@ -109,6 +112,13 @@ gboolean sakura ( double dx         , double dt              , double basin_Len 
                   double supply_time , double dep_start , double *fraction ,
                   double *phe_bot , double *rho_bot , double OutTime   ,
                   Sakura_const_st* c   , double **deposit       , FILE *fp_data );
+*/
+gboolean
+sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv    ,
+        double  dt        , double  duration ,
+        double* x         , double* z        , double* w      , gint    len      ,
+        double* rho_grain , double* rho_dep  , double* u_fall , gint    n_grains ,
+        Sakura_const_st* c );
 Sed_hydro sakura_flood_from_cell( Sed_cell c , double area );
 gboolean  sed_sakura( Sed_cube         p       ,
                       Sed_hydro        f       ,

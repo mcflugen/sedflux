@@ -17,3 +17,13 @@ sakura_SOURCES            = sakura_main.c sakura.c sakura_io.c sakura_utils.c sa
 sakura_CFLAGS             = -DSAKURA_STANDALONE
 sakura_LDADD              = -lglib-2.0
 
+if ENABLE_CHECK
+
+bin_PROGRAMS             += sakura_unit_test
+sakura_unit_test_SOURCES  = sakura_unit_test.c
+
+sakura_unit_test_LDADD    = -lsakura -lglib-2.0 -lm @CHECK_LIBS@
+sakura_unit_test_CFLAGS   = @CHECK_CFLAGS@
+
+endif
+

@@ -40,6 +40,7 @@ static Eh_key_file_entry template[] =
  { "Angle of internal friction"                      , EH_ARG_DBL    , &p.tan_phi         } ,
  { "Kinematic viscosity of clear water"              , EH_ARG_DBL    , &p.mu_water        } ,
  { "Flood data file"                                 , EH_ARG_FILENAME , &p.flood_file    } ,
+ NULL
 };
 
 //void sakura_get_phe( Sakura_phe_query_st* query_data , Sakura_bottom_st* bed_data );
@@ -85,6 +86,7 @@ sakura_wrapper( Sakura_bathy_st*    b            ,
       eh_require( s->bulk_density  );
       eh_require( f->fraction      );
 
+/*
       sakura( dx                  , c->dt            , basin_len      ,
               b->len              , s->n_grains      , b->x           ,
               b->depth            , b->width         , init_u         ,
@@ -92,7 +94,13 @@ sakura_wrapper( Sakura_bathy_st*    b            ,
               s->reynolds_no      , s->grain_density , f->depth       ,
               f->duration         , c->dep_start     , f->fraction    ,
               NULL                , s->bulk_density  , c->out_dt      ,
-              c                   , deposition       , fp_debug );
+              c                   , deposition       , NULL );
+*/
+      sakura( f->velocity      , f->rho_flow     , f->depth      , f->fraction ,
+              c->dt            , f->duration     ,
+              b->x             , b->depth        , b->width      , b->len      ,
+              s->grain_density , s->bulk_density , s->u_settling , s->n_grains ,
+              c );
 
       eh_free( init_u );
       eh_free( init_c );
@@ -138,7 +146,8 @@ sakura_scan_parameter_file( const gchar* file , GError** error )
       p_new->mu_water       *= 1e-6;
       p_new->tan_phi         = tan( p.tan_phi*G_PI/180. );
 
-      eh_dbl_array_mult( p_new->lambda     , p_new->n_grains , S_DAYS_PER_SECOND*0.1 );
+//      eh_dbl_array_mult( p_new->lambda     , p_new->n_grains , S_DAYS_PER_SECOND*0.1 );
+      eh_dbl_array_mult( p_new->lambda     , p_new->n_grains , S_DAYS_PER_SECOND     );
       eh_dbl_array_mult( p_new->size_equiv , p_new->n_grains , 1e-6                  );
       eh_dbl_array_mult( p_new->size_comp  , p_new->n_grains , 1e-6                  );
 
@@ -288,14 +297,15 @@ sakura_set_bathy_data( double** bathy , gint len , double dx , double basin_len 
    eh_require( bathy[0] );
    eh_require( bathy[1] );
    eh_require( bathy[2] );
-   eh_require( len > 2  );
-   eh_require( dx > 0.  );
+   eh_require( len >=2  );
+   eh_require( dx  > 0. );
    eh_require( basin_len <= bathy[0][len-1] - bathy[0][0] );
 
    if ( bathy )
    {
       gint   i;
-      double x_0 = bathy[0][0] + dx/2.;
+      //double x_0 = bathy[0][0] + dx/2.;
+      double x_0 = bathy[0][0];
       double x_1 = bathy[0][0] + basin_len;
 
       b     = eh_new( Sakura_bathy_st , 1 );
@@ -316,8 +326,8 @@ sakura_set_bathy_data( double** bathy , gint len , double dx , double basin_len 
          b->slope[i] = atan( (b->depth[i+1]-b->depth[i]) / (b->x[i+1]-b->x[i]) );
       b->slope[b->len-1] = b->slope[b->len-2];
 
-      for ( i=0 ; i<b->len ; i++ )
-         b->x[i] -= bathy[0][0];
+      //for ( i=0 ; i<b->len ; i++ )
+      //   b->x[i] -= bathy[0][0];
    }
 
    return b;
@@ -446,10 +456,17 @@ sakura_set_sediment_data( Sakura_param_st* p )
    for ( n=0 ; n<p->n_grains ; n++ )
    {
       s->lambda[n]      /= p->flow_fraction[n];
-      s->u_settling[n]   = sakura_settling_velocity( s->grain_density[n] , s->size_equiv[n] ,
-                                                  p->rho_river_water  , p->mu_water );
+      //s->lambda[n] *= 10.;
+      s->u_settling[n]   = sed_removal_rate_to_settling_velocity( s->lambda[n]*S_SECONDS_PER_DAY )
+                         * S_DAYS_PER_SECOND;
+      //s->u_settling[n]   = sakura_settling_velocity( s->grain_density[n] , s->size_equiv[n] ,
+      //                                            p->rho_river_water  , p->mu_water );
       s->reynolds_no[n]  = sakura_reynolds_number  ( s->grain_density[n] , s->size_equiv[n] ,
                                                   p->rho_river_water  , p->mu_water );
+if ( TRUE )
+{
+   eh_message( "Settling velocity (cm/s): %f" , s->u_settling[n]*100. );
+}
    }
 
    return s;
@@ -479,6 +496,11 @@ sakura_settling_velocity( double rho_grain , double equiv_dia , double rho_river
       Wstar = pow(10.0, Wstar);
 
       u = pow((Rden * G * mu_river_water * Wstar), 0.33333); 
+
+eh_watch_dbl( u*100 );
+u = 0.005;
+eh_watch_dbl( u*100 );
+
    }
 
    return u;
@@ -730,55 +752,66 @@ sakura_get_phe( Sakura_arch_st* data , double x , Sakura_phe_st* phe_data )
 double
 sakura_add( Sakura_arch_st* data , double x , Sakura_cell_st* s )
 {
-   double dh = 0.;
+   double vol_add = 0.;
 
    eh_require( data    );
    eh_require( data->b );
    eh_require( s       );
 
-   if ( data && s )
+   if ( data && s && s->t>0 )
    {
       Sakura_bathy_st* b     = data->b;
       gint             len   = b->len;
       double*          depth = b->depth;
-      gint             ind   = (b->x[0]-x)/b->dx;
+      gint             ind   = (x-b->x[0])/b->dx;
+      double           dh;
 
       eh_require( ind>=0  );
       eh_require( ind<len );
       eh_require( depth   );
 
-      dh          = s->t;
-      depth[ind] += fabs( dh*b->dx );
+//      vol_add     = s->t;
+
+      dh          = s->t/(b->dx*b->width[ind]);
+
+      if ( depth[ind]+dh>0 ) dh = -depth[ind];
+
+      if ( dh<0 ) dh = 0;
+
+      depth[ind] += fabs( dh );
+      vol_add     = dh*b->dx*b->width[ind];
    }
 
-   return dh;
+   return vol_add;
 }
 
 double
 sakura_remove( Sakura_arch_st* data , double x , Sakura_cell_st* s )
 {
-   double dh = 0.;
+   double vol_rem = 0.;
 
    eh_require( data    );
    eh_require( data->b );
    eh_require( s       );
 
-   if ( data && s )
+   if ( data && s && s->t>0 )
    {
       Sakura_bathy_st* b     = data->b;
       gint             len   = b->len;
       double*          depth = b->depth;
-      gint             ind   = (b->x[0]-x)/b->dx;
+      gint             ind   = (x-b->x[0])/(b->dx);
+      double           dh;
 
       eh_require( ind>=0  );
       eh_require( ind<len );
       eh_require( depth   );
 
-      dh          = s->t;
-      depth[ind] -= fabs( dh*b->dx );
+      vol_rem     = s->t;
+      dh          = vol_rem/(b->dx*b->width[ind]);
+      depth[ind] -= fabs( dh );
    }
 
-   return dh;
+   return vol_rem;
 }
 
 double
@@ -794,7 +827,8 @@ sakura_get_depth( Sakura_arch_st* data , double x )
       Sakura_bathy_st* b     = data->b;
       gint             len   = b->len;
       double*          depth = b->depth;
-      gint             ind   = (b->x[0]-x)/b->dx;
+      //gint             ind   = (b->x[0]-x)/b->dx;
+      gint             ind   = (x-b->x[0])/b->dx;
 
       eh_require( depth    );
       eh_require( ind>=0   );
