@@ -8,6 +8,8 @@
 #include "sed_sedflux.h"
 #include "sedflux.h"
 
+#include "bio.h"
+
 Eh_project fill_sedflux_info_file             ( Eh_project p         ,
                                                 const gchar* cmd_str ,
                                                 const gchar* desc    );
