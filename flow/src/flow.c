@@ -654,7 +654,7 @@ double *mgm_1d( double *u_h , double *k_h , double *f_h , int n_h , double dz , 
    return u_h;
 }
 
-#include "utils.h"
+#include <utils/utils.h>
 
 double **mgm_2d( double **u_h , double **kx_h , double **kz_h , double **f_h , int n_h , double dx , double dz , double dt )
 {
@@ -743,7 +743,7 @@ double ***mgm_3d( double ***u_h , double ***kx_h , double ***kz_h , double ***f_
    return u_h;
 }
 
-#include "utils.h"
+#include <utils/utils.h>
 
 double *fmg_1d( double *u_h , double *k_h , double *f_h , int n_h , double dz , double dt )
 {

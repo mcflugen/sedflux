@@ -27,7 +27,7 @@
  */
 
 #include <glib.h>
-#include "utils.h"
+#include <utils/utils.h>
 #include "plumeinput.h"
 #include "plumevars.h"
 

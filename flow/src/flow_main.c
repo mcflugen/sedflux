@@ -21,8 +21,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "glib.h"
-#include "utils.h"
+#include <glib.h>
+#include <utils/utils.h>
 #include "flow.h"
 
 //BOP

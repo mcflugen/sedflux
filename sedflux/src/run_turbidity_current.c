@@ -25,9 +25,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "inflow.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <inflow.h>
 #include "my_processes.h"
 
 #define WITH_SAKURA
@@ -57,8 +57,8 @@
 # define FLOW_DURATION 7200.
 #endif
 
-#define TURBIDITY_CURRENT_GRID_SPACING          (10.0)
-#define TURBIDITY_CURRENT_TIME_INTERVAL         (0.10)
+#define TURBIDITY_CURRENT_GRID_SPACING          (100.0)
+#define TURBIDITY_CURRENT_TIME_INTERVAL         (3.0)
 #define TURBIDITY_CURRENT_INITIAL_VELOCITY      (1.0)
 #define TURBIDITY_CURRENT_VELOCITY_RANGE        (3.0)
 #define TURBIDITY_CURRENT_INITIAL_WIDTH         (1000.0)
@@ -67,7 +67,7 @@
 #define TURBIDITY_CURRENT_CONCENTRATION_RANGE   (0.04)
 #define TURBIDITY_CURRENT_GRAIN_DENSITY         (2650.0)
 #define TURBIDITY_CURRENT_SPREADING_ANGLE       (14.0)
-#define TURBIDITY_CURRENT_NO_DEPOSIT_LENGTH     (1000.)
+#define TURBIDITY_CURRENT_NO_DEPOSIT_LENGTH     (0.)
 #define TURBIDITY_CURRENT_INITIAL_FLUID_DENSITY (DENSITY_OF_SEA_WATER)
 #define TURBIDITY_CURRENT_ALGORITHM_INFLOW      (0)
 #define TURBIDITY_CURRENT_ALGORITHM_SAKURA      (1)

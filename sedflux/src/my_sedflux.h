@@ -1,7 +1,7 @@
 #if !defined( MY_SEDFLUX_H )
 #define MY_SEDFLUX_H
 
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 #include "bio.h"
 

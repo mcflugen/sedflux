@@ -24,10 +24,12 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "failure.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <failure.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 int get_tsunami_parameters(Sed_cube fail);
 

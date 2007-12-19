@@ -35,7 +35,7 @@
  */
 #include "plumeinput.h"
 #include "plumevars.h"
-#include "utils.h"
+#include <utils/utils.h>
 
 /*
  *	Start of PlumeCent

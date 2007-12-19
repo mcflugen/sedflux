@@ -21,7 +21,7 @@
 #include "plumevars.h"
 #include "plumeinput.h"
 
-#include "utils.h"
+#include <utils/utils.h>
 
 //grid_type_3d *grid;
 //river_type river;
@@ -68,7 +68,8 @@ FILE    *fidlog;                /* Log file */
 //---
 //double Qsr, Qsw[4], Tsr, Tsd[2], merr;
 
-int plume( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
+int
+plume( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
 {
    int     err;
    Plume_mass_bal mb;

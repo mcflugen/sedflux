@@ -62,12 +62,12 @@
  */
 #include "plumeinput.h"
 #include "plumevars.h"
-#include "utils.h"
+#include <utils/utils.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-#include "utils.h"
+#include <utils/utils.h>
 
 int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid )
 {

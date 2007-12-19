@@ -137,11 +137,11 @@ Plume_mass_bal;
 
 typedef struct
 {
-   Plume_river *river;
-   Plume_sediment *sed;
-   Plume_ocean *ocean;
-   int n_grains;
-   int lat;
+   Plume_river*    river;
+   Plume_sediment* sed;
+   Plume_ocean*    ocean;
+   int             n_grains;
+   int             lat;
 }
 Plume_enviro;
 

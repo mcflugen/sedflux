@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 
 #undef WITH_THREADS

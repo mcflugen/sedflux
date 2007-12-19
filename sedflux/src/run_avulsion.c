@@ -23,10 +23,12 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "avulsion.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <avulsion.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 gboolean init_avulsion_data( Sed_process p , Sed_cube prof );
 
@@ -97,13 +99,14 @@ run_avulsion( Sed_process p , Sed_cube prof )
       eh_message( "fraction     : %f" , fraction                               );
       eh_message( "no. branches : %d" , sed_river_n_branches  ( this_river )   );
 */
-
+/*
       eh_data   ( "%f, %f, %f, %f, %d" ,
                   sed_cube_age_in_years ( prof       ) ,
                   sed_river_angle_to_deg( this_river ) ,
                   sed_river_angle_to_deg( sed_river_left (this_river) ) ,
                   sed_river_angle_to_deg( sed_river_right(this_river) ) ,
                   sed_river_n_branches  ( this_river ) );
+*/
 
       if ( sed_mode_is_2d() )
          sed_river_adjust_mass( this_river , fraction  );

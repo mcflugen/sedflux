@@ -20,8 +20,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
 /** \file compact.c
 
@@ -32,6 +32,12 @@
    \callgraph
 */
 /*@{*/
+
+GQuark
+compact_error_quark( void )
+{
+   return g_quark_from_static_string( "compact-error-quark" );
+}
 
 /** Compact a column of sediment
 

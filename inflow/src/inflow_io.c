@@ -1,8 +1,8 @@
 #include "inflow.h"
 #include "inflow_local.h"
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
 GQuark
 inflow_error_quark( void )

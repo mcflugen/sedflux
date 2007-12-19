@@ -1,8 +1,7 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src
+INCLUDES                 = -I$(top_srcdir)
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
-                           $(top_builddir)/libsed/src/libsedflux.la
+AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
+                           $(top_builddir)/sed/libsedflux.la
 
 bin_PROGRAMS             = bio
 bio_SOURCES              = bio_main.c
@@ -11,5 +10,6 @@ lib_LTLIBRARIES          = libbio.la
 libbio_la_SOURCES        = bio.c bio_sed_interface.c
 
 bio_LDADD                = -lbio -lglib-2.0 -lm
-include_HEADERS          = bio.h
+bioinclude_HEADERS       = bio.h
+bioincludedir            = $(includedir)/ew-2.0
 

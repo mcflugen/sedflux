@@ -21,8 +21,8 @@
 #ifndef _SQUALL_H_
 # define _SQUALL_H_
    
-# include "utils.h"
-# include "sed_sedflux.h"
+# include <utils/utils.h>
+# include <sed/sed_sedflux.h>
    
 # define SQUALL_DEFAULT_C_E       (.2)
 //# define SQUALL_DEFAULT_C_V       (.05)

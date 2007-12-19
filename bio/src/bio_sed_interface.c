@@ -2,8 +2,8 @@
 #define EH_LOG_DOMAIN BIO_PROCESS_NAME_S
 
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "bio.h"
 
 G_GNUC_INTERNAL Sed_cell* bio_array_to_cell_array( Sed_cell* c_arr , double** data );
@@ -11,7 +11,7 @@ G_GNUC_INTERNAL double**  sed_array_to_bio_array ( Sed_cell* c_arr , gint* n_gra
 G_GNUC_INTERNAL void      sed_column_bioturbate  ( Sed_column c , double depth , double k , double duration , Bio_method m );
 
 #include <stdio.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "bio.h"
 
 typedef struct

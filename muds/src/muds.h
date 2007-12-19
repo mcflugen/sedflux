@@ -21,8 +21,8 @@
 #ifndef _MUDS_H_
 # define _MUDS_H_
 
-# include "utils.h"
-# include "sed_sedflux.h"
+# include <utils/utils.h>
+# include <sed/sed_sedflux.h>
 
 int muddy(Sed_cube prof,Sed_cell *deposit, double *wave, double duration );
 

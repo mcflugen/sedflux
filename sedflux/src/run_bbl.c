@@ -24,9 +24,11 @@
 #include <math.h>
 #include <string.h>
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 double   add_sediment_from_external_source( Sed_cube     p      ,
                                             Eh_sequence* seq    ,

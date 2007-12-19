@@ -1,5 +1,5 @@
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include <check.h>
 
 int compact( Sed_column );

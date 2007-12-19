@@ -21,8 +21,10 @@
 #define EH_LOG_DOMAIN FLOW_PROCESS_NAME_S
 
 #include <stdio.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 void run_exponential_flow( Sed_column c , double time_now_in_years );
 void run_terzaghi_flow( Sed_column c , double time_now_in_years );

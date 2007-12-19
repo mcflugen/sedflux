@@ -23,8 +23,8 @@
 #include <math.h>
 #include <limits.h>
 #include "inflow.h"
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 
 /** inflow turbidity current model.
 

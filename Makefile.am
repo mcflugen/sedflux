@@ -5,8 +5,8 @@ EXTRA_DIST           = bootstrap
 SUBDIRS              = deb \
                        rpm \
                        docs \
-                       libutils \
-                       libsed  \
+                       utils \
+                       sed  \
                        avulsion  \
                        bing  \
                        bio  \
@@ -32,61 +32,67 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config-h.in \
 
 #package: $(SUBDIRS)
 
-libutils: force_rebuild
-	@cd libutils; make
+#libutils: force_rebuild
+#	@cd libutils; make
 
-libsed: libutils
-	@cd libsed/src && make datadir.h && cd .. &&  make
+#libsed: libutils
+#	@cd libsed/src && make datadir.h && cd .. &&  make
 
-avulsion: libutils libsed
+utils: force_rebuild
+	@cd utils; make
+
+sed: utils
+	@cd sed && make datadir.h &&  make
+
+avulsion: utils sed
 	@cd avulsion; make 
 
-bing: libutils libsed
+bing: utils sed
 	@cd bing; make
 
-compact: libutils libsed
+compact: utils sed
 	@cd compact; make
 
-diffusion: libutils libsed
+diffusion: utils sed
 	@cd diffusion; make
 
-failure: libutils libsed
+failure: utils sed
 	@cd failure; make
 
-flow: libutils libsed
+flow: utils sed
 	@cd flow; make
 
-hydrotrend: libutils libsed
+hydrotrend: utils sed
 	@cd hydrotrend; make
 
-inflow: libutils libsed
+inflow: utils sed
 	@cd inflow; make
 
-muds: libutils libsed
+muds: utils sed
 	@cd muds; make
 
-plume: libutils libsed
+plume: utils sed
 	@cd plume; make
 
-quake: libutils libsed
+quake: utils sed
 	@cd quake; make
 
-sakura: libutils libsed
+sakura: utils sed
 	@cd sakura; make
 
-sedflux: libutils libsed
+sedflux: utils sed
 	@cd sedflux; make
 
-sedutils: libutils libsed
+sedutils: utils sed
 	@cd sedutils; make
 
-squall: libutils libsed
+squall: utils sed
 	@cd squall; make
 
-subside: libutils libsed
+subside: utils sed
 	@cd subside; make
 
-xshore:  libutils libsed
+xshore:  utils sed
 	@cd xshore; make
 
 message: force_rebuild

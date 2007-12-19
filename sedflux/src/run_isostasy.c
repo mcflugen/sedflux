@@ -23,10 +23,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "subside.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <subside.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 void     subside_point_load      ( Eh_dbl_grid g , double load , double h ,
                                    double E       , int i_load  , int j_load );

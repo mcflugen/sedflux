@@ -1,4 +1,4 @@
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "sakura_local.h"
 #include "sakura.h"
 
@@ -57,6 +57,9 @@ sed_sakura( Sed_cube         p       ,
       double              total_t        = sed_hydro_duration(f)*S_SECONDS_PER_DAY;
       double              dt             = S_SECONDS_PER_DAY;
       double              t;
+      gint                n_grains;
+      gint                len;
+      const double        spreading_angle = tan(14.*G_PI/180.);
 
       c->get_phe      = (Sakura_phe_func)sakura_sed_get_phe;
       c->add          = (Sakura_add_func)sakura_sed_add_sediment;
@@ -76,11 +79,13 @@ sed_sakura( Sed_cube         p       ,
       eh_require( bathy_data    );
       eh_require( sediment_data );
 
-      deposit_in_m = eh_new_2( double , sediment_data->n_grains , bathy_data->len );
+      //deposit_in_m = eh_new_2( double , sediment_data->n_grains , bathy_data->len );
 
       for ( t=0 ; t<total_t ; t+=dt )
       {
-         daily_flood = sakura_set_flood_data( f , c->rho_river_water );
+         daily_flood = sakura_sed_set_flood_data( f , c->rho_river_water );
+
+         sakura_set_width( bathy_data , daily_flood->width , spreading_angle );
 
          eh_require( daily_flood );
 
@@ -90,7 +95,10 @@ sed_sakura( Sed_cube         p       ,
          daily_flood->duration  = dt;
 //         daily_flood->velocity += SAKURA_VELOCITY_RANGE*g_random_double();
 
-         ok = sakura_wrapper( bathy_data , daily_flood , sediment_data , c , deposit_in_m );
+         deposit_in_m = sakura_wrapper( bathy_data , daily_flood , sediment_data , c , &n_grains , &len );
+
+         eh_require( n_grains==sediment_data->n_grains );
+         eh_require( len==bathy_data->len );
 
          sakura_destroy_flood_data( daily_flood );
       }
@@ -267,6 +275,7 @@ sakura_set_bathy_data_from_cube( Sed_cube p , double* width , gssize ind_start ,
       double**    bathy     = eh_new_2( double , 3 , sed_cube_size(p) );
       double      basin_len;
       Eh_dbl_grid g         = sed_cube_water_depth_grid( p , id );
+      gint        n;
 
       eh_require( ind_start>=0               );
       eh_require( ind_start<sed_cube_size(p) );
@@ -277,7 +286,10 @@ sakura_set_bathy_data_from_cube( Sed_cube p , double* width , gssize ind_start ,
 
       basin_len = bathy[0][len-2] - bathy[0][0];
 
-      b = sakura_set_bathy_data( bathy , len , dx , basin_len );
+      for ( n=0 ; n<sed_cube_size(p) ; n++ )
+         bathy[1][n] *= -1;
+
+      b = sakura_set_bathy_data( bathy , len , dx , sed_sediment_env_n_types() );
 
       eh_free( bathy[0] );
       eh_free( bathy    );
@@ -288,9 +300,13 @@ sakura_set_bathy_data_from_cube( Sed_cube p , double* width , gssize ind_start ,
    return b;
 }
 
+/* Include for g_memmove */
+#include <string.h>
+
 Sakura_sediment_st*
 sakura_set_sediment_data_from_env( )
 {
+/*
    Sakura_sediment_st* s = eh_new( Sakura_sediment_st , 1 );
    gint n;
 
@@ -309,6 +325,39 @@ sakura_set_sediment_data_from_env( )
                                                           sed_rho_fresh_water() , sed_mu_water() );
       s->reynolds_no[n] = sakura_reynolds_number        ( s->grain_density[n]   , s->size_equiv[n] ,
                                                           sed_rho_fresh_water() , sed_mu_water() );
+   }
+*/
+   Sakura_sediment_st* s = eh_new( Sakura_sediment_st , 1 );
+   gint n;
+
+   s->n_grains      = sed_sediment_env_n_types();
+   s->lambda        = sed_sediment_property( NULL , &sed_type_lambda_in_per_seconds );
+   s->bulk_density  = sed_sediment_property( NULL , &sed_type_rho_sat   );
+   s->grain_density = sed_sediment_property( NULL , &sed_type_rho_grain );
+   s->u_settling    = eh_new( double , s->n_grains );
+   s->size_equiv    = NULL;
+   s->reynolds_no   = NULL;
+
+   /* Shift these array by one.  The first type is bedload and we don't want
+      bedload in the turbidity current. */
+   //g_memmove( s->lambda        , s->lambda+1        , sizeof(double)*s->n_grains );
+   //g_memmove( s->bulk_density  , s->bulk_density+1  , sizeof(double)*s->n_grains );
+   //g_memmove( s->grain_density , s->grain_density+1 , sizeof(double)*s->n_grains );
+
+   /* Divide the lambdas by the equivalentHeights.  This is added
+      to account for different grains occupying different portions
+      of the flow height (ie sands mostly near the bottom, clays 
+      distributed evenly bottom to top).
+   */
+   for ( n=0 ; n<s->n_grains ; n++ )
+   {
+      //s->lambda[n]      /= p->flow_fraction[n];
+      s->u_settling[n]   = sed_removal_rate_to_settling_velocity( s->lambda[n]*S_SECONDS_PER_DAY )
+                         * S_DAYS_PER_SECOND;
+
+if ( TRUE )
+   eh_message( "Settling velocity (cm/s): %f" , s->u_settling[n]*100. );
+
    }
 
    return s;
@@ -329,8 +378,6 @@ more sediment than is actually present.
                retreive the grain type fracitons.
 \param p       A Sed_cube to query
 
-\return       A pointer to the array of grain type fractions.
-
 */
 void
 sakura_sed_get_phe( Sed_cube p , double y , Sakura_phe_st* phe_data )
@@ -338,14 +385,13 @@ sakura_sed_get_phe( Sed_cube p , double y , Sakura_phe_st* phe_data )
    eh_require( p        );
    eh_require( phe_data );
 
-   if ( p && phe_data )
+   if ( FALSE && p && phe_data )
    {
       double   volume   = 0.;
       gint     ind      = sed_cube_column_id( p , 0 , y );
       double*  phe      = phe_data->phe;
       double   depth    = phe_data->val / ( sed_cube_x_res(p)*sed_cube_y_res(p) );
       gint     n_grains = sed_sediment_env_n_types();
-      gint     n;
 
       eh_require( ind>=0 );
       eh_require( sed_cube_is_in_domain( p , 0 , ind ) );
@@ -385,7 +431,6 @@ sakura_sed_get_phe( Sed_cube p , double y , Sakura_phe_st* phe_data )
       else
          phe = eh_dbl_array_set( phe , n_grains , 0. );
 
-
    // save the volume that was actually eroded.
 //   data->erode_depth = volume;
       phe_data->val = volume;
@@ -402,7 +447,7 @@ sakura_sed_remove_sediment( Sed_cube p , double y , Sakura_cell_st* s )
    eh_require( p );
    eh_require( s );
 
-   if ( p && s && s->t>0 )
+   if ( FALSE && p && s && s->t>0 )
    {
       Sed_column col      = sed_cube_col_pos( p , 0 , y );
       gint       n_grains = sed_sediment_env_n_types();
@@ -410,9 +455,9 @@ sakura_sed_remove_sediment( Sed_cube p , double y , Sakura_cell_st* s )
       Sed_cell   cell     = NULL;
       double     dz       = s->t / ( sed_cube_y_res(p) * sed_cube_x_res(p) );
 
-      f[s->id] = 1.;
-      cell     = sed_column_separate_top( col , dz , f , NULL );
-      vol_rem  = sed_cell_size( cell ) * sed_cube_y_res(p) * sed_cube_x_res(p);
+      f[s->id]   = 1.;
+      cell       = sed_column_separate_top( col , dz , f , NULL );
+      vol_rem    = sed_cell_size( cell ) * sed_cube_y_res(p) * sed_cube_x_res(p);
 
       sed_cell_destroy( cell );
       eh_free( f );
@@ -463,7 +508,7 @@ sakura_sed_get_depth( Sed_cube p , double y )
    {
       gint ind = sed_cube_column_id( p , 0 , y );
 
-      if ( ind>=0 ) depth = sed_cube_water_depth( p , 0 , ind );
+      if ( ind>=0 ) depth = -sed_cube_water_depth( p , 0 , ind );
    }
 
    return depth;

@@ -27,8 +27,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 #include "my_processes.h"
 
 Sed_process_info

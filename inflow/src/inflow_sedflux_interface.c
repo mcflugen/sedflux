@@ -1,4 +1,4 @@
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "inflow_local.h"
 #include "inflow.h"
 

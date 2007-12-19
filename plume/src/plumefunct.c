@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <glib.h>
-#include "utils.h"
+#include <utils/utils.h>
 
 /*
  *	convert n to characters in s
@@ -89,6 +89,9 @@ float **matrix(long nrl, long nrh, long ncl, long nch)
 	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
 	float **m;
 
+         eh_require( nch-ncl>0 );
+         eh_require( nrh-nrl>0 );
+
 	/* allocate pointers to rows */
 //	m=(float **) malloc((size_t)((nrow+NR_END)*sizeof(float*)));
 //        m = (float**)eh_malloc( ((size_t)(nrow+NR_END)*sizeof(float*)) ,
@@ -119,6 +122,9 @@ double **new_dmatrix( long n_rows , long n_cols )
    int i;
    double **m;
 
+   eh_require( n_rows>0 );
+   eh_require( n_cols>0 );
+
    m = eh_new( double* , n_rows );
 
    m[0] = eh_new( double , n_rows*n_cols );
@@ -134,6 +140,10 @@ float ***f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh)
 {
 	long i,j,nrow=nrh-nrl+1,ncol=nch-ncl+1,ndep=ndh-ndl+1;
 	float ***t;
+
+         eh_require( ndh-ndl>0 );
+         eh_require( nch-ncl>0 );
+         eh_require( nrh-nrl>0 );
 
 	/* allocate pointers to pointers to rows */
 //	t=(float ***) malloc((size_t)((nrow+NR_END)*sizeof(float**)));

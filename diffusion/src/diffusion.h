@@ -25,8 +25,8 @@
 #define DIFFUSION_OPT_LAND  (1<<1)
 #define DIFFUSION_OPT_WATER (1<<2)
 
-# include "utils.h"
-# include "sed_sedflux.h"
+# include <utils/utils.h>
+# include <sed/sed_sedflux.h>
 
 Sed_cell *diffuse_sediment( Sed_cube prof , double k_max ,
                             double skin_depth , double dt    ,

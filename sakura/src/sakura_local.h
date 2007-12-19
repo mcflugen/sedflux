@@ -33,8 +33,8 @@
 #define TURBIDITY_CURRENT_DEFAULT_CHANNEL_LENGTH    (30000.0)
 
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "sakura.h"
 #include "sakura_utils.h"
 
@@ -125,12 +125,14 @@ gint calculate_head_index( Sakura_array* a , double* u , gint ind_head , double 
 
 typedef struct
 {
-   double* x;
-   double* depth;
-   double* width;
-   double* slope;
-   gint    len;
-   double  dx;
+   double*   x;
+   double*   depth;
+   double*   width;
+   double*   slope;
+   double**  dep;
+   gint      n_grains;
+   gint      len;
+   double    dx;
 }
 Sakura_bathy_st;
 
@@ -233,23 +235,33 @@ typedef struct
 }
 Sakura_param_st;
 
-gboolean sakura_wrapper( Sakura_bathy_st*    b ,
+double** sakura_wrapper( Sakura_bathy_st*    b ,
                          Sakura_flood_st*    f ,
                          Sakura_sediment_st* s ,
                          Sakura_const_st*    c ,
-                         double**            deposition   );
+                         gint* n_grains        ,
+                         gint* len );
+
+void sakura_set_width( Sakura_bathy_st* bathy_data  ,
+                       double           river_width ,
+                       double           spreading_angle );
 
 Sakura_param_st*    sakura_scan_parameter_file( const gchar* file , GError** error );
 Sakura_param_st*    sakura_check_params       ( Sakura_param_st* p , GError** error );
 Sakura_bathy_st*    sakura_scan_bathy_file    ( const gchar* file , Sakura_param_st* p , GError** error );
 Sakura_flood_st**   sakura_scan_flood_file    ( const gchar* file , Sakura_param_st* p , GError** error );
 Sakura_flood_st*    sakura_set_flood_data     ( Sed_hydro h , double rho_river_water );
+Sakura_flood_st*    sakura_sed_set_flood_data ( Sed_hydro h , double rho_river_water );
 Sakura_flood_st*    sakura_destroy_flood_data ( Sakura_flood_st* f );
 Sakura_sediment_st* sakura_set_sediment_data  ( Sakura_param_st* p );
 Sakura_const_st*    sakura_set_constant_data  ( Sakura_param_st* p , Sakura_bathy_st* b );
-Sakura_bathy_st*    sakura_set_bathy_data     ( double** bathy , gint len , double dx , double basin_len );
+Sakura_const_st*    sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , gint* id , gint dt );
+Sakura_bathy_st*    sakura_set_bathy_data     ( double** bathy , gint len , double dx , gint n_grains );
+Sakura_bathy_st*    sakura_new_bathy_data     ( gint n_grains , gint len );
+Sakura_bathy_st*    sakura_copy_bathy_data    ( Sakura_bathy_st* d , const Sakura_bathy_st* s );
 Sakura_bathy_st*    sakura_destroy_bathy_data ( Sakura_bathy_st* b );
 Sakura_bathy_st*    sakura_update_bathy_data  ( Sakura_bathy_st* b , double** deposition , double** erosion , gint n_grains );
+gint                sakura_write_data         ( const gchar*     file , Eh_dbl_grid deposit );
 gint                sakura_write_output       ( const gchar* file  ,
                                                 Sakura_bathy_st* b ,
                                                 double** deposit   ,

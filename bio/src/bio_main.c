@@ -24,7 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "utils.h"
+#include <utils/utils.h>
 #include "bio.h"
 
 G_GNUC_INTERNAL double** bio_scan_column_file( const gchar* file , gint* n_grains , gint* n_layers , GError** error );

@@ -1,14 +1,14 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src
+INCLUDES                 = -I$(top_srcdir)
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
-                           $(top_builddir)/libsed/src/libsedflux.la
+AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
+                           $(top_builddir)/sed/libsedflux.la
 
 bin_SCRIPTS              = runinflow
 bin_PROGRAMS             = inflow pseudoplume
 
 pseudoplume_SOURCES      = pseudoplume.c
-include_HEADERS          = inflow.h
+inflowinclude_HEADERS    = inflow.h
+inflowincludedir         = $(includedir)/ew-2.0
 
 lib_LTLIBRARIES          = libinflow.la
 libinflow_la_SOURCES     = inflow.c inflow_io.c inflow_sedflux_interface.c

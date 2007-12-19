@@ -33,8 +33,8 @@
 #include <math.h>
 #include <string.h>
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "diffusion.h"
 
 // this defines the percent of maximum that the diffusion coefficient will be

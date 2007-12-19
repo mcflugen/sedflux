@@ -26,34 +26,106 @@
 #include <string.h>
 #include "sakura.h"
 #include "sakura_local.h"
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 
 // Command line arguments
-static gint     verbose    = 0;
-static gboolean version    = FALSE;
-static gboolean debug      = FALSE;
-static gdouble  day        = 1.;
-static gdouble  angle      = 14.;
-static gchar*   in_file    = NULL;
-static gchar*   out_file   = NULL;
-static gchar*   bathy_file = NULL;
-static gchar*   flood_file = NULL;
-static gchar*   data_file  = NULL;
+static gint     _verbose     = 0;
+static gboolean _reset_bathy = FALSE;
+static gboolean _version     = FALSE;
+static gboolean _debug       = FALSE;
+static gdouble  _day         = 1.;
+static gdouble  _angle       = 14.;
+static gchar*   _in_file     = NULL;
+static gchar*   _out_file    = NULL;
+static gchar*   _bathy_file  = NULL;
+static gchar*   _flood_file  = NULL;
+static gchar*   _data_file   = NULL;
+static gint*    _data_id     = NULL;
+static gint     _data_int    = 1;
+
+gboolean parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error );
 
 static GOptionEntry entries[] =
 {
-   { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &in_file    , "Initialization file" , "<file>" } ,
-   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &out_file   , "Output file"         , "<file>" } ,
-   { "bathy-file" , 'b' , 0 , G_OPTION_ARG_FILENAME , &bathy_file , "Bathymetry file"     , "<file>" } ,
-   { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &flood_file , "Flood file"          , "<file>" } ,
-   { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &data_file  , "Data file"           , "<file>" } ,
-   { "angle"      , 'a' , 0 , G_OPTION_ARG_DOUBLE   , &angle      , "Spreading angle"     , "DEG"    } ,
-   { "verbose"    , 'V' , 0 , G_OPTION_ARG_INT      , &verbose    , "Verbosity level"     , "n"      } ,
-   { "version"    , 'v' , 0 , G_OPTION_ARG_NONE     , &version    , "Version number"      , NULL     } ,
-   { "debug"      , 'b' , 0 , G_OPTION_ARG_NONE     , &debug      , "Write debug messages", NULL     } ,
+   { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &_in_file     , "Initialization file" , "<file>" } ,
+   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &_out_file    , "Output file"         , "<file>" } ,
+   { "bathy-file" , 'b' , 0 , G_OPTION_ARG_FILENAME , &_bathy_file  , "Bathymetry file"     , "<file>" } ,
+   { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &_flood_file  , "Flood file"          , "<file>" } ,
+   { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &_data_file   , "Data file"           , "<file>" } ,
+   { "out-data"   , 'D' , 0 , G_OPTION_ARG_CALLBACK , parse_data_list , "List of data to watch" , "[var1[,var2[...]]]" } ,
+   { "out-int"    , 'I' , 0 , G_OPTION_ARG_INT      , &_data_int    , "Data output interval (-)" , "INT" } ,
+   { "angle"      , 'a' , 0 , G_OPTION_ARG_DOUBLE   , &_angle       , "Spreading angle (deg)"     , "DEG"    } ,
+   { "reset"      ,  0  , 0 , G_OPTION_ARG_NONE     , &_reset_bathy , "Reset bathymetry with every flood"     , NULL    } ,
+   { "verbose"    , 'V' , 0 , G_OPTION_ARG_INT      , &_verbose     , "Verbosity level"     , "n"      } ,
+   { "version"    , 'v' , 0 , G_OPTION_ARG_NONE     , &_version     , "Version number"      , NULL     } ,
+   { "debug"      , 'b' , 0 , G_OPTION_ARG_NONE     , &_debug       , "Write debug messages", NULL     } ,
    { NULL }
 };
+
+static const gchar* _DATA_VAL_KEYS[] = 
+{
+   "velocity" , "height" , "concentration" , NULL
+};
+
+gboolean
+parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error )
+{
+   gboolean success = FALSE;
+   gint*    data_id = NULL;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+
+   if ( name && value )
+   {
+      GError* tmp_err   = NULL;
+      gchar** data_list = g_strsplit( value , "," , 0 );
+
+      if ( !data_list )
+      {
+         g_set_error( &tmp_err ,
+                      G_OPTION_ERROR ,
+                      G_OPTION_ERROR_FAILED ,
+                      "Failed to parse comma-separated list of data values to monitor" );
+      }
+      else
+      {
+         gchar** key;
+         gint    id;
+         gint    i;
+
+
+         data_id = eh_new( gint , g_strv_length( data_list )+1 );
+
+         for ( key=data_list,i=0 ; *key && !tmp_err ; key++,i++ )
+         {
+            id         = eh_strv_find( _DATA_VAL_KEYS , *key );
+            data_id[i] = id;
+
+            if ( id<0 )
+               g_set_error( &tmp_err ,
+                            G_OPTION_ERROR ,
+                            G_OPTION_ERROR_FAILED ,
+                            "Invalid data key (%s)" , *key );
+         }
+         data_id[i] = -1;
+      }
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         eh_free( data_id );
+         data_id = NULL;
+         success = FALSE;
+      }
+      else
+         success = TRUE;
+   }
+
+   _data_id = data_id;
+
+   return success;
+}
 
 void
 sakura_run_flood( Sakura_bathy_st* b    ,
@@ -62,347 +134,124 @@ sakura_run_flood( Sakura_bathy_st* b    ,
                   Sakura_const_st* c    ,
                   double** deposit_in_m )
 {
-   double** deposition = eh_new_2( double , s->n_grains , b->len );
+   //double** deposition = eh_new_2( double , s->n_grains , b->len );
 
-   if ( deposition )
+   //if ( deposition )
    {
-      gint n, i;
+      gint     n, i;
+      double** deposit = NULL;
+      gint     n_grains;
+      gint     len;
 
-      sakura_wrapper( b , f , s , c , deposition );
+      deposit = sakura_wrapper( b , f , s , c , &n_grains , &len );
+
+      eh_require( n_grains==s->n_grains );
+      eh_require( len==b->len );
 
 //      sakura_update_bathy_data( b , deposition , erosion , s->n_grains );
 
       for ( n=0 ; n<s->n_grains ; n++ )
          for ( i=0 ; i<b->len ; i++ )
-            deposit_in_m[n][i] += deposition[n][i];
+            deposit_in_m[n][i] = deposit[n][i];
 
-      eh_free_2( deposition );
+      eh_free_2( deposit );
    }
 }
-
-void sakura_set_width( Sakura_bathy_st* bathy_data  ,
-                       double           river_width ,
-                       double           spreading_angle );
 
 gint
 main(int argc,char *argv[])
 {
-   gchar*              program_name;
-   GOptionContext*     context;
-   GError*             error = NULL;
-   double              spreading_angle;
-   Eh_dbl_grid         deposit;
-   Eh_dbl_grid         total_deposit;
-   gint                i;
-   gboolean            mode_1d;
-   Sakura_param_st*    param;
-   Sakura_bathy_st*    bathy_data;
-   Sakura_flood_st**   flood_data;
-   Sakura_const_st*    const_data;
-   Sakura_sediment_st* sediment_data;
+   GError*  error = NULL;
+   gchar*   program_name;
+   gboolean mode_1d;
 
    g_thread_init( NULL );
    eh_init_glib();
 
-   context = g_option_context_new( "Run hyperpycnal flow model." );
+   {
+      GOptionContext* context = g_option_context_new( "Run hyperpycnal flow model." );
 
-   g_option_context_add_main_entries( context , entries , NULL );
+      g_option_context_add_main_entries( context , entries , NULL );
 
-   if ( !g_option_context_parse( context , &argc , &argv , &error ) )
-      eh_error( "Error parsing command line arguments: %s" , error->message );
+      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+         eh_error( "Error parsing command line arguments: %s" , error->message );
+   }
 
-   day            *= S_SECONDS_PER_DAY;
-   spreading_angle = tan(angle*G_PI/180.);
+   _day            *= S_SECONDS_PER_DAY;
 
-   if ( version )
+   if ( _version )
    {
       eh_fprint_version_info( stdout , "sakura" , 0 , 9 , 0 );
       eh_exit(0);
    }
 
-   if ( debug )
+   if ( _debug )
       g_setenv( "SAKURA_DEBUG" , "TRUE" , TRUE );
 
    program_name = g_path_get_basename( argv[0] );
    if ( strcasecmp( program_name , "sakura")==0 )
    {
-      angle   = 0.;
+      _angle   = 0.;
       mode_1d = TRUE;
    }
 
-   if ( verbose )
+   if ( _verbose )
    {
-      if ( mode_1d )
-         eh_info( "Operating in 1D mode (ignoring width information)." );
-      else
-         eh_info( "Operating in 1.5D mode." );
+      if ( mode_1d ) eh_info( "Operating in 1D mode (ignoring width information)." );
+      else           eh_info( "Operating in 1.5D mode." );
 
-      eh_info( "Duration of flow (days)   : %f" , day*S_DAYS_PER_SECOND );
-      eh_info( "Spreading angle (degrees) : %f" , angle );
+      eh_info( "Duration of flow (days)   : %f" , _day*S_DAYS_PER_SECOND );
+      eh_info( "Spreading angle (degrees) : %f" , _angle );
    }
 
-   if (    ( param      = sakura_scan_parameter_file( in_file            , &error ) )==NULL
-        || ( flood_data = sakura_scan_flood_file    ( flood_file , param , &error ) )==NULL
-        || ( bathy_data = sakura_scan_bathy_file    ( bathy_file , param , &error ) )==NULL )
-      eh_error( "%s" , error->message );
-
-   const_data    = sakura_set_constant_data( param , bathy_data );
-   sediment_data = sakura_set_sediment_data( param );
-
-   deposit       = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
-   total_deposit = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
-
-   /* Run each day of the flood */
-   for ( i=0 ; flood_data[i] ; i++ )
+   if ( !error )
    {
-      /* The width starts at the river width for each day */
-      sakura_set_width( bathy_data , flood_data[i]->width , spreading_angle );
+      gint i;
+      Sakura_param_st*    param         = NULL;
+      Sakura_bathy_st*    bathy_data    = NULL;
+      Sakura_bathy_st*    bathy_data_0  = NULL;
+      Sakura_flood_st**   flood_data    = NULL;
+      Sakura_const_st*    const_data    = NULL;
+      Sakura_sediment_st* sediment_data = NULL;
+      Eh_dbl_grid         deposit;
+      Eh_dbl_grid         total_deposit;
+      const double        spreading_angle = tan(_angle*G_PI/180.);
 
-      sakura_run_flood( bathy_data , flood_data[i] , sediment_data , const_data , eh_dbl_grid_data(deposit) );
+      if (    ( param        = sakura_scan_parameter_file( _in_file            , &error ) )==NULL
+           || ( flood_data   = sakura_scan_flood_file    ( _flood_file , param , &error ) )==NULL
+           || ( bathy_data_0 = sakura_scan_bathy_file    ( _bathy_file , param , &error ) )==NULL )
+         eh_error( "%s" , error->message );
 
-      eh_dbl_grid_add( total_deposit , deposit );
-   }
+      bathy_data    = sakura_copy_bathy_data         ( NULL       , bathy_data_0 );
+      const_data    = sakura_set_constant_data       ( param      , bathy_data   );
+      const_data    = sakura_set_constant_output_data( const_data , _data_file , _data_id , _data_int );
+      sediment_data = sakura_set_sediment_data       ( param );
 
-   sakura_write_output( out_file , bathy_data , eh_dbl_grid_data(total_deposit) , sediment_data->n_grains );
+      deposit       = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
+      total_deposit = eh_grid_new( double , sediment_data->n_grains , bathy_data->len );
 
-   eh_grid_destroy( total_deposit , TRUE );
-   eh_grid_destroy( deposit       , TRUE );
+      for ( i=0 ; flood_data[i] ; i++ )
+      { /* Run each day of the flood */
 
-   return 0;
-}
+         /* The width starts at the river width for each day */
+         sakura_set_width( bathy_data , flood_data[i]->width , spreading_angle );
 
-void
-sakura_set_width( Sakura_bathy_st* bathy_data  ,
-                  double           river_width ,
-                  double           spreading_angle )
-{
-   gint   i;
-   double dx = bathy_data->x[1] - bathy_data->x[0];
-   double flow_width;
+         sakura_run_flood( bathy_data , flood_data[i] , sediment_data , const_data , eh_dbl_grid_data(deposit) );
 
-   // Create a spreading angle.
-   bathy_data->width[0] = river_width;
-   for ( i=1 ; i<bathy_data->len ; i++ )
-   {
-      flow_width = bathy_data->width[i-1] + spreading_angle*dx;
-      if ( flow_width < bathy_data->width[i] )
-         bathy_data->width[i] = flow_width;
-      else
-         break;
-   }
+         eh_dbl_grid_add( total_deposit , deposit );
 
-   return;
-}
-
-#if defined( OLD )
-{
-
-   Eh_args *args;
-   FILE *fp_in, *fp_out, *fp_flood, *fp_data;
-   char *infile, *outfile, *bathyfile, *floodfile, *datafile;
-   gboolean verbose, mode_1d=FALSE;
-   char comment[S_LINEMAX];
-   double basin_len, dx, densitySeaWater, densityRiverWater;
-   double depositionStart;
-   double *lambda, *diameterEquivalent, *diameterComponent, *fraction;
-   double *equivalentHeight, *bulkDensity, *grainDensity, *phe_bottom;
-   double diameterBottom, BulkDensityBottom;
-   int n_grains;
-   double *discharge, *densityFlow, *river_width, *river_depth, *river_velocity;
-   int flood_days;
-   int i, j, n, n_nodes;
-   double *x, *depth, *width, *slope, **deposit;
-   double sum;
-   double day;
-   double angle, spreading_angle, flow_width;
-   I_bottom_t get_phe_data;
-   Sakura_t consts;
-
-// read input parameters.
-
-   fp_in = eh_open_file( infile , "r" );
-   read_double_vector( fp_in , &basin_len         , 1 );
-   basin_len *= 1000.;
-   read_double_vector( fp_in , &dx                , 1 );
-   read_double_vector( fp_in , &densitySeaWater   , 1 );
-   read_double_vector( fp_in , &densityRiverWater , 1 );
-   read_int_vector   ( fp_in , &n_grains          , 1 );
-
-   lambda             = eh_new( double , n_grains );
-   diameterEquivalent = eh_new( double , n_grains );
-   diameterComponent  = eh_new( double , n_grains );
-   fraction           = eh_new( double , n_grains );
-   equivalentHeight   = eh_new( double , n_grains );
-   bulkDensity        = eh_new( double , n_grains );
-   grainDensity       = eh_new( double , n_grains );
-   phe_bottom         = eh_new( double , n_grains );
-
-   read_double_vector( fp_in , lambda             , n_grains );
-   for ( n=0 ; n<n_grains ; n++ )
-      lambda[n] /= 86400;
-   read_double_vector( fp_in , diameterEquivalent , n_grains );
-   read_double_vector( fp_in , diameterComponent  , n_grains );
-   for ( n=0 ; n<n_grains ; n++ )
-   {
-      diameterEquivalent[n] /= 1e6;
-      diameterComponent[n]  /= 1e6;
-   }
-   read_double_vector( fp_in , fraction           , n_grains );
-   read_double_vector( fp_in , equivalentHeight   , n_grains );
-   read_double_vector( fp_in , bulkDensity        , n_grains );
-   read_double_vector( fp_in , grainDensity       , n_grains );
-
-   read_double_vector( fp_in , &depositionStart   , 1 );
-   depositionStart *= 1000;
-   read_double_vector( fp_in , &diameterBottom    , 1 );
-   read_double_vector( fp_in , &BulkDensityBottom , 1 );
-
-   read_double_vector( fp_in , phe_bottom         , n_grains );
-   read_double_vector( fp_in , &consts.sua        , 1 );
-   read_double_vector( fp_in , &consts.sub        , 1 );
-   read_double_vector( fp_in , &consts.Ea         , 1 );
-   read_double_vector( fp_in , &consts.Eb         , 1 );
-   read_double_vector( fp_in , &consts.Cd         , 1 );
-   read_double_vector( fp_in , &consts.tanPhi     , 1 );
-   consts.tanPhi = tan(consts.tanPhi*M_PI/180.);
-   read_double_vector( fp_in , &consts.mu         , 1 );
-   consts.mu /= 1e6;
-   consts.rhoSW = 1028.;
-   
-   fclose( fp_in );
-
-   /* Divide the lambdas by the equivalentHeights.  This is added
-      to account for different grains occupying different portions
-      of the flow height (ie sands mostly near the bottom, clays 
-      distributed evenly bottom to top).
-   */
-   for (n=0;n<n_grains;n++)
-      lambda[n] /= equivalentHeight[n];
-
-// end reading input parameters
-   
-// Read flood information.
-
-   fp_flood = eh_open_file( floodfile , "r" );
-   read_int_vector( fp_flood , &flood_days , 1 );
-   discharge      = eh_new( double , flood_days );
-   densityFlow    = eh_new( double , flood_days );
-   river_depth    = eh_new( double , flood_days );
-   river_width    = eh_new( double , flood_days );
-   river_velocity = eh_new( double , flood_days );
-
-   for ( i=0 ; i<flood_days ; i++ )
-   {
-      fgets( comment , S_LINEMAX , fp_flood );
-      read_double_vector( fp_flood , &densityFlow[i]    , 1 );
-      read_double_vector( fp_flood , &river_depth[i]    , 1 );
-      read_double_vector( fp_flood , &river_width[i]    , 1 );
-      read_double_vector( fp_flood , &river_velocity[i] , 1 );
-
-      if ( mode_1d )
-         river_width[i] = 1.;
-
-      discharge[i] = river_width[i]*river_depth[i]*river_velocity[i];
-   }
-
-   fclose(fp_flood);
-
-// end reading flood info.
-
-// read bathymetry.
-
-   {
-      Eh_data_record* all_records;
-      gssize len;
-      double* y = eh_uniform_array( 0 , basin_len , dx , &len );
-
-      all_records = eh_data_record_scan_file( bathyfile , "," , EH_FAST_DIM_COL , FALSE );
-      eh_data_record_interpolate_rows( all_records[0] , 0 , y , len );
-
-      x     = eh_data_record_dup_row( all_records[0] , 0 );
-      depth = eh_data_record_dup_row( all_records[0] , 1 );
-      width = eh_data_record_dup_row( all_records[0] , 2 );
-
-      slope = eh_new( double , len );
-   
-      for ( i=0 ; i<=len ; i++ )
-         slope[i] = atan((depth[i+1]-depth[i])/(x[i+1]-x[i]));
-      slope[n_nodes-1] = slope[n_nodes-2];
-
-      for ( i=0 ; all_records[i] ; i++ )
-         eh_data_record_destroy( all_records[i] );
-      eh_free( all_records );
-
-      n_nodes = len;
-   }
-
-   for ( i=0 ; i<flood_days ; i++ )
-      if ( river_width[i] > width[0] )
-         g_error( "The river width is greater than the basin width." );
-
-   fwrite( &n_nodes , 1       , sizeof(int)    , fp_data );
-   fwrite( x        , n_nodes , sizeof(double) , fp_data );
-   fwrite( depth    , n_nodes , sizeof(double) , fp_data );
-   fwrite( width    , n_nodes , sizeof(double) , fp_data );
-
-   get_phe_data.phe_bottom = phe_bottom;
-   get_phe_data.n_grains   = n_grains;
-   consts.get_phe_data     = (gpointer)&get_phe_data;
-   consts.get_phe          = (Sed_query_func)&inflow_get_phe;
-
-   deposit = eh_new_2( double , n_grains , n_nodes );
-
-   for (i=0;i<flood_days;i++)
-   {
-// Create a spreading angle.
-      width[0] = river_width[i];
-      for ( j=1 ; j<n_nodes ; j++ )
-      {
-         flow_width = width[j-1] + spreading_angle*dx;
-         if ( flow_width < width[j] )
-            width[j] = flow_width;
-         else
-            break;
+         if ( _data_file   ) sakura_write_data     ( _data_file  , deposit      );
+         if ( _reset_bathy ) sakura_copy_bathy_data( bathy_data , bathy_data_0 );
       }
 
-      inflow( day                , x              , slope             ,
-              width              , n_nodes        , dx                ,
-              depositionStart    , river_width[i] , river_velocity[i] ,
-              river_depth[i]     , river_q[i]     , fraction          ,
-              diameterEquivalent , lambda         , bulkDensity       ,
-              grainDensity       , n_grains       , densityRiverWater ,
-              densityFlow[i]     , consts         , deposit           ,
-              fp_data );
+      sakura_write_output( _out_file , bathy_data , eh_dbl_grid_data(total_deposit) , sediment_data->n_grains );
+
+      eh_grid_destroy( total_deposit , TRUE );
+      eh_grid_destroy( deposit       , TRUE );
    }
 
-   for ( n=0 ; n<n_grains ; n++ )
-      fwrite( deposit[n] , n_nodes , sizeof(double) , fp_data );
-
-   fp_out = eh_open_file( outfile , "w" );
-
-   for ( i=0 ; i<n_nodes ; i++ )
-   {
-      for ( n=0,sum=0 ; n<n_grains ; n++ )
-         sum += deposit[n][i];
-      fprintf( fp_out , "x, y, w : %f, %f, %f\n" , x[i] , depth[i]+sum , width[i] );
-   }
-
-   fclose( fp_out );
-   fclose( fp_data );
-   
-   eh_free(river_velocity);
-   eh_free(river_depth);
-   eh_free(densityFlow);
-   eh_free(discharge);
-   eh_free(phe_bottom);
-   eh_free(bulkDensity);
-   eh_free(fraction);
-   eh_free(diameterComponent);
-   eh_free(diameterEquivalent);
-   eh_free(lambda);
-   eh_free_2(deposit);
-   
-   return 0;
+   return EXIT_SUCCESS;
 }
-#endif
+
+
 

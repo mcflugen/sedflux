@@ -8,7 +8,7 @@
 #define PLUME_SIGMA (6.4872)
 #define PLUME_XA    (5.176)
 
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 
 double plume_centerline_inv_at( double x , double l );
 double* plume_centerline_inv_nd( double* inv , double* x , gssize len , double l );

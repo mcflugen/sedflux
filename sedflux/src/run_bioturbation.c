@@ -22,9 +22,9 @@
 #define EH_LOG_DOMAIN SED_BIOTURBATION_PROC_NAME
 
 #include <stdio.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
-#include "bio.h"
+#include <bio.h>
 
 Sed_process_info
 run_bioturbation( Sed_process proc , Sed_cube p )

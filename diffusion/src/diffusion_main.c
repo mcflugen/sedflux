@@ -19,7 +19,7 @@
 //---
 
 #include <stdio.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "diffusion.h"
 
 static char *help_msg[] =

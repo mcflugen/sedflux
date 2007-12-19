@@ -2,8 +2,8 @@
 #define MY_PROCESSES_H
 
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "sedflux.h"
 
 /* All of the initialize functions for my processes
@@ -113,6 +113,7 @@ typedef struct
 {
    double bed_load_dump_length;
    double bedload_ratio;
+   double f_retained;
    gchar* river_name;
 }
 Bedload_dump_t;
@@ -166,7 +167,7 @@ typedef struct
 }
 Erosion_t;
 
-#include "failure.h"
+#include <failure.h>
 
 GQuark failure_profile_data_quark( void );
 #define FAILURE_PROFILE_DATA failure_profile_data_quark()

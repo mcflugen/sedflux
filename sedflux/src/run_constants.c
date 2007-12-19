@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 
 Sed_process_info

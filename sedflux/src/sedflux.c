@@ -18,9 +18,8 @@
 //
 //---
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_sedflux.h"
 
 #define ESMF

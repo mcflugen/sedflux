@@ -1,5 +1,5 @@
 #include <glib.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "sedflux.h"
 
 Sedflux_param_st* sedflux_setup        ( gchar* command_s );

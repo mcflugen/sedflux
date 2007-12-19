@@ -23,10 +23,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "sed_sedflux.h"
-#include "plume_types.h"
-#include "utils.h"
-#include "sedflux.h"
+#include <sed/sed_sedflux.h>
+#include <plume_types.h>
+#include <utils/utils.h>
 
 /** Create a queue of processes from a file
 

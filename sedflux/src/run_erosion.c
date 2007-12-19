@@ -23,9 +23,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "diffusion.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <diffusion.h>
 #include "my_processes.h"
 
 //#include "erosion.h"

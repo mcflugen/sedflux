@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.33],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.34],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -201,6 +201,9 @@ AC_CHECK_FUNCS( log2 , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_LOG2,-DHAVE_LOG2)])
 AC_CHECK_FUNCS( fgetln , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_FGETLN,-DHAVE_FGETLN)])
 AC_CHECK_FUNCS( getline , [GLIB_ADD_TO_VAR(CFLAGS,-DHAVE_GETLINE,-DHAVE_GETLINE)])
 
+# Since moving to Leopard, I have to add this
+GLIB_ADD_TO_VAR(CFLAGS,-DG_IMPLEMENT_INLINES,-DG_IMPLEMENT_INLINES)
+
 cflags_set="$CFLAGS"
 
 ###
@@ -217,32 +220,32 @@ AC_SUBST( CHECK_LIBS )
 AC_SUBST( CHECK_CFLAGS )
 AC_SUBST( DPKG_ARCHITECTURE )
 
-AC_CONFIG_FILES([ libutils/src/utils.pc ])
-AC_CONFIG_FILES([ libsed/src/sedflux.pc ])
+AC_CONFIG_FILES([ utils/utils.pc ])
+AC_CONFIG_FILES([ sed/sedflux.pc ])
 
 AC_CONFIG_FILES([Makefile \
-           libutils/Makefile libutils/src/Makefile \
-           libsed/Makefile libsed/src/Makefile libsed/share/Makefile \
-           avulsion/Makefile avulsion/src/Makefile \
-           bing/Makefile bing/src/Makefile \
+           utils/Makefile \
+           sed/Makefile \
+           avulsion/Makefile \
+           bing/Makefile \
            bio/Makefile bio/src/Makefile bio/data/Makefile \
            compact/Makefile compact/src/Makefile compact/data/Makefile \
            diffusion/Makefile diffusion/src/Makefile diffusion/data/Makefile \
-           failure/Makefile failure/src/Makefile \
+           failure/Makefile \
            flow/Makefile flow/src/Makefile flow/mfiles/Makefile \
            inflow/Makefile inflow/src/Makefile inflow/data/Makefile inflow/mfiles/Makefile \
            muds/Makefile muds/src/Makefile muds/data/Makefile \
            plume/Makefile plume/src/Makefile plume/demo/Makefile plume/mfiles/Makefile \
-           quake/Makefile quake/src/Makefile \
+           quake/Makefile \
            sakura/Makefile sakura/src/Makefile sakura/mfiles/Makefile sakura/data/Makefile \
            squall/Makefile squall/src/Makefile squall/data/Makefile \
-           subside/Makefile subside/src/Makefile \
-           xshore/Makefile xshore/src/Makefile \
+           subside/Makefile \
+           xshore/Makefile \
            sedflux/Makefile sedflux/src/Makefile sedflux/data/Makefile sedflux/mfiles/Makefile \
               sedflux/tests/Makefile \
            hydrotrend/Makefile hydrotrend/src/Makefile \
               hydrotrend/data/Makefile hydrotrend/mfiles/Makefile \
-           sedutils/Makefile sedutils/src/Makefile \
+           sedutils/Makefile \
            inflow/src/runinflow \
            sedflux/src/runsedflux \
            sedflux/src/sedflux-run-batch \

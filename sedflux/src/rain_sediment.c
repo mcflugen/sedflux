@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "muds.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <muds.h>
 
 Sed_cell **construct_deposit_array_3( Sed_cube   p        ,
                                       double     fraction ,
@@ -67,7 +67,6 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
          double        time_elapsed  = 0.;
          double        time_left     = time_step;
          const double  tidal_period  = time_step;
-         gint i;
          double fraction;
          double depth;
          double tidal_dt;

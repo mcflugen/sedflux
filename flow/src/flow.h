@@ -22,7 +22,7 @@
 #define GLIB_H
 
 #include "glib.h"
-#include "utils.h"
+#include <utils/utils.h>
 
 double *solve_excess_pore_pressure( double *psi , double *k , double *c , int n , double dz , double dt , double psi_top , double sed_rate );
 void get_matrix_coefficients( double *psi , double *k , double *c , double ds , double dz , double dt , double psi_top , int n , double f ,  double *l , double *d , double *u , double *b );

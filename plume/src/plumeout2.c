@@ -62,14 +62,21 @@
  */
 #include "plumeinput.h"
 #include "plumevars.h"
-#include "utils.h"
+#include <utils/utils.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-#include "utils.h"
+#include <utils/utils.h>
 
-int plumeout2( Plume_enviro *env , Plume_grid *grid , double dx, double **deposit, int deposit_len, int n_grains, double basin_width)
+int
+plumeout2( Plume_enviro* env         ,
+           Plume_grid*   grid        ,
+           double        dx          ,
+           double**      deposit     ,
+           int           deposit_len ,
+           int           n_grains    ,
+           double        basin_width )
 {
    double *deposit_thickness, *deposit_int;
    double *deposit_x;
@@ -133,9 +140,16 @@ int plumeout2( Plume_enviro *env , Plume_grid *grid , double dx, double **deposi
       // interpolated deposit for mass balance.
       if ( mass_out > 0 )
          for (ii=0;ii<deposit_len;ii++)
-            deposit[ii][nn] = deposit_int[ii]*(mass_in/mass_out);
+            deposit[ii][nn] = deposit_int[ii];
+            //deposit[ii][nn] = deposit_int[ii]*(mass_in/mass_out);
       else
          eh_require_not_reached();
+
+eh_watch_dbl( mass_in );
+mass_out = 0;
+         for (ii=0;ii<deposit_len;ii++)
+            mass_out += deposit_int[ii]*dx*basin_width*sedload[nn].rho;
+eh_watch_dbl( mass_out );
    }
 
    eh_free( deposit_x );

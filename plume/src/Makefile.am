@@ -1,11 +1,10 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src
+INCLUDES                 = -I$(top_srcdir)
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
-                           $(top_builddir)/libsed/src/libsedflux.la
+AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
+                           $(top_builddir)/sed/libsedflux.la
 
 bin_PROGRAMS              = plume plume_run_file
-plume_SOURCES             = plumemain.c plumeout1.c plumeread.c
+plume_SOURCES             = plumemain.c plumeout1.c plumeread.c plume_scan.c
 plume_run_file_SOURCES    = plume_run_file.c
 
 if ENABLE_CHECK
@@ -36,7 +35,8 @@ libplume_la_SOURCES       = \
                             plumeread2d.c   \
                             plumeset.c
 
-include_HEADERS           = plumevars.h plumeinput.h plume_types.h plume_approx.h
+plumeinclude_HEADERS      = plumevars.h plumeinput.h plume_types.h plume_approx.h plume_local.h
+plumeincludedir           = $(includedir)/ew-2.0
 
 LDADD                     = -lplume 
 

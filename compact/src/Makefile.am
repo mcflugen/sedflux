@@ -1,8 +1,7 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src
+INCLUDES                 = -I$(top_srcdir)
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
-                           $(top_builddir)/libsed/src/libsedflux.la
+AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
+                           $(top_builddir)/sed/libsedflux.la
 
 bin_PROGRAMS              = compact
 compact_SOURCES           = compact_main.c

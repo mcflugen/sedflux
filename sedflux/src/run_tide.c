@@ -25,7 +25,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "utils.h"
+#include <utils/utils.h>
 #include "my_processes.h"
 
 Sed_process_info

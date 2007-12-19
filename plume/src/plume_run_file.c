@@ -23,8 +23,8 @@
 #include "plume_approx.h"
 
 #include "glib.h"
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
 Eh_opt_entry all_entries[] = {
    { "infile"  , 'i' , "Hydrotrend input file" , NULL , "-"                   },

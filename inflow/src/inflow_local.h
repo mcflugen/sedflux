@@ -33,7 +33,7 @@
 #define TURBIDITY_CURRENT_DEFAULT_CHANNEL_LENGTH    (30000.0)
 
 #include <glib.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "inflow.h"
 
 typedef struct

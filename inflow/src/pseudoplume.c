@@ -26,8 +26,8 @@
 #include <string.h>
 //#include <libgen.h>
 #include "inflow.h"
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 
 /*** Self Documentation ***/
 char *help_msg[] =

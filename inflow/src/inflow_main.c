@@ -26,8 +26,8 @@
 #include <string.h>
 #include "inflow.h"
 #include "inflow_local.h"
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 
 // Command line arguments
 static gint     verbose    = 0;

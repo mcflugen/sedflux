@@ -16,1104 +16,11 @@
 //
 //---
 
-/* description 
-* main module of sakura
-*/
-
-/* parameters
-* stopnumber: error detection
-* headnode: node position of the flow head
-* xhead: position of the flow head
-* uhead: propagation velocity of the flow head
-* CCMULTI & CCMULTInew: sediment concentration for each size fraction at nodes
-* U, Utemp & Unew: flow velocity at nodes
-* HH & HHnew: flow thickness at nodes
-* CC & CCnew: sediment concentration at nodes
-* SED: deposit mass at nodes
-* SEDRATE: rate of deposition at nodes
-* Init_U: flow velocity at the river mouth given in discharge files
-* Init_C: sediment concentration at the river mouth given in discharge files 
-* u, h, & c: velocity, thickness and concentration
-*      subscript l, r, m means left, right and middle (or averaged)
-*      subscript ll and rr mean 2 nodes next from the node being calculated
-* sedrate, ustar & s: rate of deposition, shear velocity and slope at the node
-* fluxatbed: sum of rate of deposition and erosion
-* erosion: rate of erosion
-* inflow_*: flow properties at river mouth
-* outflow_*: flow properties at the downstream end
-* xtravel: storage of head position
-* smallh: length scale of the settling velocity
-* porosity: calculated from density of deposit
-* maxc: maximun value of sediment concentration for each loop
-* totalsusp: amount of sediment in the flow
-* av_graindensity, bulkdensitybottom: average value
-*/
-
 #include <stdio.h>
 #include <math.h>
-#include "utils.h"
+#include <utils/utils.h>
 #include "sakura_local.h"
 #include "sakura.h"
-//#include "sakura_utils.h"
-
-/* supply duration in seconds */
-#define SUPPLYTIME (60.0*60.0*12)
-
-#undef YUSUKE
-static gboolean
-step_1( double* x , double* u , double* c , double* h , gint len , double dt , double* u_new , Sakura_const_st* Const ,
-        gint head_node , double inflow_u , double outflow_u , double outflow_c , double outflow_h );
-
-//double get_depth( int i , Eh_query_func get_depth , gpointer bathy_data );
-
-//@Include: sakura.h
-
-/**
-The sakura turbidity current model.
-
-@param Dx               Node spacing.
-@param Dt               Time step.
-@param Basin_Len        Length of the basin.
-@param nNodes           The number of nodes in the model domain.
-@param nGrains          The number of grain types in the flow.
-@param Xx               The x-position of the model nodes.
-@param Zz         
-@param Wx         
-@param Init_U           The initial velocity of the flow.
-@param Init_C           The initial concentration of the flow.
-@param Lambda           The removal rate of each grain type.
-@param Stv
-@param Rey
-@param gDens
-@param InitH            The initial height of the flow.
-@param SupplyTime
-@param DepositionStart
-@param Fraction         The fraction of each grain type in the flow.
-@param PheBottom        The fraction of each grain type in the bottom sediments.
-@param DepositDensity   The bulk density of each grain type when it is deposited
-                        on the sea floor.
-@param OutTime
-@param c                Physical constants for the flow.
-@param Deposit          The deposition rates for each grain types at each node.
-@param fp_data          The file pointer for output data.
-*/
-#define NEW
-
-#if !defined(NEW)
-gboolean
-sakura( double Dx         , double Dt              , double Basin_Len ,
-        int nNodes        , int nGrains            , double Xx[]      ,
-        double Zz[]       , double Wx[]            , double Init_U[]  ,
-        double Init_C[]   , double *Lambda         , double *Stv      ,
-        double *Rey       , double *gDens          , double InitH     ,
-        double SupplyTime , double DepositionStart , double *Fraction ,
-        double *bottom_f  , double *DepositDensity , double OutTime   ,
-        Sakura_const_st* Const , double **Deposit       , FILE *fp_data )
-{
-   /*declare variables*/
-   int  stopnumber = 0;
-   int count, node, headnode, outIntv, i, n;
-   double **CCMULTI, **CCMULTInew, **SEDMULTI; /* sediment concentration of each size fraction*/
-   double *erosion, *outflow_cMULTI;           /* for multiple grainsize*/
-   double time, xhead, uhead;
-   double *U, *Utemp, *Unew;                   /* flow velocities at node position*/
-   double *xtravel;                            /* save the position of the head*/
-   double *SED, *SEDRATE, *DEPTH;              /* deposited sediment and its rate at node midpoint*/
-   double *HH, *CC, *HHnew, *CCnew; /* flow thickness and sediment concentration at node midpoint*/
-   double smallh, porosity;                    
-   double u, ul, ur, ull, urr, cm, cl, cr, cll, crr, hm, hl, hr, hll, hrr, s, ustar; 
-   double h, c, um, wl, wr, cnew, cnewi, sedrate, fluxatbed, dh; 
-   double Ew, Ri, Ze; 
-   double maxc, maxu, totalsusp;
-   double outflow_c, outflow_h, outflow_u, outflow_cnew, outflow_hnew, outflow_unew;
-   double inflow_u, inflow_h, inflow_c; 
-   double av_graindensity, bulkdensitybottom;
-   double uhead_1;
-   double erode_depth, x;
-   double depth_0, depth_1, depth_node;
-   gboolean standalone=FALSE;
-
-   double*          PheBottom      = eh_new( double , nGrains );
-   Sakura_phe_st    phe_data;
-   Sakura_cell_st   sediment;
-
-   Sakura_phe_func get_phe_func   = Const->get_phe;
-   Sakura_add_func add_func       = Const->add;
-   Sakura_add_func remove_func    = Const->remove;
-   Sakura_get_func get_depth_func = Const->get_depth;
-
-   eh_require( bottom_f==NULL );
-
-#if defined( SAKURA_STANDALONE )
-   standalone = TRUE;
-#endif
-
-   // open ASCII output file
-//   if ( standalone && (Outfp2 = fopen("sakura_out.txt", "w")) == NULL)
-//   {
-//      fprintf(stderr, "Err opening output file ...EXITING\n");
-//      eh_exit(-1);
-//   }
-
-   // allocate memory
-   // node values.
-   // U     : flow velocity
-   // Utemp : tentative velocity
-   // Unew  : new velocity
-   U       = eh_new0( double , nNodes );
-   Utemp   = eh_new0( double , nNodes );
-   Unew    = eh_new0( double , nNodes );
-
-   // node minpoint values.
-   // HH      : flow thickness
-   // CC      : bulk concentration
-   // SED     : deposited mass
-   // SEDRATE : sedimentation rate
-   // HHnew   : new flow thickness
-   // CCnew   : new bulk concentration
-   HH      = eh_new0( double , nNodes-1 );
-   CC      = eh_new0( double , nNodes-1 );
-   SED     = eh_new0( double , nNodes-1 );
-   SEDRATE = eh_new0( double , nNodes-1 );
-   DEPTH   = eh_new0( double , nNodes-1 );
-   HHnew   = eh_new0( double , nNodes-1 );
-   CCnew   = eh_new0( double , nNodes-1 );
-   
-   // position of the head at each time step
-   xtravel = eh_new0( double , (int)(SupplyTime/Dt) );
-
-   // matrix arrays for node values for each grain size.
-   // CCMULTI    : concentration for multi grain size fractions
-   // CCMULTInew : concentration for multi grain size fractions
-   CCMULTI    = eh_new_2( double , nNodes , nGrains );
-   CCMULTInew = eh_new_2( double , nNodes , nGrains );
-   SEDMULTI   = eh_new_2( double , nNodes , nGrains );
-   
-   // rate of erosion
-   erosion        = eh_new0( double , nGrains );
-   outflow_cMULTI = eh_new0( double , nGrains );
-   
-// end of memory allocation.
-
-   xhead = HMIN;
-   uhead = Init_U[0];
-   headnode = floor(xhead/Dx);
-
-#if defined(YUSUKE)
-// NOTE: removed by eric.  from here...
-   for (i = 0, av_graindensity = 0, bulkdensitybottom = 0; i < nGrains; i++)
-   {
-      av_graindensity += gDens[i] * PheBottom[i];
-      bulkdensitybottom += DepositDensity[i] * PheBottom[i];
-   }
-   porosity = 1.0 - bulkdensitybottom/av_graindensity;
-// ... to here.
-#endif
-
-   eh_debug( "SupplyTime:%.2f, initU:%.2f, intC;%.2f, maxtime:%.2f" , SupplyTime , Init_U[0] , Init_C[0] , SupplyTime );
-
-   for ( i=0 ; i<nNodes ; i++ )
-      DEPTH[i] = Zz[i];
-
-   /* START MAIN LOOP with Dt*/
-   outIntv = (int)(OutTime / Dt);
-   for ( time = 0.0, count =0 ;
-         time <= SupplyTime && stopnumber ==0 ;
-         time += Dt, count++ )
-   {
-      /* save node attributes to outfile*/
-      if ( fp_data && !(count%outIntv)) 
-      {
-         fwrite( Xx  , nNodes-1 , sizeof(double) , fp_data );
-         fwrite( U   , nNodes-1 , sizeof(double) , fp_data );
-         fwrite( HH  , nNodes-1 , sizeof(double) , fp_data );
-         fwrite( CC  , nNodes-1 , sizeof(double) , fp_data );
-         fwrite( SED , nNodes-1 , sizeof(double) , fp_data );
-
-//         outputData( Outfp2 , nNodes , time    , U     , HH    , CC ,
-//                     SED    , Utemp  , SEDRATE , xhead , uhead , headnode );
-      }
-      
-      // input from river mouth
-      if (time <= SupplyTime)
-      {
-/*
-         if ( standalone ) inflow_u = Init_U[count];
-         else              inflow_u = Init_U[0];
-         if ( standalone ) inflow_c = Init_C[count];
-         else              inflow_c = Init_C[0];
-*/
-         inflow_u = Init_U[0];
-         inflow_c = Init_C[0];
-         U[0]     = inflow_u;
-         Utemp[0] = inflow_u;
-         inflow_h = InitH; //HH[0] = inflow_h;
-         //  inflow_c = (discharge_density[count] - Consts.rhoRW)/(av_graindensity - Consts.rhoRW);
-      }
-      else
-      {
-         inflow_u = 0;
-         U[0]     = inflow_u;
-         Utemp[0] = inflow_u;
-         inflow_h = HH[0];
-         inflow_c = CC[0];
-      }
-            
-      // free outflow at downstream end
-      if (xhead <= Basin_Len)
-      {
-         outflow_u = 0;
-         outflow_c = 0;
-         outflow_h = 0;
-         for (i = 0; i < nGrains; i++)
-            outflow_cMULTI[i] = 0;
-      }
-      else if (xhead <= Basin_Len +Dx)
-      {
-         outflow_u = 0; 
-         outflow_h = outflow_h + HH[nNodes-2] * U[nNodes-1] * Dt/Dx;
-         outflow_c = CC[nNodes-2];
-         for (i = 0; i < nGrains; i++)
-            outflow_cMULTI[i] = CCMULTI[nNodes-2][i];
-      }
-      else
-      {
-         outflow_u = U[nNodes-1];
-         outflow_h = HH[nNodes-2];
-         outflow_c = CC[nNodes-2];
-         for (i = 0; i < nGrains; i++)
-            outflow_cMULTI[i] = CCMULTI[nNodes-2][i];
-      }
-
-      step_1( Xx , U , CC , HH , nNodes , Dt , Utemp , Const , headnode , inflow_u , outflow_u , outflow_c , outflow_h );
-   
-#if defined( IGNORE )
-      // STEP 1: calculate tentative velocity at t + 0.5Dt */
-      // start from node =1 because velocity is given at upstream end (node=0)
-      // calculate only within the flow (behind the head position) */
-      headnode = eh_min(headnode, nNodes-1);
-      smallh   = Stv[0] * Dt *2; 
-
-      for (node = 1; node <= headnode; node++)
-      {
-         u     = U[node];
-
-#if defined(YUSUKE)
-         s     = - sin( atan( (DEPTH[node] - DEPTH[node-1])/Dx ));
-#else
-         // get the depths of the i-1 and i nodes from the sakura architecture
-         // so that we can calculate the slope.
-/*
-         depth_0 = get_depth( node-1 , Consts.get_depth , Consts.depth_data );
-         depth_1 = get_depth( node   , Consts.get_depth , Consts.depth_data );
-*/
-
-         depth_0 = get_depth_func( Const->depth_data , Xx[node-1] );
-         depth_1 = get_depth_func( Const->depth_data , Xx[node]   );
-
-         s       = - sin( atan( (depth_1-depth_0)/Dx ) );
-#endif
-         ustar = sqrt(Const->c_drag) * u;
-
-         ul = U[node-1]; 
-         cl = CC[node-1]; 
-         hl = HH[node-1]; 
-
-         if (node == nNodes-1)
-         {
-            cr = outflow_c;
-            hr = outflow_h;
-            ur = outflow_u;
-            urr = outflow_u;
-         }
-         else if (node == nNodes-2)
-         {
-            cr = CC[node];
-            hr = HH[node];
-            ur = U[node+1];
-            urr = outflow_u;
-         }
-         else
-         {
-            cr = CC[node];
-            hr = HH[node];
-            ur = U[node+1];
-            urr = U[node+2];
-         }
-         
-         if (node == 1)
-            ull = inflow_u;
-         else
-            ull = U[node-2];
-
-         // value at the node calculated from those at midpoints
-         cm = 0.5 * ( cl + cr );
-         hm = 0.5 * ( hl + hr );
-         
-         if (hm == 0)
-            ;
-         else if (hm < HMIN)
-         {
-            eh_warning( "hm too small in STEP 1 at count = %d, node = %d" , count , node );
-            stopnumber = 1;
-         }
-
-         // compute water entrainment 
-         Ew = 0.0;
-         if (u != 0.0)
-         {
-            Ri = R * G * hm / eh_sqr(u);
-            Ew = Const->e_a / (Const->e_b + Ri);
-         }
-                 
-         // tentative varibales with dt = 0.5 Dt 
-         Utemp[node] = u
-                     + dudt( u  , ul , ur     , ull , urr       , hl    ,
-                             hr , hm , cl     , cr  , cm        , ustar ,
-                             s  , Ew , smallh , Dx  , Const->c_drag , Const->mu_water )
-                       * Dt * 0.5;
-         
-      } // end of STEP1
-#endif
-
-      uhead_1 = uhead;   
-      uhead = eh_max(Utemp[node-1], Utemp[node-2]);
-
-      if      ( node  <= 1) uhead = Utemp[0];
-      else if ( uhead >  0) uhead = eh_min(uhead, 1.5 * pow(G * R * cl * hl * uhead, 0.3333));
-      else                  uhead = eh_max(Utemp[node-1], Utemp[node-2]);
-
-      //if ( uhead > 0 )
-      //   ;
-      //else
-      if ( uhead<=0 )
-      {
-/*                     fprintf(stderr,"flow is going back! but cancelled at time=%f; uhead=%f; xhead=%f\n", time,uhead, xhead);
-                     fprintf(stderr,"cl=%f; hl=%f; Utemp[node-1]=%f, Utemp[node-2]=%f\n", cl, hl, Utemp[node-1], Utemp[node-2]);
-                     fprintf(stderr,"uhead_1=%f; uhead_2=%f\n", uhead_1, uhead_2);
-                     fprintf(stderr,"LARGER=%f; pow=%f\n", LARGER(Utemp[node-1], Utemp[node-2]), SMALLER(uhead,  pow(cl*hl*uhead_2, 0.3333)));
-                     fprintf(stderr,"pow=%f\n", pow(cl*hl*uhead_2, 0.3333));
-                     stopnumber = 0;
-*/
-      }
-            
-      // START STEP2: calculate new flow thickness and sediment concentration
-      // calculations at node midpoint for HH, CC and SED
-      //  uses Utemp to get HHnew and CCnew
-      maxc = 0.; totalsusp = 0.;
-
-      for (node = 0; node <= headnode && node <=nNodes-2; node++)
-      {
-         h = HH[node];
-         c = CC[node];
-         
-         ul = Utemp[node]; ur = Utemp[node+1];
-         wl = Wx[node]; wr = Wx[node+1]; 
-         if (node == nNodes-2)
-            um = ul;
-         else
-            um = 0.5 * ( ul + ur );
-         ustar = sqrt(Const->c_drag) * fabs(um); 
-
-         if (node == 0)
-         {
-            hl = inflow_h; hr = HH[node+1];
-            hll = inflow_h; hrr = HH[node+2];
-         }
-         else if (node == nNodes-2)
-         {
-            hl = HH[node-1]; hr = outflow_h;
-            hll = HH[node-2]; hrr = outflow_h;
-         }
-         else if (node ==1)
-         {
-            hl = HH[node-1]; hr = HH[node+1];
-            hll = inflow_h; hrr = HH[node+2];
-         }
-         else if (node == nNodes-3)
-         {
-            hl = HH[node-1]; hr = HH[node+1];
-            hll = HH[node-2]; hrr = outflow_h;
-         }
-         else
-         {
-            hl = HH[node-1]; hr = HH[node+1];
-            hll = HH[node-2]; hrr = HH[node+2];
-         }
-         
-         //compute water entrainment 
-         Ew = 0.0; Ri = 0;
-         if (um != 0.0)
-         {
-            Ri = R * G * c * h / eh_sqr(um);
-            Ew = Const->e_a / (Const->e_b + Ri);
-         }
-         
-         // compute new HH
-         HHnew[node] = h + Dt * dfdt(ul, ur, wl, wr, hl, hr, hll, hrr, h, Dx, Ew*fabs(um));
-
-         if (HHnew[node] < 0)
-         {
-            eh_warning( "HHnew negative but cancelled at %d at %dth node" ,count,node);
-            eh_warning( "old=%f, new=%f, dfdt=%f, left=%f, right=%f"      ,h,HHnew[node],dfdt(ul,ur,wl,wr,hl,hr,hll,hrr,h,Dx,Ew*um),tvdleft(ul,h,hl,hr,hll,hrr),tvdright(ur,h,hl,hr,hll,hrr));
-            eh_warning( "ul:%f, ur:%f, hl:%f, h:%f, hr:%f", ul,ur,hl,h,hr);
-            HHnew[node] = 0;
-         }
-
-//                     if (HHnew[node] > LARGER(InitH, fabs(DEPTH[node])) )
- //                        HHnew[node] = -DEPTH[node];
-
-         // compute CCMULTI for each grain size fraction
-         for (i = 0, Ze = 0, sedrate = 0, cnew = 0; i < nGrains; i++)
-         {
-            c = CCMULTI[node][i];
-            smallh = Stv[i] * Dt * Ro;
-            if (node == 0)
-            {
-               cl = inflow_c * Fraction[i]; cr = CCMULTI[node+1][i];
-               cll = inflow_c * Fraction[i]; crr = CCMULTI[node+2][i];
-            }
-            else if (node == nNodes-2)
-            {
-               cl = CCMULTI[node-1][i]; cr = outflow_cMULTI[i];
-               cll = CCMULTI[node-2][i]; crr = outflow_cMULTI[i];
-            }
-            else if (node ==1)
-            {
-               cl = CCMULTI[node-1][i]; cr = CCMULTI[node+1][i];
-               cll = inflow_c* Fraction[i]; crr = CCMULTI[node+2][i];
-            }
-            else if (node == nNodes-3)
-            {
-               cl = CCMULTI[node-1][i]; cr = CCMULTI[node+1][i];
-               cll = CCMULTI[node-2][i]; crr = outflow_cMULTI[i];
-            }
-            else
-            {
-               cl = CCMULTI[node-1][i]; cr = CCMULTI[node+1][i];
-               cll = CCMULTI[node-2][i]; crr = CCMULTI[node+2][i];
-            }
-            
-            if (HHnew[node] < HMIN)
-            {
-               cnewi = 0;
-               eh_warning("HHnew too small in STEP2 at node = %d, Hnew = %f", node, HHnew[node]);
-               //stopnumber = 1;
-            }
-            else
-            {
-               cnewi = (c * h + Dt * dfdt(ul, ur, wl, wr, hl*cl, hr*cr, hll*cll, hrr*crr, h*c, Dx, 0) )/HHnew[node];
-               if (cnewi < -HMIN)
-               {
-                  eh_warning("negative new CC: t= %d, node= %d, i= %d", count, node, i);
-                  eh_warning("cnew= %f, cold=%f", cnewi, c);
-                  cnewi = 0;
-                  stopnumber = 0;
-               }
-            } //cnewi is the new concentration due to sediment transport by the flow
-            
-         //compute sediment deposition and erosion from cnewi
-
-/*                      if (Stv[i] != 0.0 && Rey[i] > 2.36)
-                              Ze = pow(Rey[i], 0.6) * ustar / Stv[i];
-                        else if (Stv[i] != 0.0)
-                              Ze = 0.586 * pow(Rey[i], 1.23) * ustar / Stv[i];
-                        erosion[i] = 1.3E-7 * pow(Ze, 5.0) / (1.0 + (1.3E-7 / 0.3) * pow(Ze, 5.0)); 
-*/
-
-#if !defined(YUSUKE)
-//
-// NOTE: added by eric from here...
-//
-            // here we get the PheBottom at the node location.
-            erode_depth     = (Const->c_drag*(1+cnewi*R)*Const->rho_sea_water*um*um-Const->sub);
-            x               = Xx[node];
-
-            phe_data.val      = erode_depth*Dx;
-            phe_data.phe      = PheBottom;
-            phe_data.n_grains = nGrains;
-
-            get_phe_func( Const->get_phe_data , Xx[node] , &phe_data );
-
-            // get_phe_func may have changed the erosion depth if there wasn't enough sediment.
-            erode_depth = phe_data.val/Dx;
-
-            for ( n=0 , av_graindensity = 0 , bulkdensitybottom = 0 ;
-                  n<nGrains ;
-                  n++ )
-            {
-               av_graindensity   += gDens[n]          * PheBottom[n];
-               bulkdensitybottom += DepositDensity[n] * PheBottom[n];
-            }
-            porosity = 1.0 - bulkdensitybottom/av_graindensity;
-
-/*
-            profile_data = Consts.get_phe_data;
-
-            EH_STRUCT_MEMBER( Sak_phe_query_t , &get_phe_query , x           ) = x;
-            EH_STRUCT_MEMBER( Sak_phe_query_t , &get_phe_query , erode_depth ) = erode_depth;
-            EH_STRUCT_MEMBER( Sak_phe_query_t , &get_phe_query , dx          ) = Dx;
-            EH_STRUCT_MEMBER( Sak_phe_query_t , &get_phe_query , phe         ) = PheBottom;
-
-            (*(Consts.get_phe))( (gpointer)&get_phe_query , profile_data );
-
-            // the depth of erosion may change if there isn't enough sediment
-            // available.
-            erode_depth = EH_STRUCT_MEMBER( Sak_phe_query_t , &get_phe_query  , erode_depth );
-*/
-
-            erosion[i] = erode_depth
-                       * PheBottom[i]*(1.-porosity)
-                       / (Const->sua*S_SECONDS_PER_DAY);
-
-//
-// ... to here.
-//
-#endif
-
-#if defined(YUSUKE)
-// NOTE: commented out by eric.
-            erosion[i] = (Const->c_drag* (1+ cnewi * R) * Const->rho_sea_water *um *um - Const->sub);
-            erosion[i] *= PheBottom[i] * (1.0 - porosity);
-            erosion[i] /= ( Const->sua * S_SECONDS_PER_DAY );
-#endif
-
-/*                      if (Lambda[i] * Dt >= 1)
-                              fluxatbed = cnewi * HHnew[node]/Dt - LARGER(0, erosion[i]);
-                        else
-                              fluxatbed = Lambda[i] * cnewi * HHnew[node] - LARGER(0, erosion[i]);
-
-                        if ( HHnew[node] <= smallh)
-                              fluxatbed = HHnew[node]/Dt * cnewi - Stv[i] * erosion[i]; 
-                        else
-                              fluxatbed = Stv[i] * ( Ro * cnewi - erosion[i]);
-*/
-            if ( HHnew[node] <= smallh)
-               fluxatbed = HHnew[node]/Dt * cnewi - eh_max( 0, erosion[i]); 
-            else
-               fluxatbed = Stv[i] *  Ro * cnewi - eh_max( 0, erosion[i]);
-
-//                      if (fluxatbed * Dt + SEDMULTI[node][i] < 0) /* when no net erosion */
-//                            fluxatbed = - SEDMULTI[node][i]/Dt;
-
-            if (Xx[node] < DepositionStart )
-               fluxatbed = 0.0;
-#if defined( YUSUKE )
-            if ( DEPTH[node] + fluxatbed*Dt/porosity/PheBottom[i] > -InitH)
-               fluxatbed = 0.0;
-#else
-/*
-            depth_node = get_depth( node ,
-                                    Consts.get_depth ,
-                                    Consts.depth_data );
-*/
-            depth_node = get_depth_func( Const->depth_data , Xx[node] );
-
-            if ( depth_node + fluxatbed*Dt/porosity/PheBottom[i] > -InitH)
-               fluxatbed = 0.0;
-#endif
-
-#if !defined(YUSUKE)
-//
-// NOTE: added by eric from here...
-//
-            dh = fluxatbed*Dt/porosity;
-
-            sediment.t  = dh/Dx;
-            sediment.id = i;
-            if ( dh<0 ) remove_func( Const->remove_data , Xx[node] , &sediment );
-            else        add_func   ( Const->add_data    , Xx[node] , &sediment );
-/*
-            if ( fluxatbed*Dt/porosity<0 )
-            {
-               erode_query.dh = fluxatbed*Dt/porosity;
-               erode_query.i  = node;
-
-               (*(Consts.remove))( (gpointer)&erode_query , Consts.remove_data );
-            }
-            else
-            {
-               add_query.dh = fluxatbed*Dt/porosity;
-               add_query.i  = node;
-
-               (*(Consts.add))( (gpointer)&add_query , Consts.add_data );
-            }
-*/
-//
-// ... to here.
-//
-#endif
-
-            SEDMULTI[node][i] += fluxatbed * Dt /porosity;
-
-#if defined(YUSUKE)
-// NOTE: commented out by eric.  this is now changed in the add/remove routines.
-            DEPTH[node] += fluxatbed * Dt /porosity;
-#endif
-
-            if (HHnew[node] < HMIN)
-               CCMULTInew[node][i] = 0;
-            else
-               CCMULTInew[node][i] = cnewi - fluxatbed * Dt/ HHnew[node];
-            
-            if (CCMULTInew[node][i] < -HMIN)
-            {
-               eh_warning("negative CCMULTInew: t=%d, node=%d, grain=%d",count,node,i);
-               eh_warning("cnew=%f, cold=%f, hnew=%f", CCMULTInew[node][i], cnewi, HHnew[node]);
-               stopnumber = 1;
-            }
-            else if (CCMULTInew[node][i] < 0)
-               CCMULTInew[node][i] = 0.0;
-            CCMULTInew[node][i] = eh_max(0, CCMULTInew[node][i]);
-
-            cnew += CCMULTInew[node][i];
-            sedrate += fluxatbed;
-         } //end of CCMULTI
-
-         CCnew[node] = cnew;
-         SED[node] += Dt * sedrate;
-         SEDRATE[node] = sedrate;
-         maxc = eh_max(maxc,cnew);
-         totalsusp += cnew * HHnew[node];
-      } /*end STEP2*/
-      
-      //if (maxc > HMIN && totalsusp > HMIN)
-      //   ;
-      //else
-      if ( maxc<=HMIN || totalsusp<=HMIN )
-      {
-         eh_warning("maxc=%f, totalsusp=%f", maxc, totalsusp);
-         eh_warning("ccmultinew=%f, hew=%f",CCMULTInew[node-1][i-1], HHnew[node-1]);
-         eh_watch_int( node );
-         eh_watch_dbl( HMIN );
-         stopnumber = 1;
-      }
-      
-      //free outflow at downstream end
-      if (xhead <= Basin_Len)
-      {
-         outflow_unew = 0;
-         outflow_cnew = 0;
-         outflow_hnew = 0;
-      }
-      else if (xhead <= Basin_Len +Dx)
-      {
-         outflow_unew = 0; 
-         outflow_hnew = outflow_h + HH[nNodes-2] * U[nNodes-1]/Dx;
-         outflow_cnew = CC[nNodes-2];
-      }
-      else
-      {
-         outflow_unew = U[nNodes-1];
-         outflow_hnew = HH[nNodes-2];
-         outflow_cnew = CC[nNodes-2];
-      }
-
-      /* STEP3: calculate new velocity*/
-      /* trying to use variables at t + 0.5 Dt */
-      for (node = 1; node <= headnode; node++)
-      {
-         u = Utemp[node];
-#if defined(YUSUKE)
-         s = - sin( atan( (DEPTH[node] - DEPTH[node-1])/Dx ));
-#else
-         // get the depths of the i-1 and i nodes from the sakura architecture
-         // so that we can calculate the slope.
-/*
-         depth_0 = get_depth( node-1 , Consts.get_depth , Consts.depth_data );
-         depth_1 = get_depth( node   , Consts.get_depth , Consts.depth_data );
-*/
-         depth_0 = get_depth_func( Const->depth_data , Xx[node-1] );
-         depth_1 = get_depth_func( Const->depth_data , Xx[node]   );
-
-         s       = - sin( atan( (depth_1-depth_0)/Dx ) );
-#endif
-         ustar = sqrt(Const->c_drag) * Utemp[node];
-
-         ul = Utemp[node-1]; 
-         cl = 0.5 * (CC[node-1] + CCnew[node-1] );
-         hl = 0.5 * (HH[node-1] + HHnew[node-1]);
-
-         if (node == nNodes-1)
-         {
-            cr = 0.5 * (outflow_c + outflow_cnew);
-            hr = 0.5 * (outflow_h + outflow_hnew);
-            ur = outflow_unew;
-            urr = outflow_unew;
-         }
-         else if (node == nNodes-2)
-         {
-            cr = 0.5 * (CC[node] + CCnew[node] );
-            hr = 0.5 * (HH[node] + HHnew[node]);
-            ur = Utemp[node+1];
-            urr = outflow_unew;
-         }
-         else
-         {
-            cr = 0.5 * (CC[node] + CCnew[node]);
-            hr = 0.5 * (HH[node] + HHnew[node]);
-            ur = Utemp[node+1];
-            urr = Utemp[node+2];
-         }
-         
-         if (node == 1)
-            ull = inflow_u;
-         else
-            ull = Utemp[node-2];
-         cm = 0.5 * ( cl + cr );
-         hm = 0.5 * ( hl + hr );
-         
-/*
-          if (hm < HMIN){
-             fprintf(stderr, "hm too small in STEP3 at count=%d, node=%d, headnode=%d\n", count, node, headnode);
-             stopnumber = 1;
-          }
-*/
-
-
-         // compute entrainment 
-         Ew = 0.0;
-         if (u != 0.0)
-         {
-            Ri = R * G * cm * hm / eh_sqr(u);
-            Ew = Const->e_a / (Const->e_b + Ri);
-         }
-         
-         
-         Unew[node] = U[node] + dudt( u, ul, ur, ull, urr, hl, hr, hm, cl, cr, cm, ustar, s, Ew, smallh, Dx, Const->c_drag, Const->mu_water) * Dt;
-         if (fabs(Unew[node])  > UPPERLIMIT)
-         {
-            eh_warning("too fast at %d",node);
-            stopnumber = 1;
-         }
-         
-      } /*end of STEP3*/
-      
-      if (xhead <= Basin_Len)
-         Unew[nNodes-1] = 0;
-      else
-      {
-         Unew[nNodes-1] = Unew[nNodes-1] - Dt/Dx*Unew[nNodes-2] * (Unew[nNodes-1] - Unew[nNodes-2]);                    };
-
-      /* velocity at flow head boundary */
-      xhead += uhead * Dt;
-      headnode = (int)floor(xhead/Dx);
-      if (headnode == nNodes-1)
-      {
-         //fprintf(stderr,"flow reaches downstream end\n");
-         stopnumber = 0;
-      }
-      
-      /* update variables */
-      for (node = 0; node < nNodes-1; node++)
-      {
-         U[node] = Unew[node];
-         HH[node] = HHnew[node];
-         CC[node] = CCnew[node];
-         for (i = 0; i < nGrains; i++)
-            CCMULTI[node][i] = CCMULTInew[node][i];
-      }
-      U[node] = Unew[node];
-      maxu = eh_max(maxu, Unew[node]);
-      xtravel[count] = xhead;
-
-   }
-
-   for (node=0; node <nNodes-1; node++)
-      SED[node] = SED[node] + CC[node] * HH[node];
-   
-   for (node=0; node <nNodes-1; node++)
-   {
-      for (i=0; i <nGrains; i++)
-      {
-         //Deposit[i][node] = SEDMULTI[node][i] + CCMULTI[node][i] * HH[node];
-         //Deposit[i][node] = (SEDMULTI[node][i] + SEDMULTI[node-1][i])*0.5;;
-         Deposit[i][node] = SEDMULTI[node][i];
-      }
-   }
-
-//   outputData(Outfp2, nNodes, time, U, HH, CC, SED, Utemp, SEDRATE, xhead, uhead, headnode);
-
-   if ( fp_data )
-   {
-      fwrite( Xx  , nNodes-1 , sizeof(double) , fp_data );
-      fwrite( U   , nNodes-1 , sizeof(double) , fp_data );
-      fwrite( HH  , nNodes-1 , sizeof(double) , fp_data );
-      fwrite( CC  , nNodes-1 , sizeof(double) , fp_data );
-      fwrite( SED , nNodes-1 , sizeof(double) , fp_data );
-   }
-
-   eh_debug("END...total time = %.1f sec xhead = %f m", time, xhead);
-   eh_debug("maxc=  %f; totalsusp= %f, maxu = %f, initH=%f", maxc, totalsusp, maxu,InitH);
-   
-   // de-allocate memory    */
-   eh_free( PheBottom );
-   eh_free( U       );
-   eh_free( HH      );
-   eh_free( CC      );
-   eh_free( SED     );
-   eh_free( SEDRATE );
-   eh_free( Utemp   );
-   eh_free( Unew    );
-   eh_free( HHnew   );
-   eh_free( CCnew   );
-   eh_free( xtravel );
-   eh_free( erosion );   
-
-   eh_free_2( CCMULTI    );
-   eh_free_2( CCMULTInew );
-   eh_free_2( SEDMULTI   ); 
-
-   return TRUE;
-}
-
-/** Write sakura output to a binary file.
-
-@param fp      A pointer to a FILE.
-@param n_nodes The number of nodes.
-@param x       Array of node positions.
-@param u       Array of node velocities.
-@param h       Array of node thicknesses.
-@param c       Array of node concentrations.
-@param dz      Array of changes in node elevation.
-
-*/
-void output_data( FILE* fp , int n_nodes , double *x , double *u , double *h , double *c , double *dz )
-{
-   fwrite( x  , n_nodes , sizeof(double) , fp );
-   fwrite( u  , n_nodes , sizeof(double) , fp );
-   fwrite( h  , n_nodes , sizeof(double) , fp );
-   fwrite( c  , n_nodes , sizeof(double) , fp );
-   fwrite( dz , n_nodes , sizeof(double) , fp );
-}
-#endif
-
-#if !defined(NEW)
-gboolean
-step_1( double* x , double* u , double* c , double* h , gint len , double dt , double* u_new , Sakura_const_st* Const ,
-        gint head_node , double inflow_u , double outflow_u , double outflow_c , double outflow_h )
-{
-   gboolean success = TRUE;
-
-   eh_require( x );
-   eh_require( c );
-   eh_require( h );
-   eh_require( u );
-   eh_require( u_new );
-
-   if ( x && c && h && u && u_new )
-   {
-      gint i;
-      double dx = x[1] - x[0];
-      double u_star;
-      double u_0, ul, ull, ur, urr;
-      double cl, cm, cr, hl, hm, hr;
-      double depth_0, depth_1;
-      double s;
-      Sakura_get_func get_depth_func = Const->get_depth;
-
-      // STEP 1: calculate tentative velocity at t + 0.5Dt
-      // start from node =1 because velocity is given at upstream end (node=0)
-      // calculate only within the flow (behind the head position)
-      head_node = eh_min(head_node, len-1);
-      //smallh   = Stv[0] * dt * 2; 
-
-      for ( i=1 ; i<=head_node ; i++ )
-      {
-         u_0   = u[i];
-
-#if defined(YUSUKE)
-         s     = - sin( atan( (DEPTH[i] - DEPTH[-1])/dx ));
-#else
-         // get the depths of the i-1 and i nodes from the sakura architecture
-         // so that we can calculate the slope.
-/*
-         depth_0 = get_depth( node-1 , Consts.get_depth , Consts.depth_data );
-         depth_1 = get_depth( node   , Consts.get_depth , Consts.depth_data );
-*/
-
-         depth_0 = get_depth_func( Const->depth_data , x[i-1] );
-         depth_1 = get_depth_func( Const->depth_data , x[i]   );
-
-         s       = - sin( atan( (depth_1-depth_0)/dx ) );
-#endif
-         //ustar = sqrt(Const->c_drag) * u;
-
-         ul = u[i-1]; 
-         cl = c[i-1]; 
-         hl = h[i-1]; 
-
-         if ( i==len-1 )
-         {
-            cr  = outflow_c;
-            hr  = outflow_h;
-            ur  = outflow_u;
-            urr = outflow_u;
-         }
-         else if ( i==len-2)
-         {
-            cr  = c[i];
-            hr  = h[i];
-            ur  = u[i+1];
-            urr = outflow_u;
-         }
-         else
-         {
-            cr  = c[i];
-            hr  = h[i];
-            ur  = u[i+1];
-            urr = u[i+2];
-         }
-         
-         if ( i==1) ull = inflow_u;
-         else       ull = u[i-2];
-
-         // value at the node calculated from those at midpoints
-         cm = 0.5 * ( cl + cr );
-         hm = 0.5 * ( hl + hr );
-         
-         //if (hm == 0)
-         //   ;
-         //else if (hm < HMIN)
-         if ( hm>0 && hm<HMIN )
-         {
-            eh_warning( "hm too small in STEP 1 at node = %d" , i );
-            success = FALSE;
-         }
-
-         // compute water entrainment 
-/*
-         Ew = 0.0;
-         if ( !eh_compare_dbl(u,0.,1e-12) )
-         {
-            Ri = R * G * hm / eh_sqr(u);
-            Ew = Const->e_a / (Const->e_b + Ri);
-         }
-*/
-                 
-         // tentative varibales with dt = 0.5 Dt 
-         u_new[i] = u_0
-                  +   dudt( u_0 , ul , ur     , ull , urr           , hl    ,
-                            hr  , hm , cl     , cr  , cm            , -9999 ,
-                            s   , -9 , -99999 , dx  , Const->c_drag , Const->mu_water )
-                    * dt * 0.5;
-         
-      } // end of STEP1
-   }
-   else
-      success = FALSE;
-
-   return success;
-}
-
-gboolean
-step_3( double* u , gint len , double* u_new )
-{
-   gboolean success = TRUE;
-
-   eh_require( u );
-
-   if ( u )
-   {
-      gint i;
-      double dx = x[1] - x[0];
-      double u_star;
-      double u_0, ul, ull, ur, urr;
-      double cl, cm, cr, hl, hm, hr;
-
-      /* STEP3: calculate new velocity*/
-      /* trying to use variables at t + 0.5 Dt */
-      for ( i=1 ; i<=headnode ; i++ )
-      {
-         u = Utemp[node];
-#if defined(YUSUKE)
-         s = - sin( atan( (DEPTH[node] - DEPTH[node-1])/Dx ));
-#else
-         // get the depths of the i-1 and i nodes from the sakura architecture
-         // so that we can calculate the slope.
-/*
-         depth_0 = get_depth( node-1 , Consts.get_depth , Consts.depth_data );
-         depth_1 = get_depth( node   , Consts.get_depth , Consts.depth_data );
-*/
-         depth_0 = get_depth_func( Const->depth_data , x[i-1] );
-         depth_1 = get_depth_func( Const->depth_data , x[i]   );
-
-         s       = - sin( atan( (depth_1-depth_0)/dx ) );
-#endif
-         //ustar = sqrt(Const->c_drag) * Utemp[node];
-
-         ul = Utemp[i-1]; 
-         cl = 0.5 * (c[i-1] + c_new[i-1] );
-         hl = 0.5 * (h[i-1] + h_new[i-1]);
-
-         if ( i==len-1)
-         {
-            cr  = 0.5 * (outflow_c + outflow_cnew);
-            hr  = 0.5 * (outflow_h + outflow_hnew);
-            ur  = outflow_unew;
-            urr = outflow_unew;
-         }
-         else if ( i==len-2)
-         {
-            cr  = 0.5 * (c[i] + c_new[i] );
-            hr  = 0.5 * (h[i] + h_new[i]);
-            ur  = Utemp[i+1];
-            urr = outflow_unew;
-         }
-         else
-         {
-            cr  = 0.5 * (c[i] + c_new[i]);
-            hr  = 0.5 * (h[i] + h_new[i]);
-            ur  = Utemp[i+1];
-            urr = Utemp[i+2];
-         }
-         
-         if ( i==1) ull = inflow_u;
-         else       ull = Utemp[node-2];
-
-         cm = 0.5 * ( cl + cr );
-         hm = 0.5 * ( hl + hr );
-         
-/*
-          if (hm < HMIN){
-             fprintf(stderr, "hm too small in STEP3 at count=%d, node=%d, headnode=%d\n", count, node, headnode);
-             stopnumber = 1;
-          }
-*/
-
-/*
-         // compute entrainment 
-         Ew = 0.0;
-         if (u != 0.0)
-         {
-            Ri = R * G * cm * hm / eh_sqr(u);
-            Ew = Const->e_a / (Const->e_b + Ri);
-         }
-*/
-         
-         
-         u_new[i] = U[i]
-                  + dudt( u, ul, ur, ull, urr,
-                          hl, hr, hm,
-                          cl, cr, cm,
-                          -999 , s, -999 , -999 , Dd, Const->c_drag, Const->mu_water) * dt;
-
-         if (fabs(Unew[node])  > UPPERLIMIT)
-         {
-            eh_warning("too fast at %d",node);
-            successs = FALSE;
-         }
-      }
-   }
-   else
-      success = FALSE;
-
-   return success;
-}
-
-#endif
-
-#if defined( NEW )
 
 Sakura_sediment*
 sakura_sediment_new( gint n_grains )
@@ -1221,8 +128,6 @@ sakura_array_destroy( Sakura_array* a )
 {
    if ( a )
    {
-      gint i;
-
       a->x -= 2;
       a->w -= 2;
       a->h -= 2;
@@ -1374,12 +279,36 @@ sakura_array_mass_in_susp( Sakura_array* a , Sakura_sediment* s )
       gint   n;
       double vol_w;
 
-      for ( i=0 ; i<a->len ; i++ )
+      for ( i=0 ; i<a->len+1 ; i++ )
       {
          vol_w = a->h[i]*a->w[i]*(a->x[i+1]-a->x[i]);
          for ( n=0 ; n<s->len ; n++ )
             mass += vol_w*a->c_grain[i][n]*s->rho_grain[n];
       }
+   }
+
+   return mass;
+}
+
+double
+sakura_array_mass_lost( Sakura_array* a , Sakura_sediment* s , double dt )
+{
+   double mass = 0.;
+
+   eh_require( a );
+   eh_require( s );
+
+   if ( a && s )
+   {
+      gint   i = a->len-2;
+      gint   n;
+      double flux_water = 0;
+      double flux_sed   = 0;
+
+      flux_water = a->h[i]*a->w[i]*a->u[i];
+      for ( n=0 ; n<s->len ; n++ )
+         flux_sed += flux_water*a->c_grain[i][n]*s->rho_grain[n];
+      mass = flux_sed * dt;
    }
 
    return mass;
@@ -1418,14 +347,46 @@ sakura_array_mass_deposited( Sakura_array* a , Sakura_sediment* s )
    {
       gint   i;
       gint   n;
-      double vol_w;
 
-      for ( i=0 ; i<a->len ; i++ )
+      for ( i=0 ; i<a->len+1 ; i++ )
          for ( n=0 ; n<s->len ; n++ )
             mass += a->d[i][n]*s->rho_grain[n];
    }
 
    return mass;
+}
+
+gint
+sakura_array_print_data( Sakura_array* a , Sakura_const_st* c )
+{
+   gint n = 0;
+
+   if ( c->data_fp && c->data_id )
+   {
+      gint          i;
+      gint*         id;
+      double*       data = NULL;
+      FILE*         fp   = c->data_fp;
+      const gint    len  = a->len;
+      
+      for ( id=c->data_id ; *id>=0 ; id++ )
+      {
+         switch ( *id )
+         {
+            case 0: data = a->u; break;
+            case 1: data = a->h; break;
+            case 2: data = a->c; break;
+            default: eh_require_not_reached();
+         }
+
+         n += fprintf( fp , "%f" , data[0] );
+         for ( i=1 ; i<len ; i++ )
+            n += fprintf( fp , "; %f" , data[i] );
+         n += fprintf( fp , "\n" );
+      }
+   }
+
+   return n;
 }
 
 Sakura_node*
@@ -1483,7 +444,6 @@ sakura_set_outflow( Sakura_node* out , Sakura_array* a , double x_head , double 
 
    if ( out && a )
    {
-      double basin_len = a->x[a->len-1] - a->x[0];
       gint   n_grains  = a->n_grain;
       gint   n_nodes   = a->len;
       double  u = 0.; // Free outflow at downstream end
@@ -1549,15 +509,15 @@ calculate_mid_vel( Sakura_array* a_mid , Sakura_array* a , gint ind_head , Sakur
    {
       gint i;
       double dx = a->x[1] - a->x[0];
-      double u_star;
-      double u_head;
+      //double u_star;
+      //double u_head;
       double u_0, ul, ull, ur, urr;
       double cl, cm, cr, hl, hm, hr;
       double s;
       double du_dt;
       const double    dt             = con->dt;
-      Sakura_get_func get_depth_func = con->get_depth;
-      double *x     = a->x;
+      //Sakura_get_func get_depth_func = con->get_depth;
+      //double *x     = a->x;
       double *u     = a->u;
       double *h     = a->h;
       double *c     = a->c;
@@ -1568,7 +528,7 @@ calculate_mid_vel( Sakura_array* a_mid , Sakura_array* a , gint ind_head , Sakur
       // calculate only within the flow (behind the head position)
       ind_head = eh_min( ind_head , a_mid->len-1);
 
-      for ( i=1 ; i<=ind_head ; i++ )
+      for ( i=1 ; i<=ind_head && success ; i++ )
       {
          u_0   = u[i];
 
@@ -1607,6 +567,12 @@ calculate_mid_vel( Sakura_array* a_mid , Sakura_array* a , gint ind_head , Sakur
          // tentative variables with dt = 0.5 Dt 
          u_new[i] = u_0 + du_dt * dt * .5;
 
+         if ( u_new[i] < 0 )
+         {
+            eh_message( "calculate_mid_vel: Negative flow velocity (i=%d): %f" , i , u_new[i] );
+            success = FALSE;
+         }
+
       } // end of STEP1
 
    }
@@ -1631,7 +597,7 @@ calculate_next_vel( Sakura_array* a_last , Sakura_array* a_mid , Sakura_array* a
       const double dx = a_last->x[1] - a_last->x[0];
       const double dt = Const->dt;
       gint i;
-      double u_star;
+      //double u_star;
       double u_0, ul, ull, ur, urr;
       double cl, cm, cr, hl, hm, hr;
       double* u_mid  = a_mid->u;
@@ -1686,7 +652,13 @@ calculate_next_vel( Sakura_array* a_last , Sakura_array* a_mid , Sakura_array* a
 
          if (fabs(u_next[i]) > UPPERLIMIT)
          {
-            eh_warning("too fast at %d",i);
+            eh_message( "calculate_next_vel: Extreme flow velocity (i=%d): %f" , i , u_next[i] );
+            success = FALSE;
+         }
+
+         if ( u_next[i] < 0 )
+         {
+            eh_message( "calculate_next_vel: Negative flow velocity (i=%d): %f" , i , u_next[i] );
             success = FALSE;
          }
       }
@@ -1717,7 +689,7 @@ sakura_erode_depth( double rho_f , double u , double dt , double sua , double su
    double e = 0;
 
    eh_require( rho_f>=0 );
-   eh_require( u>0      );
+//   eh_require( u>=0     );
    eh_require( dt>0     );
 
    if ( dt>0 )
@@ -1970,6 +942,52 @@ sakura_deposit( Sakura_array* a , Sakura_sediment* sed , gint i , double dt , Sa
    return dep;
 }
 
+double
+sakura_deposit_all( Sakura_array* a , Sakura_sediment* sed , Sakura_const_st* c )
+{
+   double dep = 0;
+
+   eh_require( a    );
+   eh_require( sed  );
+
+   if ( a && sed )
+   {
+      gint           i, n;
+      const gint     n_grains   = sed->len;
+      double*        f_sed      = eh_new( double , n_grains );
+      double         vol_w;
+      double         vol_grain;
+      Sakura_cell_st sediment;
+
+      /* 1 minus porosity (sediment volume over total volume) */
+      for ( n=0 ; n<n_grains ; n++ )
+         f_sed[n] = 1. - ( sed->rho_grain[n] - sed->rho_dep[n] ) / ( sed->rho_grain[n] - c->rho_sea_water );
+
+      for ( i=0 ; i<a->len ; i++ )
+      {
+         vol_w = a->h[i]*a->w[i]*(a->x[i+1]-a->x[i]);
+         for ( n=0 ; n<n_grains ; n++ )
+         {
+            // Meters of sediment plus water
+            vol_grain = vol_w*a->c_grain[i][n] / f_sed[n];
+
+            // Cubic meters of sediment plus water
+            sediment.id = n;
+            sediment.t  = vol_grain;
+
+            if ( vol_grain > 0 ) vol_grain = c->add( c->add_data , a->x[i] , &sediment );
+
+            // Cubic meters of sediment
+            dep       += vol_grain*f_sed[n];
+         }
+      }
+
+      eh_free( f_sed );
+   }
+
+   return dep;
+}
+
 gboolean
 compute_c_grain_new( Sakura_array* a , Sakura_array* a_last , double* u , gint i , double dt , Sakura_const_st* c , Sakura_sediment* sed )
 {
@@ -2206,7 +1224,7 @@ compute_next_h( Sakura_array* a_new , Sakura_array* a_last , double* u_temp , gi
       // START STEP2: calculate new flow thickness and sediment concentration
       // calculations at node midpoint for HH, CC and SED
       //  uses Utemp to get HHnew and CCnew
-      for ( i=0 ; i<=ind_head && i<=top_i ; i++ )
+      for ( i=0 ; i<=ind_head && i<=top_i && success ; i++ )
       {
          h_0 = a_last->h[i];
          c_0 = a_last->c[i];
@@ -2244,11 +1262,31 @@ compute_next_h( Sakura_array* a_new , Sakura_array* a_last , double* u_temp , gi
 
          eh_require( a_new->h[i]>=0 );
 
-         if (a_new->h[i] < 0)
+         if (a_new->h[i] < 0 || eh_isnan(a_new->h[i]) )
          {
-            eh_warning( "HHnew negative but cancelled at the %d-th node" ,i);
-            eh_warning( "ul:%f, ur:%f, hl:%f, h:%f, hr:%f", ul,ur,hl,h_0,hr);
-            a_new->h[i] = 0;
+            //eh_warning( "HHnew negative but cancelled at the %d-th node" ,i);
+            //eh_warning( "ul:%f, ur:%f, hl:%f, h:%f, hr:%f", ul,ur,hl,h_0,hr);
+            //a_new->h[i] = 0;
+            eh_watch_dbl( ul );
+            eh_watch_dbl( ur );
+            eh_watch_dbl( wl );
+            eh_watch_dbl( wr );
+            eh_watch_dbl( hll );
+            eh_watch_dbl( hl );
+            eh_watch_dbl( h_0 );
+            eh_watch_dbl( hr );
+            eh_watch_dbl( hrr );
+            eh_watch_dbl( dx );
+            eh_watch_dbl( Ew );
+            eh_watch_dbl( fabs(um) );
+
+            eh_watch_int( i );
+            eh_watch_int( a_last->len );
+            eh_watch_dbl( a_last->w[i] );
+            eh_watch_dbl( a_last->w[i+1] );
+
+            eh_warning( "compute_next_h: Negative flow height (i=%d): %f", i , a_new->h[i] );
+            success = FALSE;
          }
       }
    }
@@ -2341,7 +1379,7 @@ calculate_next_c_and_h( Sakura_array* a_new , Sakura_array* a_last , double* u_t
 
          eh_require( a_new->h[i]>=0 );
 
-         if (a_new->h[i] < 0)
+         if (a_new->h[i] < 0 )
          {
             eh_warning( "HHnew negative but cancelled at the %d-th node" ,i);
 /*
@@ -2355,7 +1393,7 @@ calculate_next_c_and_h( Sakura_array* a_new , Sakura_array* a_last , double* u_t
  //                        HHnew[node] = -DEPTH[node];
 
          // compute CCMULTI for each grain size fraction
-         compute_c_grain( a_new , a_last , u_temp , i , dx , Const , sed );
+         compute_c_grain_new( a_new , a_last , u_temp , i , dx , Const , sed );
 
          //a->c[i]     = c_new;
          //a->s[i]    += dt*sed_rate;
@@ -2401,6 +1439,8 @@ calculate_head_index( Sakura_array* a , double* u , gint ind_head , double dx , 
    if ( a && u )
    {
       eh_require( ind_head>=0     );
+if ( ind_head<0 )
+   eh_watch_int( ind_head );
 
       if ( ind_head<a->len )
       {
@@ -2417,6 +1457,15 @@ calculate_head_index( Sakura_array* a , double* u , gint ind_head , double dx , 
          new_ind = ind_head;
 
       eh_require( new_ind>=0     );
+if ( new_ind<0 )
+{
+   eh_watch_int( new_ind );
+   eh_watch_int( ind_head );
+   eh_watch_int( a->len );
+   eh_watch_dbl( u[ind_head] );
+   eh_watch_dbl( u[ind_head-1] );
+   eh_exit(0);
+}
    }
 
    return new_ind;
@@ -2482,13 +1531,14 @@ sakura( double dx          , double dt              , double basin_len ,
 
 \return TRUE on success of FALSE if an error occured
 */
-gboolean
+double**
 sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv    ,
         double  dt        , double  duration ,
         double* x         , double* z        , double* w      , gint    n_nodes  ,
         double* rho_grain , double* rho_dep  , double* u_fall , gint    n_grains ,
         Sakura_const_st* c )
 {
+   double** deposit = NULL;
    gboolean success = TRUE;
 
    eh_require( u_riv>0    );
@@ -2507,6 +1557,43 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
    eh_require( n_grains>0 );
    eh_require( c          );
 
+   if ( TRUE || g_getenv( "SAKURA_DEBUG" ) )
+   {
+         double       mass_in        = 0;
+         const double vol_w          = u_riv*h_riv*w[0]*duration;
+         gint n;
+eh_watch_dbl( duration );
+eh_watch_dbl( u_riv );
+eh_watch_dbl( c_riv );
+eh_watch_dbl( h_riv );
+         // c_riv is now volume concentration
+         for ( n=0,mass_in=0 ; n<n_grains ; n++ )
+         {
+            mass_in += c_riv*f_riv[n]*vol_w;
+eh_watch_dbl( f_riv[n] );
+eh_watch_dbl( rho_dep[n] );
+eh_watch_dbl( rho_grain[n] );
+eh_watch_dbl( u_fall[n] );
+         }
+
+         for ( n=0 ; n<n_nodes ; n++ )
+            fprintf( stderr , "%f ; %f ; %f\n" , x[n] , z[n] , w[n] );
+
+eh_watch_dbl( c->dt );
+eh_watch_dbl( c->e_a );
+eh_watch_dbl( c->e_b );
+eh_watch_dbl( c->sua );
+eh_watch_dbl( c->sub );
+eh_watch_dbl( c->c_drag );
+eh_watch_dbl( c->rho_river_water );
+eh_watch_dbl( c->rho_sea_water );
+eh_watch_dbl( c->tan_phi );
+eh_watch_dbl( c->mu_water );
+eh_watch_dbl( c->channel_width );
+eh_watch_dbl( c->channel_len );
+eh_watch_dbl( c->dep_start );
+   }
+
    if ( dt>0 )
    { // Run the model for positive time steps
       Sakura_array*    a_next  = sakura_array_new( n_nodes , n_grains );
@@ -2515,6 +1602,7 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
       Sakura_node*     inflow  = NULL;
       Sakura_node*     outflow = NULL;
       Sakura_sediment* sed     = sakura_sediment_new( n_grains );
+      double           mass_lost = 0;
 
       { // Set the inflow and outflow conditions
          gint    n;
@@ -2553,9 +1641,9 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
       c->sub       *= 1e3;
       c->dep_start += x[0];
 
-      if ( g_getenv( "SAKURA_DEBUG" ) )
+      if ( TRUE || g_getenv( "SAKURA_DEBUG" ) )
       { // Print input variables for debugging
-         gint i, n;
+         gint n;
 
          eh_debug( "Supply time        : %f" , duration     );
          eh_debug( "Init velocity      : %f" , inflow->u    );
@@ -2589,23 +1677,24 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
          const double dx       = a_last->x[1] - a_last->x[0];
          double       x_head   = HMIN + a_last->x[0];
          gint         ind_head = floor( (x_head-a_last->x[0])/dx );
+         const double total_t = 2.*duration;
          double       t;
+         gint         n;
    
          eh_require( x_head>0         );
          eh_require( ind_head>=0      );
          eh_require( ind_head<n_nodes );
    
-         for ( t=0. ; t<=duration && success ; t+=dt )
+         for ( t=0.,n=0 ; t<=total_t && success ; t+=dt,n++ )
          { // Run the flow for each time step
-   
-      eh_watch_dbl( t );
+            fprintf( stdout , "SAKURA time: %f s (%f s)\r" , t , total_t );
 
-      if ( t>duration )
-      {
-         inflow->u = 0;
-         inflow->c = 0;
-         inflow->h = 0;
-      }
+            if ( t>duration )
+            {
+               inflow->u = 0;
+               inflow->c = 0;
+               inflow->h = 0;
+            }
    
             sakura_set_outflow ( outflow , a_last , x_head  , dt , dx );
             sakura_array_set_bc( a_last  , inflow , outflow );
@@ -2613,26 +1702,39 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
    
             // Calculate u at t+dt/2.  The rest of a_mid is invalid.  a_mid->u is u_temp.
             // This also calculates u at the head of the flow
-            calculate_mid_vel( a_mid  , a_last , ind_head , c );
+            if ( success ) success = calculate_mid_vel( a_mid  , a_last , ind_head , c );
    
             // Calculate c, and h at t+dt.  This is a_next.  a_next->u is not valid.
-            compute_next_h( a_next , a_last , a_mid->u , ind_head , c );
-            compute_next_c( a_next , a_last , a_mid->u , ind_head , c , sed );
+            if ( success ) success = compute_next_h( a_next , a_last , a_mid->u , ind_head , c );
+            if ( success ) success = compute_next_c( a_next , a_last , a_mid->u , ind_head , c , sed );
    
             // Set new boundary conditions
             sakura_set_outflow ( outflow , a_last , x_head , dt , dx );
             sakura_array_set_bc( a_next  , inflow , outflow );
-   
+
             // Calculate c, and h at t+dt/2.  This is in a_mid and an average of a_last and a_next
-            calculate_mid_c_and_h( a_mid , a_last , a_next );
+            if ( success ) success = calculate_mid_c_and_h( a_mid , a_last , a_next );
    
             // Calculate u at t+dt.  This is a_next->u.
-            calculate_next_vel( a_last , a_mid , a_next , ind_head , c );
+            if ( success ) success = calculate_next_vel( a_last , a_mid , a_next , ind_head , c );
    
             ind_head = calculate_head_index( a_last , a_mid->u , ind_head , dx , dt , &x_head );
    
             // Update variables
             sakura_array_copy( a_last , a_next );
+
+            if ( n%c->data_int==0 ) sakura_array_print_data( a_last , c );
+
+            mass_lost += sakura_array_mass_lost( a_last , sed , dt );
+         }
+
+         if ( !success )
+         { /* If no success, deposit everything in suspension */
+            if ( t<duration )
+            { /* What hasn't left the river yet */
+               eh_warning( "Time remaining (seconds): %f" , duration - t );
+            }
+            sakura_deposit_all( a_last , sed , c );
          }
       }
 
@@ -2641,6 +1743,7 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
          gint         n;
          double       mass_in        = 0;
          double       mass_out       = 0;
+         double       mass_bal       = 0;
          const double mass_in_susp   = sakura_array_mass_in_susp  ( a_last , sed );
          const double mass_eroded    = sakura_array_mass_eroded   ( a_last , sed );
          const double mass_deposited = sakura_array_mass_deposited( a_last , sed );
@@ -2650,22 +1753,43 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
          for ( n=0,mass_in=0 ; n<n_grains ; n++ )
             mass_in += c_riv*f_riv[n]*vol_w*rho_grain[n];
 
-         eh_watch_dbl( mass_in  );
-         eh_watch_dbl( mass_in_susp );
-         eh_watch_dbl( mass_eroded );
-         eh_watch_dbl( mass_deposited );
+         mass_bal = mass_in + mass_eroded - mass_deposited - mass_in_susp - mass_lost;
 
-         mass_in  += sakura_array_mass_eroded( a_last , sed );
-         mass_out  = sakura_array_mass_in_susp  ( a_last , sed )
-                   + sakura_array_mass_deposited( a_last , sed );
+         fprintf( stdout , "\n\n" );
+         fprintf( stdout , "Mass in (kg)             : %g\n" , mass_in        );
+         fprintf( stdout , "Mass eroded (kg)         : %g\n" , mass_eroded    );
+         fprintf( stdout , "Mass deposited (kg)      : %g\n" , mass_deposited );
+         fprintf( stdout , "Mass in suspension (kg)  : %g\n" , mass_in_susp   );
+         fprintf( stdout , "Mass lost (kg)           : %g\n" , mass_lost      );
+         fprintf( stdout , "----------------------------------------------\n" );
+         fprintf( stdout , "Mass balance (kg)        : %g\n" , mass_bal       );
+         fprintf( stdout , "\n\n" );
 
-         if ( !eh_compare_dbl(mass_in,mass_out,.01) )
+         if ( mass_bal > 0 ) eh_message( "Relative error (-)       : %g (lost)"   , mass_bal / mass_in );
+         else                eh_message( "Relative error (-)       : %g (gained)" , mass_bal / mass_in );
+
+         //mass_in  += sakura_array_mass_eroded( a_last , sed );
+         //mass_out  = sakura_array_mass_in_susp  ( a_last , sed )
+         //          + sakura_array_mass_deposited( a_last , sed )
+         //          + mass_lost
+         //          - mass_eroded;
+
+
+         //if ( !eh_compare_dbl(mass_in,mass_out,.01) )
+         if ( !eh_compare_dbl(mass_bal,0.,.01) )
             eh_warning( "Mass balance check failed" );
-
-         eh_watch_dbl( mass_in  );
-         eh_watch_dbl( mass_out );
-
       }
+
+      if ( TRUE )
+      {
+         gint i, n;
+         deposit = eh_new_2( double , n_grains , n_nodes );
+
+         for ( n=0 ; n<n_grains ; n++ )
+            for ( i=0 ; i<n_nodes ; i++ )
+               deposit[n][i] = a_last->d[i][n]*rho_grain[n]/rho_dep[n];
+      }
+
 
       { // de-allocate memory
          sakura_array_destroy( a_next );
@@ -2677,10 +1801,12 @@ sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv   
          sakura_node_destroy( inflow  );
          sakura_node_destroy( outflow );
       }
+
+      c->sua       /= 1e3;
+      c->sub       /= 1e3;
+      c->dep_start -= x[0];
    }
 
-   return success;
+   return deposit;
 }
-
-#endif
 

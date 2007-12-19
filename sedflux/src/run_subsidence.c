@@ -26,8 +26,8 @@
 #define SED_SUBSIDENCE_PROC_NAME "subsidence"
 #define EH_LOG_DOMAIN SED_SUBSIDENCE_PROC_NAME
 
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 
 typedef struct

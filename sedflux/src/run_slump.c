@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 
 Sed_process_info

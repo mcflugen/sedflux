@@ -27,8 +27,8 @@
 # define NAME_MAX 255
 #endif
 
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
 
 /*

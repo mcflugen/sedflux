@@ -34,7 +34,7 @@
  */
 
 #include <stdlib.h>
-#include "utils.h"
+#include <utils/utils.h>
 #include "plume_types.h"
 
 //extern grid_type_3d *grid;

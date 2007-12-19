@@ -25,9 +25,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "utils.h"
-#include "eh_project.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "sedflux.h"
 
 int

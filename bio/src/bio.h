@@ -2,8 +2,8 @@
 #define BIO_H
 
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
 #define BIO_PROGRAM_NAME     "bio"
 #define BIO_MAJOR_VERSION_S  "0"

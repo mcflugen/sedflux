@@ -25,9 +25,10 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <string.h>
-#include "sed_sedflux.h"
-#include "utils.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 #include "my_processes.h"
+#include "sedflux.h"
 
 gboolean init_river_data( Sed_process proc , Sed_cube prof , GError** error );
 

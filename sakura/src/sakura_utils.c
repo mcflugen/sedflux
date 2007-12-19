@@ -232,7 +232,8 @@ dudt( double u     , double ul , double ur , double ull , double urr,
 * returns (d/dx)(u*f)
 * ext = Ew
 */
-double dfdt(double ul, double ur, double wl, double wr, double fl, double fr, double fll, double frr, double fm, double dx, double ext)
+double
+dfdt(double ul, double ur, double wl, double wr, double fl, double fr, double fll, double frr, double fm, double dx, double ext)
 {
 	double fluxl, fluxr, dh, w;
 	double minmod2(double, double);

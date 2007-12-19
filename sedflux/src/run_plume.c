@@ -24,10 +24,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "plume_types.h"
-#include "plumeinput.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <plume_types.h>
+#include <plumeinput.h>
 #include "my_processes.h"
 
 #define LEFT 0
@@ -59,10 +59,7 @@ run_plume( Sed_process proc , Sed_cube p )
    if ( sed_process_run_count(proc)==0 )
       init_plume_data( proc , p , NULL );
 
-   //---
-   // Run the plume for each of the rivers.
-   //---
-   {
+   { /* Run the plume for all rivers */
       Sed_process plume_hyper = data->plume_proc_hyper;
       Sed_process plume_hypo  = data->plume_proc_hypo;
       Sed_riv*    all_leaves;
@@ -74,8 +71,9 @@ run_plume( Sed_process proc , Sed_cube p )
       {
          for ( r=all_leaves ; *r ; r++ )
          {
-            eh_debug( "The current time is %f years" , sed_cube_age_in_years( p ) );
-            eh_debug( "Running plume for river %s"   , sed_river_name_loc( *r )   );
+            eh_debug( "The current time is %f years" , sed_cube_age_in_years( p )    );
+            eh_debug( "Running plume for river %s"   , sed_river_name_loc( *r )      );
+            eh_debug( "River concentration is %f"    , sed_river_concentration( *r ) );
 
             if ( sed_river_is_hyperpycnal(*r) ) eh_debug( "Plume is hyperpycnal" );
             else                                eh_debug( "Plume is hypopycnal" );
@@ -114,7 +112,7 @@ run_plume_hypo( Sed_process proc , Sed_cube prof )
    n_grains      = sed_sediment_env_n_types();
    n_susp_grains = sed_sediment_env_n_types()-1;
 
-   {
+   { /* Set sediment data for plume */
       gssize  i;
       double* lambda     = sed_sediment_property( NULL , &sed_type_lambda_in_per_seconds );
       double* rho_sat    = sed_sediment_property( NULL , &sed_type_rho_sat );
@@ -139,8 +137,8 @@ run_plume_hypo( Sed_process proc , Sed_cube prof )
 
    info.mass_lost = 0.;
 
-   {
-      gssize        i, j, n;
+   { /* Run the plume */
+      gint          i, j, n;
       Sed_hydro     hydro_data;
       Sed_riv       this_river;
       Plume_river   river_data;

@@ -1,150 +1,80 @@
-//---
-//
-// This file is part of sedflux.
-//
-// sedflux is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// sedflux is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with sedflux; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-//---
-
 #include "plumevars.h"
 #include "plumeinput.h"
+#include "plume_local.h"
 
 #include "glib.h"
-#include "utils.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
-/*** Self Documentation ***/
-char *help_msg[] =
+static gchar*   in_file    = NULL;
+static gchar*   out_file   = NULL;
+static gchar*   flood_file = NULL;
+static gchar*   data_file  = NULL;
+static gboolean version    = FALSE;
+static gboolean verbose    = FALSE;
+
+static GOptionEntry entries[] =
 {
-"                                                                             ",
-" plume [options] [parameters]                                                ",
-"  model a 2D sediment plume using the Albertson model.                       ",
-"                                                                             ",
-" Options                                                                     ",
-"                                                                             ",
-"  -o outfile - use outfile for output file prefixes. [outfile]               ",
-"  -1         - assume the plume centerline is 1-D (ie it doesn't bend).      ",
-"               [default]                                                     ",
-"  -2         - allow the plume centerline to bend in 2-D.                    ",
-"  -v         - be verbose. [off]                                             ",
-"  -h         - print this help message.                                      ",
-"                                                                             ",
-" Parameters                                                                  ",
-"                                                                             ",
-"  MODEL PARAMETERS                                                           ",
-"   These options set constants that are used in the model.                   ",
-"   -pu0=value - Set the river mouth velocity to value.                       ",
-"   -pQ=value  - Set river discharge to value.                                ",
-"                                                                             ",
-"  FILES                                                                      ",
-"   These options specify which files data is output to.                      ",
-"   -fccnc=file                                                               ",
-"   -fncnc=file                                                               ",
-"   -fdeps=file                                                               ",
-"   -fualb=file                                                               ",
-"   -fsln=file                                                                ",
-"                                                                             ",
-NULL
+   { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &in_file    , "Initialization file" , "<file>" } ,
+   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &out_file   , "Output file"         , "<file>" } ,
+   { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &flood_file , "Flood file"          , "<file>" } ,
+   { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &data_file  , "Data file"           , "<file>" } ,
+   { "verbose"    , 'V' , 0 , G_OPTION_ARG_NONE     , &verbose    , "Be verbose"          , NULL     } ,
+   { "version"    , 'v' , 0 , G_OPTION_ARG_NONE     , &version    , "Print version number and exit" , NULL     } ,
+   { NULL }
 };
 
-#define DEFAULT_VERBOSE       (FALSE)
-#define DEFAULT_OUT_FILE      stdout
-#define DEFAULT_IN_FILE       stdin
-#define DEFAULT_OUT_FILE_NAME "outfile"
-#define DEFAULT_IN_FILE_NAME  "stdin"
-#define DEFAULT_RIVER_Q       (-1)
-#define DEFAULT_RIVER_U0      (-1)
-#define DEFAULT_FJORD         (-1)
-
-int plumeout1( char *filename , Plume_enviro* , Plume_grid* );
-int plumeread( FILE* , Plume_enviro* , Plume_grid* , Plume_options* );
-
-int main(int argc, char *argv[])
+gint
+main(int argc, char *argv[])
 {
-   Eh_args *args;
-   FILE *fpin, *fpout;
-   char *infile, *outfile;
-   gboolean verbose;
-   int fjord;
-   double river_q, river_u0;
-   int err;
-   FILE *fidlog;
-   Plume_enviro env;
-   Plume_grid grid;
-   Plume_options opt;
-   Plume_mass_bal mb;
+   GError* error = NULL;
 
-   args = eh_opts_init( argc , argv );
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit( -1 );
+ //  g_thread_init( NULL );
+   eh_init_glib();
 
-   infile   = eh_get_opt_str ( args , "in"  , DEFAULT_IN_FILE_NAME  );
-   outfile  = eh_get_opt_str ( args , "out" , DEFAULT_OUT_FILE_NAME );
-   river_q  = eh_get_opt_dbl ( args , "q"   , DEFAULT_RIVER_Q       );
-   river_u0 = eh_get_opt_dbl ( args , "u0"  , DEFAULT_RIVER_U0      );
-   fjord    = eh_get_opt_int ( args , "f"   , DEFAULT_FJORD         );
-   verbose  = eh_get_opt_bool( args , "v"   , DEFAULT_VERBOSE       );
+   { /* Parse command line options */
+      GOptionContext* context = g_option_context_new( "Run hypopycnal flow model." );
    
-   fpin  = stdin;
-   fpout = stdout;
-   if ( strcmp( infile , "stdin" )!=0 )
-      fpin = eh_fopen(infile,"r");
-   if ( strcmp( outfile , "stdout" )!=0 )
-      fpout = eh_fopen(outfile,"w");
-
-   env.river = eh_new( Plume_river , 1 );
-   env.ocean = eh_new( Plume_ocean , 1 );
-   env.sed   = eh_new( Plume_sediment , 1 );
+      g_option_context_add_main_entries( context , entries , NULL );
    
-   /* Read plume constants from a file. */
-   err = plumeread(fpin , &env , &grid , &opt );
-
-   if ( river_q != -1 )
-      env.river->Q = river_q;
-   if ( river_u0 != -1 )
-      env.river->u0 = river_u0;
-   if ( fjord != -1 )
-      opt.fjrd = fjord;
-
-   if( verbose ) {
-      if( (fidlog = fopen("plume.log","a+")) == NULL)
-         printf("PLUME ERROR: Unable to open the log file, plume.log");
-
-      fprintf(fidlog," ======================================================== \n\n");
-      fprintf(fidlog," ----- PLUME Model Run ----- \n\n");
-      fflush(fidlog);
+      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+         eh_error( "Error parsing command line arguments: %s" , error->message );
    }
 
-#ifdef DBG
-   if( !verbose )
-      if( (fidlog = fopen("plume.log","a+")) == NULL)
-         printf("PLUME ERROR: Unable to open the log file, plume.log");
+   if ( version )
+   { /* Print version and exit */
+      eh_fprint_version_info( stdout , "plume" , PLUME_MAJOR_VERSION , PLUME_MINOR_VERSION , PLUME_MICRO_VERSION );
+      eh_exit( 0 );
+   }
 
-      fprintf(fidlog," ======================================================== \n\n");
-      fprintf(fidlog," ----- PLUME Model Run ----- \n\n");
-#endif
+   if ( !error )
+   { /* Run the model */
+      Sed_hydro*      flood_arr = NULL;
+      Sed_hydro*      r         = NULL;
+      Plume_param_st* param     = NULL;
+      double**        deposit   = NULL;
+      gint            len       = 0;
+      gint            n_grains  = 0;
 
-   plume( &env , &grid , &opt );
+      if ( !error ) param     = plume_scan_parameter_file( in_file    , &error );
+      if ( !error ) flood_arr = sed_hydro_scan           ( flood_file , &error );
 
-   err = plumeout1( outfile , &env , &grid );
+      if ( !error )
+         for ( r=flood_arr ; *r ; r++ )
+         {
+            if ( verbose ) sed_hydro_fprint( stderr , *r );
 
-   if ( verbose )
-      err = plumelog( &env , &grid , &opt , &mb );
+            deposit = plume_wrapper( *r , param , &len , &n_grains );
+            if ( data_file ) plume_print_data( data_file , deposit , len , n_grains );
 
-   fclose(fpin);
-   fclose(fpout);
+            eh_free_2( deposit );
+         }
 
-   return 0;
+      sed_hydro_array_destroy( flood_arr );
+
+      eh_exit_on_error( error , "sakura" );
+   }
+
+   return EXIT_SUCCESS;
 }
 

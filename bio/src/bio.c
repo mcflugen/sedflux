@@ -1,5 +1,5 @@
 #include <glib.h>
-#include "utils.h"
+#include <utils/utils.h>
 #include "bio.h"
 
 G_GNUC_INTERNAL void diffuse_col( double* u , gint len , double dz , double k , double total_t );

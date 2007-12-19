@@ -1,12 +1,12 @@
-INCLUDES                 = -I$(top_srcdir)/libutils/src \
-                           -I$(top_srcdir)/libsed/src
+INCLUDES                 = -I$(top_srcdir)
 
-AM_LDFLAGS               = $(top_builddir)/libutils/src/libutils.la \
-                           $(top_builddir)/libsed/src/libsedflux.la
+AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
+                           $(top_builddir)/sed/libsedflux.la
 
 bin_PROGRAMS              = sakura
 
-include_HEADERS           = sakura.h
+sakurainclude_HEADERS     = sakura.h
+sakuraincludedir          = $(includedir)/ew-2.0
 
 lib_LTLIBRARIES           = libsakura.la
 libsakura_la_SOURCES      = sakura.c sakura_io.c sakura_sedflux_interface.c sakura_utils.c

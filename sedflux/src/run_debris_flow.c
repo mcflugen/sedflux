@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 //#include "failure.h"
 #include "bing.h"
 //#include "debris_flow.h"

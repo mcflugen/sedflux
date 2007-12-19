@@ -23,10 +23,10 @@
 
 #include <stdio.h>
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
-#include "datadir_path.h"
+#include <sed/datadir_path.h>
 #if !defined( DATADIR )
 # define DATADIR "/usr/local/share"
 #endif
@@ -74,8 +74,7 @@ typedef double (*Sakura_get_func) ( gpointer data , double x );
 
 typedef struct
 {
-   double dt;
-   double out_dt;
+   double dt;              ///< Model timestep in seconds
 
    double e_a;             ///< Entrainment coefficient, a
    double e_b;             ///< Entrainment coefficient, b
@@ -90,6 +89,10 @@ typedef struct
    double channel_width;
    double channel_len;
    double dep_start;
+
+   gint*  data_id;
+   FILE*  data_fp;
+   gint   data_int;
 
    Sakura_phe_func get_phe;
    Sakura_add_func add;
@@ -113,7 +116,7 @@ gboolean sakura ( double dx         , double dt              , double basin_Len 
                   double *phe_bot , double *rho_bot , double OutTime   ,
                   Sakura_const_st* c   , double **deposit       , FILE *fp_data );
 */
-gboolean
+double**
 sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv    ,
         double  dt        , double  duration ,
         double* x         , double* z        , double* w      , gint    len      ,

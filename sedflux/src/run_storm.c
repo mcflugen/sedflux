@@ -23,7 +23,9 @@
 
 #include <stdio.h>
 #include "my_processes.h"
-#include "eh_rand.h"
+#include <utils/eh_rand.h>
+
+#include "sedflux.h"
 
 typedef struct
 {
@@ -97,8 +99,8 @@ run_storm( Sed_process proc , Sed_cube prof )
    {
       GSList *this_link;
       Sed_ocean_storm this_storm;
-      gssize n = g_slist_length( storm_list );
-      gssize i = 0;
+      gint   n = g_slist_length( storm_list );
+      gint   i = 0;
       double this_time = start_time;
       double significant_storm = G_MINDOUBLE;
 

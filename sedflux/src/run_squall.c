@@ -25,10 +25,12 @@
 #include <math.h>
 #include <string.h>
 #include <glib.h>
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "squall.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+#include <squall.h>
 #include "my_processes.h"
+
+#include "sedflux.h"
 
 Sed_process_info
 run_squall( Sed_process proc , Sed_cube prof )

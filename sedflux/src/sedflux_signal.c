@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <glib.h>
-#include "utils.h"
-#include "sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
 void print_choices( int sig_num );
 

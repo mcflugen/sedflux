@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <glib.h>
 #include <glib/gstdio.h>
-#include "utils.h"
-#include "sed_sedflux.h"
-#include "sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
 
-#include "bio.h"
+#include <bio.h>
+
+#include "sedflux.h"
 
 Eh_project fill_sedflux_info_file             ( Eh_project p         ,
                                                 const gchar* cmd_str ,

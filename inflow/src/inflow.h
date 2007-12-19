@@ -37,9 +37,9 @@
 */
 #include <stdio.h>
 #include <glib.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 
-#include "datadir_path.h"
+#include <sed/datadir_path.h>
 #if !defined( DATADIR )
 # define DATADIR "/usr/local/share"
 #endif

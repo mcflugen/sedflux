@@ -1,5 +1,5 @@
 #include <glib.h>
-#include "sed_sedflux.h"
+#include <sed/sed_sedflux.h>
 #include "my_sedflux.h"
 
 void

@@ -96,7 +96,7 @@ function [data, varargout] = read_hydro(file_name,varargin)
    elseif ( strcmp( output , 'q' ) )
       data = data(1,:).*data(2,:).*data(3,:);
    elseif ( strcmp( output , 'cs' ) )
-      data = sum(data(4:end,:));
+      data = sum(data(5:end,:));
    else
       data=num2cell(data,2);
    end

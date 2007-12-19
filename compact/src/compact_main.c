@@ -24,8 +24,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "utils.h"
-#include "sed_sedflux.h"
+#include <utils/utils.h>
+#include <sed/sed_sedflux.h>
+
+#include "compact.h"
 
 /*** Self Documentation ***/
 char *help_msg[] =
@@ -70,196 +72,200 @@ char *file_msg[] =
 NULL
 };
 
-Sed_column read_sediment_column(FILE *fp,double dy);
-int write_sediment_column(Sed_column s, FILE *fp);
-int compact( Sed_column col );
+Sed_column _scan_sediment_column ( const gchar* file , double dy , GError** error );
+gint       _print_sediment_column( const gchar* file , Sed_column s , GError** error );
 
-#define COMPACTION_NAME             "compact"
-#define COMPACTION_MAJOR_VERSION    "1"
-#define COMPACTION_MINOR_VERSION    "0"
+static double   dy       = 1.0;
+static gboolean rebin    = FALSE;
+static gboolean verbose  = FALSE;
+static gboolean version  = FALSE;
+static gchar*   infile   = NULL;
+static gchar*   outfile  = NULL;
+static gchar*   sedfile  = NULL;
+static gboolean diag     = FALSE;
 
-#define DEFAULT_CELL_HEIGHT         (1.)
-#define DEFAULT_REBIN               (FALSE)
-#define DEFAULT_ASCII               (TRUE)
-#define DEFAULT_VERBOSE             (FALSE)
-#define DEFAULT_IN_FILE             stdin
-#define DEFAULT_OUT_FILE            stdout
-#define DEFAULT_IN_FILE_NAME        "stdin"
-#define DEFAULT_OUT_FILE_NAME       "stdout"
-#define DEFAULT_SED_FILE_NAME  "compact.sed"
-
-static Eh_opt_entry entries[] =
+static GOptionEntry entries[] =
 {
-   { "cell-height" , 'h' , "Cell thickness"               , "VAL"  , "1.0" } ,
-   { "rebin"       , 'r' , "Rebin cells after compaction" , NULL   , "FALSE" } ,
-   { "ascii"       , 'a' , "Read from ascii file"         , NULL   , "TRUE" } ,
-   { "verbose"     , 'v' , "Be verbose"                   , NULL   , "FALSE" } ,
-   { "infile"      , 0   , "Input file"                   , "file" , "stdin" } ,
-   { "outfile"     , 0   , "Output file"                  , "file" , "stdout" } ,
-   { "sedfile"     , 0   , "Sediment file"                , "file" , "DEFAULT" } ,
-   {NULL}
+   { "cell-height" , 'h' , 0 , G_OPTION_ARG_DOUBLE   , &dy      , "Cell thickness (m)"           , "dz"   } ,
+   { "rebin"       , 'r' , 0 , G_OPTION_ARG_NONE     , &rebin   , "Rebin cells after compaction" , NULL   } ,
+   { "verbose"     , 'V' , 0 , G_OPTION_ARG_NONE     , &verbose , "Be verbose"                   , NULL   } ,
+   { "version"     , 'v' , 0 , G_OPTION_ARG_NONE     , &version , "Print version number"         , NULL   } ,
+   { "in-file"     , 'i' , 0 , G_OPTION_ARG_FILENAME , &infile  , "Input file"                   , "FILE" } ,
+   { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME , &outfile , "Output file"                  , "FILE" } ,
+   { "sed-file"    , 's' , 0 , G_OPTION_ARG_FILENAME , &sedfile , "Sediment file"                , "FILE" } ,
+   { "diag"        ,  0  , 0 , G_OPTION_ARG_NONE     , &diag    , "Run a diagnostics"            , NULL   } ,
+   { NULL }
 };
 
-int main(int argc, char *argv[])
+gint
+main( gint argc , gchar *argv[] )
 {
-   Eh_opt_context opt;
-   FILE *fpin, *fpout;
-   char *infile, *outfile, *sedfile;
-   gboolean verbose, ascii, rebin;
-   double dy;
-   Sed_column col;
+   GError* error = NULL;
 
    eh_init_glib();
 
-   fprintf(stderr,"welcome to %s-%s.%s.  %s -h for help.\n",COMPACTION_NAME,COMPACTION_MAJOR_VERSION,COMPACTION_MINOR_VERSION,COMPACTION_NAME);
-   fflush( stderr );
+   { /* Parse command line options, set values */
+      GOptionContext* context = g_option_context_new( "Run compaction model." );
 
-   opt = eh_opt_create_context( "compact" ,
-                                "Sediment compaction model" ,
-                                "Show compaction options" );
-   opt = eh_opt_set_context( opt , entries );
-   eh_opt_parse_context( opt , &argc , &argv , NULL );
+      g_option_context_add_main_entries( context , entries , NULL );
 
-   infile  = eh_opt_str_value( opt , "infile" );
-   outfile = eh_opt_str_value( opt , "outfile" );
-   sedfile = eh_opt_str_value( opt , "sedfile" );
-   dy      = eh_opt_dbl_value( opt , "cell-height" );
-   verbose = eh_opt_bool_value( opt , "verbose" );
-   ascii   = eh_opt_bool_value( opt , "ascii" );
-   rebin   = eh_opt_bool_value( opt , "rebin" );
-
-   if ( strcmp( infile , "stdin" )==0 )
-      fpin = stdin;
-   else
-      fpin = eh_fopen(infile,"r");
-   if ( strcmp( outfile , "stdout" )==0 )
-      fpout = stdout;
-   else
-      fpout = eh_fopen(outfile,"w");
-   if ( strcmp( sedfile , "DEFAULT" )==0 )
-      sedfile = NULL;
-
-   if ( ascii )
-   {
-      GError*      error = NULL;
-      Sed_sediment sed   = sed_sediment_scan( sedfile , &error );
-
-      if ( !sed )
-         eh_error( "%s: Unable to read sediment file: %s" , sedfile , error->message);
-
-      sed_sediment_set_env( sed );
-
-      col = read_sediment_column(fpin,dy);
-
-      sed_sediment_destroy( sed );
+      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+         eh_error( "Error parsing command line arguments: %s" , error->message );
    }
-   else
-      eh_require_not_reached();
 
-   if ( verbose )
-      eh_message("Initial mass = %f\n",sed_column_mass(col));
+   if ( !error && version )
+   { /* Print version number and exit */
+      eh_fprint_version_info( stdout , COMPACTION_PROGRAM_NAME  ,
+                                       COMPACTION_MAJOR_VERSION ,
+                                       COMPACTION_MINOR_VERSION ,
+                                       COMPACTION_MICRO_VERSION );
+      eh_exit( EXIT_SUCCESS );
+   }
 
-   eh_debug( "Compact the column." );
-   compact( col );
+   if ( !error )
+   { /* Run the model */
+      Sed_column   col;
+      Sed_sediment sed;
 
-   if ( rebin )
-      sed_column_rebin(col);
+      sed = sed_sediment_scan( sedfile , &error );
+      if ( !error )
+      { /* Setup the sediment environment */
+         sed_sediment_set_env( sed );
+         sed_sediment_destroy( sed );
+      }
 
-   if ( verbose )
-      eh_message("Final   mass = %f\n",sed_column_mass(col));
+      if ( !error ) col = _scan_sediment_column( infile  , dy , &error );
 
-   eh_debug( "Write the output bulk densities." );
-   if ( ascii )
-      write_sediment_column(col,fpout);
-   else
-      eh_require_not_reached();
+      if ( !error )
+      { /* Compact the column of sediment */
+         Sed_diag d = NULL;
 
-   sed_column_destroy(col);
-   sed_sediment_unset_env();
+         if ( diag    )
+         {
+            d = sed_diag_new_target_column( col );
+            sed_diag_start( d );
+         }
 
-   fclose(fpout);
-   fclose(fpin);
+         eh_debug( "Compact the column." );
 
-   return 0;
+         compact( col );
+
+         if ( rebin   ) sed_column_rebin( col );
+
+         if ( diag    ) 
+         {
+            sed_diag_stop   ( d );
+            sed_diag_fprint ( stderr , d );
+            sed_diag_destroy( d );
+         }
+
+         eh_debug( "Write the output bulk densities." );
+         _print_sediment_column( outfile , col , &error );
+      }
+
+      eh_exit_on_error( error , "Error in compaction program" );
+
+      sed_column_destroy( col );
+      sed_sediment_unset_env();
+   }
+
+   return EXIT_SUCCESS;
 }
 
-Sed_column read_sediment_column(FILE *fp,double dy)
+Sed_column
+_scan_sediment_column( const gchar* file , double dy , GError** error )
 {
-   Sed_column s;
-   gssize n_cells, n_grains;
-   double **fraction;
-   double *thickness;
+   Sed_column s = NULL;
 
-   eh_require( fp     );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    eh_require( dy > 0 );
 
-   n_grains = sed_sediment_env_n_types();
-
-   fscanf(fp,"%d\n",&n_cells);
-
-   eh_require( n_cells > 0 );
-
-   s = sed_column_new( n_cells );
-   sed_column_set_z_res( s , dy );
-
-   fraction  = eh_new_2( double , n_cells , n_grains );
-   thickness = eh_new  ( double , n_cells );
-
-   eh_debug( "Read sediment cells from input files." );
+   if ( dy>0 )
    {
-      gssize i, n;
-      for (i=n_cells-1;i>=0;i--)
+      GError*  tmp_err = NULL;
+      double** data    = NULL;
+      gint     n_cells;
+      gint     n_grains;
+
+      data = eh_dlm_read( file , ";" , &n_cells , &n_grains , &tmp_err );
+
+      n_grains -= 1;
+
+      if ( !tmp_err && n_grains!=sed_sediment_env_n_types() )
       {
-         fscanf(fp,"%lf",&thickness[n_cells-1-i]);
-         for (n=0;n<n_grains;n++)
-            if ( fscanf(fp,"%lf",&fraction[n_cells-1-i][n]) != 1 )
-               eh_error( "Not enough columns in input file.\n");
-         fscanf(fp,"\n");
+         g_set_error( &tmp_err , COMPACT_ERROR , COMPACT_ERROR_INPUT_FILE ,
+                     "Number of grain types in sediment file and input file are unequal (%d!=%d)",
+                     sed_sediment_env_n_types() , n_grains );
       }
-   }
+      else
+      { 
+         Sed_cell c = sed_cell_new_sized( n_grains , dy , data[0]+1 );
+         gssize   i;
 
-   eh_debug( "Fill the sediment column with sediment" );
-   {
-      Sed_cell c = sed_cell_new_sized(n_grains,dy,fraction[0]);
-      gssize i;
+         s = sed_column_new( n_cells );
+         sed_column_set_z_res( s , dy );
 
-      for ( i=0 ; i<n_cells ; i++ )
+         eh_debug( "Fill the sediment column with sediment" );
+
+         for ( i=0 ; i<n_cells ; i++ )
+         {
+            sed_cell_set_fraction ( c , data[n_cells-1-i]+1 );
+            sed_column_add_cell  ( s , c );
+         }
+
+         for ( i=0 ; i<n_cells ; i++ )
+            sed_column_resize_cell( s , i , data[n_cells-1-i][0] );
+
+         sed_cell_destroy( c );
+      }
+
+      if ( tmp_err )
       {
-         sed_cell_set_fraction( c , fraction[i] );
-         sed_column_add_cell( s , c );
+         g_propagate_error( error , tmp_err );
+         s = sed_column_destroy(s);
       }
 
-      for ( i=0 ; i<n_cells ; i++ )
-         sed_column_resize_cell( s , i , thickness[i] );
-
-      sed_cell_destroy( c );
+      eh_free_2( data );
    }
-
-   eh_free_2( fraction  );
-   eh_free  ( thickness );
 
    return s;
 }
 
-int write_sediment_column( Sed_column s , FILE *fp )
+gint
+_print_sediment_column( const gchar* file , Sed_column s , GError** error )
 {
-   gssize i, n;
-   Sed_cell this_cell;
-   gssize n_grains = sed_sediment_env_n_types();
+   gint n = 0;
 
-   eh_require( s  );
-   eh_require( fp );
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
 
-   fprintf(fp,"%d\n",sed_column_len(s));
-   for (i=sed_column_len(s)-1;i>=0;i--)
+   eh_require( s    );
+
+   if ( s )
    {
-      this_cell = sed_column_nth_cell( s , i );
-      fprintf(fp,"%f ",sed_cell_size(this_cell));
-      for ( n=0 ; n<n_grains ; n++ )
-         fprintf(fp,"%f ",sed_cell_nth_fraction(this_cell,n));
-      fprintf(fp,"\n");
+      GError*  tmp_err  = NULL;
+      gint     n_rows   = sed_column_len(s);
+      gint     n_grains = sed_sediment_env_n_types();
+      double** data     = eh_new_2( double , n_rows , n_grains+1 );
+      Sed_cell c        = NULL;
+      gint     i, j;
+
+      for ( i=0 ; i<n_rows ; i++ )
+      {
+         c = sed_column_nth_cell( s , n_rows-1-i );
+         data[i][0] = sed_cell_size( c );
+         for ( j=0 ; j<n_grains ; j++ )
+            data[i][j+1] = sed_cell_nth_fraction( c , j );
+      }
+
+      n = eh_dlm_print( file , ";" , data , n_rows , n_grains+1 , &tmp_err );
+
+      if ( tmp_err )
+         g_propagate_error( error , tmp_err );
+
+      eh_free_2( data );
    }
 
-   return 0;
+   return n;
 }
 
