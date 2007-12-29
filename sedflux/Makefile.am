@@ -1,37 +1,37 @@
 INCLUDES                 = -I$(top_srcdir) \
-                           -I$(top_srcdir)/sakura/src \
+                           -I$(top_srcdir)/sakura \
                            -I$(top_srcdir)/avulsion \
-                           -I$(top_srcdir)/bio/src \
-                           -I$(top_srcdir)/diffusion/src \
+                           -I$(top_srcdir)/bio \
+                           -I$(top_srcdir)/diffusion \
                            -I$(top_srcdir)/subside \
                            -I$(top_srcdir)/xshore \
-                           -I$(top_srcdir)/squall/src \
-                           -I$(top_srcdir)/flow/src \
-                           -I$(top_srcdir)/muds/src \
+                           -I$(top_srcdir)/squall \
+                           -I$(top_srcdir)/flow \
+                           -I$(top_srcdir)/muds \
                            -I$(top_srcdir)/bing \
                            -I$(top_srcdir)/failure \
                            -I$(top_srcdir)/quake \
-                           -I$(top_srcdir)/compact/src \
-                           -I$(top_srcdir)/inflow/src \
-                           -I$(top_srcdir)/plume/src
+                           -I$(top_srcdir)/compact \
+                           -I$(top_srcdir)/inflow \
+                           -I$(top_srcdir)/plume
 
 AM_LDFLAGS               = $(top_builddir)/utils/libutils.la \
                            $(top_builddir)/sed/libsedflux.la \
-                           $(top_builddir)/sakura/src/libsakura.la \
+                           $(top_builddir)/sakura/libsakura.la \
                            $(top_builddir)/avulsion/libavulsion.la \
-                           $(top_builddir)/bio/src/libbio.la \
-                           $(top_builddir)/diffusion/src/libdiffusion.la \
+                           $(top_builddir)/bio/libbio.la \
+                           $(top_builddir)/diffusion/libdiffusion.la \
                            $(top_builddir)/subside/libsubside.la \
                            $(top_builddir)/xshore/libxshore.la \
-                           $(top_builddir)/squall/src/libsquall.la \
-                           $(top_builddir)/flow/src/libflow.la \
-                           $(top_builddir)/muds/src/libmuds.la \
+                           $(top_builddir)/squall/libsquall.la \
+                           $(top_builddir)/flow/libflow.la \
+                           $(top_builddir)/muds/libmuds.la \
                            $(top_builddir)/bing/libbing.la \
                            $(top_builddir)/failure/libfailure.la \
                            $(top_builddir)/quake/libquake.la \
-                           $(top_builddir)/compact/src/libcompact.la \
-                           $(top_builddir)/inflow/src/libinflow.la \
-                           $(top_builddir)/plume/src/libplume.la
+                           $(top_builddir)/compact/libcompact.la \
+                           $(top_builddir)/inflow/libinflow.la \
+                           $(top_builddir)/plume/libplume.la
 
 bin_SCRIPTS               = runsedflux sedflux-run-batch
 bin_PROGRAMS              = sedflux
