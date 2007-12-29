@@ -134,5 +134,5 @@ dist-bin: distdir
 	$(am__remove_distdir)
 
 nightly: distcheck
-	/Users/huttone/googlecode_upload.py --summary="Nightly build (`date +%d/%m/%C%y`)" -p sedflux -u mcflugen $(distdir).tar.gz
+	/Users/huttone/Desktop/googlecode_upload.py --summary="Nightly build (`date +%d/%m/%C%y`)" -P sedflux -u mcflugen -p f5e8p5y3 $(distdir).tar.gz
 

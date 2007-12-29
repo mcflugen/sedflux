@@ -1,6 +1,0 @@
-AC_INIT(sakura.dxx)
-
-AM_INIT_AUTOMAKE(sakura_docs,1.0)
-
-AC_OUTPUT(Makefile)
-

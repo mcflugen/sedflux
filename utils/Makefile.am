@@ -35,6 +35,7 @@ utilsinclude_HEADERS = eh_utils.h
 
 utilssubincludedir=$(includedir)/ew-2.0/utils
 utilssubinclude_HEADERS = \
+                         utils.h \
                          eh_rand.h \
                          eh_logging.h \
                          eh_scanner.h \

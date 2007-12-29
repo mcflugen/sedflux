@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.34],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.35],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -228,28 +228,24 @@ AC_CONFIG_FILES([Makefile \
            sed/Makefile \
            avulsion/Makefile \
            bing/Makefile \
-           bio/Makefile bio/src/Makefile bio/data/Makefile \
-           compact/Makefile compact/src/Makefile compact/data/Makefile \
-           diffusion/Makefile diffusion/src/Makefile diffusion/data/Makefile \
+           bio/Makefile \
+           compact/Makefile \
+           diffusion/Makefile \
            failure/Makefile \
-           flow/Makefile flow/src/Makefile flow/mfiles/Makefile \
-           inflow/Makefile inflow/src/Makefile inflow/data/Makefile inflow/mfiles/Makefile \
-           muds/Makefile muds/src/Makefile muds/data/Makefile \
-           plume/Makefile plume/src/Makefile plume/demo/Makefile plume/mfiles/Makefile \
+           flow/Makefile \
+           inflow/Makefile \
+           muds/Makefile \
+           plume/Makefile \
            quake/Makefile \
-           sakura/Makefile sakura/src/Makefile sakura/mfiles/Makefile sakura/data/Makefile \
-           squall/Makefile squall/src/Makefile squall/data/Makefile \
+           sakura/Makefile \
+           squall/Makefile \
            subside/Makefile \
            xshore/Makefile \
-           sedflux/Makefile sedflux/src/Makefile sedflux/data/Makefile sedflux/mfiles/Makefile \
-              sedflux/tests/Makefile \
-           hydrotrend/Makefile hydrotrend/src/Makefile \
-              hydrotrend/data/Makefile hydrotrend/mfiles/Makefile \
+           sedflux/Makefile \
+           hydrotrend/Makefile \
            sedutils/Makefile \
-           inflow/src/runinflow \
-           sedflux/src/runsedflux \
-           sedflux/src/sedflux-run-batch \
-           sedflux/tests/sedflux-run-test \
+           sedflux/runsedflux \
+           sedflux/sedflux-run-batch \
            docs/sedflux-doxyfile \
            docs/Makefile \
            deb/Makefile deb/control \

@@ -1,6 +1,0 @@
-AC_INIT(squall.dxx)
-
-AM_INIT_AUTOMAKE(squall_docs,1.0)
-
-AC_OUTPUT(Makefile)
-

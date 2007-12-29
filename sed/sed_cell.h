@@ -22,7 +22,7 @@
 # define SED_CELL_H
 
 #include <glib.h>
-#include "utils/utils.h"
+#include <utils/utils.h>
 
 new_handle( Sed_cell );
 
