@@ -2,29 +2,10 @@ ACLOCAL_AMFLAGS      = -I m4
 
 EXTRA_DIST           = bootstrap
 
-SUBDIRS              = deb \
-                       rpm \
+SUBDIRS              = deb  \
+                       rpm  \
                        docs \
-                       utils \
-                       sed  \
-                       avulsion  \
-                       bing  \
-                       bio  \
-                       compact  \
-                       diffusion  \
-                       failure  \
-                       flow  \
-                       inflow  \
-                       muds  \
-                       plume  \
-                       quake  \
-                       sakura  \
-                       squall  \
-                       subside  \
-                       xshore  \
-                       sedflux  \
-                       hydrotrend  \
-                       sedutils 
+                       ew
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config-h.in \
                        stamp-h.in

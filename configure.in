@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.35],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.38],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -220,32 +220,33 @@ AC_SUBST( CHECK_LIBS )
 AC_SUBST( CHECK_CFLAGS )
 AC_SUBST( DPKG_ARCHITECTURE )
 
-AC_CONFIG_FILES([ utils/utils.pc ])
-AC_CONFIG_FILES([ sed/sedflux.pc ])
+AC_CONFIG_FILES([ ew/utils/utils.pc ])
+AC_CONFIG_FILES([ ew/sed/sedflux.pc ])
 
 AC_CONFIG_FILES([Makefile \
-           utils/Makefile \
-           sed/Makefile \
-           avulsion/Makefile \
-           bing/Makefile \
-           bio/Makefile \
-           compact/Makefile \
-           diffusion/Makefile \
-           failure/Makefile \
-           flow/Makefile \
-           inflow/Makefile \
-           muds/Makefile \
-           plume/Makefile \
-           quake/Makefile \
-           sakura/Makefile \
-           squall/Makefile \
-           subside/Makefile \
-           xshore/Makefile \
-           sedflux/Makefile \
-           hydrotrend/Makefile \
-           sedutils/Makefile \
-           sedflux/runsedflux \
-           sedflux/sedflux-run-batch \
+           ew/Makefile \
+           ew/utils/Makefile \
+           ew/sed/Makefile \
+           ew/avulsion/Makefile \
+           ew/bing/Makefile \
+           ew/bio/Makefile \
+           ew/compact/Makefile \
+           ew/diffusion/Makefile \
+           ew/failure/Makefile \
+           ew/flow/Makefile \
+           ew/inflow/Makefile \
+           ew/muds/Makefile \
+           ew/plume/Makefile \
+           ew/quake/Makefile \
+           ew/sakura/Makefile \
+           ew/squall/Makefile \
+           ew/subside/Makefile \
+           ew/xshore/Makefile \
+           ew/sedflux/Makefile \
+           ew/hydrotrend/Makefile \
+           ew/sedutils/Makefile \
+           ew/sedflux/runsedflux \
+           ew/sedflux/sedflux-run-batch \
            docs/sedflux-doxyfile \
            docs/Makefile \
            deb/Makefile deb/control \
