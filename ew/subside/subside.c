@@ -132,6 +132,14 @@ void subside_helper( gpointer d , gpointer g )
    return;
 }
 
+/** Subside a grid of elevations due to a point load
+
+\param g      A Eh_dbl_grid of elevations (in meters)
+\param load   Applied load
+\param h      EET of crust
+\param E      Young's modulus
+
+*/
 void
 subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_load , int j_load )
 {
@@ -177,6 +185,23 @@ subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_lo
 
 }
 
+void
+subside_point_load_1d( double* z , double* y , gint len , double load , double y_0 , double alpha )
+{
+   if ( z )
+   {
+      const double c = load/( 2.*alpha*sed_rho_mantle()*sed_gravity() );
+      gint         j;
+      double       r;
+
+      for ( j=0 ; j<len ; j++ )
+      {
+         r     = fabs(y[j]-y_0)/alpha;
+         z[j] += c * exp( -r ) * ( cos(r) + sin(r) );
+      }
+   }
+}
+
 void subside_half_plane_load( Eh_dbl_grid g ,
                               double load    ,
                               double h       ,
@@ -210,19 +235,32 @@ void subside_half_plane_load( Eh_dbl_grid g ,
    }
 }
 
-double get_flexure_parameter( double h , double E , gssize n_dim )
+/** Calculate the flexure parameter, alpha
+
+\param h       Effective elastic thickness of crust
+\param E       Young's modulus
+\param n_dim   Number of dimensions (1 or 2)
+
+\return The flexure parameter in meters
+*/
+double
+get_flexure_parameter( double h , double E , gssize n_dim )
 {
    double poisson = .25;
    double D       = E*pow(h,3)/12./(1-pow(poisson,2));
    double rho_m   = sed_rho_mantle();
    double alpha;
+eh_watch_dbl( h );
+eh_watch_dbl( E );
+eh_watch_dbl( D );
+eh_watch_dbl( rho_m );
 
    eh_require( n_dim==1 || n_dim==2 );
 
-   if ( n_dim > 1 )
-      alpha = pow( D / (rho_m * sed_gravity()) , .25 );
-   else
-      alpha = pow( 4.*D/(rho_m * sed_gravity()) , .25 );
+   if ( n_dim > 1 ) alpha = pow(    D / (rho_m * sed_gravity()) , .25 );
+   else             alpha = pow( 4.*D / (rho_m * sed_gravity()) , .25 );
+
+eh_watch_dbl( alpha );
 
    return alpha;
 }

@@ -1,60 +1,67 @@
 #include <glib.h>
 #include <utils/utils.h>
 #include "subside.h"
+#include <sed/sed_sedflux.h>
+#include <utils/utils.h>
 
-#define DEFAULT_RHO_W   (1030.)
-#define DEFAULT_RHO_M   (3300.)
-#define DEFAULT_EET     (5000.)
-#define DEFAULT_Y       (7.e10)
-#define DEFAULT_LOAD    (1000.)
-#define DEFAULT_SLOPE   (.001)
-#define DEFAULT_NDIM    (1)
-#define DEFAULT_VERBOSE (FALSE)
+// Command line arguments
+static gint     _verbose     = 0;
+static gboolean _reset_bathy = FALSE;
+static gboolean _version     = FALSE;
+static gboolean _debug       = FALSE;
+static gdouble  _day         = 1.;
+static gdouble  _angle       = 14.;
+static gchar*   _in_file     = NULL;
+static gchar*   _out_file    = NULL;
+static gchar*   _bathy_file  = NULL;
+static gchar*   _flood_file  = NULL;
+static gchar*   _data_file   = NULL;
+static gint*    _data_id     = NULL;
+static gint     _data_int    = 1;
 
-static Eh_opt_entry entries[] =
+gboolean parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error );
+
+static double _eet   = 5000.;
+static double _y     = 7.e10;
+static double _load  = 1000.;
+static double _slope = .001;
+static double _rho_w = 1030.;
+static double _rho_m = 3300.;
+static gint   _n_dim = 1;
+
+static GOptionEntry entries[] =
 {
-   { "eet"    , 'h' , "Effective elastic thickness" , "VAL" , "5000" } ,
-   { "youngs" , 'y' , "Young's modulus"             , "VAL" , "7e10" } ,
-   { "load"   , 'q' , "Load"                        , "VAL" , "1e3"  } ,
-   { "slope"  , 's' , "Bathymetric slope"           , "VAL" , ".001" } ,
-   { "ndim"   , 'D' , "Number of dimensions"        , "VAL" , "1"    } ,
+   { "eet"    , 'h' , 0 , G_OPTION_ARG_DOUBLE , &_eet   , "Effective elastic thickness" , "DVAL" } ,
+   { "youngs" , 'y' , 0 , G_OPTION_ARG_DOUBLE , &_y     , "Young's modulus"             , "DVAL" } ,
+   { "load"   , 'q' , 0 , G_OPTION_ARG_DOUBLE , &_load  , "Load"                        , "DVAL" } ,
+   { "slope"  , 's' , 0 , G_OPTION_ARG_DOUBLE , &_slope , "Bathymetric slope"           , "DVAL" } ,
+   { "rho-w"  , 'w' , 0 , G_OPTION_ARG_DOUBLE , &_rho_w , "Density of water (kg/m^3)"   , "DVAL" } ,
+   { "rho-m"  , 'm' , 0 , G_OPTION_ARG_DOUBLE , &_rho_m , "Density of mantle (kg/m^3)"  , "DVAL" } ,
+   { "ndim"   , 'D' , 0 , G_OPTION_ARG_INT    , &_n_dim , "Number of dimensions"        , "N"    } ,
    { NULL }
 };
 
-int main( int argc , char *argv[] )
+gint
+main( int argc , char *argv[] )
 {
-   Eh_opt_context opt;
-   Eh_dbl_grid z;
-   double eet, y, slope, load;
-   gint n_dim;
+   GError*     error = NULL;
+   Eh_dbl_grid z     = NULL;
 
+   g_thread_init( NULL );
    eh_init_glib();
 
-   opt = eh_opt_create_context( "subside" ,
-                                "flexural subsidence model" ,
-                                "Show subsidence options" );
-   opt = eh_opt_set_context( opt , entries );
-   eh_opt_parse_context( opt , &argc , &argv , NULL );
+   { /* Parse command-line arguments */
+      GOptionContext* context = g_option_context_new( "Run subsidence model." );
 
-   eh_opt_print_key_file( opt , stdout );
+      g_option_context_add_main_entries( context , entries , NULL );
 
-   eet    = eh_opt_dbl_value( opt , "eet" );
-   y      = eh_opt_dbl_value( opt , "youngs" );
-   slope  = eh_opt_dbl_value( opt , "slope" );
-   load   = eh_opt_dbl_value( opt , "load" );
-   n_dim  = eh_opt_int_value( opt , "ndim" );
+      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
+         eh_error( "Error parsing command line arguments: %s" , error->message );
+   }
 
-/*
-   verbose = DEFAULT_VERBOSE;
-   opt_context = g_option_context_new( "flexural subsidence model" );
-   g_option_context_add_main_entries( opt_context , entries , NULL );
-   g_option_context_parse( opt_context , &argc , &argv , NULL );
-*/
-
-   // Set up the initial profile.
-   {
+   { /* Set up the initial profile */
       gssize n_x = 1, n_y = 100;
-      gssize dx = 1, dy = 10;
+      gssize dx  = 1, dy  = 10;
 
       z = eh_grid_new( double , n_x , n_y );
 
@@ -64,13 +71,8 @@ int main( int argc , char *argv[] )
       eh_dbl_grid_set( z , 0. );
    }
 
-   // Subside due to external load.
-   {
-   }
-
-   subside_point_load( z , load , eet , y , 0 , 0 );
-
-   // Subside due to change in water load.
+   // Calculate deflection due to point load at origin
+   subside_point_load( z , _load , _eet , _y , 0 , 0 );
 
    // Print the new elevations.
    {
@@ -85,9 +87,9 @@ int main( int argc , char *argv[] )
 
    }
 
-   // Print the deflections.
-
-   eh_destroy_context( opt );
+   { // Free resources
+      eh_grid_destroy( z , NULL );
+   }
 
    return 0;
 }

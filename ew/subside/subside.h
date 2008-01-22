@@ -99,6 +99,8 @@ void subside_half_plane_load ( Eh_dbl_grid g ,
 */
 double get_flexure_parameter ( double h       , double E    , gssize n_dim );
 
+void subside_point_load_1d( double* z , double* y , gint len , double load , double y_0 , double alpha );
+
 #endif
 
 /*@}*/

@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.38],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.39],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -210,6 +210,7 @@ cflags_set="$CFLAGS"
 ### Add the GLIB flags to CFLAGS
 ###
 GLIB_ADD_TO_VAR(CFLAGS, ${GLIB_CFLAGS} , ${GLIB_CFLAGS} )
+GLIB_ADD_TO_VAR(LIBS, ${GLIB_LIBS} , ${GLIB_LIBS} )
 GLIB_ADD_TO_VAR(LIBS, -lm , -lm )
 
 AC_SUBST( GLIB_LIBS )
