@@ -8,5 +8,5 @@ Description: Sedflux utility library
 Version: @VERSION@
 Requires: glib-2.0 >= 2.0, utils >= 1.0
 Libs: -L${libdir} -lsedflux
-Cflags: -I${includedir}
+Cflags: -I${includedir}/ew-2.0
 
