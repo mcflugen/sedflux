@@ -79,6 +79,23 @@ eh_exit_on_error( GError* error , const gchar* format , ... )
    }
 }
 
+void
+eh_print_on_error( GError* error , const gchar* format , ... )
+{
+   if ( error )
+   {
+      gchar* err_s;
+      va_list ap;
+      va_start( ap , format );
+
+      err_s = g_strdup_vprintf( format , ap );
+      eh_error( eh_render_error_str( error , err_s ) );
+
+      va_end(ap);
+      eh_free( err_s );
+   }
+}
+
 gchar* brief_copyleft_msg[] =
 {
 "Copywrite (C) 2006 Eric Hutton." ,
