@@ -3,14 +3,17 @@ INCLUDES                 = -I$(top_srcdir)/ew
 AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
                            $(top_builddir)/ew/sed/libsedflux.la
 
-bin_PROGRAMS              = plume plume_run_file
-plume_SOURCES             = plumemain.c plumeout1.c plumeread.c plume_scan.c
-plume_run_file_SOURCES    = plume_run_file.c
+bin_PROGRAMS                = plume plume_run_file
+plume_SOURCES               = plumemain.c plumeout1.c plumeread.c plume_scan.c
+plume_run_file_SOURCES      = plume_run_file.c
+plume_DEPENDENCIES          = libplume.la
+plume_run_file_DEPENDENCIES = libplume.la
 
 if ENABLE_CHECK
 
-bin_PROGRAMS             += plume_unit_test
-plume_unit_test_SOURCES   = plume_unit_test.c
+bin_PROGRAMS                 += plume_unit_test
+plume_unit_test_SOURCES       = plume_unit_test.c
+plume_unit_test_DEPENDENCIES  = libplume.la
 
 plume_unit_test_LDADD     = @CHECK_LIBS@ -lplume
 plume_unit_test_CFLAGS    = @CHECK_CFLAGS@

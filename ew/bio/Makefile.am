@@ -5,6 +5,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 
 bin_PROGRAMS             = bio
 bio_SOURCES              = bio_main.c
+bio_DEPENDENCIES         = libbio.la
 
 lib_LTLIBRARIES          = libbio.la
 libbio_la_SOURCES        = bio.c bio_sed_interface.c

@@ -68,6 +68,7 @@ utilssubinclude_HEADERS = \
 
 bin_PROGRAMS           = test
 test_SOURCES           = test.c
+test_DEPENDENCIES      = libutils.la
 
 if ENABLE_CHECK
 
@@ -81,6 +82,8 @@ unit_test_SOURCES      = \
                          eh_symbol_table_unit_test.c \
                          eh_input_val_unit_test.c \
                          eh_io_unit_test.c
+
+unit_test_DEPENDENCIES = libutils.la
 
 unit_test_LDADD        = -lutils @GLIB_LIBS@ @CHECK_LIBS@ -lm
 

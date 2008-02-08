@@ -4,6 +4,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la
 
 bin_PROGRAMS             = earthquake 
 earthquake_SOURCES       = earthquake_main.c
+earthquake_DEPENDENCIES  = libquake.la
 
 lib_LTLIBRARIES          = libquake.la
 libquake_la_SOURCES      = earthquake.c

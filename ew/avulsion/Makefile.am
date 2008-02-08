@@ -5,6 +5,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 
 bin_PROGRAMS             = avulsion
 avulsion_SOURCES         = avulsion_main.c
+avulsion_DEPENDENCIES    = libavulsion.la
 avulsioninclude_HEADERS  = avulsion.h
 avulsionincludedir       = $(includedir)/ew-2.0
 

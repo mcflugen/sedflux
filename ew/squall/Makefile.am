@@ -6,6 +6,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 bin_PROGRAMS              = squall
 
 squall_SOURCES            = squall_main.c
+squall_DEPENDENCIES       = libsquall.la
 squallinclude_HEADERS     = squall.h
 squallincludedir          = $(includedir)/ew-2.0
 

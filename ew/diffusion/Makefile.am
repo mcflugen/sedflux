@@ -5,6 +5,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 
 bin_PROGRAMS              = diffusion
 diffusion_SOURCES         = diffusion_main.c
+diffusion_DEPENDENCIES    = libdiffusion.la
 diffusioninclude_HEADERS  = diffusion.h
 diffusionincludedir       = $(includedir)/ew-2.0
 

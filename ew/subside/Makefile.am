@@ -5,6 +5,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 
 bin_PROGRAMS              = subside
 subside_SOURCES           = subside_main.c
+subside_DEPENDENCIES      = libsubside.la
 subsideinclude_HEADERS    = subside.h
 subsideincludedir         = $(includedir)/ew-2.0
 

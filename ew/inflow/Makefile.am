@@ -7,6 +7,8 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 bin_PROGRAMS             = inflow pseudoplume
 
 pseudoplume_SOURCES      = pseudoplume.c
+pseudoplume_DEPENDENCIES = libinflow.la
+inflow_DEPENDENCIES      = libinflow.la
 inflowinclude_HEADERS    = inflow.h
 inflowincludedir         = $(includedir)/ew-2.0
 

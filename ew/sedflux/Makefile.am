@@ -35,6 +35,7 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 
 bin_SCRIPTS               = runsedflux sedflux-run-batch
 bin_PROGRAMS              = sedflux
+sedflux_DEPENDENCIES      = libsedflux-2.0.la
 sedflux_LDADD             = -lsedflux-2.0 -lgthread-2.0 -lglib-2.0
 
 lib_LTLIBRARIES           = libsedflux-2.0.la
@@ -84,47 +85,4 @@ sedfluxincludedir         = $(includedir)/ew-2.0
 noinst_HEADERS            = \
                             my_sedflux.h \
                             my_processes.h
-
-#noinst_HEADERS            = \
-#                            cpr.h \
-#                            run_squall.h \
-#                            run_flow.h \
-#                            bbl.h \
-#                            run_diffusion.h \
-#                            bedload.h \
-#                            debris_flow.h \
-#                            data_dump.h \
-#                            sealevel.h \
-#                            isostasy.h \
-#                            river.h \
-#                            run_new_process.h \
-#                            measuring_station.h \
-#                            subsidence.h \
-#                            storms.h \
-#                            processes.h \
-#                            turbidity_current.h \
-#                            run_avulsion.h \
-#                            failure_proc.h \
-#                            compaction.h \
-#                            erosion.h \
-#                            run_plume.h \
-#                            quake.h \
-#                            tide.h \
-#                            slump.h \
-#                            run_constants.h \
-#                            run_xshore.h \
-#                            my_sedflux.h
-
-#install-exec-local:
-#	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
-#	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
-#	fi 
-#	ln -f -s $(DESTDIR)$(bindir)/sedflux $(DESTDIR)$(bindir)/sedflux3d
-
-#uninstall-local:
-#	if test -h $(DESTDIR)$(bindir)/sedflux3d ; then \
-#	   rm $(DESTDIR)$(bindir)/sedflux3d ; \
-#	fi
-
-
 

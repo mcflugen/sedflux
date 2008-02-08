@@ -7,6 +7,9 @@ bin_PROGRAMS              = flow flow_2d flow_3d
 flow_SOURCES              = flow_main.c
 flow_2d_SOURCES           = flow_2d_main.c
 flow_3d_SOURCES           = flow_3d_main.c
+flow_DEPENDENCIES         = libflow.la
+flow_2d_DEPENDENCIES      = libflow.la
+flow_3d_DEPENDENCIES      = libflow.la
 flowinclude_HEADERS       = flow.h
 flowincludedir            = $(includedir)/ew-2.0
 
