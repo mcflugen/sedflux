@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.39],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.44],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -168,7 +168,7 @@ AC_ARG_ENABLE(doxygen,
                   [use doxygen to build documentation [default=no]]),,
    [enable_doxygen=no])
 
-if test -x$enable_doxygen != xno ; then
+if test x$enable_doxygen != xno ; then
 
    AC_CHECK_PROGS(DOXYGEN, doxygen )
 
