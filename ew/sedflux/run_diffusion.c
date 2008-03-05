@@ -50,17 +50,13 @@ run_diffusion( Sed_process proc , Sed_cube prof )
                * sed_get_cube_storm(prof);
 */
 
-   k_max       = eh_input_val_eval( data->k_max ,
-                                    sed_cube_age_in_years( prof ) )
+   k_max       = eh_input_val_eval( data->k_max , sed_cube_age_in_years( prof ) );
                * sed_cube_storm(prof);
    skin_depth  = data->skin_depth*sed_cube_storm(prof);
    
-   eh_require( k_max>0 )
+   eh_require( k_max>=0 )
    {
       Sed_cell *lost;
-
-      eh_message( "time                  : %f" ,
-                  sed_cube_age_in_years(prof) );
 
       if ( sed_mode_is_3d() )
          lost = diffuse_sediment_2(
@@ -82,10 +78,11 @@ run_diffusion( Sed_process proc , Sed_cube prof )
       }
 
 
-      eh_message( "time step (days)     : %f" ,
-                  sed_cube_time_step_in_days(prof) );
-      eh_message( "diffusion coeficient : %f" , k_max                     );
    }
+
+   eh_message( "time                 : %f" , sed_cube_age_in_years(prof)      );
+   eh_message( "time step (days)     : %f" , sed_cube_time_step_in_days(prof) );
+   eh_message( "diffusion coeficient : %f" , k_max                            );
 
    return info;
 }
