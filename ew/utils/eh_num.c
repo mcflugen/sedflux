@@ -360,8 +360,6 @@ void interpolate_bad_val( double *x     , double *y     , gssize len     ,
             y_new[i] = y[0];
    }
 
-eh_message( "DONE" );
-
    return;
 }
 
@@ -2805,86 +2803,117 @@ void eh_rebin_dbl_array( double *x     , double *y     , gssize len ,
                                eh_nan() );
 }
 
-void eh_rebin_dbl_array_bad_val(
-        double *x     , double *y     , gssize len     ,
-        double *x_bin , double *y_bin , gssize len_bin ,
-        double bad_val )
+void
+eh_rebin_dbl_array_bad_val( double *x     , double *y     , gssize len     ,
+                            double *x_bin , double *y_bin , gssize len_bin ,
+                            double bad_val )
 {
-   gssize i, j;
-   gssize top_i, top_j, lower_j, upper_j;
-   double left_bin, right_bin, lower, upper, upper_bin, lower_bin;
-   double sum;
-   double *x_edge;
+   eh_require( x );
+   eh_require( y );
+   eh_require( x_bin );
+   eh_require( y_bin );
+   //eh_require( len>2 );
+   //eh_require( len_bin>2 );
 
-   // initialize y_bin with NaN's.
-   for ( i=0 ; i<len_bin ; y_bin[i]=bad_val , i++ );
-
-   top_i = len_bin-1;
-   top_j = len-1;
-   lower_bin = x_bin[0]     - ( x_bin[1]     - x_bin[0]       ) * .5;
-   upper_bin = x_bin[top_i] + ( x_bin[top_i] - x_bin[top_i-1] ) * .5;
-   lower = x[0]     - ( x[1]     - x[0]       ) * .5;
-   upper = x[top_j] + ( x[top_j] - x[top_j-1] ) * .5;
-
-   // define the edges of the data.
-   x_edge      = eh_new( double , len+1 );
-   x_edge[0]   = x[0] - ( x[1] - x[0] ) * .5;
-   x_edge[len] = x[top_j] + ( x[top_j] - x[top_j-1] ) * .5;
-   for ( j=1 ; j<len ; j++ )
-      x_edge[j] = ( x[j-1] + x[j] ) * .5;
-
-   upper_j = 0;
-   for ( i=0 ; i<len_bin && j<=len ; i++ )
+   if ( x && y && x_bin && y_bin )
    {
+      gint i, j;
+      gint top_i, top_j, lower_j, upper_j;
+      double left_bin, right_bin, lower, upper, upper_bin, lower_bin;
+      double sum;
+      double *x_edge;
 
-      // Integrate the data in y over the entire bin.
-      left_bin  = (i!=0)    ?( x_bin[i]   + x_bin[i-1] ) * .5 : lower_bin;
-      right_bin = (i!=top_i)?( x_bin[i+1] + x_bin[i]   ) * .5 : upper_bin;
+      eh_require( eh_dbl_array_is_monotonic_up( x     , len     ) );
+      eh_require( eh_dbl_array_is_monotonic_up( x_bin , len_bin ) );
 
-      // Find the lower j.
-      for ( j=upper_j ; j<=len && x_edge[j]<=left_bin ; j++ );
-      lower_j = j-1;
-      eh_clamp( lower_j , 0 , len );
+      // initialize y_bin with NaN's.
+      eh_dbl_array_set( y_bin , len_bin , bad_val );
+      //for ( i=0 ; i<len_bin ; y_bin[i]=bad_val , i++ );
 
-      // Find the upper j.
-      for ( j=lower_j ; j<=len && x_edge[j]<=right_bin ; j++ );
-      upper_j = j;
-      eh_clamp( upper_j , 0 , len );
+      top_i     = len_bin-1;
+      top_j     = len-1;
+      lower_bin = x_bin[0]     - ( x_bin[1]     - x_bin[0]       ) * .5;
+      upper_bin = x_bin[top_i] + ( x_bin[top_i] - x_bin[top_i-1] ) * .5;
+      lower     = x[0]         - ( x[1]         - x[0]           ) * .5;
+      upper     = x[top_j]     + ( x[top_j]     - x[top_j-1]     ) * .5;
 
-      // Integrate the data over these j.
+      { /* Define the edges of the data */
+         x_edge      = eh_new( double , len+1 );
+         x_edge[0]   = x[0] - ( x[1] - x[0] ) * .5;
+         x_edge[len] = x[top_j] + ( x[top_j] - x[top_j-1] ) * .5;
+         for ( j=1 ; j<len ; j++ )
+            x_edge[j] = ( x[j-1] + x[j] ) * .5;
+      }
+
+      upper_j = 0;
+      for ( i=0 ; i<len_bin && j<=len ; i++ )
+      {
+         // Integrate the data in y over the entire bin.
+         left_bin  = (i!=0)    ?( x_bin[i]   + x_bin[i-1] ) * .5 : lower_bin;
+         right_bin = (i!=top_i)?( x_bin[i+1] + x_bin[i]   ) * .5 : upper_bin;
+
+         // Find the lower j.
+         for ( j=upper_j ; j<=len && x_edge[j]<=left_bin ; j++ );
+         lower_j = j-1;
+         eh_clamp( lower_j , 0 , len );
+
+         // Find the upper j.
+         for ( j=lower_j ; j<=len && x_edge[j]<=right_bin ; j++ );
+         upper_j = j;
+         eh_clamp( upper_j , 0 , len );
+
+         // Integrate the data over these j.
 //      sum  = y[lower_j]*(left_bin-x_edge[lower_j])/(right_bin-left_bin);
 //      sum += y[upper_j]*(right_bin-x_edge[upper_j])/(right_bin-left_bin);
 
-      sum  = 0;
-      if ( left_bin > x_edge[upper_j] || right_bin < x_edge[lower_j] )
-         sum = bad_val;
-      else if ( upper_j-lower_j>1 )
-      {
-         if ( left_bin >= x_edge[lower_j] )
-            sum += y[lower_j]
-                 * (x_edge[lower_j+1]-left_bin);
+         eh_require_critical( upper_j<=len );
+         eh_require_critical( lower_j<=len );
+         eh_require_critical( upper_j>=0   );
+         eh_require_critical( lower_j>=0   );
+         sum  = 0;
+         if ( left_bin > x_edge[upper_j] || right_bin < x_edge[lower_j] )
+            sum = bad_val;
+         else if ( upper_j-lower_j>1 )
+         {
+            eh_require_critical( lower_j<len );
+
+            if ( left_bin >= x_edge[lower_j] )
+               sum += y[lower_j]
+                    * (x_edge[lower_j+1]-left_bin);
+            else
+               sum += y[lower_j]
+                    * (x_edge[lower_j+1]-x_edge[lower_j]);
+
+            eh_require_critical( upper_j>0 )
+
+            if ( right_bin <= x_edge[upper_j] )
+               sum += y[upper_j-1] 
+                    * (right_bin-x_edge[upper_j-1]);
+            else
+               sum += y[upper_j-1] 
+                    * (x_edge[upper_j]-x_edge[upper_j-1]);
+
+            for ( j=lower_j+1 ; j<upper_j-1 ; j++ )
+            {
+eh_require_critical( j>=0  );
+eh_require_critical( j<len );
+               sum += y[j]*(x_edge[j+1]-x_edge[j]);
+            }
+            sum /= (right_bin-left_bin);
+         }
          else
-            sum += y[lower_j]
-                 * (x_edge[lower_j+1]-x_edge[lower_j]);
-         if ( right_bin <= x_edge[upper_j] )
-            sum += y[upper_j-1] 
-                 * (right_bin-x_edge[upper_j-1]);
-         else
-            sum += y[upper_j-1] 
-                 * (x_edge[upper_j]-x_edge[upper_j-1]);
-         for ( j=lower_j+1 ; j<upper_j-1 ; j++ )
-            sum += y[j]*(x_edge[j+1]-x_edge[j]);
-         sum /= (right_bin-left_bin);
+         {
+eh_require_critical( lower_j>=0   );
+eh_require_critical( upper_j<=len );
+            for ( j=lower_j ; j<upper_j ; j++ )
+               sum += y[j];
+         }
+
+         y_bin[i] = sum;
       }
-      else
-         for ( j=lower_j ; j<upper_j ; j++ )
-            sum += y[j];
 
-
-      y_bin[i] = sum;
+      eh_free( x_edge );
    }
-
-   eh_free( x_edge );
 
    return;
 }

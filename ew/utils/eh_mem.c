@@ -565,7 +565,6 @@ eh_alloc_2( gssize m , gssize n , gssize size )
    {
       p = eh_new( void* , m );
 
-
       if ( p )
       {
          p[0] = eh_new( gchar ,  m*n*size );

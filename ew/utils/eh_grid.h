@@ -26,18 +26,22 @@ Eh_ind_2    eh_ind_2_create          ( int i         , int j          );
 gboolean    eh_ind_2_cmp             ( Eh_ind_2 a    , Eh_ind_2 b     );
 Eh_ind_2*   eh_ind_2_dup             ( Eh_ind_2 *src , Eh_ind_2 *dest );
 
-gssize      eh_grid_n_x              ( Eh_grid g );
-gssize      eh_grid_n_y              ( Eh_grid g );
-gssize      eh_grid_n_el             ( Eh_grid g );
+gint        eh_grid_n_x              ( Eh_grid g );
+gint        eh_grid_n_y              ( Eh_grid g );
+gint        eh_grid_n_el             ( Eh_grid g );
 gssize      eh_grid_el_size          ( Eh_grid g );
-gssize      eh_grid_low_x            ( Eh_grid g );
-gssize      eh_grid_low_y            ( Eh_grid g );
+gint        eh_grid_low_x            ( Eh_grid g );
+gint        eh_grid_low_y            ( Eh_grid g );
+gint        eh_grid_top_x            ( Eh_grid g );
+gint        eh_grid_top_y            ( Eh_grid g );
 double*     eh_grid_x                ( Eh_grid g );
+double*     eh_grid_x_start          ( Eh_grid g );
 double*     eh_grid_y                ( Eh_grid g );
+double*     eh_grid_y_start          ( Eh_grid g );
 void*       eh_grid_row              ( Eh_grid g , gssize row );
 void**      eh_grid_data             ( Eh_grid g );
-double**    eh_dbl_grid_data         ( Eh_grid g );
-double**    eh_dbl_grid_data_start   ( Eh_grid g );
+double**    eh_dbl_grid_data         ( Eh_dbl_grid g );
+double*     eh_dbl_grid_data_start   ( Eh_dbl_grid g );
 void*       eh_grid_data_start       ( Eh_grid g );
 
 Eh_grid     eh_grid_set_data         ( Eh_grid g , void** new_data );
@@ -86,12 +90,12 @@ double      eh_dbl_grid_sum          ( Eh_dbl_grid g                            
 double      eh_dbl_grid_sum_bad_val  ( Eh_dbl_grid g   , double bad_val                     );
 Eh_dbl_grid eh_dbl_grid_set          ( Eh_dbl_grid g   , double val                         );
 Eh_dbl_grid eh_dbl_grid_randomize    ( Eh_dbl_grid g );
-void        eh_dbl_grid_scalar_mult  ( Eh_dbl_grid g   , double val                         );
+Eh_dbl_grid eh_dbl_grid_scalar_mult  ( Eh_dbl_grid g   , double val                         );
 Eh_dbl_grid eh_dbl_grid_rotate       ( Eh_dbl_grid g   , double angle  ,
                                        gssize i_0      , gssize j_0    , double* err        );
-Eh_dbl_grid eh_dbl_grid_reduce       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
-Eh_dbl_grid eh_dbl_grid_expand       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
-Eh_dbl_grid eh_dbl_grid_remesh       ( Eh_dbl_grid g   , gssize new_nx , gssize new_ny      );
+Eh_dbl_grid eh_dbl_grid_reduce       ( Eh_dbl_grid g   , gint new_nx , gint new_ny      );
+Eh_dbl_grid eh_dbl_grid_expand       ( Eh_dbl_grid g   , gint new_nx , gint new_ny      );
+Eh_dbl_grid eh_dbl_grid_remesh       ( Eh_dbl_grid g   , gint new_nx , gint new_ny      );
 
 void        interpolate_2            ( Eh_dbl_grid source , Eh_dbl_grid dest ) G_GNUC_DEPRECATED;
 void        interpolate_2_bad_val    ( Eh_dbl_grid source , Eh_dbl_grid dest , double bad_val ) G_GNUC_DEPRECATED;
@@ -100,17 +104,24 @@ Eh_grid_id* eh_dbl_grid_line_ids     ( Eh_dbl_grid g   , gssize i_0 , gssize j_0
                                                          gssize i_1 , gssize j_1 );
 gssize      eh_grid_path_len         ( gssize* p );
 gboolean    eh_grid_path_is_same     ( gssize* p_1 , gssize* p_2 );
-Eh_grid     eh_grid_sub              ( Eh_grid g       , gssize i_0    , gssize j_0 ,
-
-                                                         gssize n_x    , gssize n_y         );
-void        eh_dbl_grid_rebin        ( Eh_dbl_grid src , Eh_dbl_grid dest                   );
-void        eh_dbl_grid_rebin_bad_val( Eh_dbl_grid src , Eh_dbl_grid dest , double val      );
+Eh_grid     eh_grid_sub              ( Eh_grid g       , gint i_0 , gint j_0 , gint n_x , gint n_y );
+Eh_dbl_grid eh_dbl_grid_rebin        ( Eh_dbl_grid src , Eh_dbl_grid dest                   );
+Eh_dbl_grid eh_dbl_grid_rebin_bad_val( Eh_dbl_grid src , Eh_dbl_grid dest , double val      );
 
 Eh_dbl_grid eh_dbl_grid_populate     ( Eh_dbl_grid g   , Populate_func f , gpointer user_data );
 
-void        eh_dbl_grid_fprintf      ( FILE* fp        , const gchar* format , Eh_dbl_grid g );
+gint        eh_dbl_grid_fprintf      ( FILE* fp        , const gchar* format , Eh_dbl_grid g );
 Eh_grid     eh_grid_transpose        ( Eh_grid g );
 Eh_dbl_grid eh_dbl_grid_diff         ( Eh_dbl_grid g , gssize n , gssize dim );
+
+Eh_dbl_grid eh_dbl_grid_trim_gt      ( Eh_dbl_grid g , double val );
+gint*       eh_dbl_grid_crop_box_gt  ( Eh_dbl_grid g , double val );
+gint        eh_dbl_grid_first_row_gt ( Eh_dbl_grid g , double val );
+gint        eh_dbl_grid_first_col_gt ( Eh_dbl_grid g , double val );
+gint        eh_dbl_grid_last_row_gt  ( Eh_dbl_grid g , double val );
+gint        eh_dbl_grid_last_col_gt  ( Eh_dbl_grid g , double val );
+gboolean    eh_dbl_grid_row_is_gt    ( Eh_dbl_grid g , gint row , double val );
+gboolean    eh_dbl_grid_col_is_gt    ( Eh_dbl_grid g , gint col , double val );
 
 Eh_dbl_grid eh_dbl_grid_new_set      ( gint n_x , gint n_y , double** d );
 

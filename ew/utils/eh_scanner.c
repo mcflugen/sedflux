@@ -290,7 +290,74 @@ Symbol_table* eh_scan_key_file_for( const gchar* file ,
 
 #include <errno.h>
 
-GScanner *eh_open_scanner(const char *filename , GError** error )
+void
+_eh_scanner_set_config( GScannerConfig* c )
+{
+   if ( c )
+   {
+      c->cset_skip_characters = g_strdup( " \t\n" );
+
+      c->cset_identifier_first = g_strconcat( G_CSET_a_2_z        , 
+                                              "^%.+-,_0123456789" ,
+                                              G_CSET_A_2_Z        , 
+                                              NULL );
+      c->cset_identifier_nth   = g_strconcat( G_CSET_a_2_z        ,
+                                              G_CSET_A_2_Z        ,
+                                              "^%.+-,_0123456789" ,
+                                              G_CSET_LATINS       ,
+                                              G_CSET_LATINC       ,
+                                              NULL );
+      c->cpair_comment_single = g_strdup( "#\n" );
+
+      c->skip_comment_multi    = TRUE;      /* C like comment */
+      c->skip_comment_single   = TRUE;      /* single line comment */
+      c->scan_comment_multi    = TRUE;      /* scan multi line comments? */
+      c->scan_identifier       = 1;
+      c->scan_identifier_1char = 1;
+      c->scan_identifier_NULL  = 1;
+      c->scan_symbols          = 1;
+      c->scan_binary           = FALSE;
+      c->scan_octal            = FALSE;
+      c->scan_float            = FALSE;
+      c->scan_hex              = FALSE;     /* `0x0ff0' */
+      c->scan_hex_dollar       = FALSE;     /* `$0ff0' */
+      c->scan_string_sq        = TRUE;      /* string: 'anything' */
+      c->scan_string_dq        = TRUE;      /* string: "\\-escapes!\n" */
+      c->numbers_2_int         = TRUE;      /* bin, octal, hex => int */
+      c->int_2_float           = TRUE;      /* int => G_TOKEN_FLOAT? */
+      c->identifier_2_string   = TRUE;
+      c->char_2_token          = TRUE;      /* return G_TOKEN_CHAR? */
+      c->symbol_2_token        = FALSE;
+      c->scope_0_fallback      = TRUE;      /* try scope 0 on lookups? */
+   }
+
+   return;
+}
+
+GScanner*
+eh_open_scanner_text( const gchar* text , gint len , GError** error )
+{
+   GScanner* s = NULL;
+
+   eh_require( text );
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   if ( text && len>0 )
+   {
+      GScannerConfig config;
+
+      _eh_scanner_set_config( &config );
+
+      s = g_scanner_new(&config);
+      s->input_name = "Text Buffer";
+
+      g_scanner_input_text( s , text , len );
+   }
+   return NULL;
+}
+
+GScanner*
+eh_open_scanner(const char *filename , GError** error )
 {
    GScanner* s = NULL;
 
@@ -304,40 +371,7 @@ GScanner *eh_open_scanner(const char *filename , GError** error )
       {
          GScannerConfig config;
 
-         config.cset_skip_characters = g_strdup( " \t\n" );
-
-         config.cset_identifier_first = g_strconcat( G_CSET_a_2_z        , 
-                                                     "^%.+-,_0123456789" ,
-                                                     G_CSET_A_2_Z        , 
-                                                     NULL );
-         config.cset_identifier_nth   = g_strconcat( G_CSET_a_2_z        ,
-                                                     G_CSET_A_2_Z        ,
-                                                     "^%.+-,_0123456789" ,
-                                                     G_CSET_LATINS       ,
-                                                     G_CSET_LATINC       ,
-                                                     NULL );
-         config.cpair_comment_single = g_strdup( "#\n" );
-
-         config.skip_comment_multi    = TRUE;      /* C like comment */
-         config.skip_comment_single   = TRUE;      /* single line comment */
-         config.scan_comment_multi    = TRUE;      /* scan multi line comments? */
-         config.scan_identifier       = 1;
-         config.scan_identifier_1char = 1;
-         config.scan_identifier_NULL  = 1;
-         config.scan_symbols          = 1;
-         config.scan_binary           = FALSE;
-         config.scan_octal            = FALSE;
-         config.scan_float            = FALSE;
-         config.scan_hex              = FALSE;     /* `0x0ff0' */
-         config.scan_hex_dollar       = FALSE;     /* `$0ff0' */
-         config.scan_string_sq        = TRUE;      /* string: 'anything' */
-         config.scan_string_dq        = TRUE;      /* string: "\\-escapes!\n" */
-         config.numbers_2_int         = TRUE;      /* bin, octal, hex => int */
-         config.int_2_float           = TRUE;      /* int => G_TOKEN_FLOAT? */
-         config.identifier_2_string   = TRUE;
-         config.char_2_token          = TRUE;      /* return G_TOKEN_CHAR? */
-         config.symbol_2_token        = FALSE;
-         config.scope_0_fallback      = TRUE;      /* try scope 0 on lookups? */
+         _eh_scanner_set_config( &config );
 
          s = g_scanner_new(&config);
          s->input_name = filename;

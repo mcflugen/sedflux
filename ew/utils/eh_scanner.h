@@ -122,12 +122,13 @@ void eh_print_symbol(char *key, char  *value, FILE *fp);
 //Symbol_table* eh_symbol_table_dup( Symbol_table* t );
 //Symbol_table* eh_symbol_table_copy( Symbol_table* dest , Symbol_table* src );
 
-
 // merge a bunch of symbol tables into one.
 // table1       : the first symbol table to add, which must not be null.
 // ...          : a NULL terminated list of symbol tables to merge.
 // return value : a newly create symbol table composed of all the symbol table arguments.
 //Symbol_table *eh_merge_symbol_table( Symbol_table* table1 , ... );
+
+GScanner* eh_open_scanner_text( const gchar* text , gint len , GError** error );
 
 // open a scanner file.
 // filename     : the name of the file to open.
