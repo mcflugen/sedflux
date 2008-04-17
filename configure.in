@@ -65,22 +65,48 @@ CHECK_VERSION="not installed"
 GTK_VERSION="not installed"
 
 ###
-### If the --enable-libcheck flag was passed, look for check and
-### set ENABLE_CHECK so that the proper files are compiled.
+### libcheck
+### --enable-check turns on unit testing with check
+### --with-check-path turns on unit testing and gives the location of check
 ###
-AC_ARG_ENABLE(libcheck,
-   [AC_HELP_STRING([--enable-libcheck], [compile unit tests using check])], ,
-   [enable_libcheck=no])
+AC_ARG_ENABLE(check,
+   AC_HELP_STRING([--enable-check], [Use check unit tests]),,
+   [enable_check=no])
 
-if test x$enable_libcheck != xno ; then
+AC_ARG_WITH(check-dir,
+   AC_HELP_STRING([--with-check-dir=PATH], [path to check]))
+
+if test x$enable_check != xno -a x$with_check_dir == x ; then
    PKG_CHECK_MODULES(CHECK,[check >= check_required_version],
       CHECK=check,
       AC_MSG_ERROR([
 *** Checks for check failed.  You can build without it by passing
-*** --disable-libcheck to configure but some programs using CHECK will
-*** not work properly.]) )
+*** --disable-check to configure.]) )
    CHECK_VERSION=`$PKG_CONFIG --modversion check`,
 fi
+
+save_libs=$LIBS
+LIBS=-L$with_check_dir/lib
+
+AC_CHECK_LIB(check,[srunner_create],[CHECK=check])
+
+if test x$with_check_dir != x ; then
+   PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$with_check_dir/lib/pkgconfig
+   if test x$CHECK != x ; then
+      CHECK_LIBS=`$PKG_CONFIG --libs check`
+      CHECK_CFLAGS=`$PKG_CONFIG --cflags check`
+      #CHECK_LIBS="-L$with_check_dir/lib -lcheck"
+      #CHECK_CFLAGS="-I$with_check_dir/include -DENABLE_CHECK"
+   else
+      AC_MSG_ERROR([*** Failed to find CHECK library in $with_check_dir/lib.])
+   fi
+   CHECK_VERSION=`$PKG_CONFIG --modversion check`
+fi
+
+LIBS=$save_libs
+
+AC_SUBST(CHECK_LIBS)
+AC_SUBST(CHECK_CFLAGS)
 
 AM_CONDITIONAL(ENABLE_CHECK, test x$CHECK != x )
 
