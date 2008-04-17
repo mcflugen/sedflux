@@ -59,9 +59,9 @@ gboolean init_storm_data( Sed_process proc , Sed_cube prof , GError** error );
 Sed_process_info
 run_storm( Sed_process proc , Sed_cube prof )
 {
-   Storm_t*         data = sed_process_user_data(proc);
-   Sed_process_info info = SED_EMPTY_INFO;
-   GSList*          storm_list;
+   Storm_t*         data       = sed_process_user_data(proc);
+   Sed_process_info info       = SED_EMPTY_INFO;
+   GSList*          storm_list = NULL;
    double           n_days;
    double           time_step;
    double           start_time;
@@ -86,8 +86,8 @@ run_storm( Sed_process proc , Sed_cube prof )
 
          storm_list = get_equivalent_storm( (GFunc)storm_func_user ,
                                             &user_data             ,
-                                            n_days         ,
-                                            data->fraction ,
+                                            n_days                 ,
+                                            data->fraction         ,
                                             data->average_non_events );
       }
    }
@@ -97,12 +97,12 @@ run_storm( Sed_process proc , Sed_cube prof )
    sed_cube_set_storm_list( prof , storm_list );
 
    {
-      GSList *this_link;
+      GSList*         this_link;
       Sed_ocean_storm this_storm;
-      gint   n = g_slist_length( storm_list );
-      gint   i = 0;
-      double this_time = start_time;
-      double significant_storm = G_MINDOUBLE;
+      gint            n                 = g_slist_length( storm_list );
+      gint            i                 = 0;
+      double          this_time         = start_time;
+      double          significant_storm = G_MINDOUBLE;
 
       for ( this_link=storm_list ; this_link ; this_link=this_link->next )
       {
@@ -110,16 +110,13 @@ run_storm( Sed_process proc , Sed_cube prof )
 
          eh_dbl_set_max( significant_storm , sed_ocean_storm_wave_height( this_storm ) );
 
-         eh_message( "time        : %f" , this_time            );
-         eh_message( "time step   : %f" , sed_ocean_storm_duration(this_storm) );
-         eh_message( "storm number: %d" , i++                  );
-         eh_message( "total number: %d" , n                    );
-         eh_message( "wave height : %f" ,
-                     sed_ocean_storm_wave_height(this_storm) );
-         eh_message( "wave period : %f" ,
-                     sed_ocean_storm_wave_period(this_storm) );
-         eh_message( "wave length : %f" ,
-                     sed_ocean_storm_wave_length(this_storm) );
+         eh_message( "time        : %f" , this_time                               );
+         eh_message( "time step   : %f" , sed_ocean_storm_duration(this_storm)    );
+         eh_message( "storm number: %d" , i++                                     );
+         eh_message( "total number: %d" , n                                       );
+         eh_message( "wave height : %f" , sed_ocean_storm_wave_height(this_storm) );
+         eh_message( "wave period : %f" , sed_ocean_storm_wave_period(this_storm) );
+         eh_message( "wave length : %f" , sed_ocean_storm_wave_length(this_storm) );
 
          this_time  += sed_ocean_storm_duration(this_storm)*S_YEARS_PER_DAY;
 
@@ -132,6 +129,8 @@ run_storm( Sed_process proc , Sed_cube prof )
       }
       else
          sed_cube_set_storm( prof , 0. );
+
+      eh_message( "storm value : %f" , sed_cube_storm( prof ) );
 
    }
 
@@ -302,7 +301,8 @@ struct weibull_storm_data
    GRand* rand;
 };
 
-void storm_func_weibull( double* ans , struct weibull_storm_data* user_data )
+void
+storm_func_weibull( double* ans , struct weibull_storm_data* user_data )
 {
    double variance      = user_data->sigma;
    double average_storm = user_data->mu;
@@ -314,7 +314,8 @@ void storm_func_weibull( double* ans , struct weibull_storm_data* user_data )
                                1./365. );
 }
 
-void storm_func_user( double *ans , User_storm_data* user_data )
+void
+storm_func_user( double *ans , User_storm_data* user_data )
 {
    Eh_input_val wave_height = user_data->h;
    double time              = user_data->t;

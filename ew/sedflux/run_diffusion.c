@@ -50,9 +50,10 @@ run_diffusion( Sed_process proc , Sed_cube prof )
                * sed_get_cube_storm(prof);
 */
 
-   k_max       = eh_input_val_eval( data->k_max , sed_cube_age_in_years( prof ) );
+   k_max       = eh_input_val_eval( data->k_max , sed_cube_age_in_years( prof ) )
                * sed_cube_storm(prof);
-   skin_depth  = data->skin_depth*sed_cube_storm(prof);
+   skin_depth  = data->skin_depth
+               * sed_cube_storm(prof);
    
    eh_require( k_max>=0 )
    {
