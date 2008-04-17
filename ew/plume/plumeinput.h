@@ -126,11 +126,13 @@ int plumecent( Plume_enviro* , Plume_grid* , Plume_options* );
 int plumedist( Plume_grid* , Plume_options* );
 int plumeconc( Plume_enviro* , Plume_grid* , Plume_options* );
 int plumemass( Plume_enviro* , Plume_grid* , Plume_mass_bal* );
-int plumeout2( Plume_enviro* , Plume_grid* , double , double** , int , int , double );
-int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid );
+gint plumeout2( Plume_enviro* env , Plume_grid* grid , double , double** , int , int , double );
+gint plumeout3( Plume_enviro* env , Plume_grid* grid , Eh_dbl_grid *deposit_grid );
 int plumelog( Plume_enviro* , Plume_grid* , Plume_options* , Plume_mass_bal* );
 
 Plume_data *plume_data_init( Plume_data* );
 void destroy_plume_data( Plume_data* );
+
+Eh_dbl_grid* plume_grid_to_dbl_grid( Plume_grid* g , const gint n_grains );
 
 #endif // plumeinput.h is included

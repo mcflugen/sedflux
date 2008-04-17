@@ -69,7 +69,8 @@
 
 #include <utils/utils.h>
 
-int plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid )
+gint
+plumeout3( Plume_enviro *env , Plume_grid *grid , Eh_dbl_grid *deposit_grid )
 {
    int   ii, jj, nn;
    gsize i_0, j_0;

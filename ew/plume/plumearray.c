@@ -137,17 +137,12 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
    if ( !(opt->fjrd || opt->strt) )
       Li = river->u0/(2*omega*sin(env->lat*degTOr));
 
-//---
-// (1) Fjord run or straight centerline
-//---
    if ( opt->fjrd || opt->strt )
+   { /* (1) Fjord run or straight centerline */
       grid->xmax = rnd(1.1*zend);
-
-//---
-// (2) Ocean plume, with downwelling
-//---
+   }
    else if( opt->kwf == 1 )
-   {
+   { /* (2) Ocean plume, with downwelling */
       grid->xmax = rnd(Li);
       if( ocean->vo > 0 )
       {
@@ -160,12 +155,8 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
          grid->ymax = ceil(2*river->b0);
       }
    }
-
-//---
-// Upwelling Conditions
-//---
    else
-   {
+   { /* (3) - (5) Upwelling Conditions */
 
       // Deflected Jet centerline constants
       avo = fabs(ocean->vo);
@@ -213,12 +204,8 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
       free(ycl);
       free(dcl);
     
-      //---
-      // (3) Ocean plume, with upwelling, strong vo
-      // indicated by vo ~= 0, kwf = 0, yend > 1.5*xend
-      //---
       if( yend > 1.5*xend )
-      {
+      { /* (3) Ocean plume, with upwelling, strong vo indicated by vo~=0, kwf=0, yend>1.5*xend */
          grid->xmax = rnd(xend+Li);
          if( ocean->vo > 0 )
          {
@@ -231,13 +218,8 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
             grid->ymax = rnd(4*river->b0);
          }
       }
-
-      //---
-      // (4) Ocean plume, with upwelling, weak vo
-      // indicated by vo ~= 0, kwf = 0, xend > 1.5*yend
-      //---
       else if( xend > 1.5*yend )
-      {
+      { /* (4) Ocean plume, with upwelling, weak vo indicated by vo~=0, kwf=0, xend>1.5*yend */
          grid->xmax = rnd(xend);
          if ( ocean->vo > 0 )
          {
@@ -250,13 +232,8 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
             grid->ymax = rnd(Li);
          }
       }
-
-      //---
-      // (5) Ocean plume, with upwelling, moderate vo
-      // indicated by vo ~= 0, kwf = 0, xend ~ yend
-      //---
       else
-      {
+      { /* (5) Ocean plume, with upwelling, moderate vo indicated by vo~=0, kwf=0, xend ~ yend */
          grid->xmax = xend;
          if ( ocean->vo > 0 )
          {
@@ -270,6 +247,10 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
          }
       } // end 3)
    } // end of Upwelling Conditons
+
+   eh_make_note( "Increased grid size!" );
+   if ( fabs(grid->ymin) > grid->ymax ) grid->ymax =  fabs(grid->ymin);
+   if ( fabs(grid->ymin) < grid->ymax ) grid->ymin = -fabs(grid->ymax);
 
    //---
    // Create nicely centered X/Y arrays

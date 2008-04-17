@@ -69,7 +69,7 @@
 
 #include <utils/utils.h>
 
-int
+gint
 plumeout2( Plume_enviro* env         ,
            Plume_grid*   grid        ,
            double        dx          ,
