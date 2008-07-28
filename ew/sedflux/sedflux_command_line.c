@@ -81,11 +81,20 @@ sedflux_parse_command_line( int argc , char *argv[] , GError** error )
 
       if ( version )
       {
+         gchar* prog_name = NULL;
+
+         if      ( sizeof(void*)==8 ) prog_name = g_strconcat( PROGRAM_NAME , " (64-bit)" , NULL );
+         else if ( sizeof(void*)==4 ) prog_name = g_strconcat( PROGRAM_NAME , " (32-bit)" , NULL );
+         else                         eh_require_not_reached();
+
          eh_fprint_version_info( stdout          ,
-                                 PROGRAM_NAME    ,
+                                 prog_name       ,
                                  S_MAJOR_VERSION ,
                                  S_MINOR_VERSION ,
                                  S_MICRO_VERSION );
+
+         eh_free( prog_name );
+
          eh_exit( EXIT_SUCCESS );
       }
 
