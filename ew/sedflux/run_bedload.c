@@ -110,7 +110,6 @@ run_bedload( Sed_process p , Sed_cube prof )
                                     - bed_load_spreading_angle;
             bed_load_data.max_angle = sed_river_angle( this_river )
                                     + bed_load_spreading_angle;
-
             //---
             // Add the bed load into its grid.  The bed load is distributed evenly over
             // an arc.  The user defines the radius and interior angle of the arc.
@@ -125,6 +124,7 @@ run_bedload( Sed_process p , Sed_cube prof )
                                      &bed_load_data );
          }
 
+         eh_debug( "set non-zero elements to 1" );
          { /* Set non-zero elements of fraction to 1. */
             gint i, j;
             const gint low_x  = eh_grid_low_x(fraction_grid);
@@ -141,6 +141,7 @@ run_bedload( Sed_process p , Sed_cube prof )
                }
          }
 
+         eh_debug( "set cell's facies, age, type" );
          { /* Set the bedload cell's facies, age, and type */
 /*
             bed_load_cell = sed_cell_new_bedload( NULL , 0 );
@@ -169,6 +170,7 @@ run_bedload( Sed_process p , Sed_cube prof )
          }
 */
 
+         eh_debug( "deposit sediment" );
          { /* Deposit the sediment landward and seaward of the river mouth. */
             double vol_total = (sed_river_bedload(this_river)*S_SECONDS_PER_DAY)
                              * sed_cube_time_step_in_days( prof )
@@ -181,6 +183,7 @@ run_bedload( Sed_process p , Sed_cube prof )
             if ( vol_delta>0 ) mass_delta = deposit_in_river( prof , this_river , vol_delta );
          }
 
+         eh_debug( "mass balance" );
          { /* Mass balance */
             double input_mass = sed_river_bedload( this_river )
                               * sed_cube_time_step_in_seconds( prof );
@@ -276,7 +279,7 @@ destroy_bedload( Sed_process p )
 double
 deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_grid )
 {
-   double dep_vol = 0.;
+   double mass_dep = 0.;
 
    eh_require( p             );
    eh_require( r             );
@@ -295,7 +298,8 @@ deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_gri
 
          if ( area>0 )
          {  /* Add the bed load to the cube's in-suspension grid to be deposited later. */
-            Sed_cell c     = sed_cell_new_bedload( NULL , area/vol );
+            //Sed_cell c     = sed_cell_new_bedload( NULL , area/vol );
+            Sed_cell c     = sed_cell_new_bedload( NULL , vol/area );
 
          { /* The thickness of sediment to be deposited. */
 /*
@@ -310,7 +314,7 @@ deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_gri
             const gint   low_y  = eh_grid_low_y(fraction_grid);
             const gint   high_x = low_x + eh_grid_n_x(fraction_grid);
             const gint   high_y = low_y + eh_grid_n_y(fraction_grid);
-            const double t      = area / vol;
+            const double t      = vol / area;
 
             for ( i=low_x ; i<high_x ; i++ )
                for ( j=low_y ; j<high_y ; j++ )
@@ -318,9 +322,11 @@ deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_gri
                   if( eh_dbl_grid_val(fraction_grid,i,j) > 0 )
                   {
                      sed_cell_resize( c , t*eh_dbl_grid_val(fraction_grid,i,j) );
+                     mass_dep += sed_cell_mass( c );
                      sed_cell_add   ( sed_cell_grid_val(in_suspension,i,j) , c );
                   }
                }
+            mass_dep *= sed_cube_x_res(p)*sed_cube_y_res(p);
 
             sed_cell_destroy( c );
          }
@@ -330,7 +336,7 @@ deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_gri
          eh_require_not_reached();
    }
 
-   return dep_vol;
+   return mass_dep;
 }
 
 /** Deposit sediment along the profile of a river.
@@ -344,7 +350,7 @@ deposit_in_ocean( Sed_cube p , Sed_riv r , double vol , Eh_dbl_grid fraction_gri
 double
 deposit_in_river( Sed_cube p , Sed_riv r , double vol )
 {
-   double vol_dep = 0;
+   double mass_dep = 0;
 
    eh_require( p      );
    eh_require( r      );
@@ -378,17 +384,20 @@ deposit_in_river( Sed_cube p , Sed_riv r , double vol )
                sed_cube_set_x_res( river_profile , sed_cube_x_res(p) );
                sed_cube_set_y_res( river_profile , sed_cube_y_res(p) );
             }
-   
             { /* Deposit the sediment. */
                gint   i;
                double area    = sed_cube_x_res( river_profile )
                               * sed_cube_y_res( river_profile )
                               * i_river;
-               Sed_cell c     = sed_cell_new_bedload( NULL , area/vol );
-
+               Sed_cell c     = sed_cell_new_bedload( NULL , vol/area );
+               //Sed_cell c     = sed_cell_new_bedload( NULL , area/vol );
                for ( i=0 ; i<i_river ; i++ )
+               {
+                  mass_dep += sed_cell_mass(c);
                   sed_column_add_cell( sed_cube_col(river_profile,i) , c );
-               vol_dep = vol;
+               }
+               mass_dep *= sed_cube_x_res( river_profile )*sed_cube_y_res( river_profile );
+               //vol_dep = vol;
 
                sed_cell_destroy( c );
             }
@@ -400,7 +409,7 @@ deposit_in_river( Sed_cube p , Sed_riv r , double vol )
       }
    }
 
-   return vol_dep;
+   return mass_dep;
 }
 
 /*
@@ -464,10 +473,11 @@ sed_cube_add_cell( Sed_cube c , Sed_cell c )
 }
 */
 
-gboolean bed_load_1d_domain( double x , double y , Bed_load_data *user_data )
+gboolean
+bed_load_1d_domain( double x , double y , Bed_load_data *user_data )
 {
-   double y_0 = user_data->y_0;
-   double dy  = user_data->dy;
+   double y_0   = user_data->y_0;
+   double dy    = user_data->dy;
    double r_max = user_data->r_max;
 
    y*=dy;
@@ -478,12 +488,13 @@ gboolean bed_load_1d_domain( double x , double y , Bed_load_data *user_data )
    return FALSE;
 }
 
-gboolean bed_load_2d_domain( double x , double y , Bed_load_data *user_data )
+gboolean
+bed_load_2d_domain( double x , double y , Bed_load_data *user_data )
 {
-   double x_0 = user_data->x_0;
-   double y_0 = user_data->y_0;
-   double dx  = user_data->dx;
-   double dy  = user_data->dy;
+   double x_0   = user_data->x_0;
+   double y_0   = user_data->y_0;
+   double dx    = user_data->dx;
+   double dy    = user_data->dy;
    double r_max = user_data->r_max;
    double a_min = user_data->min_angle;
    double a_max = user_data->max_angle;
