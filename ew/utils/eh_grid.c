@@ -1496,33 +1496,36 @@ void eh_grid_foreach( Eh_grid g , GFunc func , gpointer user_data )
    }
 }
 
-Eh_dbl_grid eh_dbl_grid_populate( Eh_dbl_grid g  ,
-                                  Populate_func f ,
-                                  gpointer user_data )
+Eh_dbl_grid
+eh_dbl_grid_populate( Eh_dbl_grid g  , Populate_func f , gpointer user_data )
 {
-   gssize n;
-   gssize population_size=100000;
-   gssize low_x  = g->low_x;
-   gssize low_y  = g->low_y;
-   gssize high_x = g->low_x+g->n_x;
-   gssize high_y = g->low_y+g->n_y;
-   gssize i, j;
-   double inc, x, y;
-
-   for ( n=0 ; n<population_size ; n++ )
+   if ( g && f )
    {
-      x = eh_get_fuzzy_dbl( low_x , high_x );
-      y = eh_get_fuzzy_dbl( low_y , high_y );
-      if ( (*f)( x , y , user_data ) )
-      {
-         i   = floor(x);
-         j   = floor(y);
-         inc = eh_dbl_grid_val(g,i,j) + 1;
-         eh_dbl_grid_set_val( g , i , j , inc );
-      }
-   }
+      const gint64 population_size=100000;
+      const gint64 low_x  = g->low_x;
+      const gint64 low_y  = g->low_y;
+      const gint64 high_x = g->low_x+g->n_x;
+      const gint64 high_y = g->low_y+g->n_y;
+      gint64 i, j;
+      gint64 n;
+      double inc, x, y;
 
-   eh_dbl_grid_scalar_mult( g , ((double)(g->n_x*g->n_y))/population_size );
+      for ( n=0 ; n<population_size ; n++ )
+      {
+         x = eh_get_fuzzy_dbl( low_x , high_x );
+         y = eh_get_fuzzy_dbl( low_y , high_y );
+
+         if ( (*f)( x , y , user_data ) )
+         {
+            i   = floor(x);
+            j   = floor(y);
+            inc = eh_dbl_grid_val(g,i,j) + 1;
+            eh_dbl_grid_set_val( g , i , j , inc );
+         }
+      }
+
+      eh_dbl_grid_scalar_mult( g , ((double)(g->n_x*g->n_y))/population_size );
+   }
 
    return g;
 }
