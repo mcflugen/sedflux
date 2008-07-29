@@ -428,6 +428,12 @@ sed_hydro_file_guess_type( const gchar* file , GError** error )
 
          sed_hydro_array_destroy( arr );
       }
+
+      if ( tmp_err )
+      {
+         g_propagate_error( error , tmp_err );
+         type = SED_HYDRO_UNKNOWN;
+      }
    }
 
    return type;
