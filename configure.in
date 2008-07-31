@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.64],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.76],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -88,7 +88,9 @@ fi
 save_libs=$LIBS
 LIBS=-L$with_check_dir/lib
 
-AC_CHECK_LIB(check,[srunner_create],[CHECK=check])
+if test x$enable_check != xno -o x$with_check_dir != x ; then
+   AC_CHECK_LIB(check,[srunner_create],[CHECK=check])
+fi
 
 if test x$with_check_dir != x ; then
    PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$with_check_dir/lib/pkgconfig
