@@ -66,11 +66,11 @@ utilssubinclude_HEADERS = \
                          eh_messages.h \
                          eh_macros.h
 
+if ENABLE_CHECK
+
 bin_PROGRAMS           = test
 test_SOURCES           = test.c
 test_DEPENDENCIES      = libutils.la
-
-if ENABLE_CHECK
 
 bin_PROGRAMS          += unit_test
 unit_test_SOURCES      = \
