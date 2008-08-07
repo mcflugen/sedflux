@@ -40,6 +40,15 @@ typedef enum
 }
 Sakura_error;
 
+typedef enum
+{
+   SAKURA_VAR_BAD_VAR  = 0 ,
+   SAKURA_VAR_VELOCITY = 1 ,
+   SAKURA_VAR_DEPTH    = 2 ,
+   SAKURA_VAR_WIDTH    = 3
+}
+Sakura_var;
+
 #define SAKURA_ERROR sakura_error_quark()
 /*
 typedef struct
@@ -90,9 +99,9 @@ typedef struct
    double channel_len;
    double dep_start;
 
-   gint*  data_id;
-   FILE*  data_fp;
-   gint   data_int;
+   Sakura_var*  data_id;
+   FILE*        data_fp;
+   gint         data_int;
 
    Sakura_phe_func get_phe;
    Sakura_add_func add;

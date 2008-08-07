@@ -71,8 +71,8 @@ static const gchar* _DATA_VAL_KEYS[] =
 gboolean
 parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error )
 {
-   gboolean success = FALSE;
-   gint*    data_id = NULL;
+   gboolean    success = FALSE;
+   Sakura_var* data_id = NULL;
 
    eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
 
@@ -90,12 +90,12 @@ parse_data_list( const gchar* name , const gchar* value , gpointer data , GError
       }
       else
       {
-         gchar** key;
-         gint    id;
-         gint    i;
+         gchar**    key;
+         Sakura_var id;
+         gint       i;
 
 
-         data_id = eh_new( gint , g_strv_length( data_list )+1 );
+         data_id = eh_new( Sakura_var , g_strv_length( data_list )+1 );
 
          for ( key=data_list,i=0 ; *key && !tmp_err ; key++,i++ )
          {

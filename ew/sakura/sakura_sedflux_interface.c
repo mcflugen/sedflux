@@ -71,6 +71,10 @@ sed_sakura( Sed_cube         p       ,
       c->remove_data  = p;
       c->depth_data   = p;
 
+      c->data_id  = 0;
+      c->data_fp  = NULL;
+      c->data_int = 0;
+
       width         = sakura_set_width_from_cube       ( p , i_start );
       bathy_data    = sakura_set_bathy_data_from_cube  ( p , width , i_start , dx );
       sediment_data = sakura_set_sediment_data_from_env( );
@@ -374,10 +378,10 @@ Note that the member, eroded_depth may be changed to reflect the actual amount
 of bottom sediment available to be eroded.  That is, we may be trying to erode
 more sediment than is actually present.
 
-\param data    A structure that contains the necessary data for the function to
-               retreive the grain type fracitons.
-\param p       A Sed_cube to query
-
+\param p          A Sed_cube to query
+\param y          Location where grain size data is to be queried
+\param phe_data   A Sakura_phe_st that contains the necessary data for the function to
+                  retreive the grain type fracitons.
 */
 void
 sakura_sed_get_phe( Sed_cube p , double y , Sakura_phe_st* phe_data )

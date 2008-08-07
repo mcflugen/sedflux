@@ -255,7 +255,7 @@ Sakura_flood_st*    sakura_sed_set_flood_data ( Sed_hydro h , double rho_river_w
 Sakura_flood_st*    sakura_destroy_flood_data ( Sakura_flood_st* f );
 Sakura_sediment_st* sakura_set_sediment_data  ( Sakura_param_st* p );
 Sakura_const_st*    sakura_set_constant_data  ( Sakura_param_st* p , Sakura_bathy_st* b );
-Sakura_const_st*    sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , gint* id , gint dt );
+Sakura_const_st*    sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , Sakura_var* id , gint dt );
 Sakura_bathy_st*    sakura_set_bathy_data     ( double** bathy , gint len , double dx , gint n_grains );
 Sakura_bathy_st*    sakura_new_bathy_data     ( gint n_grains , gint len );
 Sakura_bathy_st*    sakura_copy_bathy_data    ( Sakura_bathy_st* d , const Sakura_bathy_st* s );

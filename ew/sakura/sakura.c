@@ -364,7 +364,7 @@ sakura_array_print_data( Sakura_array* a , Sakura_const_st* c )
    if ( c->data_fp && c->data_id )
    {
       gint          i;
-      gint*         id;
+      Sakura_var*   id;
       double*       data = NULL;
       FILE*         fp   = c->data_fp;
       const gint    len  = a->len;
@@ -373,9 +373,9 @@ sakura_array_print_data( Sakura_array* a , Sakura_const_st* c )
       {
          switch ( *id )
          {
-            case 0: data = a->u; break;
-            case 1: data = a->h; break;
-            case 2: data = a->c; break;
+            case SAKURA_VAR_VELOCITY: data = a->u; break;
+            case SAKURA_VAR_DEPTH:    data = a->h; break;
+            case SAKURA_VAR_WIDTH:    data = a->c; break;
             default: eh_require_not_reached();
          }
 
@@ -1723,7 +1723,7 @@ eh_watch_dbl( c->dep_start );
             // Update variables
             sakura_array_copy( a_last , a_next );
 
-            if ( n%c->data_int==0 ) sakura_array_print_data( a_last , c );
+            if ( c->data_int>0 && n%c->data_int==0 ) sakura_array_print_data( a_last , c );
 
             mass_lost += sakura_array_mass_lost( a_last , sed , dt );
          }

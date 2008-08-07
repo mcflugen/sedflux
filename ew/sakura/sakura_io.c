@@ -695,7 +695,7 @@ sakura_set_constant_data( Sakura_param_st* p , Sakura_bathy_st* b )
 }
 
 Sakura_const_st*
-sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , gint* id , gint dt )
+sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , Sakura_var* id , gint dt )
 {
    eh_require( c );
    
@@ -785,6 +785,7 @@ sakura_write_output( const gchar*     file    ,
    return bytes;
 }
 
+#if defined( EXCLUDE_THIS )
 /** Get the grain size distribution of bottom sediments.
 
 Get the fractions of each grain type of bottom sediments from a
@@ -807,7 +808,6 @@ information is simply copied to the location pointed to by phe.
 @return            A pointer to the array of grain type fractions.
 
 */
-#if defined( EXCLUDE_THIS )
 void
 sakura_get_phe( Sakura_phe_query_st* query_data , Sakura_bottom_st* bed_data )
 {
@@ -897,6 +897,25 @@ void sakura_set_depth( gpointer depth_query , gpointer data )
 }
 #endif
 
+/** Get the grain size distribution of bottom sediments.
+
+Get the fractions of each grain type of bottom sediments from a
+Sed_cube.  This function is intended to be used within another program that
+needs to communicate with the sedflux architecture but is otherwise separate
+from sedflux.
+
+Note that the member, eroded_depth may be changed to reflect the actual amount
+of bottom sediment available to be eroded.  That is, we may be trying to erode
+more sediment than is actually present.
+
+In this case, the data pointer should point to a Sakura_get_phe_t structure
+that contains the grain size distribution and the number of grains.  This
+information is simply copied to the location pointed to by phe.
+
+\param   data       Pointer to a Sakura_arch_st
+\param   x          Location to query architecture for grain size info
+\param   phe_data   Pointer to Sakura_phe_st
+*/
 void
 sakura_get_phe( Sakura_arch_st* data , double x , Sakura_phe_st* phe_data )
 {
