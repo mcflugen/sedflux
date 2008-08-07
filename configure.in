@@ -1,6 +1,6 @@
 AC_PREREQ([2.59])
 
-AC_INIT([sedflux],[2.0.79],[huttone@colorado.edu])
+AC_INIT([sedflux],[2.0.81],[huttone@colorado.edu])
 AC_CONFIG_HEADERS(config.h:config-h.in)
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
