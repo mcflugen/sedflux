@@ -1056,7 +1056,6 @@ Add sediment to river discharge.
 
 @param a             A Sed_hydro discharge record
 @param s             A Sed_cell to add
-@param volume_in_m3  Volume (in m^3) of the Sed_cell
 
 @return The input Sed_hydro record
 */
@@ -1655,7 +1654,9 @@ sed_hydro_file_read_record( Sed_hydro_file fp )
 
 \param filename       The name of the Sed_hydro_file
 \param type           The file type.
+\param buffer_is_on   TRUE if hydro data is to be buffered, FALSE otherwise
 \param wrap_is_on     If TRUE, when EOF is encountered, the file is rewound
+\param error          Pointer to a GError
 
 \return A new Sed_hydro_file.  Use sed_hydro_file_destroy to free.
 */
