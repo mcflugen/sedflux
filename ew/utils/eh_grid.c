@@ -931,8 +931,8 @@ eh_dbl_grid_randomize( Eh_dbl_grid g )
 
 Multiply each element of grid \a g by the scalar value \a val.
 
-\param   g_1   A Eh_dbl_grid
-\double  val   The value to multiply the grid by
+\param   g     A Eh_dbl_grid
+\param   val   The value to multiply the grid by
 
 \return The input grid
 */
@@ -1639,11 +1639,11 @@ Calculate the n-th order difference or derivative of a grid along a
 specified dimension.  \a dim is either 1 or 2 to indicate 
 differences to be taken along rows or columns, respectively.
 
-\param   g      A doube grid
+\param   g      A double grid
 \param   n      Order of the difference to calculate
 \param   dim    Dimension of the grid to difference (1 or 2)
 
-\param A newly-allocated Eh_dbl_grid of differences
+\return A newly-allocated Eh_dbl_grid of differences
 */
 Eh_dbl_grid
 eh_dbl_grid_diff( Eh_dbl_grid g , gssize n , gssize dim )
@@ -1838,7 +1838,7 @@ eh_dbl_grid_last_col_gt( Eh_dbl_grid g , double val )
 Compare all elements of a row in a Eh_dbl_grid to \a val.  
 
 \param g   A double grid
-\param col The row to test
+\param row The row to test
 \param val The value to compare
 
 \return    TRUE if all elemets are greater than the value
