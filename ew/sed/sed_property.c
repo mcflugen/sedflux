@@ -42,7 +42,6 @@ static Sed_property_static all_properties[41] = {
    { "porosity max"       , "pormax"   , {&sed_cell_porosity_max}      , 1 } ,
    { "pi"                 , "pi"       , {&sed_cell_plastic_index}     , 1 } ,
    { "permeability"       , "perm"     , {&sed_cell_permeability}      , 1 } ,
-   { "permeability"       , "perm"     , {&sed_cell_permeability}      , 1 } ,
    { "void ratio"         , "void"     , {&sed_cell_void_ratio}        , 1 } ,
    { "void ratio min"     , "emin"     , {&sed_cell_void_ratio_min}    , 1 } ,
    { "void ratio max"     , "emax"     , {&sed_cell_void_ratio_max}    , 1 } ,
