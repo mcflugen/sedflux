@@ -52,4 +52,18 @@ gboolean          sedflux_setup_project_dir  ( gchar** init_file , gchar** worki
 gint              sedflux_print_info_file    ( const gchar* init_file , const gchar* wd ,
                                                const gchar* cmd_str   , const gchar* desc );
 
+#include <sed/csdms.h>
+
+gboolean          sed_init_func    ( CSDMSComp* c, const gchar* file );
+gboolean          sed_run_func     ( CSDMSComp* c,
+                                     const gchar* val_s,
+                                     gint* here,
+                                     double now,
+                                     double** vals );
+gboolean          sed_set_func     ( CSDMSComp* c,
+                                     const gchar* val_s,
+                                     const gint* here,
+                                     const double* vals );
+gboolean          sed_finalize_func( CSDMSComp* c );
+
 #endif /* SEDFLUX_H */
