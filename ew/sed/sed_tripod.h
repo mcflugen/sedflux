@@ -29,6 +29,7 @@ Sed_measurement sed_measurement_copy           ( Sed_measurement dest , Sed_meas
 Sed_measurement sed_measurement_dup            ( Sed_measurement src );
 Sed_measurement sed_measurement_destroy        ( Sed_measurement m );
 char*           sed_measurement_name           ( Sed_measurement m );
+double          sed_measurement_make           ( Sed_measurement m , Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_slope         ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_water_depth   ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_elevation     ( Sed_cube p , gssize i , gssize j );

@@ -279,6 +279,15 @@ char* sed_measurement_name( Sed_measurement m )
    return name;
 }
 
+double
+sed_measurement_make( Sed_measurement m , Sed_cube p , gssize i , gssize j )
+{
+   if ( sed_cube_is_in_domain(p,i,j) )
+      return (m->f)( p , i , j );
+   else
+      return eh_nan();
+}
+
 double sed_measure_cube_slope( Sed_cube p , gssize i , gssize j )
 {
    if ( sed_cube_is_in_domain(p,i,j) )
