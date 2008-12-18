@@ -39,6 +39,7 @@ typedef struct
 Subside_data;
 
 void subside_helper( gpointer data , gpointer v_0 );
+void subside_parallel_row( double* w, double* load, gint len, double dy, double dx, double alpha, double* r );
 
 /* Calculate a deflection grid
 
@@ -59,18 +60,57 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
 #ifndef WITH_THREADS
    if ( w && v_0 )
    {
-      gssize i, j;
-      double load;
-      gssize n_x = eh_grid_n_x( v_0 );
-      gssize n_y = eh_grid_n_y( v_0 );
-   
-      for ( i=0 ; i<n_x ; i++ )
-         for ( j=0 ; j<n_y ; j++ )
+      gint i, j;
+      double* load;
+      const gint n_x = eh_grid_n_x( v_0 );
+      const gint n_y = eh_grid_n_y( v_0 );
+
+      if ( FALSE )
+      { /* Grid is not equally spaced. */
+         for ( i=0 ; i<n_x ; i++ )
          {
-            load = eh_dbl_grid_val( v_0 , i , j );
-            if ( fabs(load) > 1e-3 )
-               subside_point_load( w , load , eet , y , i , j );
+            load = eh_grid_row( v_0, i );
+            for ( j=0 ; j<n_y ; j++ )
+            {
+               //load = eh_dbl_grid_val( v_0 , i , j );
+               //if ( fabs(load[j]) > 1e-3 )
+               if ( fabs(load[j]) > 1e-10 )
+                  subside_point_load( w , load[j] , eet , y , i , j );
+            }
          }
+      }
+      else
+      { /* Grid is equally spaced. */
+         const double alpha     = get_flexure_parameter( eet , y , (eh_grid_n_x(w)==1)?1:2 );
+         const double inv_alpha = 1./alpha;
+         const double dx        = eh_grid_x(w)[1] - eh_grid_x(w)[0];
+         const double dy        = eh_grid_y(w)[1] - eh_grid_y(w)[0];
+         double** r             = eh_new_2( double, n_x, n_y );
+         gint d_row;
+         double dx_2, dy_2;
+
+         for ( d_row=0; d_row<n_x; d_row++ )
+         {
+            dx_2 = (d_row*dx)*(d_row*dx);
+            for ( j=0; j<n_y; j++ )
+            {
+               dy_2 = (j*dy)*(j*dy);
+               r[d_row][j] = eh_kei_0( sqrt( dx_2 + dy_2 )*inv_alpha );
+            }
+         }
+
+         for ( i=0 ; i<n_x ; i++ )
+         { /* For each row of loads. */
+            load = eh_grid_row( v_0, i );
+            for ( j=0 ; j<n_x ; j++ )
+            { /* For each row of locations */
+               d_row = abs(j-i);
+               subside_parallel_row( eh_grid_row(w,j), load, n_y, dy, d_row*dx, alpha, r[d_row] );
+            }
+         }
+
+         eh_free_2( r );
+      }
    }
 #else
    if ( w && v_0 )
@@ -138,6 +178,8 @@ void subside_helper( gpointer d , gpointer g )
 \param load   Applied load
 \param h      EET of crust
 \param E      Young's modulus
+\param i_load i-subscript where load is applied
+\param j_load j-subscript where load is applied
 
 */
 void
@@ -157,26 +199,37 @@ subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_lo
       gssize i, j;
       double r;
       double c = load/(2.*M_PI*sed_rho_mantle()*sed_gravity()*pow(alpha,2.));
+      double* x = eh_grid_x(g);
+      double* y = eh_grid_y(g);
+      const double inv_alpha = 1./alpha;
+      double dx_2, dy_2;
 
       for ( i=0 ; i<eh_grid_n_x(g) ; i++ )
+      {
+         dx_2 = (x[i]-x_0)*(x[i]-x_0);
          for ( j=0 ; j<eh_grid_n_y(g) ; j++ )
          {
-            r              = sqrt( pow(eh_grid_x(g)[i]-x_0,2) + pow(eh_grid_y(g)[j]-y_0,2) )
-                           / alpha;
+            dy_2     = (y[j]-y_0)*(y[j]-y_0);
+            r        = sqrt( dx_2 + dy_2 ) * inv_alpha;
             z[i][j] += - c * eh_kei_0( r );
          }
+      }
    }
    else
    {
-      if ( fabs( load )>1e-5 )
+      //if ( fabs( load )>1e-5 )
+      if ( fabs( load )>1e-10 )
       {
-         gssize j;
+         gint j;
+         const gint len = eh_grid_n_y(g);
          double r;
-         double c = load/( 2.*alpha*sed_rho_mantle()*sed_gravity() );
+         double* y = eh_grid_y(g);
+         const double c = load/( 2.*alpha*sed_rho_mantle()*sed_gravity() );
+         const double inv_alpha = 1./alpha;
 
-         for ( j=0 ; j<eh_grid_n_y(g) ; j++ )
+         for ( j=0 ; j<len ; j++ )
          {
-            r = fabs(eh_grid_y(g)[j]-y_0)/alpha;
+            r = fabs(y[j]-y_0)*inv_alpha;
             z[0][j] += c * exp( -r ) * ( cos(r) + sin(r) );
          }
       }
@@ -186,17 +239,58 @@ subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_lo
 }
 
 void
+subside_parallel_row( double* w, double* load, gint len, double dy, double dx, double alpha, double* r )
+{
+   if ( w && load )
+   {
+      gint i, j;
+      double c;
+      const double inv_c     = 1./(2.*M_PI*sed_rho_mantle()*sed_gravity()*alpha*alpha);
+      const double inv_alpha = 1./alpha;
+      const double dx_2      = dx*dx;
+      double dy_2;
+      gboolean free_r = FALSE;
+
+      if ( !r )
+      {
+         r = eh_new( double, len );
+         for ( i=0; i<len; i++ )
+         {
+            dy_2 = (i*dy)*(i*dy);
+            r[i] = eh_kei_0( sqrt( dx_2 + dy_2 )*inv_alpha );
+         }
+         free_r = TRUE;
+      }
+
+      for ( i=0; i<len; i++ )
+      { /* For each load. */
+         c   = load[i]*inv_c;
+         for ( j=0; j<len; j++ )
+         { /* For each location. */
+            //w[j] += -c * eh_kei_0(r[abs(j-i)]);
+            w[j] += -c * r[abs(j-i)];
+         }
+      }
+
+      if ( free_r )
+         eh_free( r );
+   }
+   return;
+}
+
+void
 subside_point_load_1d( double* z , double* y , gint len , double load , double y_0 , double alpha )
 {
    if ( z )
    {
-      const double c = load/( 2.*alpha*sed_rho_mantle()*sed_gravity() );
       gint         j;
       double       r;
+      const double c = load/( 2.*alpha*sed_rho_mantle()*sed_gravity() );
+      const double inv_alpha = 1./alpha;
 
       for ( j=0 ; j<len ; j++ )
       {
-         r     = fabs(y[j]-y_0)/alpha;
+         r     = fabs(y[j]-y_0)*inv_alpha;
          z[j] += c * exp( -r ) * ( cos(r) + sin(r) );
       }
    }
@@ -219,16 +313,18 @@ void subside_half_plane_load( Eh_dbl_grid g ,
       //---
       if ( fabs(load)>1e-5 )
       {
-         gssize i;
+         gint   i;
          double r;
-         double y_l = 1.5*eh_grid_y(g)[eh_grid_n_y(g)-1]
-                    -  .5*eh_grid_y(g)[eh_grid_n_y(g)-2];
-         double c   = load/(2*sed_rho_mantle()*sed_gravity());
+         const gint len = eh_grid_n_y(g);
+         double*  y = eh_grid_y(g);
          double** z = eh_dbl_grid_data(g);
+         const double y_l       = 1.5*y[len-1] - .5*y[len-2];
+         const double c         = load/(2.*sed_rho_mantle()*sed_gravity());
+         const double inv_alpha = 1./alpha;
 
-         for ( i=0 ; i<eh_grid_n_y(g) ; i++ )
+         for ( i=0 ; i<len ; i++ )
          {
-            r        = (y_l - eh_grid_y(g)[i])/alpha;
+            r        = (y_l - y[i])*inv_alpha;
             z[0][i] += c * exp(-r)*cos(r);
          }
       }
@@ -246,21 +342,15 @@ void subside_half_plane_load( Eh_dbl_grid g ,
 double
 get_flexure_parameter( double h , double E , gssize n_dim )
 {
-   double poisson = .25;
-   double D       = E*pow(h,3)/12./(1-pow(poisson,2));
-   double rho_m   = sed_rho_mantle();
+   const double poisson = .25;
+   const double D       = E*pow(h,3)/12./(1-pow(poisson,2));
+   const double rho_m   = sed_rho_mantle();
    double alpha;
-eh_watch_dbl( h );
-eh_watch_dbl( E );
-eh_watch_dbl( D );
-eh_watch_dbl( rho_m );
 
    eh_require( n_dim==1 || n_dim==2 );
 
    if ( n_dim > 1 ) alpha = pow(    D / (rho_m * sed_gravity()) , .25 );
    else             alpha = pow( 4.*D / (rho_m * sed_gravity()) , .25 );
-
-eh_watch_dbl( alpha );
 
    return alpha;
 }
