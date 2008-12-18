@@ -40,5 +40,6 @@
 #include <sed/sed_epoch.h>
 #include <sed/sed_river.h>
 #include <sed/sed_signal.h>
+#include <sed/csdms.h>
 
 #endif
