@@ -117,6 +117,7 @@ gboolean        sed_epoch_queue_test_run( const Sed_epoch_queue q          ,
 Sed_epoch_queue sed_epoch_queue_run     ( Sed_epoch_queue       q        ,
                                           Sed_cube              p        );
 
-Sed_epoch_queue sed_epoch_queue_tic     ( Sed_epoch_queue epoch_q , Sed_cube p );
+Sed_epoch_queue sed_epoch_queue_tic      ( Sed_epoch_queue epoch_q , Sed_cube p );
+Sed_epoch_queue sed_epoch_queue_run_until( Sed_epoch_queue epoch_q , Sed_cube p , double t_in_years );
 
 #endif /* sed_epoch.h */

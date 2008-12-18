@@ -949,6 +949,7 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
    eh_require( p );
 
    eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
    if ( !eh_key_file_has_group( k , p->name ) )
    {
       Sed_process new_proc;
@@ -1039,7 +1040,6 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
                                eh_logger ,
                                new_proc->log_files );
          }
-
          p_array = g_list_append(p_array,new_proc);
       }
 

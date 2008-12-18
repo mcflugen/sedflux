@@ -997,6 +997,16 @@ sed_epoch_queue_run( Sed_epoch_queue q , Sed_cube p )
    return q;
 }
 
+/** Run an epoch on a Sed_cube
+
+Starting at the current age of the Sed_cube, run the rest of
+the epoch that contains that time.
+
+\param   epoch_q   A queue of epochs
+\param   p         The Sed_cube to act on
+
+\return The input Sed_epoch_queue (or NULL)
+*/
 Sed_epoch_queue
 sed_epoch_queue_tic( Sed_epoch_queue   epoch_q ,
                      Sed_cube          p       )
@@ -1009,11 +1019,13 @@ sed_epoch_queue_tic( Sed_epoch_queue   epoch_q ,
       double            t_start = sed_cube_age( p );
       Sed_epoch         epoch   = sed_epoch_queue_find( epoch_q , t_start );
       Sed_process_queue proc_q  = sed_epoch_proc_queue( epoch );
-      double            t_stop  = t_start + sed_epoch_duration( epoch );
+      double            t_0     = sed_epoch_start( epoch );
+      //double            t_stop  = t_start + sed_epoch_duration( epoch );
+      double            t_stop  = t_0 + sed_epoch_duration( epoch );
 
       sed_cube_set_time_step( p , sed_epoch_time_step( epoch ) );
 
-      sed_process_queue_run_until( proc_q , p , t_stop );
+      sed_process_queue_run_until( proc_q , p , t_stop-t_start );
 
       if ( t_stop > sed_epoch_end( epoch ) )
       {
@@ -1022,6 +1034,76 @@ sed_epoch_queue_tic( Sed_epoch_queue   epoch_q ,
          sed_process_queue_summary( stdout , proc_q );
 
 //         sed_cube_free_river      ( p      );
+      }
+   }
+
+   return epoch_q;
+}
+
+
+/** Advance a Sed_cube to another time
+
+Starting at the current age of the Sed_cube, run the through
+the epoch queue until the stop time.
+
+\param   epoch_q    A queue of epochs
+\param   p          The Sed_cube to act on
+\param   t_in_years Stop time (in years)
+
+\return The input Sed_epoch_queue (or NULL)
+*/
+Sed_epoch_queue
+sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
+                           Sed_cube          p       ,
+                           double            t_in_years )
+{
+   eh_require( epoch_q );
+   eh_require( p       );
+
+   if ( epoch_q && p )
+   {
+      const double t_start = sed_cube_age( p );
+
+      // The epoch queue contains a series of epochs
+      //   Epoch 0     Epoch 1              Epoch 2
+      // |-----------|--------------------|--------------|
+      // Advance the model from t_0 to t_1
+      //       ^                            ^
+      //      t_0                          t_1
+      if ( !eh_compare_dbl( t_in_years , t_start , 1e-6 ) )
+      { /* If the times are the same, do nothing.  Otherwise, run until stop time. */
+
+         if ( t_in_years > t_start )
+         { /* Run until the stop time */
+            Sed_epoch  epoch     = sed_epoch_queue_find( epoch_q , t_start );
+            double     t_0       = sed_epoch_start( epoch );
+            double     epoch_end = t_0 + sed_epoch_duration( epoch );
+            //double     epoch_end = t_start + sed_epoch_duration( epoch );
+            //double     t_stop  = t_0 + sed_epoch_duration( epoch );
+
+            if ( epoch_end >= t_in_years )
+            { /* t_0 and t_1 are in the same epoch */
+               Sed_process_queue proc_q = sed_epoch_proc_queue( epoch );
+
+               sed_cube_set_time_step( p , sed_epoch_time_step( epoch ) );
+
+               //sed_process_queue_run_until( proc_q , p , t_in_years );
+               sed_process_queue_run_until( proc_q , p , t_in_years-t_start );
+
+               if ( sed_cube_age_in_years(p) > sed_epoch_end( epoch ) )
+               {
+                  sed_process_queue_run_at_end( proc_q , p );
+                  sed_process_queue_summary( stdout , proc_q );
+               }
+            }
+            else
+            { /* t_1 is in another (later) epoch that t_0 */
+               sed_epoch_queue_tic( epoch_q , p );
+               sed_epoch_queue_run_until( epoch_q , p , t_in_years );
+            }
+         }
+         else
+            eh_warning( "End time less than start time.  Exiting without doing anything." );
       }
    }
 
