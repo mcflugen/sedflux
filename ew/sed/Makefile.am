@@ -7,6 +7,7 @@ BUILT_SOURCES            = datadir_path.h
 lib_LTLIBRARIES          = libsedflux.la
 
 libsedflux_la_SOURCES    = \
+                           csdms.c \
                            sed_cell.c \
                            sed_column.c \
                            sed_cube.c \
@@ -28,6 +29,7 @@ sedfluxinclude_HEADERS = sed.h
 
 sedfluxsubincludedir=$(includedir)/ew-2.0/sed
 sedfluxsubinclude_HEADERS = \
+                           csdms.h \
                            sed_cell.h \
                            sed_column.h \
                            sed_const.h \
