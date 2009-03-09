@@ -99,10 +99,11 @@ plume_print_data( const gchar* file , Eh_dbl_grid* deposit , gint len , gint n_g
       GError*      error = NULL;
       gchar*       file_s;
 
-      eh_message( "************************************" );
-      eh_message( "Number of grain sizes: %d" , n_grains );
+      eh_message( "************************************"              );
+      eh_message( "Number of grain sizes: %d" , n_grains              );
       eh_message( "Number of rows       : %d" , eh_grid_n_x(*deposit) );
       eh_message( "Number of cols       : %d" , eh_grid_n_y(*deposit) );
+      eh_message( "Units                : %s" , "m/day"               );
       eh_message( "************************************" );
 
       for ( d=deposit,i=0 ; *d && !error ; d++,i++ )
