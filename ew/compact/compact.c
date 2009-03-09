@@ -23,6 +23,8 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
+#include <omp.h>
+
 /** \file compact.c
 
    Sediment compaction
@@ -64,60 +66,71 @@ thickness of the cell is not changed.
 \param s        A Sed_column to compact
 
 */
-int compact( Sed_column s )
+gint
+compact( Sed_column s )
 {
-   double *load_eff;
-   double hydro_static;
-   gssize n_grains = sed_sediment_env_n_types();
+   eh_require( s );
 
-   // If there is only one (or no) bins, there is no
-   // overlying load and so no compaction.
-   if ( sed_column_len(s) < 2 )
-      return 0;
+   if ( s || sed_column_len(s)<2 )
+   { /* There is a column with overlying load; compact it! */
+      const double hydro_static = sed_column_water_pressure( s );
+      const gint n_grains = sed_sediment_env_n_types();
+      const gint col_len  = sed_column_len(s);
+      double*    load_eff = eh_new0( double , col_len );
 
-   load_eff     = eh_new0( double , sed_column_len(s) );
-   hydro_static = sed_column_water_pressure( s );
+      eh_require( load_eff );
 
-   // Calculate the load of the overlying sediment.
-   {
-      gssize i;
-      double p;
-      double* load = sed_column_load( s , 0 , -1 , NULL );
+      { /* Calculate the load of the overlying sediment. */
+         gint  i;
+         double* load = sed_column_load    ( s , 0 , -1 , NULL );
+         double* p    = sed_column_pressure( s , 0 , -1 , NULL );
 
-      for (i=sed_column_len(s)-1; i>=0; --i) 
-      {
-         p = sed_cell_pressure( sed_column_nth_cell( s , i ) );
+         for ( i=0; i<col_len; i++ )
+         {
+            load_eff[i] = load[i] - p[i];
+            if ( load_eff[i] < 0 )
+               load_eff[i] = 0.;
+         }
+/*
+         for (i=sed_column_len(s)-1; i>=0; --i) 
+         {
+            p = sed_cell_pressure( sed_column_nth_cell( s , i ) );
 
-         load_eff[i] = load[i] - p;
+            load_eff[i] = load[i] - p;
 
-         if ( load_eff[i] < 0 )
-            load_eff[i] = 0.;
+            if ( load_eff[i] < 0 )
+               load_eff[i] = 0.;
+         }
+*/
+         eh_free( p    );
+         eh_free( load );
       }
 
-      eh_free( load );
-   }
-
-   // Calculate the densities that the sediment should be.
-   {
-      gssize i, n;
-      Sed_cell this_cell;
-      double t_new;
-      double* c         = sed_sediment_property( NULL , &sed_type_compressibility );
-      double* rho_grain = sed_sediment_property( NULL , &sed_type_rho_grain       );
-      double* rho_max   = sed_sediment_property( NULL , &sed_type_rho_max         );
-      double* rho       = sed_sediment_property( NULL , &sed_type_rho_sat         );
-      double rho_new;
-      double t_0;
+      { /* Calculate the densities that the sediment should be. */
+         gint i, n;
+         Sed_cell this_cell;
+         double t_new;
+         double* c         = sed_sediment_property( NULL,
+                                                 &sed_type_compressibility );
+         double* rho_grain = sed_sediment_property( NULL, &sed_type_rho_grain       );
+         double* rho_max   = sed_sediment_property( NULL, &sed_type_rho_max         );
+         double* rho       = sed_sediment_property( NULL, &sed_type_rho_sat         );
+         double rho_new;
+         double t_0;
+         const double rho_sea_water = sed_rho_sea_water();
 
       for (i=sed_column_len(s)-1; i>=0 ; i--)
-      {
+      { /* From the top of the column to the bottom. */
+
          this_cell = sed_column_nth_cell( s , i );
          for ( n=0 , t_new=0. ; n<n_grains ; n++ )
-         {
-            t_0 = sed_cell_sediment_volume(this_cell)*sed_cell_fraction(this_cell,n);
+         { /* Compact each grain type. */
+
+            t_0 = sed_cell_sediment_volume(this_cell)
+                * sed_cell_fraction(this_cell,n);
             rho_new = rho_max[n] + (rho[n]-rho_max[n]) / exp(c[n]*load_eff[i]);
 
-            t_new += t_0*(rho_grain[n]-sed_rho_sea_water())/(rho_new-sed_rho_sea_water());
+            t_new += t_0*(rho_grain[n]-rho_sea_water)/(rho_new-rho_sea_water);
 
             if ( t_new< 0 )
             {
@@ -133,15 +146,49 @@ int compact( Sed_column s )
             sed_column_compact_cell(s,i,t_new);
       }
 
-      eh_free( c         );
-      eh_free( rho_max   );
-      eh_free( rho_grain );
-      eh_free( rho       );
-   }
+         eh_free( c         );
+         eh_free( rho_max   );
+         eh_free( rho_grain );
+         eh_free( rho       );
+      }
 
-   eh_free(load_eff);
+      eh_free(load_eff);
+   }
    
    return 0;
+}
+
+gboolean
+compact_cube( Sed_cube p )
+{
+   gboolean success = FALSE;
+
+   eh_require( p );
+
+   if ( p )
+   {
+      gint i;
+      const gint len = sed_cube_size(p);
+
+#pragma omp parallel for num_threads(4)
+      for ( i=0 ; i<len ; i++ )
+      {
+         Sed_column s = sed_cube_col( p, i );
+         compact( s );
+      }
+
+      success = TRUE;
+   }
+   return success;
+}
+
+double
+compact_sediment( double t_sed, double load,
+                  double rho_grain, double rho_max, double rho, double rho_void,
+                  double c ) 
+{
+   double rho_new = rho_max + (rho-rho_max) * exp( -c*load );
+   return t_sed*(rho_grain-rho_void)/(rho_new-rho_void);
 }
 
 /*@}*/
