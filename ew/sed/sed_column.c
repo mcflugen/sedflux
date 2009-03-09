@@ -849,18 +849,19 @@ values.
 @see sed_get_column_load         , sed_get_column_avg_property_with_load .
      sed_get_column_avg_property .
 */
-double* sed_column_at_property( Sed_property f ,
-                                Sed_column c   ,
-                                gssize start   ,
-                                gssize n_bins  ,
-                                double* val )
+double*
+sed_column_at_property( Sed_property f ,
+                        Sed_column c   ,
+                        gint start     ,
+                        gint n_bins    ,
+                        double* val )
 {
    eh_require( c );
 
    if ( c )
    {
-      gssize i;
-      gssize col_len = c->len;
+      gint i;
+      const gint col_len = c->len;
 
       if ( n_bins <= 0 || start+n_bins>col_len )
          n_bins = col_len-start;
@@ -868,7 +869,8 @@ double* sed_column_at_property( Sed_property f ,
       if ( !val )
          val = eh_new( double , n_bins );
 
-      for ( i=n_bins-1 ; i>=0 ; i-- )
+      //for ( i=n_bins-1 ; i>=0 ; i-- )
+      for ( i=0 ; i<n_bins ; i++ )
          val[i] = sed_property_measure( f , c->cell[i] );
    }
    else

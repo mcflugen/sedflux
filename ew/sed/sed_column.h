@@ -107,7 +107,7 @@ double  sed_column_water_pressure( const Sed_column s );
 double* sed_column_total_property( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
 double* sed_column_avg_property_with_load( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
 double* sed_column_avg_property( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
-double* sed_column_at_property( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
+double* sed_column_at_property( Sed_property f , Sed_column c , gint start , gint n_bins , double* val );
 double  sed_column_load_at(const Sed_column,gssize);
 double  sed_column_property_0( Sed_property f, const Sed_column s );
 double  sed_column_property( Sed_property f, const Sed_column s );
