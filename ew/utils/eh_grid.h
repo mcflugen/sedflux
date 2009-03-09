@@ -124,6 +124,7 @@ gboolean    eh_dbl_grid_row_is_gt    ( Eh_dbl_grid g , gint row , double val );
 gboolean    eh_dbl_grid_col_is_gt    ( Eh_dbl_grid g , gint col , double val );
 
 Eh_dbl_grid eh_dbl_grid_new_set      ( gint n_x , gint n_y , double** d );
+Eh_grid     eh_grid_malloc_uniform   ( gssize n_x , gssize n_y , gssize size , double dx , double dy );
 
 #define eh_grid_val( g , t , i , j ) ( *((t*)eh_grid_loc(g,i,j)) )
 #define eh_grid_new( t , n_x , n_y ) eh_grid_malloc( (n_x) , (n_y) , sizeof(t) )

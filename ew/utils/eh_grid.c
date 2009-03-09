@@ -368,7 +368,8 @@ eh_dbl_grid_new_set( gint n_x , gint n_y , double** d )
    return g;
 }
 
-Eh_grid eh_grid_malloc_uniform( gssize n_x , gssize n_y , gssize size , double dx , double dy )
+Eh_grid
+eh_grid_malloc_uniform( gssize n_x , gssize n_y , gssize size , double dx , double dy )
 {
    Eh_grid g = eh_grid_malloc( n_x , n_y , size );
 
