@@ -88,7 +88,7 @@ main( int argc , char *argv[] )
    }
 
    { // Free resources
-      eh_grid_destroy( z , NULL );
+      eh_grid_destroy( z , TRUE );
    }
 
    return 0;

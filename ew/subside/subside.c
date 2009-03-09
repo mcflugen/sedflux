@@ -25,6 +25,7 @@
 #include "subside.h"
 
 #include <math.h>
+#include <omp.h>
 
 #define N_THREADS 5
 
@@ -39,7 +40,7 @@ typedef struct
 Subside_data;
 
 void subside_helper( gpointer data , gpointer v_0 );
-void subside_parallel_row( double* w, double* load, gint len, double dy, double dx, double alpha, double* r );
+void subside_parallel_row( double* w, const double* load, const gint len, const double dy, const double dx, const double alpha, const double* r );
 
 /* Calculate a deflection grid
 
@@ -65,17 +66,19 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
       const gint n_x = eh_grid_n_x( v_0 );
       const gint n_y = eh_grid_n_y( v_0 );
 
-      if ( FALSE )
+      if ( TRUE )
       { /* Grid is not equally spaced. */
+         double load;
          for ( i=0 ; i<n_x ; i++ )
          {
-            load = eh_grid_row( v_0, i );
+            //load = eh_grid_row( v_0, i );
             for ( j=0 ; j<n_y ; j++ )
             {
-               //load = eh_dbl_grid_val( v_0 , i , j );
+               load = eh_dbl_grid_val( v_0 , i , j );
                //if ( fabs(load[j]) > 1e-3 )
-               if ( fabs(load[j]) > 1e-10 )
-                  subside_point_load( w , load[j] , eet , y , i , j );
+               if ( fabs(load) > 1e-10 )
+                  subside_point_load( w , load , eet , y , i , j );
+                  //subside_point_load( w , load[j] , eet , y , i , j );
             }
          }
       }
@@ -99,15 +102,64 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
             }
          }
 
+#define USE_OMP
+#ifdef USE_OMP
+//#pragma omp parallel num_threads(4)
+         {
+/*
+            int id        = omp_get_thread_num();
+            int n_threads = omp_get_num_threads();
+            int j_start   = id*n_x/n_threads;
+            int j_end     = ( id+1 )*n_x/n_threads;
+
+            if ( id==n_threads-1 )
+               j_end = n_x;
+            for ( j=j_start ; j<j_end ; j++ )
+*/
+
+#pragma omp parallel for num_threads(4)
+            for ( j=0 ; j<n_x ; j++ )
+            {
+               double* w_row = eh_grid_row(w,j);
+               gint i;
+               gint d_row;
+               for ( i=0 ; i<n_x ; i++ )
+               { /* For each row of loads */
+                  d_row = abs(j-i);
+                  subside_parallel_row( w_row,
+                                        eh_grid_row(v_0,i),
+                                        n_y,
+                                        dy,
+                                        d_row*dx,
+                                        alpha, r[d_row] );//r[d_row] );
+               }
+               //eh_message( "Done (row=%d).", j );
+            }
+            
+         }
+#else
+
+//         for ( j=0 ; j<n_x ; j++ )
+//         { /* For each row of locations */
+//            w_row = eh_grid_row(w,j);
+//            for ( i=0 ; i<n_x ; i++ )
+//            { /* For each row of loads */
+//               d_row = abs(j-i);
+//               subside_parallel_row( w_row, eh_grid_row(v_0,i), n_y, dy, d_row*dx, alpha, NULL );
+//            }
+//         }
+
          for ( i=0 ; i<n_x ; i++ )
          { /* For each row of loads. */
             load = eh_grid_row( v_0, i );
             for ( j=0 ; j<n_x ; j++ )
             { /* For each row of locations */
                d_row = abs(j-i);
-               subside_parallel_row( eh_grid_row(w,j), load, n_y, dy, d_row*dx, alpha, r[d_row] );
+               //subside_parallel_row( eh_grid_row(w,j), load, n_y, dy, d_row*dx, alpha, r[d_row] );
+               subside_parallel_row( eh_grid_row(w,j), load, n_y, dy, d_row*dx, alpha, NULL );
             }
          }
+#endif
 
          eh_free_2( r );
       }
@@ -239,7 +291,7 @@ subside_point_load( Eh_dbl_grid g , double load , double h , double E , int i_lo
 }
 
 void
-subside_parallel_row( double* w, double* load, gint len, double dy, double dx, double alpha, double* r )
+subside_parallel_row( double* w, const double* load, const gint len, const double dy, const double dx, const double alpha, const double* r )
 {
    if ( w && load )
    {
@@ -249,18 +301,21 @@ subside_parallel_row( double* w, double* load, gint len, double dy, double dx, d
       const double inv_alpha = 1./alpha;
       const double dx_2      = dx*dx;
       double dy_2;
-      gboolean free_r = FALSE;
+      double* kei = NULL;
+      gboolean free_kei = FALSE;
 
       if ( !r )
       {
-         r = eh_new( double, len );
+         kei = eh_new( double, len );
          for ( i=0; i<len; i++ )
          {
             dy_2 = (i*dy)*(i*dy);
-            r[i] = eh_kei_0( sqrt( dx_2 + dy_2 )*inv_alpha );
+            kei[i] = eh_kei_0( sqrt( dx_2 + dy_2 )*inv_alpha );
          }
-         free_r = TRUE;
+         free_kei = TRUE;
       }
+      else
+         kei = r;
 
       for ( i=0; i<len; i++ )
       { /* For each load. */
@@ -268,12 +323,12 @@ subside_parallel_row( double* w, double* load, gint len, double dy, double dx, d
          for ( j=0; j<len; j++ )
          { /* For each location. */
             //w[j] += -c * eh_kei_0(r[abs(j-i)]);
-            w[j] += -c * r[abs(j-i)];
+            w[j] += -c * kei[abs(j-i)];
          }
       }
 
-      if ( free_r )
-         eh_free( r );
+      if ( free_kei )
+         eh_free( kei );
    }
    return;
 }
