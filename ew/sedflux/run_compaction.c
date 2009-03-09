@@ -38,6 +38,8 @@ run_compaction( Sed_process proc , Sed_cube p )
 {
    Sed_process_info info = SED_EMPTY_INFO;
 
+   compact_cube( p );
+/*
 #if !defined(WITH_THREADS)
 
    {
@@ -80,6 +82,7 @@ run_compaction( Sed_process proc , Sed_cube p )
    }
 
 #endif
+*/
 
    return info;
 }
