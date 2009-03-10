@@ -1019,13 +1019,11 @@ sed_epoch_queue_tic( Sed_epoch_queue   epoch_q ,
       double            t_start = sed_cube_age( p );
       Sed_epoch         epoch   = sed_epoch_queue_find( epoch_q , t_start );
       Sed_process_queue proc_q  = sed_epoch_proc_queue( epoch );
-      double            t_0     = sed_epoch_start( epoch );
-      //double            t_stop  = t_start + sed_epoch_duration( epoch );
-      double            t_stop  = t_0 + sed_epoch_duration( epoch );
+      double            t_stop  = t_start + sed_epoch_duration( epoch );
 
       sed_cube_set_time_step( p , sed_epoch_time_step( epoch ) );
 
-      sed_process_queue_run_until( proc_q , p , t_stop-t_start );
+      sed_process_queue_run_until( proc_q , p , t_stop );
 
       if ( t_stop > sed_epoch_end( epoch ) )
       {
@@ -1070,16 +1068,13 @@ sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
       // Advance the model from t_0 to t_1
       //       ^                            ^
       //      t_0                          t_1
-      if ( !eh_compare_dbl( t_in_years , t_start , 1e-6 ) )
+      if ( !eh_compare_dbl( t_in_years , t_start , 1e-12 ) )
       { /* If the times are the same, do nothing.  Otherwise, run until stop time. */
 
          if ( t_in_years > t_start )
          { /* Run until the stop time */
-            Sed_epoch  epoch     = sed_epoch_queue_find( epoch_q , t_start );
-            double     t_0       = sed_epoch_start( epoch );
-            double     epoch_end = t_0 + sed_epoch_duration( epoch );
-            //double     epoch_end = t_start + sed_epoch_duration( epoch );
-            //double     t_stop  = t_0 + sed_epoch_duration( epoch );
+            Sed_epoch         epoch     = sed_epoch_queue_find( epoch_q , t_start );
+            double            epoch_end = t_start + sed_epoch_duration( epoch );
 
             if ( epoch_end >= t_in_years )
             { /* t_0 and t_1 are in the same epoch */
@@ -1087,8 +1082,7 @@ sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
 
                sed_cube_set_time_step( p , sed_epoch_time_step( epoch ) );
 
-               //sed_process_queue_run_until( proc_q , p , t_in_years );
-               sed_process_queue_run_until( proc_q , p , t_in_years-t_start );
+               sed_process_queue_run_until( proc_q , p , t_in_years );
 
                if ( sed_cube_age_in_years(p) > sed_epoch_end( epoch ) )
                {
