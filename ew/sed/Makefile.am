@@ -25,11 +25,10 @@ libsedflux_la_SOURCES    = \
                            sed_wave.c
 
 sedfluxincludedir=$(includedir)/ew-2.0
-sedfluxinclude_HEADERS = sed.h
+sedfluxinclude_HEADERS = sed.h csdms.h
 
 sedfluxsubincludedir=$(includedir)/ew-2.0/sed
 sedfluxsubinclude_HEADERS = \
-                           csdms.h \
                            sed_cell.h \
                            sed_column.h \
                            sed_const.h \
