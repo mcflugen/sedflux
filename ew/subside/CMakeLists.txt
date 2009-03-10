@@ -1,0 +1,63 @@
+include_directories(${CMAKE_SOURCE_DIR}/ew )
+
+
+########### next target ###############
+
+SET(subside_SRCS
+   subside_main.c
+)
+
+add_executable(run_subside ${subside_SRCS})
+
+target_link_libraries(run_subside subside)
+
+install(PROGRAMS run_subside DESTINATION bin RENAME subside)
+
+
+########### next target ###############
+
+SET(subside_LIB_SRCS
+   subside.c
+)
+
+add_library(subside SHARED ${subside_LIB_SRCS})
+
+target_link_libraries(subside sedflux)
+
+install(TARGETS subside DESTINATION lib)
+
+
+########### install files ###############
+
+install(FILES  subside.h DESTINATION include/ew-2.0)
+
+
+
+#original Makefile.am contents follow:
+
+#INCLUDES                 = -I$(top_srcdir)/ew
+#
+#AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
+#                           $(top_builddir)/ew/sed/libsedflux.la
+#
+#bin_PROGRAMS              = subside
+#subside_SOURCES           = subside_main.c
+#subside_DEPENDENCIES      = libsubside.la
+#subsideinclude_HEADERS    = subside.h
+#subsideincludedir         = $(includedir)/ew-2.0
+#
+#lib_LTLIBRARIES           = libsubside.la
+#libsubside_la_SOURCES     = subside.c
+#
+#subside_LDADD             = -lsubside -lglib-2.0 -lm
+#
+#if ENABLE_CHECK
+#
+#bin_PROGRAMS                   += subside_unit_test
+#subside_unit_test_SOURCES       = subside_unit_test.c
+#subside_unit_test_DEPENDENCIES  = libsubside.la
+#
+#subside_unit_test_LDADD   = -lsubside -lglib-2.0 -lm @CHECK_LIBS@
+#subside_unit_test_CFLAGS  = @CHECK_CFLAGS@
+#
+#endif
