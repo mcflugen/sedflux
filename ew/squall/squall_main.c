@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <sed/sed_sedflux.h>
-#include <squall.h>
+#include "squall.h"
 
 static char *help_msg[] =
 {
