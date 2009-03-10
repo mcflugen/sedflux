@@ -66,27 +66,6 @@ csdms_comp_get_val( CSDMSComp* c , const gchar* name , gint* here , double now ,
    return success;
 }
 
-gboolean
-csdms_comp_set_val( CSDMSComp* c , const gchar* name , const gint* here , const double* vals )
-{
-   gboolean success = FALSE;
-
-   eh_require( c    );
-   eh_require( vals );
-
-   if ( c && vals )
-   {
-      CSDMSRealComp* rc = (CSDMSRealComp*)c;
-
-      if ( rc->set_val ) success = rc->set_val( c , name , here , vals );
-      else               success = TRUE;
-   }
-
-   eh_require( success==TRUE || success==FALSE );
-
-   return success;
-}
-
 /** Run finalize methods for a CSDMSComp
 
 \param[in,out]   c   A CSDMSComp
@@ -160,10 +139,7 @@ csdms_comp_destroy( CSDMSComp* c )
 \return The CSDMSComp
 */
 CSDMSComp*
-csdms_comp_set_irf( CSDMSComp* c, CSDMSInitFunc init_func,
-                                  CSDMSGetValFunc get_val_func,
-                                  CSDMSFinalizeFunc finalize_func,
-                                  CSDMSSetValFunc set_val_func )
+csdms_comp_set_irf( CSDMSComp* c , CSDMSInitFunc init_func , CSDMSGetValFunc get_val_func , CSDMSFinalizeFunc finalize_func )
 {
    eh_require( c );
 
@@ -173,7 +149,6 @@ csdms_comp_set_irf( CSDMSComp* c, CSDMSInitFunc init_func,
 
       rc->init     = init_func;
       rc->get_val  = get_val_func;
-      rc->set_val  = set_val_func;
       rc->finalize = finalize_func;
    }
 

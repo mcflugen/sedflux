@@ -33,8 +33,6 @@ typedef gboolean (CSDMSInitFunc)     ( CSDMSComp* c , const gchar* file );
 */
 typedef gboolean (CSDMSGetValFunc)   ( CSDMSComp* c , const gchar* val_s , gint* where , double when , double** vals );
 
-typedef gboolean (CSDMSSetValFunc)   ( CSDMSComp* c , const gchar* val_s , gint* where , double* vals );
-
 /** The finalize function for a CSDMSComp
 
 \param[in,out]   c      A CSDMSComp
@@ -51,18 +49,16 @@ struct _CSDMSRealComp
 
    CSDMSInitFunc*     init;
    CSDMSGetValFunc*   get_val;
-   CSDMSSetValFunc*   set_val;
    CSDMSFinalizeFunc* finalize;
 };
 
 gboolean csdms_comp_init    ( CSDMSComp* c , const gchar* file );
 gboolean csdms_comp_get_val ( CSDMSComp* c , const gchar* name , gint* here , double now , double** vals );
-gboolean csdms_comp_set_val ( CSDMSComp* c , const gchar* name , const gint* here , const double* vals );
 gboolean csdms_comp_finalize( CSDMSComp* c );
 
 CSDMSComp* csdms_comp_new     ( void );
 CSDMSComp* csdms_comp_destroy ( CSDMSComp* c );
-CSDMSComp* csdms_comp_set_irf ( CSDMSComp* c , CSDMSInitFunc , CSDMSGetValFunc , CSDMSFinalizeFunc, CSDMSSetValFunc );
+CSDMSComp* csdms_comp_set_irf ( CSDMSComp* c , CSDMSInitFunc , CSDMSGetValFunc , CSDMSFinalizeFunc );
 
 gpointer   csdms_comp_data( CSDMSComp* c );
 
