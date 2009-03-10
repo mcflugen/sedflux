@@ -99,7 +99,7 @@ sedflux_init( Sed_epoch_queue* q , Sed_cube* p , const gchar* init_file )
    if ( init_file && p && q )
    {
       GError* error = NULL;
-eh_watch_str( init_file );
+
       (*p) = sed_cube_new_from_file( init_file , &error );
       eh_exit_on_error( error , "%s: Error reading initialization file" , init_file );
 
@@ -189,6 +189,7 @@ sedflux_get_val_at( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* 
 
    eh_require( q    );
    eh_require( p    );
+   eh_require( here );
 
    if ( sedflux_run_until( q , p , now ) )
    {
@@ -234,38 +235,6 @@ sedflux_get_val_at( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* 
    }
 
    return data;
-}
-
-gboolean
-sedflux_set_val_at( Sed_cube p , const gchar* val_s , gint* here, const double* val )
-{
-   gboolean success = FALSE;
-
-   eh_require( p );
-
-   if ( val && g_ascii_strcasecmp( val_s, "BASEMENT" )==0 )
-   {
-      eh_watch_str( val_s );
-      eh_watch_ptr( here );
-      if ( here )
-      {
-         gint i;
-         gint* id = here;
-         for ( ; *id!=-1; id++ )
-            sed_column_set_base_height( sed_cube_col( p, *id ), val[i] );
-
-      }
-      else
-      {
-         const gint len = sed_cube_size(p);
-         gint i;
-
-         for ( i=0; i<len; i++ )
-            sed_column_set_base_height( sed_cube_col( p, i ), val[i] );
-      }
-   }
-
-   return success;
 }
 
 gboolean

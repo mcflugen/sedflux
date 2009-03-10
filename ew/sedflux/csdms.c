@@ -15,7 +15,6 @@ Sed_state;
 gboolean sedflux_init         ( Sed_epoch_queue* q , Sed_cube* p , const gchar* init_file );
 gboolean sedflux_finalize     ( Sed_epoch_queue  q , Sed_cube  p );
 double*  sedflux_get_val_at   ( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* here , double now );
-gboolean sedflux_set_val_at   ( Sed_cube p , const gchar* val_s , const gint* here, const double* vals );
 
 gboolean
 sed_init_func( CSDMSComp* c , const gchar* file )
@@ -29,8 +28,6 @@ sed_init_func( CSDMSComp* c , const gchar* file )
    if ( c && !c->user_data && file )
    {
       Sed_state* s = eh_new( Sed_state , 1 );
-
-      sed_mode_set( SEDFLUX_MODE_3D );
 
       s->q = NULL;
       s->p = NULL;
@@ -59,8 +56,8 @@ sed_run_func( CSDMSComp* c , const gchar* val_s , gint* here , double now , doub
 {
    gboolean success = FALSE;
 
-   eh_require( c            );
-   eh_require( c->user_data );
+   eh_require( c                  );
+   eh_require( c->user_data==NULL );
 
    if ( c && c->user_data )
    {
@@ -69,25 +66,6 @@ sed_run_func( CSDMSComp* c , const gchar* val_s , gint* here , double now , doub
       (*vals) = sedflux_get_val_at( s->q , s->p , val_s , here , now );
 
       success = (*vals)!=NULL;
-   }
-
-   eh_require( success==TRUE || success==FALSE );
-
-   return success;
-}
-
-gboolean
-sed_set_func( CSDMSComp* c , const gchar* val_s , const gint* here , const double* vals )
-{
-   gboolean success = FALSE;
-
-   eh_require( c            );
-   eh_require( c->user_data );
-
-   if ( c && c->user_data )
-   {
-      Sed_state* s = (Sed_state*)(c->user_data);
-      success = sedflux_set_val_at( s->p, val_s, here, vals );
    }
 
    eh_require( success==TRUE || success==FALSE );
@@ -132,7 +110,7 @@ csdms_sample_prog( void )
    gint*      here   = NULL;
    double     now    = 100.;
 
-   csdms_comp_set_irf ( c , sed_init_func , sed_run_func , sed_finalize_func, sed_set_func );
+   csdms_comp_set_irf ( c , sed_init_func , sed_run_func , sed_finalize_func );
 
    csdms_comp_init    ( c , "sedflux_init_file" );
 
