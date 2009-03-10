@@ -23,7 +23,9 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
-#include <omp.h>
+#ifdef HAVE_OMP_H
+# include <omp.h>
+#endif
 
 /** \file compact.c
 

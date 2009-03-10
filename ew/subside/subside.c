@@ -25,7 +25,9 @@
 #include "subside.h"
 
 #include <math.h>
-#include <omp.h>
+#ifdef HAVE_OMP_H
+# include <omp.h>
+#endif
 
 #define N_THREADS 5
 
