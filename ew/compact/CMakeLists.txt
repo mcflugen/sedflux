@@ -9,9 +9,9 @@ SET(compact_SRCS
 
 add_executable(run_compact ${compact_SRCS})
 
-target_link_libraries(run_compact compact)
+target_link_libraries(run_compact compact )
 
-install(PROGRAMS run_compact DESTINATION bin RENAME compact)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_compact DESTINATION bin RENAME compact COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(compact_LIB_SRCS
    compact.c
 )
 
-add_library(compact SHARED ${compact_LIB_SRCS})
+add_library(compact ${compact_LIB_SRCS})
 
 target_link_libraries(compact sedflux)
 
-install(TARGETS compact DESTINATION lib)
+install(TARGETS compact DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  compact.h DESTINATION include/ew-2.0)
+install(FILES  compact.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

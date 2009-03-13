@@ -9,7 +9,7 @@ add_executable(read_hydro ${read_hydro_SRCS})
 
 target_link_libraries(read_hydro sedflux)
 
-install(TARGETS read_hydro DESTINATION bin)
+install(TARGETS read_hydro DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -22,7 +22,7 @@ add_executable(sedrescale ${sedrescale_SRCS})
 
 target_link_libraries(sedrescale sedflux)
 
-install(TARGETS sedrescale DESTINATION bin)
+install(TARGETS sedrescale DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -35,7 +35,7 @@ add_executable(getfloor ${getfloor_SRCS})
 
 target_link_libraries(getfloor sedflux)
 
-install(TARGETS getfloor DESTINATION bin)
+install(TARGETS getfloor DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -48,7 +48,7 @@ add_executable(sedextract ${sedextract_SRCS})
 
 target_link_libraries(sedextract sedflux)
 
-install(TARGETS sedextract DESTINATION bin)
+install(TARGETS sedextract DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -61,7 +61,7 @@ add_executable(sed2binary ${sed2binary_SRCS})
 
 target_link_libraries(sed2binary sedflux)
 
-install(TARGETS sed2binary DESTINATION bin)
+install(TARGETS sed2binary DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -74,7 +74,7 @@ add_executable(read_usgs ${read_usgs_SRCS})
 
 target_link_libraries(read_usgs sedflux)
 
-install(TARGETS read_usgs DESTINATION bin)
+install(TARGETS read_usgs DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -87,7 +87,7 @@ add_executable(create_hydro ${create_hydro_SRCS})
 
 target_link_libraries(create_hydro sedflux)
 
-install(TARGETS create_hydro DESTINATION bin)
+install(TARGETS create_hydro DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -100,7 +100,7 @@ add_executable(sedwheeler ${sedwheeler_SRCS})
 
 target_link_libraries(sedwheeler sedflux)
 
-install(TARGETS sedwheeler DESTINATION bin)
+install(TARGETS sedwheeler DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -111,7 +111,7 @@ add_executable(sedflux-make-bathy ${sedflux-make-bathy_SRCS})
 
 target_link_libraries(sedflux-make-bathy sedflux)
 
-install(TARGETS sedflux-make-bathy DESTINATION bin)
+install(TARGETS sedflux-make-bathy DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -122,7 +122,7 @@ add_executable(sedflux-read-hydro ${sedflux-read-hydro_SRCS})
 
 target_link_libraries(sedflux-read-hydro sedflux)
 
-install(TARGETS sedflux-read-hydro DESTINATION bin)
+install(TARGETS sedflux-read-hydro DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -133,7 +133,7 @@ add_executable(sedflux-make-sequence ${sedflux-make-sequence_SRCS})
 
 target_link_libraries(sedflux-make-sequence sedflux)
 
-install(TARGETS sedflux-make-sequence DESTINATION bin)
+install(TARGETS sedflux-make-sequence DESTINATION bin COMPONENT sedflux)
 
 
 ########### install files ###############

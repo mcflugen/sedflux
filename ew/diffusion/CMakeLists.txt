@@ -11,7 +11,7 @@ add_executable(run_diffusion ${diffusion_SRCS})
 
 target_link_libraries(run_diffusion diffusion)
 
-install(PROGRAMS run_diffusion DESTINATION bin RENAME diffusion)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_diffusion DESTINATION bin RENAME diffusion COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(diffusion_LIB_SRCS
    diffusion.c
 )
 
-add_library(diffusion SHARED ${diffusion_LIB_SRCS})
+add_library(diffusion ${diffusion_LIB_SRCS})
 
 target_link_libraries(diffusion sedflux)
 
-install(TARGETS diffusion DESTINATION lib)
+install(TARGETS diffusion DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  diffusion.h DESTINATION include/ew-2.0)
+install(FILES  diffusion.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

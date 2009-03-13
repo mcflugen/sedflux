@@ -11,7 +11,7 @@ add_executable(run_plume ${plume_SRCS})
 
 target_link_libraries(run_plume plume)
 
-install(PROGRAMS run_plume DESTINATION bin RENAME plume)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_plume DESTINATION bin RENAME plume COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -24,7 +24,7 @@ add_executable(plume_run_file ${plume_run_file_SRCS})
 
 target_link_libraries(plume_run_file plume)
 
-install(TARGETS plume_run_file DESTINATION bin)
+install(TARGETS plume_run_file DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -51,16 +51,16 @@ SET(plume_LIB_SRCS
    plumeset.c
 )
 
-add_library(plume SHARED ${plume_LIB_SRCS})
+add_library(plume ${plume_LIB_SRCS})
 
 target_link_libraries(plume sedflux)
 
-install(TARGETS plume DESTINATION lib)
+install(TARGETS plume DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  plumevars.h plumeinput.h plume_types.h plume_approx.h plume_local.h DESTINATION include/ew-2.0)
+install(FILES  plumevars.h plumeinput.h plume_types.h plume_approx.h plume_local.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

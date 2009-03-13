@@ -5,14 +5,15 @@ set( sedflux_LIBS
 
 ########### next target ###############
 
-SET(sedflux_SRCS main.c)
+set(sedflux_SRCS
+   main.c
+)
 
 add_executable(run_sedflux ${sedflux_SRCS})
 
 target_link_libraries(run_sedflux sedflux-2.0)
 
-install(PROGRAMS run_sedflux DESTINATION bin RENAME sedflux)
-
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME sedflux COMPONENT sedflux)
 
 ########### next target ###############
 
@@ -51,16 +52,16 @@ run_flow.c
                             sedflux_esmf.c
 )
 
-add_library(sedflux-2.0 SHARED ${sedflux-2.0_LIB_SRCS})
+add_library(sedflux-2.0 ${sedflux-2.0_LIB_SRCS})
 
 target_link_libraries(sedflux-2.0 sedflux ${sedflux_LIBS})
 
-install(TARGETS sedflux-2.0 DESTINATION lib)
+install(TARGETS sedflux-2.0 DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  sedflux.h DESTINATION include/ew-2.0)
+install(FILES  sedflux.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 #install(FILES  runsedflux sedflux-run-batch DESTINATION )
 
 

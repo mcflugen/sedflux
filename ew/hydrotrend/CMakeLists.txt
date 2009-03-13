@@ -43,7 +43,7 @@ add_executable(run_hydrotrend ${hydrotrend_SRCS})
 
 target_link_libraries(run_hydrotrend)
 
-install(PROGRAMS run_hydrotrend DESTINATION bin RENAME hydrotrend)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_hydrotrend DESTINATION bin RENAME hydrotrend)
 
 
 ########### install files ###############

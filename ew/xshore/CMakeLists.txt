@@ -7,16 +7,16 @@ SET(xshore_LIB_SRCS
    xshore.c
 )
 
-add_library(xshore SHARED ${xshore_LIB_SRCS})
+add_library(xshore ${xshore_LIB_SRCS})
 
 target_link_libraries(xshore sedflux)
 
-install(TARGETS xshore DESTINATION lib)
+install(TARGETS xshore DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  xshore.h DESTINATION include/ew-2.0)
+install(FILES  xshore.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

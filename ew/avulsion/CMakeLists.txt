@@ -9,9 +9,10 @@ SET(avulsion_SRCS
 
 add_executable(run_avulsion ${avulsion_SRCS})
 
-target_link_libraries(run_avulsion avulsion glib-2.0 sedflux)
+target_link_libraries(run_avulsion avulsion sedflux)
 
-install(PROGRAMS run_avulsion DESTINATION bin RENAME avulsion)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_avulsion
+       DESTINATION bin RENAME avulsion COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +21,16 @@ SET(avulsion_LIB_SRCS
    avulsion.c
 )
 
-add_library(avulsion SHARED ${avulsion_LIB_SRCS})
+add_library(avulsion ${avulsion_LIB_SRCS})
 
 target_link_libraries(avulsion sedflux)
 
-install(TARGETS avulsion DESTINATION lib)
+install(TARGETS avulsion DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  avulsion.h DESTINATION include/ew-2.0)
+install(FILES  avulsion.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

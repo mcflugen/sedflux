@@ -40,11 +40,11 @@ SET(utils_LIB_SRCS
    eh_file_utils.c
 )
 
-add_library(utils SHARED ${utils_LIB_SRCS})
+add_library(utils ${utils_LIB_SRCS})
 
-target_link_libraries(utils ${GLIB2_LIBRARIES})
+target_link_libraries(utils m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} )
 
-install(TARGETS utils DESTINATION lib)
+install(TARGETS utils DESTINATION lib COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -57,7 +57,7 @@ add_executable(test ${test_SRCS})
 
 target_link_libraries(test utils utils m)
 
-install(TARGETS test DESTINATION bin)
+install(TARGETS test DESTINATION bin COMPONENT sedflux)
 
 ########### Optional unit tests ###############
 
@@ -78,9 +78,10 @@ endif (WITH_CHECK)
 
 ########### install files ###############
 
-install(FILES  eh_utils.h DESTINATION include/ew-2.0)
-install(FILES  utils.h                           eh_rand.h                           eh_logging.h                           eh_scanner.h                           eh_glib.h                           eh_get_opt.h                           complex.h                           eh_num.h                           f2c.h                           eh_mem.h                           eh_project.h                           eh_opt_context.h                           eh_ndgrid.h                           eh_grid.h                           eh_key_file.h                           eh_symbol_table.h                           eh_data_record.h                           eh_types.h                           eh_input_val.h                           eh_dlm_file.h                           eh_str.h                           eh_io.h                           eh_status_bar.h                           eh_sequence.h                           eh_polygon.h                           eh_misc.h                           eh_thread_pool.h                           eh_file_utils.h                           eh_messages.h                           eh_macros.h DESTINATION include/ew-2.0/utils)
-install(FILES  utils.pc DESTINATION lib/pkgconfig )
+install(FILES  eh_utils.h DESTINATION include/ew-2.0 COMPONENT sedflux)
+
+install(FILES  utils.h                           eh_rand.h                           eh_logging.h                           eh_scanner.h                           eh_glib.h                           eh_get_opt.h                           complex.h                           eh_num.h                           f2c.h                           eh_mem.h                           eh_project.h                           eh_opt_context.h                           eh_ndgrid.h                           eh_grid.h                           eh_key_file.h                           eh_symbol_table.h                           eh_data_record.h                           eh_types.h                           eh_input_val.h                           eh_dlm_file.h                           eh_str.h                           eh_io.h                           eh_status_bar.h                           eh_sequence.h                           eh_polygon.h                           eh_misc.h                           eh_thread_pool.h                           eh_file_utils.h                           eh_messages.h                           eh_macros.h DESTINATION include/ew-2.0/utils COMPONENT sedflux)
+install(FILES  utils.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 
 

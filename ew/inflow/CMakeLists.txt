@@ -11,7 +11,7 @@ add_executable(run_inflow ${inflow_SRCS})
 
 target_link_libraries(run_inflow inflow)
 
-install(PROGRAMS run_inflow DESTINATION bin RENAME inflow)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_inflow DESTINATION bin RENAME inflow COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -24,7 +24,7 @@ add_executable(pseudoplume ${pseudoplume_SRCS})
 
 target_link_libraries(pseudoplume inflow)
 
-install(TARGETS pseudoplume DESTINATION bin)
+install(TARGETS pseudoplume DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -35,16 +35,16 @@ SET(inflow_LIB_SRCS
   inflow_sedflux_interface.c
 )
 
-add_library(inflow SHARED ${inflow_LIB_SRCS})
+add_library(inflow ${inflow_LIB_SRCS})
 
 target_link_libraries(inflow sedflux)
 
-install(TARGETS inflow DESTINATION lib)
+install(TARGETS inflow DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  inflow.h DESTINATION include/ew-2.0)
+install(FILES  inflow.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

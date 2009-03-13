@@ -9,16 +9,16 @@ SET(failure_LIB_SRCS
    decider.c
 )
 
-add_library(failure SHARED ${failure_LIB_SRCS})
+add_library(failure ${failure_LIB_SRCS})
 
 target_link_libraries(failure sedflux)
 
-install(TARGETS failure DESTINATION lib)
+install(TARGETS failure DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  failure.h DESTINATION include/ew-2.0)
+install(FILES  failure.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

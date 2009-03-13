@@ -11,7 +11,7 @@ add_executable(run_bing ${bing_SRCS})
 
 target_link_libraries(run_bing bing )
 
-install(PROGRAMS run_bing DESTINATION bin RENAME bing)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bing DESTINATION bin RENAME bing COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(bing_LIB_SRCS
    bing.c
 )
 
-add_library(bing SHARED ${bing_LIB_SRCS})
+add_library(bing ${bing_LIB_SRCS})
 
 target_link_libraries(bing sedflux)
 
-install(TARGETS bing DESTINATION lib)
+install(TARGETS bing DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  bing.h DESTINATION include/ew-2.0)
+install(FILES  bing.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

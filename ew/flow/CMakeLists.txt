@@ -7,11 +7,11 @@ SET(flow_LIB_SRCS
    flow.c
 )
 
-add_library(flow SHARED ${flow_LIB_SRCS})
+add_library(flow ${flow_LIB_SRCS})
 
 target_link_libraries(flow sedflux)
 
-install(TARGETS flow DESTINATION lib)
+install(TARGETS flow DESTINATION lib COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -24,7 +24,7 @@ add_executable(run_flow ${flow_SRCS})
 
 target_link_libraries(run_flow flow)
 
-install(PROGRAMS run_flow DESTINATION bin RENAME flow)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_flow DESTINATION bin RENAME flow COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -37,7 +37,7 @@ add_executable(flow_2d ${flow_2d_SRCS})
 
 target_link_libraries(flow_2d flow)
 
-install(TARGETS flow_2d DESTINATION bin)
+install(TARGETS flow_2d DESTINATION bin COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -50,12 +50,12 @@ add_executable(flow_3d ${flow_3d_SRCS})
 
 target_link_libraries(flow_3d flow)
 
-install(TARGETS flow_3d DESTINATION bin)
+install(TARGETS flow_3d DESTINATION bin COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  flow.h DESTINATION include/ew-2.0)
+install(FILES  flow.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

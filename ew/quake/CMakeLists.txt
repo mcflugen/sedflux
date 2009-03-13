@@ -11,18 +11,18 @@ add_executable(run_earthquake ${earthquake_SRCS})
 
 target_link_libraries(run_earthquake quake)
 
-install(PROGRAMS run_earthquake DESTINATION bin RENAME earthquake)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_earthquake DESTINATION bin RENAME earthquake COMPONENT sedflux)
 
 
 ########### next target ###############
 
 SET(quake_LIB_SRCS earthquake.c)
 
-add_library(quake SHARED ${quake_LIB_SRCS})
+add_library(quake ${quake_LIB_SRCS})
 
 target_link_libraries(quake utils)
 
-install(TARGETS quake DESTINATION lib)
+install(TARGETS quake DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############

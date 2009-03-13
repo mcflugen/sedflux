@@ -11,7 +11,7 @@ add_executable(run_squall ${squall_SRCS})
 
 target_link_libraries(run_squall squall)
 
-install(PROGRAMS run_squall DESTINATION bin RENAME squall)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_squall DESTINATION bin RENAME squall COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(squall_LIB_SRCS
    squall.c
 )
 
-add_library(squall SHARED ${squall_LIB_SRCS})
+add_library(squall ${squall_LIB_SRCS})
 
 target_link_libraries(squall sedflux)
 
-install(TARGETS squall DESTINATION lib)
+install(TARGETS squall DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  squall.h DESTINATION include/ew-2.0)
+install(FILES  squall.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

@@ -11,7 +11,7 @@ add_executable(run_muds ${muds_SRCS})
 
 target_link_libraries(run_muds muds)
 
-install(PROGRAMS run_muds DESTINATION bin RENAME muds)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_muds DESTINATION bin RENAME muds COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(muds_LIB_SRCS
    muds.c
 )
 
-add_library(muds SHARED ${muds_LIB_SRCS})
+add_library(muds ${muds_LIB_SRCS})
 
 target_link_libraries(muds sedflux)
 
-install(TARGETS muds DESTINATION lib)
+install(TARGETS muds DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  muds.h DESTINATION include/ew-2.0)
+install(FILES  muds.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

@@ -28,11 +28,11 @@ SET(sedflux_LIB_SRCS
    sed_wave.c
 )
 
-add_library(sedflux SHARED ${sedflux_LIB_SRCS})
+add_library(sedflux ${sedflux_LIB_SRCS})
 
-target_link_libraries(sedflux gthread-2.0 glib-2.0 utils)
+target_link_libraries(sedflux m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} utils)
 
-install(TARGETS sedflux DESTINATION lib)
+install(TARGETS sedflux DESTINATION lib COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -45,7 +45,7 @@ add_executable(write_test_file ${write_test_file_SRCS})
 
 target_link_libraries(write_test_file sedflux gthread-2.0 glib-2.0)
 
-install(TARGETS write_test_file DESTINATION bin)
+install(TARGETS write_test_file DESTINATION bin COMPONENT sedflux)
 
 ########### Optional unit tests ###############
 
@@ -66,9 +66,9 @@ endif (WITH_CHECK)
 
 ########### install files ###############
 
-install(FILES  sed.h DESTINATION include/ew-2.0)
-install(FILES  csdms.h                             sed_cell.h                             sed_column.h                             sed_const.h                             sed_cube.h                             sed_diag.h                             sed_epoch.h                             sed_hydro.h                             sed_hydrotrend.h                             sed_process.h                             sed_property.h                             sed_property_file.h                             sed_river.h                             sed_sediment.h                             sed_signal.h                             sed_tripod.h                             sed_wave.h                             etk_addrem.h                             etk_keyvalue.h                             datadir_path.h DESTINATION include/ew-2.0/sed)
-install(FILES  sedflux.pc DESTINATION lib/pkgconfig )
+install(FILES  sed.h DESTINATION include/ew-2.0 COMPONENT sedflux)
+install(FILES  csdms.h                             sed_cell.h                             sed_column.h                             sed_const.h                             sed_cube.h                             sed_diag.h                             sed_epoch.h                             sed_hydro.h                             sed_hydrotrend.h                             sed_process.h                             sed_property.h                             sed_property_file.h                             sed_river.h                             sed_sediment.h                             sed_signal.h                             sed_tripod.h                             sed_wave.h                             etk_addrem.h                             etk_keyvalue.h                             datadir_path.h DESTINATION include/ew-2.0/sed COMPONENT sedflux)
+install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 
 

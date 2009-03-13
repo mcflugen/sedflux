@@ -9,7 +9,7 @@ add_executable(run_sakura ${sakura_SRCS})
 
 target_link_libraries(run_sakura sakura)
 
-install(PROGRAMS run_sakura DESTINATION bin RENAME sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sakura DESTINATION bin RENAME sakura COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -21,16 +21,16 @@ SET(sakura_LIB_SRCS
    sakura_utils.c
 )
 
-add_library(sakura SHARED ${sakura_LIB_SRCS})
+add_library(sakura ${sakura_LIB_SRCS})
 
 target_link_libraries(sakura sedflux)
 
-install(TARGETS sakura DESTINATION lib)
+install(TARGETS sakura DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  sakura.h DESTINATION include/ew-2.0)
+install(FILES  sakura.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 

@@ -11,7 +11,7 @@ add_executable(run_subside ${subside_SRCS})
 
 target_link_libraries(run_subside subside)
 
-install(PROGRAMS run_subside DESTINATION bin RENAME subside)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME subside COMPONENT sedflux)
 
 
 ########### next target ###############
@@ -20,16 +20,16 @@ SET(subside_LIB_SRCS
    subside.c
 )
 
-add_library(subside SHARED ${subside_LIB_SRCS})
+add_library(subside ${subside_LIB_SRCS})
 
 target_link_libraries(subside sedflux)
 
-install(TARGETS subside DESTINATION lib)
+install(TARGETS subside DESTINATION lib COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  subside.h DESTINATION include/ew-2.0)
+install(FILES  subside.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 
