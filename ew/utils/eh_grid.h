@@ -97,8 +97,9 @@ Eh_dbl_grid eh_dbl_grid_reduce       ( Eh_dbl_grid g   , gint new_nx , gint new_
 Eh_dbl_grid eh_dbl_grid_expand       ( Eh_dbl_grid g   , gint new_nx , gint new_ny      );
 Eh_dbl_grid eh_dbl_grid_remesh       ( Eh_dbl_grid g   , gint new_nx , gint new_ny      );
 
-void        interpolate_2            ( Eh_dbl_grid source , Eh_dbl_grid dest ) G_GNUC_DEPRECATED;
-void        interpolate_2_bad_val    ( Eh_dbl_grid source , Eh_dbl_grid dest , double bad_val ) G_GNUC_DEPRECATED;
+void        interpolate_2            ( Eh_dbl_grid source , Eh_dbl_grid dest );
+void        interpolate_2_bad_val    ( Eh_dbl_grid source , Eh_dbl_grid dest ,
+                                       double bad_val );
 
 Eh_grid_id* eh_dbl_grid_line_ids     ( Eh_dbl_grid g   , gssize i_0 , gssize j_0 ,
                                                          gssize i_1 , gssize j_1 );
