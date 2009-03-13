@@ -2247,9 +2247,10 @@ eh_dbl_array_each_le( double val , double *x , gssize len )
    return is_le;
 }
 
-gboolean eh_dbl_array_is_monotonic_up( double *x , gsize n )
+gboolean
+eh_dbl_array_is_monotonic_up ( double *x , gsize n )
 {
-   gssize i;
+   gsize i;
 
    for ( i=1 ; i<n ; i++ )
       if ( x[i-1] >= x[i] )
@@ -2258,9 +2259,10 @@ gboolean eh_dbl_array_is_monotonic_up( double *x , gsize n )
    return TRUE;
 }
 
-gboolean eh_dbl_array_is_monotonic_down( double *x , gsize n )
+gboolean
+eh_dbl_array_is_monotonic_down ( double *x , gsize n )
 {
-   gssize i;
+   gsize i;
 
    for ( i=1 ; i<n ; i++ )
       if ( x[i-1] <= x[i] )
@@ -2383,7 +2385,8 @@ eh_dbl_array_linspace( double* x , gssize n_x ,  double x_0 , double dx )
 
 \return TRUE if the array is either monotonically increasing or decreasing.
 */
-gboolean eh_dbl_array_is_monotonic( double* x , gssize len )
+gboolean
+eh_dbl_array_is_monotonic ( double* x , gsize len )
 {
    gssize i;
 

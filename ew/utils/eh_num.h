@@ -142,6 +142,7 @@ gboolean   eh_dbl_array_each_le     ( double val , double *x , gssize len );
 
 gboolean   eh_dbl_array_is_monotonic_up  ( double *x , gsize n );
 gboolean   eh_dbl_array_is_monotonic_down( double *x , gsize n );
+gboolean   eh_dbl_array_is_monotonic     ( double *x , gsize n );
 double*    eh_linspace                   ( double x1 , double x2 , gssize n );
 gssize*    eh_id_array                   ( gssize i_0 , gssize i_1 , gssize* n );
 double*    eh_uniform_array              ( double x1 , double x2 , double dx , gint* n );
