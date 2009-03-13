@@ -114,23 +114,23 @@ eh_project_add_info_val( Eh_project p , char* key , const gchar* val )
    //---
    if ( g_key_file_has_key( p->info_file , group_name , key , NULL ) )
    {
-      gchar** cur_val;
       gsize n_vals;
-
-      cur_val = g_key_file_get_string_list( p->info_file ,
-                                            group_name   ,
-                                            key          ,
-                                            &n_vals      ,
-                                            NULL );
+      gchar** cur_val = g_key_file_get_string_list( p->info_file ,
+                                                    group_name   ,
+                                                    key          ,
+                                                    &n_vals      ,
+                                                    NULL );
 
       n_vals            = n_vals+1;
       cur_val           = eh_renew( char* , cur_val , n_vals+1 );
       cur_val[n_vals-1] = g_strdup( val );
 
+      // Note: g_key_file_set_string_list copies data from cur_val so it's
+      // ok to typecast it as constant and then free cur_val.
       g_key_file_set_string_list( p->info_file ,
                                   group_name   ,
                                   key          ,
-                                  cur_val      ,
+                                  (const gchar**)cur_val ,
                                   n_vals );
 
       g_strfreev( cur_val );
