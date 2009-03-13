@@ -604,7 +604,10 @@ eh_dlm_print_dbl_grid( const gchar* file , const gchar* delim , Eh_dbl_grid g , 
    {
       GError* tmp_err = NULL;
 
-      n = eh_dlm_print( file , delim , (double**)eh_dbl_grid_data(g) , eh_grid_n_x(g) , eh_grid_n_y(g) , &tmp_err );
+      n = eh_dlm_print( file , delim ,
+                        (const double**)eh_dbl_grid_data(g) ,
+                        eh_grid_n_x(g) , eh_grid_n_y(g) ,
+                        &tmp_err );
 
       if ( tmp_err )
          g_propagate_error( error , tmp_err );
