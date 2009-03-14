@@ -12,7 +12,7 @@ typedef struct
    FILE *fp;
    int max_key_len;
 }
-aligned_st G_GNUC_INTERNAL;
+aligned_st;
 
 GQuark
 eh_symbol_table_error_quark( void )
