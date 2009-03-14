@@ -2,6 +2,7 @@
 #define __EH_TYPES_H__
 
 #define API_ENTRY
+
 /*
 typedef struct
 {
@@ -13,7 +14,7 @@ typedef char* Class_Desc;
 
 #define _CD( type ) type##_Class_Desc
 #define CLASS( type ) \
-   static Class_Desc _CD( type ) = G_STRINGIFY(type) ; typedef struct tag_##type
+   static Class_Desc _CD( type ) = G_STRINGIFY(type) ; struct tag_##type
 
 //   static Class_Desc _CD( type ) = { #type } ; typedef struct tag_##type
 
