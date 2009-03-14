@@ -67,7 +67,7 @@ void     API_ENTRY eh_free_c_style   ( gpointer    mem  );
 
 #endif
 
-void** eh_alloc_2    ( gssize m , gssize n , gssize size );
+void** eh_alloc_2    ( gsize m , gsize n , gsize size );
 void   eh_free_void_2( void **p );
 
 #endif

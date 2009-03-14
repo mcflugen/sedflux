@@ -184,7 +184,7 @@ gpointer API_ENTRY eh_malloc( gsize w_size     ,
 
       prefix->postfix         = (Heap_Postfix)( (char*)(prefix+1)+w_size );
       prefix->postfix->prefix = prefix;
-      prefix->file_name       = file;
+      prefix->file_name       = strdup( file );
       prefix->line_no         = line_no;
       prefix->mem             = prefix+1;
       prefix->class_desc      = desc;
@@ -248,6 +248,8 @@ void* API_ENTRY eh_free_mem( gpointer mem )
       Heap_Prefix prefix = (Heap_Prefix)mem-1;
       size_t w_size = (size_t)(prefix->postfix) - (size_t)prefix->mem;
       remove_from_linked_list( prefix );
+      free( prefix->file_name );
+
       memset( prefix , 0 , w_size );
       free( prefix );
 
@@ -487,11 +489,11 @@ if ( mem==25217568 )
          if ( prefix->mem == mem )
          {
             if ( prefix->postfix->prefix == prefix ) ok = TRUE;
-            else fprintf( stderr , "(%08lx: %d) Pointer overwrite\n"      , mem , mem );
+            else fprintf( stderr , "(%p: %p) Pointer overwrite\n"      , mem , mem );
          }
-         else    fprintf( stderr , "(%08lx: %d) Pointer underwrite\n"     , mem , mem );
+         else    fprintf( stderr , "(%p: %p) Pointer underwrite\n"     , mem , mem );
       }
-      else       fprintf( stderr , "(%08lx) Pointer is not aligned\n" , mem );
+      else       fprintf( stderr , "(%p) Pointer is not aligned\n" , mem );
    }
 
    return ok;
@@ -515,7 +517,7 @@ render_desc( Heap_Prefix prefix , char* buffer )
 
       //if ( prefix->class_desc )
       {
-         sprintf( buffer , "%08lx" , prefix->mem );
+         sprintf( buffer , "%p" , prefix->mem );
          if ( prefix->file_name )
          {
             sprintf( buffer+strlen(buffer) ,
@@ -557,7 +559,7 @@ void API_ENTRY report_win_assert( char *file_name , int line_no )
 }
 
 void**
-eh_alloc_2( gssize m , gssize n , gssize size )
+eh_alloc_2( gsize m , gsize n , gsize size )
 {
    void **p=NULL;
 
@@ -576,10 +578,10 @@ eh_alloc_2( gssize m , gssize n , gssize size )
                p[i] = (gint8*)(p[i-1])+size*n;
          }
          else
-            eh_error( "Failed to allocate %d bytes" , n*m*size );
+            eh_error( "Failed to allocate %zd bytes" , n*m*size );
       }
       else
-         eh_error( "Failed to allocate %d bytes" , n*sizeof(void*) );
+         eh_error( "Failed to allocate %zd bytes" , n*sizeof(void*) );
    }
 
    return p;
