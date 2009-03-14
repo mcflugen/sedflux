@@ -6,10 +6,10 @@
 
 #if G_BYTE_ORDER==G_LITTLE_ENDIAN
 
-gssize eh_fwrite_int32_to_be ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fwrite_int64_to_be ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fread_int32_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gsize eh_fwrite_int32_to_be ( const void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fwrite_int64_to_be ( const void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fread_int32_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fread_int64_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  );
 
 #define eh_fwrite_int32_to_le  ( fwrite )
 #define eh_fwrite_int64_to_le  ( fwrite )
@@ -33,10 +33,10 @@ gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , F
 
 #else
 
-gssize eh_fwrite_int32_to_le ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fwrite_int64_to_le ( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
-gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  );
+gsize eh_fwrite_int32_to_le ( const void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fwrite_int64_to_le ( const void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fread_int32_from_le( const void *ptr , gsize size , gsize nitems , FILE* stream  );
+gsize eh_fread_int64_from_le( const void *ptr , gsize size , gsize nitems , FILE* stream  );
 
 #define eh_fwrite_int32_to_be  ( fwrite )
 #define eh_fwrite_int64_to_be  ( fwrite )

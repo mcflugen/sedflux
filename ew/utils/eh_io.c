@@ -2,15 +2,15 @@
 
 #if G_BYTE_ORDER==G_LITTLE_ENDIAN
 
-gssize eh_fread_int32_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fread_int32_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint32) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint32 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -23,15 +23,15 @@ gssize eh_fread_int32_from_be( const void *ptr , gssize size , gssize nitems , F
    return n;
 }
 
-gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fread_int64_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint64) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint64 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -44,15 +44,15 @@ gssize eh_fread_int64_from_be( const void *ptr , gssize size , gssize nitems , F
    return n;
 }
 
-gssize eh_fwrite_int32_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fwrite_int32_to_be( const void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint32) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint32 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -65,15 +65,15 @@ gssize eh_fwrite_int32_to_be( const void *ptr , gssize size , gssize nitems , FI
    return n;
 }
 
-gssize eh_fwrite_int64_to_be( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fwrite_int64_to_be( const void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint64) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint64 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -89,15 +89,15 @@ gssize eh_fwrite_int64_to_be( const void *ptr , gssize size , gssize nitems , FI
 #else
 
 
-gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fread_int32_from_le( void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint32) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint32 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -110,15 +110,15 @@ gssize eh_fread_int32_from_le( const void *ptr , gssize size , gssize nitems , F
    return n;
 }
 
-gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fread_int64_from_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint64) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint64 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -131,15 +131,15 @@ gssize eh_fread_int64_from_le( const void *ptr , gssize size , gssize nitems , F
    return n;
 }
 
-gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fwrite_int32_to_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint32) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint32 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -152,15 +152,15 @@ gssize eh_fwrite_int32_to_le( const void *ptr , gssize size , gssize nitems , FI
    return n;
 }
 
-gssize eh_fwrite_int64_to_le( const void *ptr , gssize size , gssize nitems , FILE* stream  )
+gsize eh_fwrite_int64_to_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
 {
-   gssize n = 0;
+   gsize n = 0;
 
    eh_require( size==sizeof(gint64) );
 
    if ( ptr && stream )
    {
-      gssize i;
+      gsize i;
       gint64 i_val;
 
       for ( i=0 ; i<nitems ; i++ )
@@ -197,7 +197,7 @@ getline( gchar** lineptr , gsize *n , FILE* stream )
       (*lineptr)[len] = '\0';
 
       if ( !feof(stream) )
-         result   = len;
+         result   = len; // Careful! Assignment of unsigned int to signed int
       else
          result   = -1;
    }
@@ -245,8 +245,11 @@ getline( gchar** lineptr , gsize *n , FILE* stream )
          result = -1;
       else
       {
+         // Careful! Assignment of unsigned int to signed int
          result = strlen( *lineptr );
-         fseek( stream , start+result , SEEK_SET ); /* Move the file pointer to after the delimeter */
+
+         // Move the file pointer to after the delimeter
+         fseek( stream , start+result , SEEK_SET );
       }
    }
 
@@ -280,7 +283,7 @@ eh_scan_str( FILE* fp , GError** error )
 
    if ( fp )
    {
-      size_t  n;
+      gsize  n;
       gchar*  s;
       GError* tmp_err = NULL;
 
