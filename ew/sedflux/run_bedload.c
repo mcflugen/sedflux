@@ -358,7 +358,7 @@ deposit_in_river( Sed_cube p , Sed_riv r , double vol )
 
    if ( p && r && vol>0 )
    {
-      gssize* river_path = sed_cube_river_path_id( p , r , TRUE );
+      gint* river_path = sed_cube_river_path_id( p , r , TRUE );
 
       eh_require( river_path );
 
