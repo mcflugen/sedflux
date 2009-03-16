@@ -84,9 +84,9 @@ main( int argc, char *argv[])
    }
    else
    {
-      gint n_grains;
-      gint method;
+      //gint n_grains;
 //      double** col = bio_scan_column_file( in_file , &n_grains , &n_layers , &error );
+      gint method;
 
       if      ( g_ascii_strcasecmp( method_s , "DIFFUSION" )==0 ) method = 1;
       else if ( g_ascii_strcasecmp( method_s , "CONVEYOR"  )==0 ) method = 2;
@@ -116,8 +116,8 @@ main( int argc, char *argv[])
 
          bio_print_layers( out_file , layers , n_layers , &error );
 
-         g_strfreev( layers );
-         eh_free_2 ( t      );
+         g_strfreev ( (gchar**)layers );
+         eh_free_2 ( t );
       }
 
       if ( error ) eh_error( "bio: %s" , error->message );
@@ -150,8 +150,8 @@ bio_print_layers( const gchar* file , double** col , gint n_layers , GError** er
 
    if ( col && col[0] )
    {
-      gint len = g_strv_length( col );
-      n = eh_dlm_print( file , ";" , col , len , n_layers , error );
+      gint len = g_strv_length( (gchar**)col );
+      n = eh_dlm_print( file , ";" , (const double**)col , len , n_layers , error );
    }
 
    return n;
@@ -166,7 +166,7 @@ bio_print_output( const gchar* file , double** col , gint n_grains , gint n_laye
 
    if ( col && col[0] )
    {
-      n = eh_dlm_print_swap( file , ";" , col , n_grains , n_layers , error );
+      n = eh_dlm_print_swap( file , ";" , (const double**)col , n_grains , n_layers , error );
    }
 
    return n;
