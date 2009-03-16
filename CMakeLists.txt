@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 2.6)
 
+project( sedflux )
+
 ########### Look for glib-2.0 ###############
 
 include( FindPkgConfig )
-pkg_check_modules( GLIB2 REQUIRED glib-2.0 )
-include_directories( ${GLIB2_INCLUDE_DIRS} )
-link_directories( ${GLIB2_LIBRARY_DIRS} )
+pkg_check_modules( GLIB2 glib-2.0 )
+pkg_check_modules( GTHREAD2 gthread-2.0 )
+include_directories( ${GLIB2_INCLUDE_DIRS} ${GTHREAD2_INCLUDE_DIRS} )
+link_directories( ${GLIB2_LIBRARY_DIRS} ${GTHREAD2_LIBRARY_DIRS} )
 
-########### Look for check for unit tests ###############
+########### Look for check ###############
 
 option( WITH_CHECK   "Enable unit testing with check" OFF )
 if ( WITH_CHECK )
@@ -21,12 +24,11 @@ endif ( WITH_CHECK )
 option( WITH_DOXYGEN "Build API docs using Doxygen" OFF )
 if ( WITH_DOXYGEN )
   find_program( DOXYGEN doxygen )
+  include( FindDoxygen )
+  if (DOXYGEN)
+    add_subdirectory(doxygen)
+  endif (DOXYGEN)
 endif ( WITH_DOXYGEN )
-
-include( FIndDoxygen )
-if (DOXYGEN)
-  add_subdirectory(doxygen)
-endif (DOXYGEN)
 
 ########### Look for BLAS ###############
 
@@ -36,38 +38,31 @@ if (WITH_BLAS)
   include( FindBLAS )
 endif (WITH_BLAS)
 
-########### Look for openMP ###############
-
-find_file( HAVE_OMP_H omp.h )
-if (HAVE_OMP_H)
-  add_definitions( -DHAVE_OMP_H )
-  message(STATUS "omp.h found: ${HAVE_OMP_H}")
-else (HAVE_OMP_H)
-  message("omp.h not found. Not using openMP.")
-endif (HAVE_OMP_H)
-
 ########### Path to libintl  ###############
 find_library(LIBINTL intl
              HINTS ${CMAKE_LIBINTL_DIR})
 if (NOT LIBINTL)
-  message(FATAL_ERROR "libintl not found. Try setting DCMAKE_LIBINTL_DIR.")
+  message(STATUS
+          "Looking for libintl... - NOT found.  Try setting CMAKE_LIBINTL_DIR") 
 endif (NOT LIBINTL)
-link_directories( ${CMAKE_LIBINTL_DIR} )
-message(STATUS "libintl found: ${LIBINTL}")
 
-add_subdirectory(deb)
-add_subdirectory(rpm)
+get_filename_component( LIBINTL_DIR ${LIBINTL} PATH )
+message(STATUS "Looking for libintl... - found ${LIBINTL_DIR}") 
+link_directories( ${LIBINTL_DIR} )
+
+#add_subdirectory(deb)
+#add_subdirectory(rpm)
 add_subdirectory(ew)
 
-set( CPACK_PACKAGE_NAME sedflux )
-set( CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux )
-set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model" )
-set( CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/License.txt )
-set( CPACK_PACKAGE_VERSION_MAJOR "2" )
-set( CPACK_PACKAGE_VERSION_MINOR "0" )
-set( CPACK_PACKAGE_VERSION_PATCH "81" )
+#set( CPACK_PACKAGE_NAME sedflux )
+#set( CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux )
+#set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model" )
+#set( CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.txt )
+#set( CPACK_PACKAGE_VERSION_MAJOR "2" )
+#set( CPACK_PACKAGE_VERSION_MINOR "0" )
+#set( CPACK_PACKAGE_VERSION_PATCH "81" )
 
-include( CPack )
+#include( CPack )
 
 ########### install files ###############
 
