@@ -32,7 +32,8 @@ GOptionEntry entries[] =
    { NULL }
 };
 
-int main( int argc , char* argv[] )
+int
+main( int argc , char* argv[] )
 {
    GOptionContext* context = g_option_context_new( "Create a bathymetry file for sedflux-3d" );
    GError*         error   = NULL;
@@ -109,5 +110,7 @@ int main( int argc , char* argv[] )
    }
 
    fclose( fp_out );
+
+   return EXIT_SUCCESS;
 }
 
