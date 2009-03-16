@@ -26,7 +26,7 @@
 Sed_process_info
 run_slump( Sed_process proc , Sed_cube prof )
 {
-   Slump_t*         data = sed_process_user_data(proc);
+   //Slump_t*         data = sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    int              i;
    Sed_cube         fail;
