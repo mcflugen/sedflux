@@ -239,7 +239,7 @@ _print_sediment_column( const gchar* file , Sed_column s , GError** error )
 
    eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
 
-   eh_require( s    );
+   eh_require( s );
 
    if ( s )
    {
@@ -258,7 +258,7 @@ _print_sediment_column( const gchar* file , Sed_column s , GError** error )
             data[i][j+1] = sed_cell_nth_fraction( c , j );
       }
 
-      n = eh_dlm_print( file , ";" , data , n_rows , n_grains+1 , &tmp_err );
+      n = eh_dlm_print( file , ";" , (const double**)data , n_rows , n_grains+1 , &tmp_err );
 
       if ( tmp_err )
          g_propagate_error( error , tmp_err );

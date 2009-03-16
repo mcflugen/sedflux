@@ -75,14 +75,14 @@ compact( Sed_column s )
 
    if ( s || sed_column_len(s)<2 )
    { /* There is a column with overlying load; compact it! */
-      const double hydro_static = sed_column_water_pressure( s );
+      //const double hydro_static = sed_column_water_pressure( s );
       const gint n_grains = sed_sediment_env_n_types();
       const gint col_len  = sed_column_len(s);
       double*    load_eff = eh_new0( double , col_len );
 
       eh_require( load_eff );
 
-      { /* Calculate the load of the overlying sediment. */
+      { /* Calculate the effective load of the overlying sediment. */
          gint  i;
          double* load = sed_column_load    ( s , 0 , -1 , NULL );
          double* p    = sed_column_pressure( s , 0 , -1 , NULL );

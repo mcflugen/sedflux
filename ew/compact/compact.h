@@ -12,8 +12,9 @@ typedef enum
 Compact_error;
 
 #define COMPACT_ERROR compact_error_quark()
-GQuark compact_error_quark( void );
-int    compact( Sed_column col );
+GQuark   compact_error_quark( void );
+int      compact ( Sed_column col );
+gboolean compact_cube ( Sed_cube cube );
 
 #define COMPACTION_PROGRAM_NAME     "compact"
 #define COMPACTION_MAJOR_VERSION    1
