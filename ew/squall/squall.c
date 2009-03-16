@@ -29,7 +29,7 @@
 
 typedef struct
 {
-   gsize count;
+   gint count;
    double lower_edge;
    double upper_edge;
    gpointer data;
@@ -39,13 +39,13 @@ Eh_histogram;
 typedef struct
 {
    double f;
-   gssize ind;
+   gint ind;
 }
 Hist_data;
 
-Eh_histogram **eh_create_histogram( double dx , gssize n );
+Eh_histogram **eh_create_histogram( double dx , gint n );
 void eh_destroy_histogram( Eh_histogram **h );
-Eh_histogram **make_depth_histogram( double *x , int n_x , double dz , gssize n_z );
+Eh_histogram **make_depth_histogram( double *x , int n_x , double dz , gint n_z );
 
 double get_weibull_deposition_rate( double x , double alpha , double beta );
 double get_threshold_depth( double wave_length , double wave_height ,
@@ -80,7 +80,7 @@ gboolean squall( Sed_cube p , double time_step_in_years )
    double *total_erosion   = eh_new( double , n_grains );
    double dz;
    int n_z_bins;
-   gssize dep_column;
+   gint dep_column;
    Eh_histogram **hist;
    gboolean back_barrier_is_on = FALSE;
    Sed_cell add_cell;
@@ -449,7 +449,7 @@ eh_message( "e_shelf set to zero." );
    return TRUE;
 }
 
-Eh_histogram **eh_create_histogram( double dx , gssize n )
+Eh_histogram **eh_create_histogram( double dx , gint n )
 {
    gsize i;
    Eh_histogram **h;
@@ -470,7 +470,7 @@ Eh_histogram **eh_create_histogram( double dx , gssize n )
 
 void eh_destroy_histogram( Eh_histogram **h )
 {
-   gssize i;
+   gint i;
 
    for ( i=0 ; h[i] ; i++ )
    {
@@ -480,13 +480,13 @@ void eh_destroy_histogram( Eh_histogram **h )
    eh_free( h );
 }
 
-void add_to_hist( Eh_histogram **hist , gssize bin , double f , gssize ind );
+void add_to_hist( Eh_histogram **hist , gint bin , double f , gint ind );
 
-Eh_histogram **make_depth_histogram( double *x , int n_x , double dz , gssize n_z )
+Eh_histogram **make_depth_histogram( double *x , int n_x , double dz , gint n_z )
 {
    double dx = 50;
-   gssize i, j;
-   gssize lower_z_bin, upper_z_bin;
+   gint i, j;
+   gint lower_z_bin, upper_z_bin;
    double lower_edge, upper_edge;
    double lower_x, upper_x;
    double f;
@@ -577,7 +577,7 @@ Eh_histogram **make_depth_histogram( double *x , int n_x , double dz , gssize n_
    return hist;
 }
 
-void add_to_hist( Eh_histogram **hist , gssize bin , double f , gssize ind )
+void add_to_hist( Eh_histogram **hist , gint bin , double f , gint ind )
 {
    Eh_histogram *this_bin = hist[bin];
    
@@ -899,7 +899,7 @@ double *get_moveable_grains( double water_depth ,
    double wave_length = 25.*wave_height;
    double u;
    double d;
-   gssize n_grains;
+   gint n_grains;
 
    if ( sed )
       n_grains = sed_sediment_n_types( sed );
@@ -918,7 +918,7 @@ double *get_moveable_grains( double water_depth ,
 
    if ( wave_height<= 0 || wave_period <= 0 || water_depth <= 0 )
    {
-      gssize n;
+      gint n;
       for ( n=0 ; n<n_grains ; n++ )
          is_moveable[n] = FALSE;
       return is_moveable;
@@ -935,7 +935,7 @@ double *get_moveable_grains( double water_depth ,
 
    {
       double* grain_size = sed_sediment_property( NULL , &sed_type_grain_size_in_meters );
-      gssize n;
+      gint n;
 
       for ( n=0 ; n<n_grains ; n++ )
       {
