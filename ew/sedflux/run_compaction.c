@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sed/sed_sedflux.h>
+#include <compact.h>
 #include "my_processes.h"
 
 #undef WITH_THREADS
@@ -31,7 +32,6 @@
 #define N_THREADS 5
 
 void thread_compact( void *data , void *user_data );
-int compact(Sed_column,double);
 
 Sed_process_info
 run_compaction( Sed_process proc , Sed_cube p )
@@ -87,6 +87,8 @@ run_compaction( Sed_process proc , Sed_cube p )
    return info;
 }
 
+#if defined( WITH_THREADS )
+
 int pthread_mutex_spinlock(pthread_mutex_t *mutex);
 
 void thread_compact( void *data , void *user_data )
@@ -111,4 +113,6 @@ int pthread_mutex_spinlock(pthread_mutex_t *mutex)
    }
    return pthread_mutex_lock(mutex); // give up.
 }
+
+#endif
 
