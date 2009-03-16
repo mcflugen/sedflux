@@ -342,7 +342,7 @@ plume_dbl_grid_rebin( Eh_dbl_grid* grid , Eh_dbl_grid* dest )
       Eh_dbl_grid* g;
       gint         n;
 
-      eh_require( g_strv_length(grid)==g_strv_length(dest) );
+      eh_require( g_strv_length((gchar**)grid)==g_strv_length((gchar**)dest) );
 
       for ( g=grid,n=0 ; *g ; g++,n++ )
          eh_dbl_grid_rebin_bad_val( *g , dest[n] , 0. );
@@ -440,9 +440,12 @@ plume_dbl_grid_trim( Eh_dbl_grid* grid , double val )
       lim[3] = top_col - lim[1] + 1;
 
       for ( g=grid ; *g ; g++ )
-         t = eh_strv_append( &t , eh_grid_sub( *g , lim[0] , lim[1] , lim[2] , lim[3] ) );
+         t = (Eh_dbl_grid*) eh_strv_append (
+                              (gchar***) (&t) ,
+                              (gchar*) eh_grid_sub ( *g , lim[0] , lim[1] ,
+                                                          lim[2] , lim[3] ) );
 
-      eh_require( g_strv_length(grid)==g_strv_length(t) ); 
+      eh_require( g_strv_length((gchar**)grid)==g_strv_length((gchar**)t) ); 
    }
 
    return t;
