@@ -5,7 +5,7 @@
 #include <utils/utils.h>
 
 // Command line arguments
-static gint     _verbose     = 0;
+/*
 static gboolean _reset_bathy = FALSE;
 static gboolean _version     = FALSE;
 static gboolean _debug       = FALSE;
@@ -18,16 +18,20 @@ static gchar*   _flood_file  = NULL;
 static gchar*   _data_file   = NULL;
 static gint*    _data_id     = NULL;
 static gint     _data_int    = 1;
+*/
 
 gboolean parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error );
 
-static double _eet   = 5000.;
-static double _y     = 7.e10;
-static double _load  = 1000.;
-static double _slope = .001;
-static double _rho_w = 1030.;
-static double _rho_m = 3300.;
-static gint   _n_dim = 1;
+static gint     _verbosity   = 0;
+static gboolean _verbose     = FALSE;
+static gboolean _version     = FALSE;
+static double   _eet         = 5000.;
+static double   _y           = 7.e10;
+static double   _load        = 1000.;
+static double   _slope       = .001;
+static double   _rho_w       = 1030.;
+static double   _rho_m       = 3300.;
+static gint     _n_dim       = 1;
 
 static GOptionEntry entries[] =
 {
@@ -38,6 +42,9 @@ static GOptionEntry entries[] =
    { "rho-w"  , 'w' , 0 , G_OPTION_ARG_DOUBLE , &_rho_w , "Density of water (kg/m^3)"   , "DVAL" } ,
    { "rho-m"  , 'm' , 0 , G_OPTION_ARG_DOUBLE , &_rho_m , "Density of mantle (kg/m^3)"  , "DVAL" } ,
    { "ndim"   , 'D' , 0 , G_OPTION_ARG_INT    , &_n_dim , "Number of dimensions"        , "N"    } ,
+   { "verbosity"   , 'l' , 0 , G_OPTION_ARG_INT          , &_verbosity   , "Verbosity level"            , "n"      } ,
+   { "verbose"     , 'V' , 0 , G_OPTION_ARG_NONE         , &_verbose     , "Be verbose"                 , NULL     } ,
+   { "version"     , 'v' , 0 , G_OPTION_ARG_NONE         , &_version     , "Version number"             , NULL     } ,
    { NULL }
 };
 
@@ -59,6 +66,28 @@ main( int argc , char *argv[] )
          eh_error( "Error parsing command line arguments: %s" , error->message );
    }
 
+   if ( _version )
+   {
+     gchar* prog_name = NULL;
+
+     if      ( sizeof(void*)==8 )
+       prog_name = g_strconcat( SUBSIDE_PROGRAM_NAME , " (64-bit)" , NULL );
+     else if ( sizeof(void*)==4 )
+        prog_name = g_strconcat( SUBSIDE_PROGRAM_NAME , " (32-bit)" , NULL );
+     else
+        eh_require_not_reached();
+
+     eh_fprint_version_info( stdout          ,
+                             prog_name       ,
+                             SUBSIDE_MAJOR_VERSION ,
+                             SUBSIDE_MINOR_VERSION ,
+                             SUBSIDE_MICRO_VERSION );
+
+     eh_free( prog_name );
+
+     eh_exit( EXIT_SUCCESS );
+   }
+
    { /* Set up the initial profile */
       gssize n_x = 1, n_y = 100;
       gssize dx  = 1, dy  = 10;
@@ -76,7 +105,7 @@ main( int argc , char *argv[] )
 
    // Print the new elevations.
    {
-      gssize i, j;
+      gint i, j;
 
       for ( i=0 ; i<eh_grid_n_x(z) ; i++ )
       {
@@ -91,6 +120,6 @@ main( int argc , char *argv[] )
       eh_grid_destroy( z , TRUE );
    }
 
-   return 0;
+   return EXIT_SUCCESS;
 }
 
