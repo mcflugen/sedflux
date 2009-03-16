@@ -64,7 +64,6 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
    if ( w && v_0 )
    {
       gint i, j;
-      double* load;
       const gint n_x = eh_grid_n_x( v_0 );
       const gint n_y = eh_grid_n_y( v_0 );
 
@@ -317,7 +316,7 @@ subside_parallel_row( double* w, const double* load, const gint len, const doubl
          free_kei = TRUE;
       }
       else
-         kei = r;
+         kei = (double*)r;
 
       for ( i=0; i<len; i++ )
       { /* For each load. */
