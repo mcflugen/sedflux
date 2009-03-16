@@ -277,12 +277,13 @@ That is, i=0 refers to the lowest cell within the column.
 @param col A pointer to a Sed_column.
 @param i   Index to a Sed_cell of the column.
 
-@return A pointer to the fraction information for the requested Sed_cell.
+@return A newly-allocated array of the fraction information for the
+        requested Sed_cell.
 */
 double*
-sed_column_cell_fraction( const Sed_column col , gssize i )
+sed_column_cell_fraction( const Sed_column col , gint i )
 {
-   return sed_cell_fraction_ptr( col->cell[i] );
+   return sed_cell_copy_fraction( NULL, col->cell[i] );
 }
 
 /** Get the height of a Sed_column
@@ -623,6 +624,38 @@ double* sed_column_load_with_water( const Sed_column s ,
    double water_load = sed_column_water_pressure( s );
 
    return sed_column_total_load( s , start , n_bins , water_load , load );
+}
+
+double*
+sed_column_pressure( const   Sed_column s ,
+                     gint    start ,
+                     gint    n_bins ,
+                     double* pressure )
+{
+  double* p = NULL;
+
+  eh_require( s );
+
+  if ( s )
+    {
+      gint i;
+      gint col_len = s->len;
+
+      eh_lower_bound( start , 0 );
+
+      if ( n_bins <= 0 || start+n_bins>col_len )
+        n_bins = col_len - start;
+
+      if ( !pressure )
+        p = eh_new0( double , n_bins );
+      else
+        p = pressure;
+
+      for ( i=0 ; i<n_bins ; i++ )
+        p[i] = sed_cell_pressure( sed_column_nth_cell( s , i+start ) );
+   }
+
+   return p;
 }
 
 double sed_column_water_pressure( const Sed_column s )
@@ -2609,7 +2642,7 @@ sed_column_stack_cells( Sed_column dest , Sed_cell* src )
          sed_column_stack_cell( dest , *c );
 if ( sed_cell_is_clear( *c ) )
 {
-   eh_watch_int( c-src );
+   eh_watch_ptr( (void*)(c-src) );
    sed_cell_array_fprint( stderr , src );
 }
       }
@@ -2631,7 +2664,7 @@ sed_column_stack_cells_loc( Sed_column dest , Sed_cell* src )
       for ( c=src ; *c ; c++ )
 {
 if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
-   eh_watch_int( c-src );
+   eh_watch_ptr( (void*)(c-src) );
          sed_column_stack_cell_loc( dest , *c );
 }
    }

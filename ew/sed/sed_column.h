@@ -90,6 +90,8 @@ Sed_column sed_column_copy_data       ( Sed_column d , const Sed_column s );
 Sed_column sed_column_copy_public_data( Sed_column d , const Sed_column s );
 Sed_column sed_column_dup             ( const Sed_column s );
 
+double*    sed_column_cell_fraction   ( const Sed_column col , gint i );
+
 double     sed_column_mass            ( const Sed_column c );
 double     sed_column_sediment_mass   ( const Sed_column c );
 double*    sed_column_total_load      ( const Sed_column c    ,
@@ -102,7 +104,11 @@ double*    sed_column_load            ( const Sed_column c    ,
                                         gssize n_bins         ,
                                         double* load );
 
-double* sed_column_load_with_water(const Sed_column,gssize,gssize,double*);
+double* sed_column_load_with_water    (const Sed_column,gssize,gssize,double*);
+double* sed_column_pressure           ( const   Sed_column s ,
+                                        gint    start ,
+                                        gint    n_bins ,
+                                        double* pressure );
 double  sed_column_water_pressure( const Sed_column s );
 double* sed_column_total_property( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
 double* sed_column_avg_property_with_load( Sed_property f , Sed_column c , gssize start , gssize n_bins , double* val );
