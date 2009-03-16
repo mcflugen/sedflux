@@ -153,7 +153,7 @@ bio_init( Sed_process p , Eh_symbol_table t , GError** error )
 
    if ( eh_symbol_table_require_labels( t , bio_req_label , &tmp_err ) )
    {
-      gchar** err_s   = NULL;
+      //gchar** err_s   = NULL;
       gchar*  model_s = eh_symbol_table_lookup( t , BIO_KEY_MODEL );
 
       data->depth = eh_symbol_table_input_value( t , BIO_KEY_DEPTH , &tmp_err );
@@ -220,7 +220,7 @@ sed_column_bioturbate( Sed_column c , double depth , double k , double duration 
       if ( top )
       {
          double   dz       = sed_column_z_res( c );
-         gint     n_layers = g_strv_length( top );
+         gint     n_layers = g_strv_length( (gchar**)top );
 
          if ( n_layers>2 )
          {
@@ -255,7 +255,7 @@ sed_column_bioturbate( Sed_column c , double depth , double k , double duration 
                sed_column_stack_cells_loc( c , new_top );
 
                eh_free  ( new_top );
-               g_strfreev( data );
+               g_strfreev( (gchar**)data );
             }
             else
             {
@@ -322,8 +322,8 @@ bio_array_to_cell_array( Sed_cell* c_arr , double** data )
 
    if ( data && c_arr )
    {
-      gint new_len  = g_strv_length( data  );
-      gint orig_len = g_strv_length( c_arr );
+      gint new_len  = g_strv_length ( (gchar**)data  );
+      gint orig_len = g_strv_length ( (gchar**)c_arr );
       gint i;
       gint j;
       double mass_in, mass_out;
@@ -388,8 +388,8 @@ eh_watch_int( j );
             sed_cell_fprint( stderr , out_arr[i] );
          eh_watch_dbl( mass_in  );
          eh_watch_dbl( mass_out );
-         eh_watch_int( g_strv_length( c_arr   ) );
-         eh_watch_int( g_strv_length( out_arr ) );
+         eh_watch_int( g_strv_length ( (gchar**)c_arr   ) );
+         eh_watch_int( g_strv_length ( (gchar**)out_arr ) );
 eh_exit(0);
       }
 
