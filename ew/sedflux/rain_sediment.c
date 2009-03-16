@@ -63,7 +63,7 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
          Sed_cell      erode_cell    = sed_cell_new_env();
          Sed_cell_grid in_suspension = sed_cube_in_suspension( p , this_river );
          Sed_cell_grid deposit_grid  = sed_cell_grid_new_env( sed_cube_n_x(p) , sed_cube_n_y(p) );
-         Sed_cell**    deposit       = eh_grid_data( deposit_grid );
+         Sed_cell**    deposit       = (Sed_cell**)eh_grid_data( deposit_grid );
          double        time_elapsed  = 0.;
          double        time_left     = time_step;
          const double  tidal_period  = time_step;
