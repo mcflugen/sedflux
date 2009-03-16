@@ -37,7 +37,7 @@ typedef struct
    double bruun_y_b;
    double bruun_h_b;
    double z_0;
-   gssize n_zones;
+   gint n_zones;
    double* dt;
 }
 Xshore_info;
@@ -49,20 +49,20 @@ Xshore_info  xshore                      ( Sed_cube p                ,
 double     get_breaking_wave_depth       ( Sed_wave deep_water );
 Sed_cube*  get_shelf_zones               ( Sed_cube p               ,
                                            double z_0               ,
-                                           gssize** shelf_ind );
+                                           gint** shelf_ind );
 Sed_cube*  get_bruun_zones               ( Sed_cube p               ,
                                            double y_0 );
 Sed_cube* get_zones                      ( Sed_cube p               ,
                                            double* z                ,
-                                           gssize n_zones           ,
+                                           gint n_zones           ,
                                            Sed_grid_func f          ,
-                                           gssize** ind );
-gssize     get_zone_indices              ( Sed_cube p               ,
+                                           gint** ind );
+gint     get_zone_indices              ( Sed_cube p               ,
                                            double z_0               ,
                                            double z_1               ,
-                                           gssize i_0               ,
+                                           gint i_0               ,
                                            Sed_grid_func get_val    ,
-                                           gssize* ind );
+                                           gint* ind );
 double     get_diffusion_constant        ( double z                 ,
                                            Sed_wave w              ,
                                            double settling_velocity ,
@@ -78,7 +78,7 @@ double     get_bruun_depth               ( double y                , double y_0 
 double     get_bruun_a                   ( Sed_cube p              , double bruun_m );
 double     get_bruun_y_0                 ( Sed_cube p );
 double     get_bruun_y_b                 ( Sed_cube p );
-double*    get_bruun_profile             ( double* y               , gssize len ,
+double*    get_bruun_profile             ( double* y               , gint len ,
                                            double bruun_a          , double bruun_m ,
                                            double y_0              , double y_b );
 void       fill_to_bruun                 ( Sed_cube p             ,

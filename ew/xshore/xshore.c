@@ -39,15 +39,15 @@
 
 double get_closure_depth( Sed_cube p , Sed_wave wave );
 double get_h_c( Sed_wave wave );
-gssize get_zone_indices( Sed_cube p , double z_0 , double z_1 , gssize i_0 , Sed_grid_func get_val , gssize* ind );
+gint get_zone_indices( Sed_cube p , double z_0 , double z_1 , gint i_0 , Sed_grid_func get_val , gint* ind );
 
 typedef struct
 {
    double u_0;   ///< Cross-shore current
    Sed_wave w;   ///< Incoming deep-water wave
    Sed_cube p; 
-   gssize* ind;
-   gssize ind_len;
+   gint* ind;
+   gint ind_len;
 
    double x_0;   ///< Position of shoreline
    double x_b;   ///< Position of breaker zone
@@ -55,7 +55,7 @@ typedef struct
    double dz_dx; ///< Slope at bruun zone
    double *k;    ///< Sediment flux at bruun zone
 }
-Bruun_data G_GNUC_INTERNAL;
+Bruun_data;
 
 double get_total_flux( double z     ,
                        double dz_dx ,
@@ -81,15 +81,15 @@ void update_bruun_zone_data( Bruun_data* data )
 {
    if ( data && data->ind_len>2 )
    {
-      gssize n;
+      gint n;
       double *w_s, u_om, d_max;
       double q_left, q_right;
       Sed_cube p = data->p;
       double breaker_depth = get_breaking_wave_depth( data->w );
       double h_b_left, h_b_right, x_b_left;
-      gssize i_0 = data->ind[0];
-      gssize i_b = data->ind[data->ind_len-1];
-      gssize n_grains = sed_sediment_env_n_types();
+      gint i_0 = data->ind[0];
+      gint i_b = data->ind[data->ind_len-1];
+      gint n_grains = sed_sediment_env_n_types();
       Sed_wave this_wave;
 
       eh_require( i_0 >= 0 );
@@ -205,7 +205,7 @@ Xshore_info xshore( Sed_cube p               ,
    Sed_wave    deep_water_wave;
    Sed_cube*   shelf_zone;
    Sed_column* source_col;
-   gssize      n_zones;
+   gint        n_zones;
    Xshore_info info;
    Bruun_data  bruun_zone_data;
 
@@ -229,11 +229,11 @@ Xshore_info xshore( Sed_cube p               ,
    eh_debug( "Is there a Bruun zone?" );
    {
       gboolean error = FALSE;
-      gssize i;
-//      gssize*   bruun_ind   = eh_new( gssize , sed_cube_n_y(p) );
+      gint i;
+//      gint*   bruun_ind   = eh_new( gint , sed_cube_n_y(p) );
       Sed_cube* bruun_zones = get_shelf_zones( p , get_h_c( deep_water_wave ) , NULL );
 /*
-      gssize    ind_len     = get_zone_indices( p ,
+      gint    ind_len     = get_zone_indices( p ,
                                                 0 ,
                                                 get_h_c(deep_water_wave) ,
                                                 0 ,
@@ -274,18 +274,18 @@ Xshore_info xshore( Sed_cube p               ,
    eh_debug( "Calculate the Bruun profile" );
    if ( n_zones>0 )
    {
-      gssize i;
+      gint i;
       double* y;
-//      gssize*   bruun_ind   = eh_new( gssize , sed_cube_n_y(p) );
-      gssize**  bruun_ind   = eh_new( gssize* , 2 );
+//      gint*   bruun_ind   = eh_new( gint , sed_cube_n_y(p) );
+      gint**  bruun_ind   = eh_new( gint* , 2 );
       Sed_cube* bruun_zones = get_shelf_zones( p , get_h_c( deep_water_wave ) , bruun_ind );
 /*
-      gssize    ind_len     = get_zone_indices( p ,
-                                                0 ,
-                                                get_h_c(deep_water_wave) ,
-                                                0 ,
-                                                S_WATER_DEPTH_FUNC ,
-                                                bruun_ind );
+      gint    ind_len     = get_zone_indices ( p ,
+                                               0 ,
+                                               get_h_c(deep_water_wave) ,
+                                               0 ,
+                                               S_WATER_DEPTH_FUNC ,
+                                               bruun_ind );
 */
 
       bruun_depth = eh_new0( double* , n_zones );
@@ -313,7 +313,7 @@ Xshore_info xshore( Sed_cube p               ,
 
          bruun_zone_data.p        = p;
          bruun_zone_data.ind_len  = sed_cube_n_y(bruun_zones[0]);
-         bruun_zone_data.ind      = g_memdup( bruun_ind[0] , sizeof(gssize)*bruun_zone_data.ind_len );
+         bruun_zone_data.ind      = g_memdup( bruun_ind[0] , sizeof(gint)*bruun_zone_data.ind_len );
          bruun_zone_data.w        = deep_water_wave;
          bruun_zone_data.u_0      = xshore_current;
          bruun_zone_data.k        = g_new( double , sed_sediment_env_n_types() );
@@ -341,7 +341,7 @@ Xshore_info xshore( Sed_cube p               ,
 
    eh_debug( "Find the column where suspended sediment is added" );
    {
-      gssize i;
+      gint i;
       Sed_cube* zone = get_shelf_zones( p , 30. , NULL );
 
       if ( zone[1] )
@@ -360,7 +360,7 @@ Xshore_info xshore( Sed_cube p               ,
    eh_debug( "Calculate the maximum erosion depth for this storm" );
    if ( n_zones>0 )
    {
-      gssize i;
+      gint i;
 
       max_erode_depth = eh_new0( double* , n_zones );
       for ( i=0 ; i<1 ; i++ )
@@ -370,7 +370,7 @@ Xshore_info xshore( Sed_cube p               ,
    eh_debug( "Calculate the time step for each region" );
    if ( n_zones>0 )
    {
-      gssize i;
+      gint i;
       double t_total = sed_ocean_storm_duration(storm);
 
       zone_dt = eh_new( double , n_zones+1 );
@@ -394,15 +394,15 @@ Xshore_info xshore( Sed_cube p               ,
    {
       double m_0 = sed_cube_mass( p );
       double m_added, m_lost, m_1;
-      gssize i;
+      gint i;
       double t;
-      double       t_total = sed_ocean_storm_duration(storm);
-      gssize      n_grains = sed_sediment_env_n_types();
-      Sed_cell  total_lost = sed_cell_new( n_grains );
+      double   t_total     = sed_ocean_storm_duration(storm);
+      gint     n_grains    = sed_sediment_env_n_types();
+      Sed_cell total_lost  = sed_cell_new( n_grains );
       Sed_cell total_added = sed_cell_new( n_grains );
-      Sed_cell          in = sed_cell_new( n_grains );
-      Sed_cell         out = sed_cell_new( n_grains );
-      Sed_cell       added = sed_cell_new( n_grains );
+      Sed_cell in          = sed_cell_new( n_grains );
+      Sed_cell out         = sed_cell_new( n_grains );
+      Sed_cell added       = sed_cell_new( n_grains );
 
       eh_require( t_total>0 );
 
@@ -449,7 +449,7 @@ if ( fabs((m_0+m_added-m_lost-m_1)/m_1) > .01 )
 
    eh_debug( "Free memory" );
    {
-      gssize i;
+      gint i;
 
       eh_free( zone_dt );
       sed_wave_destroy( deep_water_wave );
@@ -519,12 +519,12 @@ double wave_break_helper( double z , gpointer user_data )
 
 \return An array of Sed_cube's.  One for each zone.
 */
-Sed_cube* get_shelf_zones( Sed_cube p , double z_0 , gssize** shelf_ind )
+Sed_cube* get_shelf_zones( Sed_cube p , double z_0 , gint** shelf_ind )
 {
-   const gssize n_zones = 2;
+   const gint n_zones = 2;
    double boundary[3];
    Sed_cube* shelf_zones, *all_zones;
-   gssize** zone_ind;
+   gint** zone_ind;
 
    eh_require( p );
 
@@ -535,15 +535,15 @@ Sed_cube* get_shelf_zones( Sed_cube p , double z_0 , gssize** shelf_ind )
    boundary[2] = G_MAXDOUBLE;
 
    if ( shelf_ind )
-      memset( shelf_ind , 0 , n_zones*sizeof(gssize*) );
+      memset( shelf_ind , 0 , n_zones*sizeof(gint*) );
 
-   zone_ind  = eh_new( gssize* , n_zones );
+   zone_ind  = eh_new( gint* , n_zones );
    all_zones = get_zones( p , boundary , n_zones , S_WATER_DEPTH_FUNC , zone_ind );
 
    eh_debug( "Get rid of NULL zones" );
    {
-      gssize i;
-//      gssize n = 0;
+      gint i;
+//      gint n = 0;
       shelf_zones = eh_new0( Sed_cube , n_zones+1 );
 /*
       for ( i=0 ; i<n_zones ; i++ )
@@ -559,7 +559,7 @@ Sed_cube* get_shelf_zones( Sed_cube p , double z_0 , gssize** shelf_ind )
       shelf_zones[n_zones] = NULL;
 
       if ( shelf_ind )
-         memcpy( shelf_ind , zone_ind , sizeof(gssize*)*n_zones );
+         memcpy( shelf_ind , zone_ind , sizeof(gint*)*n_zones );
       else
       {
          for ( i=0 ; i<n_zones ; i++ )
@@ -577,8 +577,8 @@ Sed_cube* get_bruun_zones( Sed_cube p , double y_0 )
 {
    Sed_cube* shelf_zones;
    Sed_cube* all_zones;
-   const gssize n_zones = 2;
-   gssize i_rm;
+   const gint n_zones = 2;
+   gint i_rm;
 
    eh_require( p );
 
@@ -608,8 +608,8 @@ Sed_cube* get_bruun_zones( Sed_cube p , double y_0 )
 
    eh_debug( "Get rid of NULL zones" );
    {
-      gssize i;
-      gssize n = 0;
+      gint i;
+      gint n = 0;
       shelf_zones = eh_new0( Sed_cube , n_zones+1 );
 
       for ( i=0 ; i<n_zones ; i++ )
@@ -641,11 +641,11 @@ of each zone.
 
 \return          A array of Sed_cube's.  One for each zone.
 */
-Sed_cube* get_zones( Sed_cube p , double* z , gssize n_zones , Sed_grid_func f , gssize** ind )
+Sed_cube* get_zones( Sed_cube p , double* z , gint n_zones , Sed_grid_func f , gint** ind )
 {
    Sed_cube* sub_cube;
-   gssize **zones;
-   gssize n;
+   gint **zones;
+   gint n;
 
    eh_require( p                 );
    eh_require( z                 );
@@ -654,13 +654,13 @@ Sed_cube* get_zones( Sed_cube p , double* z , gssize n_zones , Sed_grid_func f ,
 
    eh_require( eh_dbl_array_is_monotonic( z , n_zones+1 ) );
 
-   zones = eh_new( gssize* , n_zones );
+   zones = eh_new( gint* , n_zones );
    for ( n=0 ; n<n_zones ; n++ )
-      zones[n] = eh_new( gssize , sed_cube_n_y(p) );
+      zones[n] = eh_new( gint , sed_cube_n_y(p) );
 
    eh_require( zones )
    {
-      gssize len = get_zone_indices( p , z[0] , z[1] , 0 , f , zones[0] );
+      gint len = get_zone_indices( p , z[0] , z[1] , 0 , f , zones[0] );
       for ( n=1 ; n<n_zones ; n++ )
          len = get_zone_indices( p , z[n] , z[n+1] , zones[n-1][len-1] , f , zones[n] );
    }
@@ -675,7 +675,7 @@ Sed_cube* get_zones( Sed_cube p , double* z , gssize n_zones , Sed_grid_func f ,
    }
 
    if ( ind )
-      memcpy( ind , zones , sizeof(gssize*)*n_zones );
+      memcpy( ind , zones , sizeof(gint*)*n_zones );
    else
       for ( n=0 ; n<n_zones ; n++ )
          eh_free(zones[n]);
@@ -685,15 +685,15 @@ Sed_cube* get_zones( Sed_cube p , double* z , gssize n_zones , Sed_grid_func f ,
    return sub_cube;
 }
 
-gssize get_zone_indices( Sed_cube p ,
+gint get_zone_indices( Sed_cube p ,
                          double z_0 ,
                          double z_1 ,
-                         gssize i_0 ,
+                         gint i_0 ,
                          Sed_grid_func get_val ,
-                         gssize* ind )
+                         gint* ind )
 {
-   gssize max_i;
-   gssize n = 0;
+   gint max_i;
+   gint n = 0;
 
    eh_require( p       );
    eh_require( z_1>z_0 );
@@ -705,7 +705,7 @@ gssize get_zone_indices( Sed_cube p ,
    // Check if the right edge of the Sed_cube is in this zone.
    if ( get_val( p,0,max_i)>z_0 )
    {
-      gssize i;
+      gint i;
 
       // Find the index of right boundary
       for (  ; get_val(p,0,i_0)<z_0 ; i_0++ );
@@ -798,7 +798,7 @@ double get_time_step( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun_data*
    }
 */
    {
-      gssize n_grains = sed_sediment_env_n_types();
+      gint n_grains = sed_sediment_env_n_types();
       double* w_s = sed_sediment_property( NULL , &sed_type_settling_velocity );
       Sed_wave this_wave = sed_gravity_wave_new( deep_wave , data->h_b , NULL );
 
@@ -1086,9 +1086,9 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
 
    eh_require( du )
    {
-      gssize i, n;
+      gint i, n;
       double u_om, d_max, qy;
-      gssize     n_grains  = sed_sediment_env_n_types();
+      gint     n_grains  = sed_sediment_env_n_types();
       Sed_wave this_wave   = sed_wave_new( 0 , 0 , 0 );
       double  wave_period  = sed_wave_period( deep_wave );
       double breaker_depth = get_breaking_wave_depth( deep_wave );
@@ -1167,13 +1167,13 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
    }
 
    {
-      gssize i, n;
-      gssize n_grains  = sed_sediment_env_n_types();
-      gssize* bruun_ind = data->ind;
-      gssize  ind_len = data->ind_len;
+      gint i, n;
+      gint n_grains  = sed_sediment_env_n_types();
+      gint* bruun_ind = data->ind;
+      gint  ind_len = data->ind_len;
 /*
-      gssize* bruun_ind = eh_new( gssize , sed_cube_n_y(p)+1 );
-      gssize ind_len = get_zone_indices( p ,
+      gint* bruun_ind = eh_new( gint , sed_cube_n_y(p)+1 );
+      gint ind_len = get_zone_indices( p ,
                                          0 ,
                                          get_h_c( deep_wave ) ,
                                          0 ,
@@ -1185,7 +1185,7 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
 
       if ( ind_len>0 )
       {
-         gssize i_b = bruun_ind[ind_len-1] - bruun_ind[0];
+         gint i_b = bruun_ind[ind_len-1] - bruun_ind[0];
          // Get Bruun k for each grain so that the fluxes match.
          i = bruun_ind[ind_len-1] + 1;
          for ( n=0 ; n<n_grains ; n++ )
@@ -1217,8 +1217,8 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
 
    if ( in )
    {
-      gssize n;
-      gssize n_grains = sed_sediment_env_n_types();
+      gint n;
+      gint n_grains = sed_sediment_env_n_types();
       double t        = sed_cell_size(in);
 
       for ( n=0 ; n<n_grains ; n++ )
@@ -1238,7 +1238,7 @@ Sed_cell move_sediment( Sed_cube p            ,
                         Sed_cell added        ,
                         Sed_cell in_suspension )
 {
-   gssize n_grains;
+   gint n_grains;
    Sed_cell* rem_cell;
 
    eh_require( p    );
@@ -1250,7 +1250,7 @@ Sed_cell move_sediment( Sed_cube p            ,
    // Convert the fluxes to amounts.  Create a temporary array to hold
    // the removed sediment.
    {
-      gssize i, n;
+      gint i, n;
       for ( i=0 ; i<sed_cube_n_y(p) ; i++ )
          for ( n=0 ; n<n_grains ; n++ )
 {
@@ -1280,16 +1280,16 @@ if ( du[i][n] > 10 )
    // Remove the sediment and add it to the appropriate index of the temporary
    // array.
    {
-      gssize i, add_index, remove_index;
+      gint i, add_index, remove_index;
       double du_tot;
-      gssize top_i = sed_cube_n_y(p)-1;
+      gint top_i = sed_cube_n_y(p)-1;
       Sed_cell add_cell  = sed_cell_new_env();
       Sed_cell fill_cell;
       double*     dh_max = eh_new( double , sed_cube_n_y(p) );
-//      gssize* bruun_ind = eh_new( gssize , sed_cube_n_y(p)+1 );
-//      gssize ind_len = get_zone_indices( p , 0 , data->h_b , 0 , S_WATER_DEPTH_FUNC , bruun_ind );
+//      gint* bruun_ind = eh_new( gint , sed_cube_n_y(p)+1 );
+//      gint ind_len = get_zone_indices( p , 0 , data->h_b , 0 , S_WATER_DEPTH_FUNC , bruun_ind );
       double total = 0;
-      gssize    ind_len = data->ind_len;
+      gint    ind_len = data->ind_len;
 
       {
          double* f = eh_new0( double , n_grains );
@@ -1357,8 +1357,8 @@ if ( fabs(m_1+dm-m_0) > 1e-6 )
       {
          if ( ind_len > 0 )
          {
-            //gssize i_0 = bruun_ind[0];
-            gssize i_0 = 0;
+            //gint i_0 = bruun_ind[0];
+            gint i_0 = 0;
 
             // Add whatever we removed from the first cell back.
             sed_cell_copy( rem_cell[i_0] , rem_cell[i_0+1] );
@@ -1410,7 +1410,7 @@ if ( fabs(m_1+dm-m_0) > 1e-6 )
    // Set the facies type, and age of the sediment.  Add the removed sediment
    // to the profile.
    {
-      gssize i;
+      gint i;
 //      Sed_cell clay_cell = sed_cell_new_env();
 //      double* just_clay = eh_new0( double , n_grains );
 //      double z_0 = 23;
@@ -1433,7 +1433,7 @@ if ( fabs(m_1+dm-m_0) > 1e-6 )
 
    // Free memory.
    {
-      gssize i;
+      gint i;
       for ( i=0 ; i<sed_cube_n_y(p) ; i++ )
          sed_cell_destroy( rem_cell[i] );
       eh_free( rem_cell );
@@ -1451,7 +1451,7 @@ void add_suspended_sediment( Sed_column* col , Sed_cell cell )
 {
    if ( col )
    {
-      gssize i;
+      gint i;
 
       eh_require( cell );
       for ( i=0 ; col[i] ; i++ )
@@ -1519,7 +1519,7 @@ double get_bruun_y_b( Sed_cube p )
    return sed_cube_col_y( p , sed_cube_n_y(p)-1 );
 }
 
-double* get_bruun_profile( double* y      , gssize len     ,
+double* get_bruun_profile( double* y      , gint len     ,
                            double bruun_a , double bruun_m ,
                            double y_0     , double y_b )
 {
@@ -1536,7 +1536,7 @@ double* get_bruun_profile( double* y      , gssize len     ,
 
       eh_debug( "Calculate the depths of the Bruun profile" );
       {
-         gssize i;
+         gint i;
          for ( i=0 ; i<len ; i++ )
          {
             if ( y[i] < y_0 || y[i]>y_b )
@@ -1548,7 +1548,7 @@ double* get_bruun_profile( double* y      , gssize len     ,
 
       eh_debug( "Check if all points are outside of inner shelf" );
       {
-         gssize i;
+         gint i;
          for ( i=0 ; i<len && eh_isnan(h[i]) ; i++ );
          if ( i==len )
          {
@@ -1590,7 +1590,7 @@ void fill_to_bruun( Sed_cube p ,
 
    if ( h )
    {
-      gssize i;
+      gint i;
       double dh;
 
       sed_cell_set_age   ( fill_cell , sed_cube_age_in_years(p) );
@@ -1650,7 +1650,7 @@ void fill_to_bruun_profile( Sed_cube p             ,
       // the profile using the fill sediment.
       //---
       {
-         gssize i;
+         gint i;
          double h, dh, h_total = 0.;
 
          for ( i=0 ; i<sed_cube_n_y(p) ; i++ )
@@ -1731,7 +1731,7 @@ double* get_max_erosion_profile( Sed_cube p , Sed_wave w )
 
    if ( p && w )
    {
-      gssize i;
+      gint i;
       double z;
       double u;
       double h_b = sed_wave_break_depth( w );
