@@ -18,4 +18,6 @@ double sed_diag_elapsed ( Sed_diag d );
 double sed_diag_continue( Sed_diag d );
 double sed_diag_reset   ( Sed_diag d );
 
+gint sed_diag_fprint( FILE* fp , Sed_diag d );
+
 #endif
