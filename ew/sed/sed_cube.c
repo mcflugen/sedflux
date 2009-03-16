@@ -464,19 +464,19 @@ char* sed_cube_name( const Sed_cube s )
    return g_strdup( s->name );
 }
 
-gssize sed_cube_size( const Sed_cube s )
+gint sed_cube_size( const Sed_cube s )
 {
    eh_return_val_if_fail( s!=NULL , 0 );
    return s->n_x*s->n_y;
 }
 
-gssize sed_cube_n_x( const Sed_cube s )
+gint sed_cube_n_x( const Sed_cube s )
 {
    eh_return_val_if_fail( s!=NULL , 0 );
    return s->n_x;
 }
 
-gssize sed_cube_n_y( const Sed_cube s )
+gint sed_cube_n_y( const Sed_cube s )
 {
    eh_return_val_if_fail( s!=NULL , 0 );
    return s->n_y;
@@ -1274,15 +1274,15 @@ Sed_cube sed_cube_copy_line( const Sed_cube src , double *x , double *y , double
 }
 
 Sed_cube
-sed_cube_cols( Sed_cube src , gssize *path )
+sed_cube_cols( Sed_cube src , gint *path )
 {
    Sed_cube new_cube = NULL;
 
    eh_require( src!=NULL );
 
    {
-      gssize j;
-      gssize len;
+      gint j;
+      gint len;
 
       if ( path )
          for ( len=0 ; path[len]>=0 ; len++ );
@@ -2476,12 +2476,12 @@ Eh_ind_2 get_shift_from_exit_pos( Eh_pt_2 exit_pos , double dx , double dy )
    return shift;
 }
 
-gssize*
+gint*
 sed_cube_river_path_id( Sed_cube c    ,
                         Sed_riv river ,
                         gboolean down_stream )
 {
-   gssize *path_id = NULL;
+   gint *path_id = NULL;
 
    eh_require( c     );
    eh_require( river );
@@ -2502,7 +2502,7 @@ sed_cube_river_path_id( Sed_cube c    ,
          gint   n_y = g_list_length( path );
          GList* this_link;
 
-         path_id = eh_new( gssize , n_y+1 );
+         path_id = eh_new( gint , n_y+1 );
 
          if ( down_stream ) path = g_list_reverse( path );
 

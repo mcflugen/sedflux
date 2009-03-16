@@ -128,9 +128,9 @@ Sed_cube sed_cube_adjust_sea_level( Sed_cube s , double dz );
 Sed_cube sed_cube_destroy_storm_list( Sed_cube c );
 Sed_cube sed_cube_set_bathy( Sed_cube c , Eh_dbl_grid g );
 Sed_cube sed_cube_set_dz( Sed_cube p , double new_dz );
-gssize sed_cube_size( const Sed_cube s );
-gssize sed_cube_n_x( const Sed_cube s );
-gssize sed_cube_n_y( const Sed_cube s );
+gint sed_cube_size( const Sed_cube s );
+gint sed_cube_n_x( const Sed_cube s );
+gint sed_cube_n_y( const Sed_cube s );
 
 Sed_column sed_cube_col    ( const Sed_cube s , gssize ind );
 Sed_column sed_cube_col_ij ( const Sed_cube s , gssize i , gssize j );
@@ -189,7 +189,7 @@ Sed_cube sed_cube_dup( Sed_cube c );
 Sed_cube sed_cube_copy( Sed_cube dest , const Sed_cube src );
 Sed_cube sed_cube_copy_cols( const Sed_cube src , gssize* x , gssize* y , double* z , gssize len );
 Sed_cube sed_cube_copy_line( const Sed_cube src , double *x , double *y , double *z , gssize len );
-Sed_cube sed_cube_cols( Sed_cube src , gssize *path );
+Sed_cube sed_cube_cols( Sed_cube src , gint *path );
 gssize sed_cube_river_mouth_1d( Sed_cube c );
 Sed_cube sed_cube_remove( Sed_cube dest , Sed_cube src );
 Sed_cube sed_cube_add( Sed_cube dest , const Sed_cube src );
@@ -292,7 +292,7 @@ Eh_ind_2 sed_shift_index_over_edge( gssize i , gssize j , int edge );
 
 
 GTree *sed_create_shore_tree( GList *shore );
-gssize* sed_cube_river_path_id( Sed_cube c , Sed_riv river , gboolean down_stream );
+gint* sed_cube_river_path_id( Sed_cube c , Sed_riv river , gboolean down_stream );
 GList*  sed_cube_river_path   ( Sed_cube c , Sed_riv river );
 GList *sed_find_river_path( Sed_cube c         ,
                             Eh_ind_2 *hinge_pos ,
@@ -365,8 +365,8 @@ Sed_cube sed_cube_read( FILE *fp );
 gssize *sed_cube_find_column_below( Sed_cube c , double z );
 gssize *sed_cube_find_column_above( Sed_cube c , double z );
 
-int         sed_get_floor_vec ( char *filename , double *x , int len , double *y , GError** error ) G_GNUC_DEPRECATED;
-GArray*     sed_get_floor     ( char *filename , GArray *x , GError** error ) G_GNUC_DEPRECATED;
+int         sed_get_floor_vec ( char *filename , double *x , int len , double *y , GError** error );
+GArray*     sed_get_floor     ( char *filename , GArray *x , GError** error );
 
 gssize   sed_cube_id ( Sed_cube p , gssize i , gssize j );
 Eh_ind_2 sed_cube_sub( Sed_cube p , gssize id );
