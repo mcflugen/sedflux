@@ -191,7 +191,7 @@ Sed_type     sed_type_set_settling_velocity ( Sed_type t , double w );
 Sed_type     sed_type_set_c_consolidation   ( Sed_type t , double c_v );
 Sed_type     sed_type_set_compressibility   ( Sed_type t , double c );
 
-double         sed_type_plastic_index( const Sed_type t ) G_GNUC_DEPRECATED;
+double         sed_type_plastic_index( const Sed_type t );
 
 double         sed_type_rho_sat( const Sed_type t );
 double         sed_type_rho_grain( const Sed_type t );
