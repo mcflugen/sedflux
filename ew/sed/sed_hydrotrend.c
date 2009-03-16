@@ -39,7 +39,7 @@ sed_hydrotrend_read_header_from_byte_order( FILE *fp , gint order )
    if ( fp )
    {
       gint n;
-      size_t (*fread_int)(void*,size_t,size_t,FILE*);
+      gsize (*fread_int)(void*,gsize,gsize,FILE*);
 
       if ( order==G_BYTE_ORDER ) fread_int = fread;
       else                       fread_int = eh_fread_int32_swap;
@@ -159,7 +159,7 @@ sed_hydrotrend_write_header_to_byte_order( FILE*  fp        ,
    if ( fp )
    {
       gint len;
-      gssize (*fwrite_int)(void*,size_t,size_t,FILE*);
+      gsize (*fwrite_int)(const void*,gsize,gsize,FILE*);
 
       if ( !comment_s )
          comment_s = g_strdup( "No comment" );
