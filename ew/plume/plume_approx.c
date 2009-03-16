@@ -480,7 +480,7 @@ double plume_k_bar_dy_establishment( double x , double y )
    return plume_k_bar_dy_established( x,y );
 }
 
-double* plume_u_bar_at_x( double x , double dy , gssize* n_y )
+double* plume_u_bar_at_x( double x , double dy , gint* n_y )
 {
    double* u;
 
@@ -527,7 +527,7 @@ double* plume_u_bar_at_x( double x , double dy , gssize* n_y )
    return u;
 }
 
-double* plume_v_bar_at_x( double x , double dy , gssize* n_y )
+double* plume_v_bar_at_x( double x , double dy , gint* n_y )
 {
    double* v;
 
@@ -574,7 +574,7 @@ double* plume_v_bar_at_x( double x , double dy , gssize* n_y )
    return v;
 }
 
-double* plume_k_bar_at_x( double x , double dy , gssize* n_y )
+double* plume_k_bar_at_x( double x , double dy , gint* n_y )
 {
    double* k;
 
@@ -621,7 +621,7 @@ double* plume_k_bar_at_x( double x , double dy , gssize* n_y )
    return k;
 }
 
-double* plume_k_bar_dy_at_x( double x , double dy , gssize* n_y )
+double* plume_k_bar_dy_at_x( double x , double dy , gint* n_y )
 {
    double* k;
 
@@ -696,8 +696,8 @@ double** plume_i_bar( double* x , gssize n_x , double l , gssize* n_y , double d
    }
 
    {
-      gssize i;
-      gssize len;
+      gint i;
+      gint len;
       double* i_bar_at_x;
 
       for ( i=1 ; i<n_x ; i++ )
@@ -787,7 +787,7 @@ double plume_i_bar_total( double* i_bar_0 , gssize len , double x_0 , double x_1
 }
 */
 
-double* plume_i_bar_at_x( double x , double dx , double dy , gssize* n_y , double l , double* i_bar_last )
+double* plume_i_bar_at_x( double x , double dx , double dy , gint* n_y , double l , double* i_bar_last )
 {
    double* i_bar = NULL;
 

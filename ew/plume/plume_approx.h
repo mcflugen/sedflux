@@ -22,7 +22,7 @@ Sed_cell_grid plume_width_averaged_deposit( Sed_cell_grid g , Sed_hydro r , Sed_
 double* plume_width_averaged_deposit_nd( double* dep , double* x , gssize len , double l );
 
 double** plume_i_bar( double* x , gssize n_x , double l , gssize* n_y , double dy );
-double* plume_i_bar_at_x( double x , double dx , double dy , gssize* n_y , double l , double* i_bar_last );
+double* plume_i_bar_at_x( double x , double dx , double dy , gint* n_y , double l , double* i_bar_last );
 
 double plume_non_dim_distance( double x , Sed_hydro r );
 double plume_non_dim_lambda( double l , Sed_hydro r );
