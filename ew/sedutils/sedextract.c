@@ -27,6 +27,9 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
+#define FORGET_THIS_FOR_NOW
+
+#if !defined( FORGET_THIS_FOR_NOW )
 /*** Self Documentation ***/
 static char *help_msg[] =
 {
@@ -52,6 +55,7 @@ static char *help_msg[] =
 "  ny=value  - Resample each trace using every value-th row. [1]              ",
 NULL
 };
+#endif
 
 #define UNITS_BINS   (0)
 #define UNITS_METERS (1)
@@ -70,8 +74,6 @@ NULL
 #define DEFAULT_OUT_FILE            stdout
 #define DEFAULT_IN_FILE_NAME        "stdin"
 #define DEFAULT_OUT_FILE_NAME       "stdout"
-
-#define FORGET_THIS_FOR_NOW
 
 int main(int argc, char *argv[])
 {

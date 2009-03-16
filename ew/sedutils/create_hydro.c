@@ -22,6 +22,8 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
+#define FORGET_THIS_FOR_NOW
+#if !defined(FORGET_THIS_FOR_NOW)
 static char *help_msg[] = {
 " create_hydro - create a hydrotrend file from         ",
 "                discharge data.                       ",
@@ -31,10 +33,10 @@ static char *help_msg[] = {
 "  v     : be verbose [no]                             ",
 "                                                      ",
 NULL };
+#endif
 
 Sed_hydro discharge_to_hydro_record( double q );
 
-#define FORGET_THIS_FOR_NOW
 int main(int argc,char *argv[])
 {
 #if !defined(FORGET_THIS_FOR_NOW)
