@@ -328,7 +328,7 @@ erode_river_profile( Sed_cube p , Sed_riv r , double slope , gint method )
 
    if ( p && r )
    {
-      gssize*  river_path = sed_cube_river_path_id( p , r , TRUE );
+      gint*  river_path = sed_cube_river_path_id( p , r , TRUE );
 
       eh_require( river_path );
 
