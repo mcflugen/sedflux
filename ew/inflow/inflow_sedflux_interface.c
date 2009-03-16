@@ -54,7 +54,7 @@ sed_inflow( Sed_cube         p       ,
       double              dt             = S_SECONDS_PER_DAY;
       double              t;
 
-      c->get_phe      = sed_get_phe;
+      c->get_phe      = (Inflow_query_func)sed_get_phe;
       c->get_phe_data = p;
 
       width         = inflow_set_width_from_cube       ( p , i_start );
