@@ -166,8 +166,8 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
 
       data->type = sed_hydro_str_to_type( str );
 
-      if (    g_ascii_strcasecmp( str , "EVENT"  )==0
-           || g_ascii_strcasecmp( str , "BUFFER" )==0 
+      if ( (    g_ascii_strcasecmp( str , "EVENT"  )==0
+             || g_ascii_strcasecmp( str , "BUFFER" )==0 )
            && data->type == SED_HYDRO_HYDROTREND )
       {
          data->buffer_is_on = TRUE;
