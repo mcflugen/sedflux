@@ -55,7 +55,6 @@ main(int argc, char *argv[])
       Sed_hydro*      flood_arr = NULL;
       Sed_hydro*      r         = NULL;
       Plume_param_st* param     = NULL;
-      double**        deposit   = NULL;
       Eh_dbl_grid*    dep_grid  = NULL;
       gint            len       = 0;
       gint            n_grains  = 0;
