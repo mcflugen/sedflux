@@ -63,7 +63,7 @@ inflow_run_flood( Inflow_bathy_st* b    ,
                   double** deposit_in_m )
 {
    gint n, i;
-   FILE* fp_debug = g_getenv("INFLOW_DEBUG")?stderr:NULL;
+   //FILE* fp_debug = g_getenv("INFLOW_DEBUG")?stderr:NULL;
    double t       = 0.;
    double dt      = S_SECONDS_PER_DAY;
    double total_t = f->duration;
