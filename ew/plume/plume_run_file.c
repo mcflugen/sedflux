@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 {
    char* river_file;
    char* sediment_file;
-   gssize len;
+   gint len;
    double dx;
    double width;
    gboolean verbose;
