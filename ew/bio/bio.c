@@ -33,17 +33,20 @@ diffuse_col( double* f , gint len , double dz , double k , double total_t )
    {
       {
          Eh_num_method method = EH_NUM_IMPLICIT;
-         gint i, n;
+         gint n;
          double*      f_new  = eh_dbl_array_dup( f , len );
-         const double dt_opt = .9*.5*dz*dz/k;
+//         const double dt_opt = .9*.5*dz*dz/k;
 //         const double dt     = eh_min( dt_opt , total_t );
          const double dt     = total_t;
          const double c      = dt * k / (dz*dz);
          const gint   n_t    = total_t / dt;
          const double dt_rem = fmod( total_t , dt );
 
-         for ( n=0 ; n<n_t ; n++ ) eh_dbl_array_diffuse( f , len , c                   , method );
-         if  ( dt_rem > 0. )       eh_dbl_array_diffuse( f , len , c * ( dt_rem / dt ) , method );
+         for ( n=0 ; n<n_t ; n++ )
+           eh_dbl_array_diffuse ( f , len , c , method );
+
+         if  ( dt_rem > 0. )
+           eh_dbl_array_diffuse ( f , len , c * ( dt_rem / dt ) , method );
 
          eh_free( f_new );
       }
