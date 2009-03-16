@@ -34,6 +34,12 @@
 # include <utils/utils.h>
 # include <sed/sed_sedflux.h>
 
+
+#define SUBSIDE_PROGRAM_NAME "subside"
+#define SUBSIDE_MAJOR_VERSION 0
+#define SUBSIDE_MINOR_VERSION 1
+#define SUBSIDE_MICRO_VERSION 0
+
 void subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y );
 
 /**
