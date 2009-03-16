@@ -41,7 +41,8 @@ static gchar*   _out_file    = NULL;
 static gchar*   _bathy_file  = NULL;
 static gchar*   _flood_file  = NULL;
 static gchar*   _data_file   = NULL;
-static gint*    _data_id     = NULL;
+//static gint*    _data_id     = NULL;
+static Sakura_var* _data_id     = NULL;
 static gint     _data_int    = 1;
 
 gboolean parse_data_list( const gchar* name , const gchar* value , gpointer data , GError** error );

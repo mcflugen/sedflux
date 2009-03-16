@@ -1742,7 +1742,7 @@ eh_watch_dbl( c->dep_start );
       { // Mass balance check
          gint         n;
          double       mass_in        = 0;
-         double       mass_out       = 0;
+         //double       mass_out       = 0;
          double       mass_bal       = 0;
          const double mass_in_susp   = sakura_array_mass_in_susp  ( a_last , sed );
          const double mass_eroded    = sakura_array_mass_eroded   ( a_last , sed );

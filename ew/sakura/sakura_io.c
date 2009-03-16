@@ -54,7 +54,7 @@ sakura_wrapper( Sakura_bathy_st*    b            ,
                 gint* len )
 {
    double** deposit = NULL;
-   gboolean is_ok;
+   //gboolean is_ok;
 
    eh_require( b );
    eh_require( f );
@@ -64,9 +64,9 @@ sakura_wrapper( Sakura_bathy_st*    b            ,
    eh_require( len );
 
    {
-      FILE*   fp_debug  = g_getenv("SAKURA_DEBUG")?stderr:NULL;
+      //FILE*   fp_debug  = g_getenv("SAKURA_DEBUG")?stderr:NULL;
       //double  basin_len = b->x[b->len-1] - b->x[0];
-      double  dx        = b->dx;
+      //double  dx        = b->dx;
       double* init_u    = eh_new( double , 2 );
       double* init_c    = eh_new( double , 2 );
 
@@ -576,8 +576,8 @@ sakura_set_width( Sakura_bathy_st* bathy_data  ,
                   double           spreading_angle )
 {
    gint   i;
-   double dx = bathy_data->x[1] - bathy_data->x[0];
-   double flow_width;
+   //double dx = bathy_data->x[1] - bathy_data->x[0];
+   //double flow_width;
 
    // Create a spreading angle.
    bathy_data->width[0] = river_width;
