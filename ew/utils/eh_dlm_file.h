@@ -77,4 +77,17 @@ gint       eh_dlm_print_dbl_grid         ( const gchar* file  ,
                                            Eh_dbl_grid g      ,
                                            GError** error );
 
+void       eh_bov_print                  (const char* prefix,
+                                          const double* x,
+                                          const char* name,
+                                          int len[3],
+                                          double size[3],
+                                          GError** err);
+void       eh_curve2d_print              (const char* file,
+                                          const double* x,
+                                          const double* y,
+                                          char* name,
+                                          int len,
+                                          GError** error);
+
 #endif

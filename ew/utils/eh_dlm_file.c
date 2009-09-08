@@ -604,15 +604,119 @@ eh_dlm_print_dbl_grid( const gchar* file , const gchar* delim , Eh_dbl_grid g , 
    {
       GError* tmp_err = NULL;
 
-      n = eh_dlm_print( file , delim ,
-                        (const double**)eh_dbl_grid_data(g) ,
-                        eh_grid_n_x(g) , eh_grid_n_y(g) ,
-                        &tmp_err );
+      n = eh_dlm_print (file, delim,
+                       (const double**)eh_dbl_grid_data(g),
+                       eh_grid_n_x(g), eh_grid_n_y(g),
+                       &tmp_err );
 
       if ( tmp_err )
          g_propagate_error( error , tmp_err );
    }
 
    return n;
+}
+
+void
+eh_bov_print (const char* prefix, const double* x, const char* name,
+              int len[3], double size[3], GError** err)
+{
+  eh_return_if_fail (err==NULL || *err==NULL);
+
+  { /* Print two files: prefix.bov, prefix.dat */
+    char* bov_file = g_strdup_printf ("%s.bov", prefix);
+    char* dat_file = g_strdup_printf ("%s.dat", prefix);
+    GError* tmp_err = NULL;
+
+    eh_require (bov_file);
+    eh_require (dat_file);
+
+    if (!tmp_err)
+    { /* Print the header (.bov) file. */
+      FILE* fp = eh_fopen_error (bov_file, "w", &tmp_err);
+
+      if (!tmp_err)
+      {
+        char* endian = NULL;
+
+        switch (G_BYTE_ORDER)
+        {
+          case G_LITTLE_ENDIAN:
+            endian = "LITTLE";
+            break;
+          case G_BIG_ENDIAN:
+            endian = "BIG";
+            break;
+          default:
+            eh_require_not_reached ();
+        }
+
+        fprintf (fp, "TIME: %f\n", 0.0);
+        fprintf (fp, "DATA_FILE: %s\n", dat_file);
+        fprintf (fp, "DATA_SIZE: %d %d %d\n", len[2], len[1], len[0]);
+        fprintf (fp, "DATA_FORMAT: %s\n", "DOUBLE");
+        fprintf (fp, "VARIABLE: %s\n", name);
+        fprintf (fp, "DATA_ENDIAN: %s\n", endian);
+        fprintf (fp, "CENTERING: %s\n", "zonal");
+        fprintf (fp, "BRICK_ORIGIN: 0. 0. 0.\n");
+        fprintf (fp, "BRICK_SIZE: %f %f %f\n", size[2], size[1], size[0]);
+
+        fclose (fp);
+      }
+    }
+
+    if (!tmp_err)
+    { /* Print the data (.dat) file. */
+      FILE* fp = eh_fopen_error (dat_file, "w", &tmp_err);
+
+      if (!tmp_err)
+      {
+        int nmemb = 1;
+        int i;
+
+        for (i=0; i<3; i++)
+          nmemb *= len[i];
+
+        fwrite (x, sizeof (double), nmemb, fp);
+
+        fclose (fp);
+      }
+    }
+    else
+      g_propagate_error (err, tmp_err);
+
+    eh_free (bov_file);
+    eh_free (dat_file);
+  }
+  return;
+}
+
+void
+eh_curve2d_print (const char* file, const double* x, const double* y,
+                  char* name, int len, GError** err)
+{
+  eh_return_if_fail (err==NULL || *err==NULL);
+
+  {
+    GError* tmp_err = NULL;
+
+    if (!tmp_err)
+    {
+      FILE* fp = eh_fopen_error (file, "w", &tmp_err);
+
+      if (!tmp_err)
+      {
+        int i;
+        fprintf (fp, "# %s\n", name);
+
+        for (i=0; i<len; i++)
+          fprintf (fp, "%f, %f\n", x[i], y[i]);
+
+        fclose (fp);
+      }
+      else
+        g_propagate_error (err, tmp_err);
+    }
+  }
+  return;
 }
 
