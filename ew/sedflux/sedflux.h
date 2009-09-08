@@ -45,7 +45,8 @@ typedef gint32 Sedflux_run_flag;
 GQuark sedflux_error_quark( void );
 
 //gboolean          sedflux                    ( const gchar* init_file , Sedflux_run_flag flag );
-gboolean          sedflux                    ( const gchar* init_file );
+
+//gboolean          sedflux                    ( const gchar* init_file );
 
 Sedflux_param_st* sedflux_parse_command_line ( int argc , char *argv[] , GError** error );
 gboolean          sedflux_setup_project_dir  ( gchar** init_file , gchar** working_dir , GError** error );
