@@ -30,6 +30,7 @@ static gboolean summary      = FALSE;
 static gboolean warn         = FALSE;
 static gint     verbosity    = -1;
 static gboolean verbose      = FALSE;
+static gboolean silent       = FALSE;
 static gboolean version      = FALSE;
 static char**   active_procs = NULL;
 
@@ -49,6 +50,7 @@ static GOptionEntry command_line_entries[] =
    { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE         , &warn        , "Print warnings"             , NULL     } ,
    { "verbosity"   , 'l' , 0 , G_OPTION_ARG_INT          , &verbosity   , "Verbosity level"            , "n"      } ,
    { "verbose"     , 'V' , 0 , G_OPTION_ARG_NONE         , &verbose     , "Be verbose"                 , NULL     } ,
+   { "silent"      , 'S' , 0 , G_OPTION_ARG_NONE         , &silent      , "Be silent"                  , NULL     } ,
    { "version"     , 'v' , 0 , G_OPTION_ARG_NONE         , &version     , "Version number"             , NULL     } ,
    { NULL }
 };
@@ -57,91 +59,100 @@ static gchar* just_plume_procs[] = { "plume"      , "river"  ,  "bbl" , NULL }; 
 static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };          //< Process to run with just-rng option
 
 Sedflux_param_st*
-sedflux_parse_command_line( int argc , char *argv[] , GError** error )
+sedflux_parse_command_line (int argc, char *argv[], GError** error)
 {
-   Sedflux_param_st* p = NULL;
+  Sedflux_param_st* p = NULL;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
-   eh_require( argv );
+  eh_return_val_if_fail (error==NULL || *error==NULL, NULL);
+  eh_require (argv);
 
-   {
-      GError*         tmp_err = NULL;
-      GOptionContext* context = g_option_context_new( "Run basin filling model sedflux-2.0" );
+  {
+    GError*         tmp_err = NULL;
+    GOptionContext* context = g_option_context_new (
+                                "Run basin filling model sedflux-2.0" );
 
-      g_option_context_add_main_entries( context , command_line_entries , NULL );
-      g_option_context_add_group( context , bio_get_option_group() );
+    g_option_context_add_main_entries (context, command_line_entries, NULL);
+    g_option_context_add_group (context, bio_get_option_group());
 
-      g_option_context_parse( context , &argc , &argv , &tmp_err );
+    g_option_context_parse (context, &argc, &argv, &tmp_err);
 
-      if ( (mode_3d && mode_2d) && !tmp_err )
-         g_set_error( &tmp_err ,
-                      SEDFLUX_ERROR ,
-                      SEDFLUX_ERROR_MULTIPLE_MODES ,
-                      "Mode must be either 2D or 3D" );
+    if ( (mode_3d && mode_2d) && !tmp_err )
+      g_set_error( &tmp_err ,
+                   SEDFLUX_ERROR ,
+                   SEDFLUX_ERROR_MULTIPLE_MODES ,
+                   "Mode must be either 2D or 3D" );
 
-      if ( version )
-      {
-         gchar* prog_name = NULL;
+    if (version)
+    {
+      gchar* prog_name = NULL;
 
-         if      ( sizeof(void*)==8 ) prog_name = g_strconcat( PROGRAM_NAME , " (64-bit)" , NULL );
-         else if ( sizeof(void*)==4 ) prog_name = g_strconcat( PROGRAM_NAME , " (32-bit)" , NULL );
-         else                         eh_require_not_reached();
+      if (sizeof(void*)==8)
+        prog_name = g_strconcat (PROGRAM_NAME, " (64-bit)", NULL);
+      else if (sizeof(void*)==4)
+        prog_name = g_strconcat (PROGRAM_NAME, " (32-bit)", NULL);
+      else                         eh_require_not_reached();
+        eh_fprint_version_info( stdout          ,
+                                prog_name       ,
+                                S_MAJOR_VERSION ,
+                                S_MINOR_VERSION ,
+                                S_MICRO_VERSION );
 
-         eh_fprint_version_info( stdout          ,
-                                 prog_name       ,
-                                 S_MAJOR_VERSION ,
-                                 S_MINOR_VERSION ,
-                                 S_MICRO_VERSION );
+      eh_free (prog_name);
 
-         eh_free( prog_name );
+      eh_exit (EXIT_SUCCESS);
+    }
 
-         eh_exit( EXIT_SUCCESS );
-      }
-
-      if ( !tmp_err )
-      {
-         if ( mode_3d )
-            sed_mode_set( SEDFLUX_MODE_3D );
-         else
-            sed_mode_set( SEDFLUX_MODE_2D );
-
-         if      ( verbosity >= 0 )
-            eh_set_verbosity_level( verbosity );
-         else if ( verbose )
-            eh_set_verbosity_level( 4 );
-         else
-            eh_set_verbosity_level( 0 );
-
-         if ( !active_procs )
-         {
-            if ( just_plume )
-               active_procs = just_plume_procs;
-            if ( just_rng )
-               active_procs = just_rng_procs;
-         }
-
-         g_option_context_free( context );
-
-         p = eh_new( Sedflux_param_st , 1 );
-
-         p->init_file    = init_file;
-         p->out_file     = out_file;
-         p->working_dir  = working_dir;
-         p->run_desc     = run_desc;
-         p->just_plume   = just_plume;
-         p->just_rng     = just_rng;
-         p->summary      = summary;
-         p->warn         = warn;
-         p->verbosity    = verbosity;
-         p->verbose      = verbose;
-         p->version      = version;
-         p->active_procs = active_procs;
-      }
+    if (!tmp_err)
+    {
+/*
+      if (mode_3d)
+        sed_mode_set (SEDFLUX_MODE_3D);
       else
-         g_propagate_error( error , tmp_err );
-   }
+        sed_mode_set (SEDFLUX_MODE_2D);
+*/
 
-   return p;
+      if (verbosity >= 0)
+        eh_set_verbosity_level( verbosity );
+      else if (verbose)
+        eh_set_verbosity_level( 4 );
+      else
+        eh_set_verbosity_level( 0 );
+
+      if (silent)
+        eh_set_verbosity_level (0);
+
+      if (!active_procs)
+      {
+        if (just_plume)
+          active_procs = just_plume_procs;
+        if (just_rng)
+          active_procs = just_rng_procs;
+      }
+
+      g_option_context_free (context);
+
+      p = eh_new (Sedflux_param_st, 1);
+
+      p->mode_2d      = mode_2d;
+      p->mode_3d      = mode_3d;
+      p->init_file    = init_file;
+      p->out_file     = out_file;
+      p->working_dir  = working_dir;
+      p->run_desc     = run_desc;
+      p->just_plume   = just_plume;
+      p->just_rng     = just_rng;
+      p->summary      = summary;
+      p->warn         = warn;
+      p->verbosity    = verbosity;
+      p->verbose      = verbose;
+      p->version      = version;
+      p->active_procs = active_procs;
+    }
+    else
+      g_propagate_error( error , tmp_err );
+  }
+
+  return p;
 }
 
 GQuark
@@ -228,9 +239,6 @@ sedflux_get_file_name_interactively( gchar **working_dir , gchar **in_file )
 
    fprintf( stderr , "---\n" );
    fprintf( stderr , "--- This is %s" , PROGRAM_NAME );
-
-   if ( sed_mode_is_3d() )
-      fprintf( stderr , "3d" );
 
    eh_fprint_version_info( stderr          ,
                            PROGRAM_NAME    ,
