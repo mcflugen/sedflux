@@ -6,11 +6,11 @@ AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
 bin_PROGRAMS              = subside
 subside_SOURCES           = subside_main.c
 subside_DEPENDENCIES      = libsubside.la
-subsideinclude_HEADERS    = subside.h
+subsideinclude_HEADERS    = subside.h subside_api.h
 subsideincludedir         = $(includedir)/ew-2.0
 
 lib_LTLIBRARIES           = libsubside.la
-libsubside_la_SOURCES     = subside.c
+libsubside_la_SOURCES     = subside.c subside_api.c
 
 subside_LDADD             = -lsubside -lglib-2.0 -lm
 

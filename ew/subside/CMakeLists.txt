@@ -18,6 +18,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME 
 
 SET(subside_LIB_SRCS
    subside.c
+   subside_api.c
 )
 
 add_library(subside ${subside_LIB_SRCS})
@@ -29,7 +30,9 @@ install(TARGETS subside DESTINATION lib COMPONENT sedflux)
 
 ########### install files ###############
 
-install(FILES  subside.h DESTINATION include/ew-2.0 COMPONENT sedflux)
+install(FILES  subside.h subside_api.h
+        DESTINATION include/ew-2.0
+        COMPONENT sedflux)
 
 
 
