@@ -56,7 +56,15 @@ Eh_ndgrid eh_ndgrid_malloc( gssize n_dim , gssize el_size , ... )
    return g;
 }
 
-void eh_free_ndgrid_data( Eh_ndgrid g )
+void
+eh_free_ndgrid_data (Eh_ndgrid g)
+{
+  if (g)
+    eh_free (g->data);
+}
+
+void
+eh_free_ndgrid (Eh_ndgrid g)
 {
    gssize n;
    if ( g )
@@ -66,7 +74,7 @@ void eh_free_ndgrid_data( Eh_ndgrid g )
       eh_free( g->x    );
       eh_free( g->low  );
       eh_free( g->size );
-      eh_free( g->data );
+      //eh_free( g->data );
    }
 }
 
@@ -169,10 +177,13 @@ gssize *eh_ndgrid_id_to_sub( gssize *size , gssize id , gssize n_dim )
    return sub;
 }
 
-void eh_ndgrid_destroy( Eh_ndgrid g )
+void
+eh_ndgrid_destroy (Eh_ndgrid g, gboolean free_data)
 {
-   eh_free_ndgrid_data( g );
-   eh_free( g );
+  eh_free_ndgrid (g);
+  if (free_data)
+    eh_free_ndgrid_data (g);
+  eh_free( g );
 }
 
 Eh_dbl_grid eh_ndgrid_to_grid( Eh_ndgrid g )
@@ -261,5 +272,11 @@ gssize eh_ndgrid_write( FILE *fp , Eh_ndgrid g )
    return eh_dbl_array_write( fp , g->data , n_x );
 }
 
+double*
+eh_ndgrid_start (Eh_ndgrid g)
+{
+  eh_return_val_if_fail (g, NULL);
+  return g->data;
+}
 #endif
 

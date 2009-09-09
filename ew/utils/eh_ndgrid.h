@@ -24,10 +24,12 @@ gssize      eh_ndgrid_sub_to_id   ( gssize *size     ,
 gssize*     eh_ndgrid_id_to_sub   ( gssize *size     ,
                                     gssize id        ,
                                     gssize n_dim                            );
-void        eh_ndgrid_destroy     ( Eh_ndgrid g                             );
+void        eh_ndgrid_destroy     ( Eh_ndgrid g, gboolean free_data );
 Eh_dbl_grid eh_ndgrid_to_grid     ( Eh_ndgrid g                             );
 Eh_ndgrid   eh_grid_to_ndgrid     ( Eh_grid g                               );
 gssize      eh_ndgrid_write       ( FILE *fp         , Eh_ndgrid g          );
+
+double* eh_ndgrid_start (Eh_ndgrid g);
 
 #endif
 
