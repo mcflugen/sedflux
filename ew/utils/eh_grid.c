@@ -297,8 +297,13 @@ eh_grid_set_data( Eh_grid g , void** new_data )
 {
   if (g->data)
   {
-    free (eh_grid_data_start (g));
-    free (g->data + g->low_x);
+    void *data = eh_grid_data_start (g);
+    void **data_ptr = g->data + g->low_x;
+
+    eh_free (data);
+    eh_free (data_ptr);
+    //free (eh_grid_data_start (g));
+    //free (g->data + g->low_x);
   }
   g->data = new_data;
   return g;
