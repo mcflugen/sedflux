@@ -31,5 +31,11 @@ Sed_property_file_attr sed_property_file_attr_dup( Sed_property_file_attr src );
 Sed_property_file_attr sed_property_file_attr_destroy( Sed_property_file_attr a );
 Sed_property_file_header sed_property_file_header_destroy( Sed_property_file_header h );
 
+Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
+                                     Sed_property property ,
+                                     double lower_left[3]  ,
+                                     double upper_right[3] ,
+                                     double resolution[3] );
+
 #endif
 
