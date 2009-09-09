@@ -45,6 +45,8 @@ double*     eh_dbl_grid_data_start   ( Eh_dbl_grid g );
 void*       eh_grid_data_start       ( Eh_grid g );
 
 Eh_grid     eh_grid_set_data         ( Eh_grid g , void** new_data );
+
+Eh_grid     eh_grid_borrow_data      (Eh_grid g, void* new_data);
 Eh_grid     eh_grid_set_x_lin        ( Eh_grid g , double x_0 , double dx );
 Eh_grid     eh_grid_set_y_lin        ( Eh_grid g , double y_0 , double dy );
 

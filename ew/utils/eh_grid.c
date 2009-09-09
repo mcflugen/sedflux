@@ -285,6 +285,8 @@ eh_grid_data_start( Eh_grid g )
 
 /** Set the data portion of a grid
 
+Note that the old data is freed before setting to the new value.
+
 \param   g   A Eh_grid
 \param   new_data   Location of the new data
 
@@ -293,8 +295,22 @@ eh_grid_data_start( Eh_grid g )
 Eh_grid
 eh_grid_set_data( Eh_grid g , void** new_data )
 {
-   g->data = new_data;
-   return g;
+  if (g->data)
+  {
+    free (eh_grid_data_start (g));
+    free (g->data + g->low_x);
+  }
+  g->data = new_data;
+  return g;
+}
+
+Eh_grid
+eh_grid_borrow_data (Eh_grid g, void* data)
+{
+  if (g->data)
+    eh_free (g->data[g->low_x]);
+  g->data[g->low_x] = data;
+  return g;
 }
 
 Eh_grid
