@@ -110,8 +110,8 @@ main (int argc, char *argv[])
         sedflux_run_until (state, t);
 
         prefix = g_strdup_printf ("%s_%.4d","grain",i);
-        //print_sedflux_var (state, prefix, "Elevation");
-        print_sedflux_var (state, prefix, "grain");
+        print_sedflux_var (state, prefix, "Elevation");
+        //print_sedflux_var (state, prefix, "grain");
 
         eh_free (prefix);
       }
