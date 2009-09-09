@@ -89,6 +89,8 @@ Sed_epoch_queue sed_epoch_queue_concat ( Sed_epoch_queue q_1 , Sed_epoch_queue q
 Sed_epoch_queue sed_epoch_queue_destroy( Sed_epoch_queue q );
 
 gssize          sed_epoch_queue_length ( Sed_epoch_queue q );
+Sed_epoch       sed_epoch_queue_first  (Sed_epoch_queue q);
+Sed_epoch       sed_epoch_queue_last   (Sed_epoch_queue q);
 Sed_epoch_queue sed_epoch_queue_order  ( Sed_epoch_queue q );
 Sed_epoch_queue sed_epoch_queue_push_tail( Sed_epoch_queue q , Sed_epoch e );
 Sed_epoch       sed_epoch_queue_pop    ( Sed_epoch_queue q );

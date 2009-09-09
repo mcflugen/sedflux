@@ -752,6 +752,19 @@ sed_epoch_queue_length( Sed_epoch_queue q )
    return g_list_length( q->l );
 }
 
+Sed_epoch
+sed_epoch_queue_first (Sed_epoch_queue q)
+{
+  return sed_epoch_queue_nth (q,0);
+}
+
+Sed_epoch
+sed_epoch_queue_last (Sed_epoch_queue q)
+{
+  gint len = sed_epoch_queue_length (q);
+  return sed_epoch_queue_nth (q,len-1);
+}
+
 Sed_epoch_queue
 sed_epoch_queue_order( Sed_epoch_queue q )
 {
