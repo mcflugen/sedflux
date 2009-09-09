@@ -207,7 +207,7 @@ gssize sed_property_file_write( Sed_property_file sed_fp , Sed_cube p )
       n += sed_property_file_header_fprint( sed_fp->fp , sed_fp->h );
       n += eh_ndgrid_write( sed_fp->fp , g );
 
-      eh_ndgrid_destroy( g );
+      eh_ndgrid_destroy (g, TRUE);
    }
 
    return n;
