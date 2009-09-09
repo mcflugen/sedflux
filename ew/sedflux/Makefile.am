@@ -41,6 +41,7 @@ sedflux_LDADD             = -lsedflux-2.0 -lgthread-2.0 -lglib-2.0
 lib_LTLIBRARIES           = libsedflux-2.0.la
 
 libsedflux_2_0_la_SOURCES = \
+                            sedflux_api.c \
                             csdms.c \
                             sedflux_command_line.c \
                             run_constants.c \
@@ -80,7 +81,7 @@ EXTRA_DIST                = sedflux_esmf.F90
 sedflux_SOURCES           = main.c
 
 
-sedfluxinclude_HEADERS    = sedflux.h
+sedfluxinclude_HEADERS    = sedflux.h sedflux_api.h
 sedfluxincludedir         = $(includedir)/ew-2.0
 
 noinst_HEADERS            = \
