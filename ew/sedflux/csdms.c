@@ -4,6 +4,8 @@
 #include <sed/csdms.h>
 #include <sed/sed_sedflux.h>
 
+#if defined (OLD_WAY)
+
 typedef struct
 {
    Sed_epoch_queue q;
@@ -125,3 +127,4 @@ csdms_sample_prog( void )
    return EXIT_SUCCESS;
 }
 
+#endif
