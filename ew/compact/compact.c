@@ -73,7 +73,8 @@ compact( Sed_column s )
 {
    eh_require( s );
 
-   if ( s || sed_column_len(s)<2 )
+   //if ( s || sed_column_len(s)<2 )
+   if ( s && sed_column_len(s)>2 )
    { /* There is a column with overlying load; compact it! */
       //const double hydro_static = sed_column_water_pressure( s );
       const gint n_grains = sed_sediment_env_n_types();
