@@ -44,8 +44,8 @@ print_sedflux_var (Sedflux_state* s, const gchar* prefix, const gchar* val_s)
     gint len[3] = {1, nx, ny};
     double size[3] = {1, 1, 1};
 
-    //z = sedflux_get_value (s, val_s, len);
-    z = sedflux_get_value_cube (s, val_s, len);
+    z = sedflux_get_value (s, val_s, len);
+    //z = sedflux_get_value_cube (s, val_s, len);
 
     eh_bov_print (prefix, z, val_s, len, size, NULL);
 
@@ -109,11 +109,13 @@ main (int argc, char *argv[])
       {
         sedflux_run_until (state, t);
 
+/*
         prefix = g_strdup_printf ("%s_%.4d","grain",i);
         print_sedflux_var (state, prefix, "Elevation");
         //print_sedflux_var (state, prefix, "grain");
 
         eh_free (prefix);
+*/
       }
     }
 
