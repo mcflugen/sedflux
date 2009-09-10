@@ -874,7 +874,10 @@ sed_process_run_now( Sed_process a , Sed_cube p )
 
       eh_redirect_log( log_name , DEFAULT_LOG );
 
-      fprintf( stderr , "%7g years [ Running process: %-25s]\r" , sed_cube_age_in_years(p) , a->name );
+      if (eh_get_verbosity_level()>=3)
+        fprintf( stderr ,
+                 "%7g years [ Running process: %-25s]\r" ,
+                 sed_cube_age_in_years(p) , a->name );
 
       if ( g_getenv("SED_TRACK_MASS") )
       {
