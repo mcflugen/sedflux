@@ -207,6 +207,7 @@ sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error )
 
          if ( tmp_err )
          {
+            g_prefix_error (&tmp_err, "%s (Record %d):", file, i);
             g_propagate_error( error , tmp_err );
 
             for ( i=0 ; hydro_arr[i] ; i++ )
@@ -311,9 +312,9 @@ sed_hydro_check( Sed_hydro a , GError** err )
    {
       gchar** err_s = NULL;
 
-      eh_check_to_s( sed_hydro_width   (a)>0.  , "River width > 0"    , &err_s );
-      eh_check_to_s( sed_hydro_depth   (a)>0.  , "River depth > 0"    , &err_s );
-      eh_check_to_s( sed_hydro_velocity(a)>0.  , "River velocity > 0" , &err_s );
+      eh_check_to_s( sed_hydro_width   (a)>=0.  , "River width > 0"    , &err_s );
+      eh_check_to_s( sed_hydro_depth   (a)>=0.  , "River depth > 0"    , &err_s );
+      eh_check_to_s( sed_hydro_velocity(a)>=0.  , "River velocity > 0" , &err_s );
       eh_check_to_s( sed_hydro_bedload (a)>=0. , "Bedload flux > 0"   , &err_s );
       eh_check_to_s( sed_hydro_duration(a)>0.  , "Duration > 0"       , &err_s );
       eh_check_to_s( eh_dbl_array_each_ge( 0.  , a->conc , a->n_grains ) ,
@@ -1807,10 +1808,11 @@ _hydro_read_inline_record( Sed_hydro_file fp )
 
    /* If the buffer hasn't already been set */
    if ( !(fp->buf_set) )
-   {
-      /* Fill the buffer with all the records from the file */
-      fp->buf_set = sed_hydro_scan( fp->file , NULL );
+   { /* Fill the buffer with all the records from the file */
+      GError* error = NULL;
+      fp->buf_set = sed_hydro_scan( fp->file , &error );
       fp->buf_cur = fp->buf_set;
+      eh_exit_on_error (error, "_hydro_read_inline_record");
    }
 
    eh_require( fp->buf_set );
