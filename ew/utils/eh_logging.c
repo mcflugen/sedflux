@@ -205,6 +205,25 @@ eh_set_verbosity_level( gint verbosity )
    return ignore;
 }
 
+gint
+eh_get_verbosity_level ()
+{
+  if (eh_ignore_log_level&G_LOG_LEVEL_ERROR)
+    return 0;
+  else if (eh_ignore_log_level&G_LOG_LEVEL_CRITICAL)
+    return 1;
+  else if (eh_ignore_log_level&G_LOG_LEVEL_WARNING)
+    return 2;
+  else if (eh_ignore_log_level&G_LOG_LEVEL_MESSAGE)
+    return 3;
+  else if (eh_ignore_log_level&G_LOG_LEVEL_INFO)
+    return 4;
+  else if (eh_ignore_log_level&G_LOG_LEVEL_DEBUG)
+    return 5;
+  else
+    return 6;
+}
+
 void eh_logger( const gchar*   log_domain ,
                 GLogLevelFlags log_level  ,
                 const gchar*   message    ,
