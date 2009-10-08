@@ -76,6 +76,30 @@ if ( WITH_CHECK )
   target_link_libraries(unit_test utils check)
 endif (WITH_CHECK)
 
+set (key_file_tests_SRCS test_key_file.c)
+add_executable (utils-test-key-file ${key_file_tests_SRCS})
+target_link_libraries (utils-test-key-file utils)
+
+set (input_val_tests_SRCS test_input_val.c)
+add_executable (utils-test-input-val ${input_val_tests_SRCS})
+target_link_libraries (utils-test-input-val utils)
+
+set (io_tests_SRCS test_io.c)
+add_executable (utils-test-io ${io_tests_SRCS})
+target_link_libraries (utils-test-io utils)
+
+set (symbol_table_tests_SRCS test_symbol_table.c)
+add_executable (utils-test-symbol-table ${symbol_table_tests_SRCS})
+target_link_libraries (utils-test-symbol-table utils)
+
+set (grid_tests_SRCS test_grid.c)
+add_executable (utils-test-grid ${grid_tests_SRCS})
+target_link_libraries (utils-test-grid utils)
+
+set (num_tests_SRCS test_num.c)
+add_executable (utils-test-num ${num_tests_SRCS})
+target_link_libraries (utils-test-num utils)
+
 ########### install files ###############
 
 install(FILES  eh_utils.h DESTINATION include/ew-2.0 COMPONENT sedflux)
