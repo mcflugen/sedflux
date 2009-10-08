@@ -216,7 +216,7 @@ Sed_cube      sed_cube_split_river( Sed_cube s , const gchar* name );
 void          sed_river_attach_susp_grid( Sed_riv r , Sed_cell_grid g );
 Sed_cell_grid sed_river_get_susp_grid( Sed_riv r );
 void          sed_river_detach_susp_grid( Sed_riv r );
-Sed_cube      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
+gpointer      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
 Sed_cube      sed_cube_remove_river( Sed_cube s , Sed_riv r );
 Sed_cube      sed_cube_remove_all_trunks( Sed_cube s );
 
@@ -243,6 +243,9 @@ Sed_riv       sed_cube_river_by_name   ( Sed_cube s , const char *name );
 Sed_riv       sed_cube_nth_river       ( Sed_cube s , gint n );
 gssize        sed_cube_river_id        ( Sed_cube s , Sed_riv river );
 
+double        sed_cube_nth_river_angle (Sed_cube s, gint n);
+Eh_ind_2      sed_cube_nth_river_mouth (Sed_cube s, gint n);
+
 //Sed_cell_grid sed_cube_in_suspension( Sed_cube s , gssize river_no );
 Sed_cell_grid sed_cube_in_suspension( Sed_cube s , Sed_riv r );
 
@@ -255,8 +258,6 @@ Sed_riv* sed_cube_all_rivers  ( Sed_cube s );
 gssize     sed_cube_number_of_rivers( Sed_cube s ) G_GNUC_DEPRECATED;
 gint       sed_cube_n_branches      ( Sed_cube s );
 gint       sed_cube_n_rivers        ( Sed_cube s );
-
-Sed_cube      sed_cube_add_trunk    ( Sed_cube s , Sed_riv river );
 
 Sed_cube sed_load_cube( FILE *fp );
 gssize sed_cube_column_id( const Sed_cube c , double x , double y );
@@ -315,7 +316,10 @@ GList *sed_cube_find_line_path( Sed_cube c         ,
                                 Eh_ind_2 *hinge_pos ,
                                 double angle );
 
-double sed_cube_river_angle( Sed_cube c , GList *river );
+double sed_cube_river_angle (Sed_cube c, gpointer river_id);
+Eh_ind_2 sed_cube_river_mouth (Sed_cube c, gpointer river_id);
+Sed_hydro sed_cube_river_hydro (Sed_cube c, gpointer river_id);
+Sed_cube sed_cube_river_set_hydro (Sed_cube c, gpointer river_id, Sed_hydro h);
 
 Eh_dbl_grid sed_get_floor_3_default( int floor_type , int n_x , int n_y );
 double**    sed_scan_sea_level_curve( const char* file , gint* len , GError** err );
@@ -381,6 +385,9 @@ Sed_cell sed_cube_to_cell( Sed_cube c , Sed_cell d );
 
 gint     sed_cube_count_above( Sed_cube c , double h );
 double   sed_cube_area_above ( Sed_cube c , double h );
+
+Sed_cube sed_cube_deposit (Sed_cube c, Sed_cell* dz);
+Sed_cube sed_cube_erode (Sed_cube c, double* dz);
 
 #endif
 

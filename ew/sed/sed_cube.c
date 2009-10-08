@@ -61,6 +61,8 @@ sed_cube_error_quark( void )
 }
 
 static Sedflux_mode __sedflux_mode = SEDFLUX_MODE_NOT_SET;
+static Sed_riv _sed_cube_nth_river (Sed_cube s, gint n);
+static Sed_riv _sed_cube_river (Sed_cube s, gpointer river_id);
 
 void
 sed_mode_set( Sedflux_mode mode )
@@ -157,7 +159,6 @@ sed_cube_new_empty( gssize n_x , gssize n_y )
    s->n_y          = n_y;
    s->river        = NULL;
    s->shore        = NULL;
-eh_message( "DONE" );
    
    return s;
 }
@@ -1592,16 +1593,29 @@ sed_river_detach_susp_grid( Sed_riv r )
    g_dataset_id_remove_data( r , SED_CUBE_SUSP_GRID );
 }
 
-Sed_cube
-sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk )
+gpointer
+sed_cube_add_trunk (Sed_cube s, Sed_riv new_trunk)
 {
-   Sed_cell_grid new_grid = sed_cube_create_in_suspension( s );
+  gpointer river_id = NULL;
 
-   s->river = g_list_prepend( s->river , new_trunk );
+  eh_require (s);
+  eh_require (new_trunk);
 
-   sed_river_attach_susp_grid( new_trunk , new_grid );
+  {
+    Sed_cell_grid new_grid = sed_cube_create_in_suspension (s);
+    Sed_riv trunk_copy = sed_river_dup (new_trunk);
 
-   return s;
+    eh_require (new_grid);
+    eh_require (trunk_copy);
+
+    s->river = g_list_prepend (s->river, trunk_copy);
+
+    sed_river_attach_susp_grid (new_trunk, new_grid);
+
+    river_id = (gpointer)trunk_copy;
+  }
+
+  return river_id;
 }
 
 Sed_cube
@@ -1655,14 +1669,118 @@ Sed_cube sed_cube_remove_river( Sed_cube s , gssize river_no )
    return s;
 }
 */
-Sed_riv
-sed_cube_nth_river( Sed_cube s , gint n )
+
+static Sed_riv
+_sed_cube_nth_river (Sed_cube s, gint n)
 {
-   Sed_riv r = NULL;
+  eh_require (s);
+  return g_list_nth_data( s->river , n );
+}
 
-   if ( s ) r = g_list_nth_data( s->river , n );
+static Sed_riv
+_sed_cube_river (Sed_cube s, gpointer river_id)
+{
+  eh_require (s);
+  if (g_list_find (s->river, river_id))
+    return (Sed_riv)river_id;
+  else
+    return NULL;
+}
 
-   return r;
+Sed_riv
+sed_cube_nth_river (Sed_cube s, gint n)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = g_list_nth_data (s->river, n);
+  eh_require (r);
+
+  return sed_river_dup (r);
+}
+
+double
+sed_cube_nth_river_angle (Sed_cube s, gint n)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = _sed_cube_nth_river (s, n);
+  eh_require (r);
+
+  return sed_river_angle (r);
+}
+
+double
+sed_cube_river_angle (Sed_cube s, gpointer river_id)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = _sed_cube_river (s, river_id);
+  eh_require (r);
+
+  return sed_river_angle (r);
+}
+
+Sed_hydro
+sed_cube_river_hydro (Sed_cube s, gpointer river_id)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = _sed_cube_river (s, river_id);
+  eh_require (r);
+
+  return sed_river_hydro (r);
+}
+
+Sed_cube
+sed_cube_river_set_hydro (Sed_cube s, gpointer river_id, Sed_hydro h)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = _sed_cube_river (s, river_id);
+  eh_require (r);
+
+  sed_river_set_hydro (r, h);
+
+  return s;
+}
+
+Eh_ind_2
+sed_cube_nth_river_mouth (Sed_cube s, gint n)
+{
+  Eh_ind_2 ind = {-1, -1};
+
+  eh_require (s);
+
+  {
+    Sed_riv r = _sed_cube_nth_river (s, n);
+    eh_require (r);
+
+    ind = sed_river_mouth (r);
+  }
+
+  return ind;
+}
+
+Eh_ind_2
+sed_cube_river_mouth (Sed_cube s, gpointer river_id)
+{
+  Eh_ind_2 ind = {-1, -1};
+
+  eh_require (s);
+
+  {
+    Sed_riv r = _sed_cube_river (s, river_id);
+    eh_require (r);
+
+    ind = sed_river_mouth (r);
+  }
+
+  return ind;
 }
 
 /*
@@ -3440,7 +3558,8 @@ gssize sed_cube_write( FILE *fp , const Sed_cube p )
 
 \return A pointer to a newly created Sed_cube.
 */
-Sed_cube sed_cube_read( FILE *fp )
+Sed_cube
+sed_cube_read( FILE *fp )
 {
    Sed_cube p = NULL;
 
@@ -3906,3 +4025,36 @@ sed_cube_area_above( Sed_cube c , double h )
           * sed_cube_x_res(c)
           * sed_cube_y_res(c);
 }
+
+Sed_cube
+sed_cube_deposit (Sed_cube c, Sed_cell* dz)
+{
+  eh_require (c);
+
+  if (dz)
+  {
+    const int len = sed_cube_size (c);
+    int i;
+    for (i=0; i<len; i++)
+      sed_column_add_cell (sed_cube_col (c, i), dz[i]);
+  }
+
+  return c;
+}
+
+Sed_cube
+sed_cube_erode (Sed_cube c, double* dz)
+{
+  eh_require (c);
+
+  if (dz)
+  {
+    const int len = sed_cube_size (c);
+    int i;
+    for (i=0; i<len; i++)
+      sed_column_remove_top (sed_cube_col (c, i), dz[i]);
+  }
+
+  return c;
+}
+
