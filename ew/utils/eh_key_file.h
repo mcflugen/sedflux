@@ -91,10 +91,16 @@ Eh_symbol_table eh_key_file_get_symbol_table ( Eh_key_file f           ,
 Eh_symbol_table* eh_key_file_get_symbol_tables( Eh_key_file f          ,
                                               const gchar* group_name );
 Eh_key_file   eh_key_file_scan              ( const char* file , GError** error );
+Eh_key_file   eh_key_file_scan_text (const gchar* buffer, GError** error);
 gint          eh_key_file_scan_from_template( const gchar* file       ,
                                               const gchar* group_name ,
                                               Eh_key_file_entry* t    ,
                                               GError** error );
+gint          eh_key_file_scan_text_from_template (
+                                       const gchar* buffer,
+                                       const gchar* group_name ,
+                                       Eh_key_file_entry t[]   ,
+                                       GError** error );
 gssize        eh_key_file_fprint_template   ( FILE* fp                ,
                                               const gchar* group_name ,
                                               Eh_key_file_entry entry[] );
@@ -102,6 +108,10 @@ Eh_symbol_table eh_key_file_scan_for        ( const gchar* file      ,
                                               const gchar* name      ,
                                               Eh_symbol_table tab    ,
                                               GError** error );
+Eh_symbol_table eh_key_file_scan_text_for (const gchar* buffer,
+                                           const gchar* name,
+                                           Eh_symbol_table tab,
+                                           GError** error);
 Eh_symbol_table eh_key_file_pop_group       ( Eh_key_file f );
 
 #endif

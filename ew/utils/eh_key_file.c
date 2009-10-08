@@ -758,6 +758,63 @@ eh_key_file_scan( const char* file , GError** error )
    return f;
 }
 
+Eh_key_file
+eh_key_file_scan_text (const char* buffer, GError** error)
+{
+   Eh_key_file f = NULL;
+
+   eh_return_val_if_fail(error==NULL || *error==NULL, NULL);
+
+   f = eh_key_file_new();
+
+   if (f)
+   {
+      GError* tmp_err = NULL;
+      GScanner* s;
+
+      s = eh_open_scanner_text(buffer, strlen(buffer), &tmp_err);
+
+      if ( s )
+      {
+         gboolean        done = FALSE;
+         gchar*          group_name;
+         Eh_symbol_table symbol_table;
+         gpointer        user_data[2];
+
+         while( !done && !g_scanner_eof(s) )
+         {
+            symbol_table = eh_symbol_table_new();
+            group_name = eh_scan_next_record( s , symbol_table );
+
+            if ( group_name )
+            {
+               user_data[0] = f;
+               user_data[1] = group_name;
+
+               eh_symbol_table_foreach( symbol_table , &add_record_value , user_data );
+            }
+            else
+               done = TRUE;
+
+            eh_symbol_table_destroy( symbol_table );
+            eh_free( group_name );
+         }
+
+         eh_close_scanner( s );
+      }
+      else
+      {
+         f = eh_key_file_destroy( f );
+         if (tmp_err)
+           g_propagate_error( error , tmp_err );
+         else
+           eh_require_not_reached ();
+      }
+   }
+
+   return f;
+}
+
 gint
 eh_key_file_scan_from_template( const gchar* file       ,
                                 const gchar* group_name ,
@@ -823,6 +880,101 @@ eh_key_file_scan_from_template( const gchar* file       ,
          }
          else
             eh_strv_append( &missing_entries , g_strconcat(file , ": Missing required entry: " , t[i].label , NULL ) );
+
+      }
+
+      if ( !tmp_error && missing_entries )
+      {
+         gchar* missing_list = g_strjoinv( "\n" , missing_entries );
+
+         g_set_error( &tmp_error ,
+                      EH_KEY_FILE_ERROR ,
+                      EH_KEY_FILE_ERROR_MISSING_ENTRY ,
+                      "%s\n" , missing_list );
+
+         eh_free( missing_list );
+      }
+
+      if ( tmp_error )
+         g_propagate_error( error , tmp_error );
+
+      g_strfreev( missing_entries );
+      eh_free( len );
+      eh_key_file_destroy( f );
+   }
+
+   return n_entries;
+}
+
+gint
+eh_key_file_scan_text_from_template (const gchar* buffer,
+                                       const gchar* group_name ,
+                                       Eh_key_file_entry t[]   ,
+                                       GError** error )
+{
+   gint n_entries = 0;
+
+   eh_return_val_if_fail( error==NULL || *error==NULL , 0 );
+
+   if (buffer)
+   {
+      GError*     tmp_error       = NULL;
+      Eh_key_file f               = NULL;
+      gchar**     missing_entries = NULL;
+      gint*       len;
+      gint        i;
+
+      for ( n_entries=0 ; t[n_entries].label ; n_entries++ );
+
+      for ( i=0 ; i<n_entries ; i++ )
+         if ( t[i].arg == EH_ARG_DARRAY )
+         {
+            eh_require( t[i].arg_data_len );
+            eh_return_val_if_fail( t[i].arg_data_len , 0 );
+
+            *(t[i].arg_data_len) = 0;
+         }
+
+      len = eh_new( gint , n_entries );
+
+      f = eh_key_file_scan_text (buffer, &tmp_error);
+
+      for ( i=0 ; i<n_entries && !tmp_error ; i++ )
+      {
+         if ( eh_key_file_has_key( f , group_name , t[i].label ) )
+         {
+            switch ( t[i].arg )
+            {
+               case EH_ARG_DBL:
+                  *(double* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
+                  break;
+               case EH_ARG_INT:
+                  *(gint* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
+                  break;
+               case EH_ARG_DARRAY:
+                  *(double**)(t[i].arg_data) = eh_key_file_get_dbl_array( f , group_name , t[i].label , &(len[i]) );
+
+                  if ( *(t[i].arg_data_len)==0 || *(t[i].arg_data_len)==len[i] )
+                     *(t[i].arg_data_len) = len[i];
+                  else
+                     g_set_error( &tmp_error ,
+                                  EH_KEY_FILE_ERROR ,
+                                  EH_KEY_FILE_ERROR_ARRAY_LEN_MISMATCH ,
+                                  "%s: Array length mismatch (%d!=%d): %s\n" ,
+                                  "stream" , len[i] , *(t[i].arg_data_len) , t[i].label );
+
+                  break;
+               case EH_ARG_FILENAME:
+                  *(gchar**)(t[i].arg_data)  = eh_key_file_get_value( f , group_name , t[i].label );
+                  break;
+            }
+         }
+         else
+            eh_strv_append (&missing_entries ,
+                             g_strconcat(
+                               "stream",
+                               ": Missing required entry: ",
+                               t[i].label, NULL) );
 
       }
 
@@ -958,6 +1110,50 @@ eh_key_file_scan_for( const gchar* file ,
 
    return new_tab;
 }
+
+Eh_symbol_table
+eh_key_file_scan_text_for (const gchar* buffer,
+                           const gchar* name,
+                           Eh_symbol_table tab,
+                           GError** error)
+{
+   Eh_symbol_table new_tab = NULL;
+
+   eh_return_val_if_fail (error==NULL || *error==NULL, NULL);
+
+   //---
+   // Open the key-file and scan in all of the entries.
+   //
+   // Add each key-value pair (of the specified group) to the symbol table.
+   //---
+   {
+      GError*     tmp_err  = NULL;
+      Eh_key_file key_file = eh_key_file_scan_text(buffer, &tmp_err);
+   
+      if ( key_file )
+      {
+         if ( eh_key_file_has_group( key_file , name ) )
+            new_tab = eh_key_file_get_symbol_table( key_file , name );
+         else
+            new_tab = NULL;
+      }
+      else
+         g_propagate_error( error , tmp_err );
+
+      eh_key_file_destroy( key_file );
+   }
+
+   if ( tab && new_tab )
+   {
+      eh_symbol_table_copy   ( tab , new_tab );
+      eh_symbol_table_destroy( new_tab );
+
+      new_tab = tab;
+   }
+
+   return new_tab;
+}
+
 
 /** Pop the next group of a key-file
 
