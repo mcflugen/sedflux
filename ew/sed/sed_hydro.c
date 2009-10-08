@@ -163,6 +163,12 @@ sed_hydro_scan( const gchar* file , GError** error )
 }
 
 Sed_hydro*
+sed_hydro_scan_text (const gchar* buffer, GError** error)
+{
+   return sed_hydro_scan_text_n_records (buffer, -1, error);
+}
+
+Sed_hydro*
 sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error )
 {
    Sed_hydro* hydro_arr = NULL;
@@ -221,6 +227,68 @@ sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error )
          g_propagate_error( error , tmp_err );
 
       eh_free            ( name_used );
+      eh_key_file_destroy( key_file  );
+   }
+
+   return hydro_arr;
+}
+
+Sed_hydro*
+sed_hydro_scan_text_n_records (const gchar* buffer, gint n_recs, GError** error)
+{
+   Sed_hydro* hydro_arr = NULL;
+
+   eh_require (buffer);
+   eh_require (error==NULL || *error==NULL);
+
+   if (n_recs!=0)
+   {
+      gchar*          file = g_strdup("Text Buffer");
+      GError*         tmp_err   = NULL;
+      Eh_key_file     key_file  = NULL;
+
+      key_file = eh_key_file_scan_text (buffer, &tmp_err);
+
+      if (key_file)
+      {
+         gint            i;
+         Eh_symbol_table group;
+         const gint      len = eh_key_file_size(key_file);
+
+         if      ( n_recs<0   ) n_recs = len;
+         else if ( n_recs>len ) n_recs = len;
+
+         hydro_arr = eh_new0( Sed_hydro , n_recs+1 );
+
+         for ( group = eh_key_file_pop_group( key_file ), i=0 ;
+               group && !tmp_err && i<n_recs ;
+               group = eh_key_file_pop_group( key_file ), i++ )
+         {
+            hydro_arr[i] = sed_hydro_new_from_table( group , &tmp_err );
+
+            if ( !tmp_err ) sed_hydro_check( hydro_arr[i] , &tmp_err );
+
+            eh_symbol_table_destroy( group );
+         }
+         hydro_arr[i] = NULL;
+
+         sed_hydro_array_set_time( hydro_arr , 0. );
+
+         if ( tmp_err )
+         {
+            g_prefix_error (&tmp_err, "%s (Record %d):", file, i);
+            g_propagate_error( error , tmp_err );
+
+            for ( i=0 ; hydro_arr[i] ; i++ )
+               sed_hydro_destroy( hydro_arr[i] );
+            eh_free( hydro_arr );
+            hydro_arr = NULL;
+         }
+
+      }
+      else
+         g_propagate_error( error , tmp_err );
+
       eh_key_file_destroy( key_file  );
    }
 

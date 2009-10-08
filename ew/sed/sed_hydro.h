@@ -108,7 +108,9 @@ gssize        sed_hydro_array_fprint( FILE* fp , Sed_hydro* rec_a );
 gssize        sed_hydro_fprint      ( FILE* fp , Sed_hydro  rec   );
 //Sed_hydro     sed_hydro_init( char *file );
 Sed_hydro*    sed_hydro_scan          ( const gchar* file , GError** error );
+Sed_hydro*    sed_hydro_scan_text     (const gchar* buffer, GError** error);
 Sed_hydro*    sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error );
+Sed_hydro*    sed_hydro_scan_text_n_records (const gchar* buffer, gint n_recs, GError** error);
 
 Sed_hydrotrend_header* sed_hydro_scan_inline_header( FILE *fp );
 gssize        sed_hydro_read_n_records( FILE* fp , Sed_hydro* rec , int n_grains , int n_recs );
