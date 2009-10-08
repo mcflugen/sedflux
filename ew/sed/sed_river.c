@@ -210,6 +210,8 @@ sed_river_set_angle_limit( Sed_riv s , double a_min , double a_max )
       }
       else
          eh_require_not_reached();
+
+      sed_river_set_angle (s, s->hinge->angle);
    }
    return s;
 }
