@@ -64,6 +64,41 @@ if (WITH_CHECK)
   target_link_libraries( libsed_unit_test sedflux check )
 endif (WITH_CHECK)
 
+set (cell_tests_SRCS test_cell.c)
+add_executable (sed-test-cell ${cell_tests_SRCS})
+target_link_libraries (sed-test-cell sedflux)
+
+set (column_tests_SRCS test_column.c)
+add_executable (sed-test-column ${column_tests_SRCS})
+target_link_libraries (sed-test-column sedflux)
+
+set (cube_tests_SRCS test_cube.c)
+add_executable (sed-test-cube ${cube_tests_SRCS})
+target_link_libraries (sed-test-cube sedflux)
+
+set (hydro_tests_SRCS test_hydro.c)
+add_executable (sed-test-hydro ${hydro_tests_SRCS})
+target_link_libraries (sed-test-hydro sedflux)
+
+set (river_tests_SRCS test_river.c)
+add_executable (sed-test-river ${river_tests_SRCS})
+target_link_libraries (sed-test-river sedflux)
+
+set (sediment_tests_SRCS test_sediment.c)
+add_executable (sed-test-sediment ${sediment_tests_SRCS})
+target_link_libraries (sed-test-sediment sedflux)
+
+set (wave_tests_SRCS test_wave.c)
+add_executable (sed-test-wave ${wave_tests_SRCS})
+target_link_libraries (sed-test-wave sedflux)
+
+########### utility programs ###############
+set (print_sed_file_SRCS print_sediment_file.c)
+add_executable (sed-print-sediment ${print_sed_file_SRCS})
+
+set (print_hydro_file_SRCS print_hydro_file.c)
+add_executable (sed-print-hydro ${print_hydro_file_SRCS})
+
 ########### install files ###############
 
 install(FILES  sed.h DESTINATION include/ew-2.0 COMPONENT sedflux)
