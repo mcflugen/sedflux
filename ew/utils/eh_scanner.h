@@ -128,12 +128,20 @@ void eh_print_symbol(char *key, char  *value, FILE *fp);
 // return value : a newly create symbol table composed of all the symbol table arguments.
 //Symbol_table *eh_merge_symbol_table( Symbol_table* table1 , ... );
 
-GScanner* eh_open_scanner_text( const gchar* text , gint len , GError** error );
 
 // open a scanner file.
 // filename     : the name of the file to open.
 // return value : the opened scanner.
 GScanner *eh_open_scanner(const char *filename , GError** error );
+
+/** Open a scanner from a text buffer
+
+@param buffer A pointer to a text buffer
+@param error A GError
+
+@return A new GScanner
+*/
+GScanner* eh_open_scanner_text( const gchar* buffer , gint len , GError** error );
 
 void eh_close_scanner( GScanner* );
 

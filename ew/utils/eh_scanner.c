@@ -335,14 +335,14 @@ _eh_scanner_set_config( GScannerConfig* c )
 }
 
 GScanner*
-eh_open_scanner_text( const gchar* text , gint len , GError** error )
+eh_open_scanner_text (const gchar* buffer, gint len, GError** error)
 {
    GScanner* s = NULL;
 
-   eh_require( text );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+   eh_require (buffer);
+   eh_return_val_if_fail (error==NULL || *error==NULL, NULL);
 
-   if ( text && len>0 )
+   if (buffer && len>0)
    {
       GScannerConfig config;
 
@@ -351,9 +351,9 @@ eh_open_scanner_text( const gchar* text , gint len , GError** error )
       s = g_scanner_new(&config);
       s->input_name = "Text Buffer";
 
-      g_scanner_input_text( s , text , len );
+      g_scanner_input_text (s, buffer, len);
    }
-   return NULL;
+   return s;
 }
 
 GScanner*
