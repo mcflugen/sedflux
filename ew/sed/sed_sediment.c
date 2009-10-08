@@ -656,6 +656,47 @@ sed_sediment_scan( const char *file , GError** error )
    return sed;
 }
 
+Sed_sediment
+sed_sediment_scan_text (const gchar* buffer, GError** error)
+{
+   Sed_sediment sed = NULL;
+
+   eh_require (buffer);
+   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+
+   {
+      GError*     tmp_err   = NULL;
+      Eh_key_file key_file  = NULL;
+
+      key_file = eh_key_file_scan_text (buffer, &tmp_err);
+
+      if ( key_file )
+      {
+         Eh_symbol_table group;
+         Sed_type        new_type;
+
+         sed = sed_sediment_new();
+
+         for ( group = eh_key_file_pop_group( key_file ) ;
+               group ;
+               group = eh_key_file_pop_group( key_file ) )
+         {
+            new_type = sed_type_init( group );
+
+            sed      = sed_sediment_add_type( sed , new_type );
+
+            group    = eh_symbol_table_destroy( group );
+            new_type = sed_type_destroy       ( new_type );
+         }
+      }
+      else
+         g_propagate_error( error , tmp_err );
+
+      eh_key_file_destroy( key_file  );
+   }
+
+   return sed;
+}
 #define S_KEY_GRAIN_SIZE "grain size"
 #define S_KEY_RHO_GRAIN  "grain density"
 #define S_KEY_RHO_SAT    "saturated density"
