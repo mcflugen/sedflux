@@ -37,7 +37,7 @@ main (int argc, char* argv[])
   eh_exit_on_error (error);
 
   if (version)
-  {
+  { /* Print version number and exit. */
     eh_fprint_version_info (stdout, SED_PRINT_PROGRAM_NAME,
                                     SED_PRINT_MAJOR_VERSION,
                                     SED_PRINT_MINOR_VERSION,
@@ -45,13 +45,15 @@ main (int argc, char* argv[])
     eh_exit (EXIT_SUCCESS);
   }
 
-  {
+  { /* Print the input file. */
     char** line = NULL;
 
     if (g_ascii_strcasecmp (file, "SEDIMENT")==0)
       line = _default_sediment_file;
     else if (g_ascii_strcasecmp (file, "RIVER")==0)
       line = _default_hydro_inline_file;
+    else if (g_ascii_strcasecmp (file, "INIT")==0)
+      line = _default_init_file;
     else
       g_assert_not_reached ();
 
