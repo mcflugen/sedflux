@@ -1,7 +1,10 @@
+#include <stdlib.h>
 #include <glib.h>
 
 #include "utils/utils.h"
 #include "sed_column.h"
+
+#include "test_sed.h"
 
 void
 test_sed_column_new (void)
@@ -276,13 +279,15 @@ test_sed_column_stack_cells_loc (void)
 
    for (i=0; i<10; i++)
    {
-      eh_strv_append( &c_arr , sed_cell_new_classed( NULL , 1. , S_SED_TYPE_SAND ) );
+      eh_strv_append (
+        (gchar***)&c_arr,
+        (gchar*)sed_cell_new_classed (NULL, 1., S_SED_TYPE_SAND));
       mass_in += sed_cell_mass( c_arr[i] );
    }
 
    sed_column_stack_cells_loc( c , c_arr );
 
-   g_assert (sed_column_len(c)==g_strv_length(c_arr));
+   g_assert (sed_column_len(c)==g_strv_length((gchar**)c_arr));
    g_assert (eh_compare_dbl (sed_column_mass(c), mass_in, 1e-12));
    g_assert (eh_compare_dbl (sed_column_thickness(c), 10., 1e-12));
 
@@ -1551,7 +1556,7 @@ test_sed_column_extract_above_0 (void)
    c_arr = sed_column_extract_cells_above( c , 140 );
 
    g_assert (c_arr!=NULL);
-   g_assert (g_strv_length(c_arr)==3);
+   g_assert (g_strv_length((gchar**)c_arr)==3);
    g_assert (fabs( sed_column_base_height(c)-123 ) < 1e-23);
    g_assert (fabs( sed_column_top_height(c) -140 ) < 1e-23);
 
@@ -1575,7 +1580,7 @@ test_sed_column_extract_above_1 (void)
    c_arr = sed_column_extract_cells_above( c , 125.1 );
 
    g_assert (c_arr!=NULL);
-   g_assert (g_strv_length(c_arr)==18);
+   g_assert (g_strv_length((gchar**)c_arr)==18);
    g_assert (fabs( sed_column_base_height(c)-123   ) < 1e-23);
    g_assert (fabs( sed_column_top_height(c) -125.1 ) < 1e-23);
 
@@ -1599,7 +1604,7 @@ test_sed_column_extract_above_2 (void)
    c_arr = sed_column_extract_cells_above( c , 120.1 );
 
    g_assert (c_arr!=NULL);
-   g_assert (g_strv_length(c_arr)==20);
+   g_assert (g_strv_length((gchar**)c_arr)==20);
    g_assert (sed_column_is_empty(c));
    g_assert (fabs( sed_column_base_height(c)-123 ) < 1e-23);
    g_assert (fabs( sed_column_top_height(c) -123 ) < 1e-23);
@@ -1944,22 +1949,13 @@ test_sed_column_remove_empty (void)
    sed_column_destroy( s );
 }
 
-
 int
 main (int argc, char* argv[])
 {
-  Sed_sediment s     = NULL;
-  GError*      error = NULL;
-
   eh_init_glib ();
 
-  s = sed_sediment_scan (SED_SEDIMENT_TEST_FILE, &error);
-
-  if ( s )
-    sed_sediment_set_env (s);
-  else
-    eh_error ("%s: Unable to read sediment file: %s",
-              SED_SEDIMENT_TEST_FILE, error->message);
+  if (!sed_test_setup_sediment ("sediment"))
+    eh_exit (EXIT_FAILURE);
 
   g_test_init (&argc, &argv, NULL);
 
@@ -2061,5 +2057,7 @@ main (int argc, char* argv[])
 
 
   g_test_run ();
+
+  return EXIT_SUCCESS;
 }
 

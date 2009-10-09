@@ -4,6 +4,8 @@
 #include "sed_hydro.h"
 #include "sed_input_files.h"
 
+#include "test_sed.h"
+
 void
 test_sed_hydro_new (void)
 {
@@ -378,18 +380,10 @@ test_sed_hydro_file_new_buffer (void)
 int
 main (int argc, char* argv[])
 {
-  Sed_sediment s     = NULL;
-  GError*      error = NULL;
-
   eh_init_glib ();
 
-  s = sed_sediment_scan (SED_SEDIMENT_TEST_FILE, &error);
-
-  if ( s )
-    sed_sediment_set_env (s);
-  else
-    eh_error ("%s: Unable to read sediment file: %s",
-              SED_SEDIMENT_TEST_FILE, error->message);
+  if (!sed_test_setup_sediment ("sediment"))
+    eh_exit (EXIT_FAILURE);
 
   g_test_init (&argc, &argv, NULL);
 
