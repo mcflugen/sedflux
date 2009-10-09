@@ -172,6 +172,7 @@ gssize       sed_sediment_write    ( FILE*              , const Sed_sediment );
 Sed_sediment sed_sediment_load     ( FILE*                                   );
 Sed_sediment sed_sediment_scan     (const char* file, GError** error);
 Sed_sediment sed_sediment_scan_text(const gchar* buffer, GError** error);
+gchar*       sed_sediment_default_text ();
 
 Sed_sediment sed_sediment_set_env    ( Sed_sediment s );
 Sed_sediment sed_sediment_unset_env  ( );

@@ -48,6 +48,23 @@ CLASS ( Sed_cube )
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 };
 
+char* _default_init_file[] = {
+"[ global ]",
+"margin name:            Earth",
+"vertical resolution:    .5",
+"x resolution:           150",
+"y resolution:           150",
+"bathymetry file:        mars_bathy_150m.csv",
+"sediment file:          earth_sediment.kvf",
+"",
+"[ epoch ]",
+"number:           1",
+"duration:         200y",
+"time step:        1y",
+"process file:     earth_epoch.kvf",
+NULL
+};
+
 GQuark
 sed_cube_susp_grid_quark( void )
 {
