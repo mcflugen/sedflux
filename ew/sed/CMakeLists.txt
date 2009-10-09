@@ -64,31 +64,31 @@ if (WITH_CHECK)
   target_link_libraries( libsed_unit_test sedflux check )
 endif (WITH_CHECK)
 
-set (cell_tests_SRCS test_cell.c)
+set (cell_tests_SRCS test_cell.c test_sed.c)
 add_executable (sed-test-cell ${cell_tests_SRCS})
 target_link_libraries (sed-test-cell sedflux)
 
-set (column_tests_SRCS test_column.c)
+set (column_tests_SRCS test_column.c test_sed.c)
 add_executable (sed-test-column ${column_tests_SRCS})
 target_link_libraries (sed-test-column sedflux)
 
-set (cube_tests_SRCS test_cube.c)
+set (cube_tests_SRCS test_cube.c test_sed.c)
 add_executable (sed-test-cube ${cube_tests_SRCS})
 target_link_libraries (sed-test-cube sedflux)
 
-set (hydro_tests_SRCS test_hydro.c)
+set (hydro_tests_SRCS test_hydro.c test_sed.c)
 add_executable (sed-test-hydro ${hydro_tests_SRCS})
 target_link_libraries (sed-test-hydro sedflux)
 
-set (river_tests_SRCS test_river.c)
+set (river_tests_SRCS test_river.c test_sed.c)
 add_executable (sed-test-river ${river_tests_SRCS})
 target_link_libraries (sed-test-river sedflux)
 
-set (sediment_tests_SRCS test_sediment.c)
+set (sediment_tests_SRCS test_sediment.c test_sed.c)
 add_executable (sed-test-sediment ${sediment_tests_SRCS})
 target_link_libraries (sed-test-sediment sedflux)
 
-set (wave_tests_SRCS test_wave.c)
+set (wave_tests_SRCS test_wave.c test_sed.c)
 add_executable (sed-test-wave ${wave_tests_SRCS})
 target_link_libraries (sed-test-wave sedflux)
 
