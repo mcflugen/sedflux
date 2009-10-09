@@ -459,13 +459,13 @@ double sed_measure_cube_river_mouth( Sed_cube p , gssize i , gssize j )
    {
       gssize len = sed_cube_n_rivers( p );
       gssize n;
-      Sed_riv this_river;
       gboolean found=FALSE;
+      Eh_ind_2 ind;
 
       for ( n=0 ; n<len && !found ; n++ )
       {
-         this_river = sed_cube_nth_river( p , n );
-         if ( sed_river_mouth_is( this_river , i , j ) )
+         ind = sed_cube_nth_river_mouth (p, n);
+         if (ind.i==i && ind.j==j)
             found = TRUE;
       }
 
