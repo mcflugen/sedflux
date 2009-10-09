@@ -93,11 +93,9 @@ add_executable (sed-test-wave ${wave_tests_SRCS})
 target_link_libraries (sed-test-wave sedflux)
 
 ########### utility programs ###############
-set (print_sed_file_SRCS print_sediment_file.c)
-add_executable (sed-print-sediment ${print_sed_file_SRCS})
-
-set (print_hydro_file_SRCS print_hydro_file.c)
-add_executable (sed-print-hydro ${print_hydro_file_SRCS})
+set (print_input_file_SRCS print_input.c)
+add_executable (sed-print-input ${print_input_file_SRCS})
+target_link_libraries (sed-print-input sedflux)
 
 ########### install files ###############
 
