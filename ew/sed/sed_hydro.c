@@ -55,38 +55,6 @@ CLASS ( Sed_hydro_file )
    Hydro_read_header_func read_hdr;
 };
 
-char* _default_hydro_inline_file[] = {
-"[ 'Season 1' ]",
-"Duration (y): .25y",
-"Bedload (kg/s): 100.0",
-"Suspended load concentration (kg/m^3): 1.0, 2.5, 2.5, 2.5",
-"Velocity (m/s): 2.",
-"Width (m): 125.0",
-"Depth (m): 2.0",
-"[ 'Season 2' ]",
-"Duration (y): 3m",
-"Bedload (kg/s): 200.0",
-"Suspended load concentration (kg/m^3): 2.5, 2.5, 2.5, 2.5",
-"Velocity (m/s): 2.",
-"Width (m): 125.0",
-"Depth (m): 2.0",
-"[ 'Season 3' ]",
-"Duration (y): .25y",
-"Bedload (kg/s): 300.0",
-"Suspended load concentration (kg/m^3): 3.0, 2.5, 2.5, 2.5",
-"Velocity (m/s): 2.",
-"Width (m): 125.0",
-"Depth (m): 2.0",
-"[ 'Season 4' ]",
-"Duration (y): 3m",
-"Bedload (kg/s): 400.0",
-"Suspended load concentration (kg/m^3): 4.0, 2.5, 2.5, 2.5",
-"Velocity (m/s): 2.",
-"Width (m): 125.0",
-"Depth (m): 2.0",
-NULL
-};
-
 GQuark
 sed_hydro_error_quark( void )
 {
