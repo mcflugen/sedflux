@@ -2,6 +2,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. )
 
 set( DATADIR ${CMAKE_INSTALL_PREFIX}/share )
+set( PLUGINDIR ${CMAKE_INSTALL_PREFIX}/lib )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/datadir_path.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/datadir_path.h )
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc )
@@ -26,6 +27,7 @@ SET(sedflux_LIB_SRCS
    sed_signal.c
    sed_tripod.c
    sed_wave.c
+   sed_input_files.c
 )
 
 add_library(sedflux ${sedflux_LIB_SRCS})
@@ -93,9 +95,10 @@ add_executable (sed-test-wave ${wave_tests_SRCS})
 target_link_libraries (sed-test-wave sedflux)
 
 ########### utility programs ###############
-set (print_input_file_SRCS print_input.c)
+set (print_input_file_SRCS print_input.c sed_input_files.c)
 add_executable (sed-print-input ${print_input_file_SRCS})
-target_link_libraries (sed-print-input sedflux)
+target_link_libraries (sed-print-input sedflux gmodule-2.0)
+install(TARGETS sed-print-input DESTINATION bin COMPONENT sedflux)
 
 ########### install files ###############
 
