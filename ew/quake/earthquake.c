@@ -42,3 +42,19 @@ double earthquake(double a,double dt)
    return acceleration;
 }
 
+static gchar* _default_config[] = {
+"mean acceleration of 100 year quake",
+"variance of 100 year quake",
+"seed for random number generator",
+NULL
+};
+
+gchar*
+get_config_text (const gchar* file)
+{
+  if (g_ascii_strcasecmp (file, "config")==0)
+    return g_strjoinv ("\n", _default_config);
+  else
+    return NULL;
+}
+
