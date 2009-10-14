@@ -97,7 +97,8 @@ run_river( Sed_process proc , Sed_cube prof )
 
       mass_removed     = susp_mass+bedload_mass - (init_susp_mass+init_bedload_mass);
 
-      sed_river_set_hydro( data->this_river , river_data );
+      //sed_river_set_hydro( data->this_river , river_data );
+      sed_cube_river_set_hydro (prof, data->this_river, river_data);
 
       eh_message( "time         : %f" , sed_cube_age_in_years(prof) );
       eh_message( "duration     : %f" , sed_cube_time_step_in_years(prof) );
@@ -225,14 +226,18 @@ init_river_data( Sed_process proc , Sed_cube prof , GError** error )
 
    if ( data )
    {
+      Sed_riv new_river;
       data->total_mass            = 0;
       data->total_mass_from_river = 0;
       data->fp_river              = sed_hydro_file_new( data->filename , data->type , data->buffer_is_on , TRUE , error );
-      data->this_river            = sed_river_new     ( data->river_name );
+      //data->this_river            = sed_river_new     ( data->river_name );
 
+      new_river = sed_river_new (data->river_name);
       eh_require( data->fp_river );
 
-      sed_cube_add_trunk( prof , data->this_river );
+      data->this_river = sed_cube_add_trunk (prof, new_river);
+
+      sed_river_destroy (new_river);
    }
 
    return TRUE;

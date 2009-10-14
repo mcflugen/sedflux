@@ -232,7 +232,8 @@ typedef struct
    int              location;
    double           total_mass;
    double           total_mass_from_river;
-   Sed_riv          this_river;
+   //Sed_riv          this_river;
+   gpointer         this_river;
    char*            river_name;
 }
 River_t;
