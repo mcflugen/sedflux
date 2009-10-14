@@ -1610,7 +1610,7 @@ sed_cube_add_trunk (Sed_cube s, Sed_riv new_trunk)
 
     s->river = g_list_prepend (s->river, trunk_copy);
 
-    sed_river_attach_susp_grid (new_trunk, new_grid);
+    sed_river_attach_susp_grid (trunk_copy, new_grid);
 
     river_id = (gpointer)trunk_copy;
   }
