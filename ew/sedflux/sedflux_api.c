@@ -259,6 +259,24 @@ sedflux_set_basement (Sedflux_state* state, const double* val)
   return;
 }
 
+void
+sedflux_set_deposition (Sedflux_state* state, const double* val)
+{
+  eh_require (state);
+  eh_require (state->p);
+  eh_require (val);
+
+  {
+    Sed_cell add_cell = sed_cell_new_bedload (NULL, 1.);
+
+    sed_cube_deposit_cell (state->p, val, add_cell);
+
+    sed_cell_destroy (add_cell);
+  }
+
+  return;
+}
+
 double
 sedflux_get_start_time (Sedflux_state* state)
 {
