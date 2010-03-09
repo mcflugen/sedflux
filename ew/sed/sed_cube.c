@@ -4058,3 +4058,31 @@ sed_cube_erode (Sed_cube c, double* dz)
   return c;
 }
 
+Sed_cube
+sed_cube_deposit_cell (Sed_cube c, double const* dz, Sed_cell const add_cell)
+{
+  eh_require (c);
+
+  if (dz)
+  {
+    int i;
+    const int len = sed_cube_size (c);
+    Sed_cell cell = sed_cell_dup (add_cell);
+
+    for (i=0; i<len; i++)
+    {
+      if (dz[i]<0)
+        sed_column_remove_top (sed_cube_col (c, i), dz[i]);
+      else if (dz[i]>0)
+      {
+        sed_cell_resize (cell, dz[i]);
+        sed_column_add_cell (sed_cube_col (c, i), cell);
+      }
+    }
+
+    cell = sed_cell_destroy (cell);
+  }
+
+  return c;
+}
+

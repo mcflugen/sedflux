@@ -388,6 +388,9 @@ double   sed_cube_area_above ( Sed_cube c , double h );
 
 Sed_cube sed_cube_deposit (Sed_cube c, Sed_cell* dz);
 Sed_cube sed_cube_erode (Sed_cube c, double* dz);
+Sed_cube sed_cube_deposit_cell (Sed_cube c,
+                                double const* dz,
+                                Sed_cell const add_cell);
 
 #endif
 
