@@ -83,7 +83,7 @@ plume_check_params( Plume_param_st* p , GError** error )
 }
 
 gint
-plume_print_data( const gchar* file , Eh_dbl_grid* deposit , gint len , gint n_grains )
+plume_print_data( const gchar* prefix , Eh_dbl_grid* deposit , gint len , gint n_grains )
 {
    gint n = 0;
 
@@ -91,13 +91,14 @@ plume_print_data( const gchar* file , Eh_dbl_grid* deposit , gint len , gint n_g
    eh_require( len>0 )
    eh_require( n_grains>0 );
 
-   if ( file && deposit )
+   if ( prefix && deposit )
    {
       gint         i;
       //FILE*        fp    = eh_open_file( file , "a" );
       Eh_dbl_grid* d     = NULL;
       GError*      error = NULL;
       gchar*       file_s;
+      const gchar* extension = "csv";
 
       eh_message( "************************************"              );
       eh_message( "Number of grain sizes: %d" , n_grains              );
@@ -108,9 +109,9 @@ plume_print_data( const gchar* file , Eh_dbl_grid* deposit , gint len , gint n_g
 
       for ( d=deposit,i=0 ; *d && !error ; d++,i++ )
       {
-         file_s = g_strdup_printf( "%s-%d" , file , i );
-         //n += eh_dlm_print_dbl_grid( file_s , "," , *d , &error );
-         n += eh_dlm_print_dbl_grid( NULL , "," , *d , &error );
+         file_s = g_strdup_printf( "%s-%d.%s" , prefix , i, extension );
+         n += eh_dlm_print_dbl_grid( file_s , "," , *d , &error );
+         //n += eh_dlm_print_dbl_grid( NULL , "," , *d , &error );
          eh_free( file_s );
       }
 

@@ -41,7 +41,7 @@ Plume_param_st;
 
 Plume_param_st* plume_scan_parameter_file( const gchar*    file , GError**        error );
 Plume_param_st* plume_check_params       ( Plume_param_st* p    , GError**        error );
-gint            plume_print_data         ( const gchar* file , Eh_dbl_grid* deposit , gint len , gint n_grains );
+gint            plume_print_data         ( const gchar* prefix , Eh_dbl_grid* deposit , gint len , gint n_grains );
 Eh_dbl_grid*    plume_wrapper            ( Sed_hydro       r    , Plume_param_st* p , gint* len , gint* n_grains );
 
 Eh_dbl_grid*    plume_dbl_grid_new       ( gint n_grains , gint n_x , gint n_y , double dx , double dy );

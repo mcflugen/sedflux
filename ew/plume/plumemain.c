@@ -7,7 +7,7 @@
 #include <sed/sed_sedflux.h>
 
 static gchar*   _in_file    = NULL;
-static gchar*   _out_file   = NULL;
+//static gchar*   _out_file   = NULL;
 static gchar*   _flood_file = NULL;
 static gchar*   _data_file  = NULL;
 static gint     _n_dim      = 1;
@@ -18,7 +18,7 @@ static gboolean _verbose    = FALSE;
 static GOptionEntry entries[] =
 {
    { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &_in_file    , "Initialization file" , "<file>" } ,
-   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &_out_file   , "Output file"         , "<file>" } ,
+//   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &_out_file   , "Output file"         , "<file>" } ,
    { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &_flood_file , "Flood file"          , "<file>" } ,
    { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &_data_file  , "Data file"           , "<file>" } ,
    { "n-dim"      , 'D' , 0 , G_OPTION_ARG_INT      , &_n_dim      , "Number of dimensions" , "[1|2]" } ,
