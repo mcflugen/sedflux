@@ -22,7 +22,8 @@ libsedflux_la_SOURCES    = \
                            sed_sediment.c \
                            sed_signal.c \
                            sed_tripod.c \
-                           sed_wave.c
+                           sed_wave.c \
+                           sed_input_files.c
 
 sedfluxincludedir=$(includedir)/ew-2.0
 sedfluxinclude_HEADERS = sed.h csdms.h
