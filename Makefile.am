@@ -1,6 +1,28 @@
 ACLOCAL_AMFLAGS      = -I m4
 
-EXTRA_DIST           = bootstrap
+EXTRA_DIST           = bootstrap \
+                       CMakeLists.txt \
+											 ew/CMakeLists.txt \
+											 ew/avulsion/CMakeLists.txt \
+											 ew/bing/CMakeLists.txt \
+											 ew/bio/CMakeLists.txt \
+											 ew/compact/CMakeLists.txt \
+											 ew/diffusion/CMakeLists.txt \
+											 ew/failure/CMakeLists.txt \
+											 ew/flow/CMakeLists.txt \
+											 ew/hydrotrend/CMakeLists.txt \
+											 ew/inflow/CMakeLists.txt \
+											 ew/muds/CMakeLists.txt \
+											 ew/plume/CMakeLists.txt \
+											 ew/quake/CMakeLists.txt \
+											 ew/sakura/CMakeLists.txt \
+											 ew/sed/CMakeLists.txt \
+											 ew/sedflux/CMakeLists.txt \
+											 ew/sedutils/CMakeLists.txt \
+											 ew/squall/CMakeLists.txt \
+											 ew/subside/CMakeLists.txt \
+											 ew/utils/CMakeLists.txt \
+											 ew/xshore/CMakeLists.txt
 
 SUBDIRS              = deb  \
                        rpm  \
