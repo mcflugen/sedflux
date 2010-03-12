@@ -54,15 +54,15 @@ link_directories( ${LIBINTL_DIR} )
 #add_subdirectory(rpm)
 add_subdirectory(ew)
 
-#set( CPACK_PACKAGE_NAME sedflux )
-#set( CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux )
-#set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model" )
-#set( CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.txt )
-#set( CPACK_PACKAGE_VERSION_MAJOR "2" )
-#set( CPACK_PACKAGE_VERSION_MINOR "0" )
-#set( CPACK_PACKAGE_VERSION_PATCH "81" )
+set( CPACK_PACKAGE_NAME sedflux )
+set( CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux )
+set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model" )
+set( CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.txt )
+set( CPACK_PACKAGE_VERSION_MAJOR "2" )
+set( CPACK_PACKAGE_VERSION_MINOR "0" )
+set( CPACK_PACKAGE_VERSION_PATCH "215" )
 
-#include( CPack )
+include( CPack )
 
 ########### install files ###############
 
