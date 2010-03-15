@@ -50,17 +50,28 @@ get_filename_component( LIBINTL_DIR ${LIBINTL} PATH )
 message(STATUS "Looking for libintl... - found ${LIBINTL_DIR}") 
 link_directories( ${LIBINTL_DIR} )
 
-#add_subdirectory(deb)
-#add_subdirectory(rpm)
-add_subdirectory(ew)
+#file (STRINGS Version version LIMIT_COUNT 1 REGEXP "\\$Revision: 144 \\$" )
+file (STRINGS Version version LIMIT_COUNT 1)
+set (major 2)
+set (minor 0)
+string (REGEX REPLACE "\\$Revision: ([0-9].*) \\$" "\\1" patch "${version}")
 
+#set (test "$Revision: 214 $")
+#string (REGEX REPLACE "\\$Revision: ([0-9].*) \\$" "\\1" result  "${test}")
+#MESSAGE(STATUS "result= ${result}")
+
+#list (GET version 0 major)
+#list (GET version 1 minor)
+#list (GET version 2 patch)
+
+########### Create a distribution ###############
 set( CPACK_PACKAGE_NAME sedflux )
 set( CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux )
 set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model" )
 set( CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/COPYING )
 set( CPACK_PACKAGE_VERSION_MAJOR "2" )
 set( CPACK_PACKAGE_VERSION_MINOR "0" )
-set( CPACK_PACKAGE_VERSION_PATCH "215" )
+set( CPACK_PACKAGE_VERSION_PATCH "220" )
 set (CPACK_SOURCE_GENERATOR "TGZ")
 set (CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
@@ -69,6 +80,11 @@ set (CPACK_SOURCE_IGNORE_FILES "/_build/;/_inst/;/.git/")
 include( CPack )
 
 add_custom_target (dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+########### Build in subdirectories ###############
+#add_subdirectory(deb)
+#add_subdirectory(rpm)
+add_subdirectory(ew)
 
 ########### install files ###############
 
@@ -86,6 +102,7 @@ endif ( CMAKE_BUILD_TYPE MATCHES Release )
 message("------------------------------------------------------------------------")
 message("Configuration:")
 message("")
+message("  sedflux Version:            ${major}.${minor}.${patch}")
 message("  Source code location:       ${CMAKE_SOURCE_DIR}")
 message("  Build type:                 ${CMAKE_BUILD_TYPE}")
 message("  Compiler:                   ${CMAKE_C_COMPILER}")
