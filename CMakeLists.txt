@@ -52,7 +52,7 @@ link_directories( ${LIBINTL_DIR} )
 
 ########### Version number ###############
 execute_process (
-  COMMAND ./version-gen tarball-version Version
+  COMMAND ./build-aux/version-gen build-aux/tarball-version Version
   OUTPUT_FILE .version
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
@@ -64,7 +64,7 @@ list (GET v 2 PATCH_VERSION)
 #string (REGEX REPLACE "\\$Revision: ([0-9].*) \\$" "\\1" patch "${version}")
 
 add_custom_target (tarball_version 
-  COMMAND cat .version > tarball-version
+  COMMAND cat .version > build-aux/tarball-version
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMENT "Create tarball-version")
 
@@ -85,7 +85,7 @@ include( CPack )
 
 add_custom_target (dist
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
-  DEPENDS ${CMAKE_SOURCE_DIR}/tarball-version)
+  DEPENDS ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 add_dependencies (dist tarball_version)
 
 ########### Build in subdirectories ###############
