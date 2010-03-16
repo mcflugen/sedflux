@@ -1,0 +1,222 @@
+#! /bin/bash
+# Print a version string.
+
+# Copyright (C) 2009 Raphael 'kena' Poss
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This script is inspired from git-version-gen (originally from
+# http://git.or.cz/ and modified for use in GNUlib, M4, Bison and
+# other GNU software.)
+#
+# It may be run in two ways:
+# - from a VC repository in which the "svnversion" or "git log"
+#   produce useful output and a "package-version" file exists.
+# - from a non-VC repo directory containing a tarball-version file.
+#
+# It differs from git-version-gen in that the version number is
+# derived from the content of a version file, not a tag name in the
+# SCM repository; and that both Subversion, Git and git-svn branches
+# are supported.
+#
+# The script should be invoked as:
+#     version-gen <location of tarball-version> <location of package-version>
+#
+# A version number is composed of two parts:
+#
+# - a "fixed" part, which is set by the developer in the
+#   "package-version" file and reflects the overall state of the
+#   software. This must start with a digit and can be of any shape. An
+#   example scheme is X.Y.Z where X is the major version (indicating
+#   large changes that cause incompatibilities), Y the minor version
+#   (indicating feature additions) and Z the revision (indicating bug
+#   fixes).
+#
+# - a "floating" part, which reflects the origin of the source code
+#   used to compile the software. This is optional. The floating part
+#   is important when software can be built from a SCM repository in
+#   an intermediary state before the fixed part is updated.
+#
+# An example complete version number is "1.0.3", with only a fixed
+# part. It reflects for instance the state of a software from a
+# polished release, e.g. the outcome of "make dist" immediately after
+# the fixed version number was committed into the SCM repository.
+#
+# Another example is "1.0.3.77-r3124". This would be the version
+# generated from a Subversion repository or git-svn dcommit at SVN
+# revision 3124, when 3124 is 77 revisions after the fixed version
+# number was set.
+#
+# Another example is "1.0.3.77-a7d8f", where 1.0.3 is the fixed part
+# and "77-a7d8f" is the floating part. This would be the version
+# generated from a git repository or non-dcommitted git-svn clone at
+# the commit identified by "a7d8f", 77 git commits after the commit
+# where the fixed part was set.
+#
+# Other examples are "1.0.3.77-a7d8f-dirty" and
+# "1.0.3.77-r3124-dirty".  The suffix "-dirty" is appended when the
+# version string is generated from a source tree with changes not
+# committed to the SCM repository.
+#
+# In order to use intra-version strings in your project, you will
+# need two separate automatically generated version string files:
+#
+# .tarball-version - present only in a distribution tarball, and not
+#   in a checked-out repository.  Created with contents that were
+#   learned at the last time autoconf was run, and used by
+#   version-gen.  Must not be present in either $(srcdir) or
+#   $(builddir) for version-gen to give accurate answers during normal
+#   development with a checked out tree, but must be present in a
+#   tarball when there is no version control system.  Therefore, it
+#   cannot be used in any dependencies. The Makefile should contain
+#   hooks to check that the value is up-to-date at distribution or
+#   installation time, without penalizing normal development with
+#   extra reconfigures.
+#
+# .version - present in a checked-out repository and in a distribution
+#   tarball.  Usable in dependencies, particularly for files that
+#   don't want to depend on config.h but do want to track version
+#   changes.  Delete this file prior to any autoconf run where you
+#   want to rebuild files to pick up a version string change; and
+#   leave it stale to minimize rebuild time after unrelated changes to
+#   configure sources.
+# It is probably wise to add these two files to .gitignore or
+# svn:ignore, so that you don't accidentally commit either generated
+# file.
+#
+# Use the following line in your configure.ac, so that $(VERSION) will
+# automatically be up-to-date each time configure is run (and note
+# that since configure.ac no longer includes a version string,
+# Makefile rules should not depend on configure.ac for version
+# updates).
+#
+# AC_INIT([Your project],
+#         m4_esyscmd([build-aux/version-gen build-aux/tarball-version build-aux/package-version]),
+#         [bug-project@example])
+#
+# Then use the following lines in your Makefile.am, so that .version
+# will be present for dependencies, and so that .tarball-version will
+# exist in distribution tarballs.
+#
+# EXTRA_DIST = .version
+# BUILT_SOURCES = $(top_srcdir)/.version
+# $(top_srcdir)/.version:
+#	echo $(VERSION) > $@-t && mv $@-t $@
+# dist-hook:
+#	echo $(VERSION) > $(distdir)/.tarball-version
+#
+set -e
+
+if ! test $# = 2; then
+     echo "Usage: $0 <tarball-version> <package-version>" >&2
+     exit 1
+fi
+
+tarball_version_file=$1
+package_version_file=$2
+nl='
+'
+
+# First see if there is a tarball-only version file.
+if test -f $tarball_version_file; then
+    v=`cat "$tarball_version_file"`
+    case $v in
+	*$nl*) v= ;; # reject multi-line output
+	[0-9]*) ;;
+	*) v= ;; # reject non-numbers
+    esac
+    if test -z "$v"; then
+	echo "$0: WARNING: $tarball_version_file seems to be damaged" >&2
+    fi
+fi
+
+
+package_version=`cat "$package_version_file"` || package_version=UNKNOWN
+
+if test -n "$v"; then
+    : # use $v
+elif test -d .svn; then
+
+    svnversion_info=`svnversion` || svnversion_info=
+
+    package_version_rev=`svn info "$package_version_file"|grep '^Last Changed Rev'` || package_version_rev=
+    package_version_rev=${package_version_rev#*:}
+
+    compute_distance=
+    suffix=
+    case $svnversion_info in
+        *[A-Z])
+            svnversion_info=${svnversion_info%[A-Z]*}
+            suffix=-r${svnversion_info/:/-r}-dirty
+            compute_distance=1 
+            ;;
+        *:*)
+            suffix=-r${svnversion_info/:/-r}
+            compute_distance=1 
+            ;;
+        *)
+            if ! test $svnversion_info = $package_version_rev; then
+                suffix=-r$svnversion_info
+                compute_distance=1
+            fi
+            ;;
+    esac
+    distance=
+    if test -n "$compute_distance"; then
+        last_commit_rev=${svnversion_info#*:} # use trailing part of mixed revision, if any
+        distance=.`expr $last_commit_rev - $package_version_rev` || distance=.0
+    fi
+
+    v=$package_version$distance$suffix
+
+elif test -d .git; then
+
+    #package_version_commit=`git log -n 1 --format=format:'%H' "$package_version_file"`
+    package_version_commit=`git log -n 1 --format=format:'%H' AUTHORS`
+    head_commit=`git rev-list --max-count=1 HEAD`
+    distance=`git rev-list $package_version_commit..HEAD | wc -l`
+    distance=`echo $distance` # remove whitespace before count
+
+    git status > /dev/null 2>&1 || true
+    dirty=`git diff-index --name-only HEAD 2>/dev/null` || dirty=
+
+    suffix=
+    case $distance$dirty in
+        '0') ;;
+        *) 
+            maybe_svn_rev=`git log -n 1 $head_commit | grep '^ *git-svn-id: [^@]*@[0-9][0-9]*'` || maybe_svn_rev=
+            if test -z "$maybe_svn_rev"; then
+                # no svn revision in head commit, assume (not yet dcomitted) local branch
+                suffix=.$distance-`echo $head_commit|cut -c1-5`
+            else
+                maybe_svn_rev=${maybe_svn_rev#*@}
+                maybe_svn_rev=${maybe_svn_rev% *}
+                suffix=.$distance-r$maybe_svn_rev
+            fi
+            case $dirty in
+                '') ;;
+                *) suffix=$suffix-dirty ;;
+            esac
+            ;;
+    esac
+
+    v=$package_version$suffix
+
+else
+    # exported / copied directory
+    v=$package_version-UNKNOWN
+fi
+
+# Omit the trailing newline, so that m4_esyscmd can use the result directly.
+echo "$v" | tr -d '\n'
