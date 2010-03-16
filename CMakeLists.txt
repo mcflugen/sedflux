@@ -52,7 +52,7 @@ link_directories( ${LIBINTL_DIR} )
 
 ########### Version number ###############
 execute_process (
-  COMMAND ./version-gen tarball-version package-version
+  COMMAND ./version-gen tarball-version Version
   OUTPUT_FILE .version
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
@@ -60,7 +60,7 @@ file (STRINGS .version version LIMIT_COUNT 1)
 string (REPLACE "." ";" v "${version}")
 list (GET v 0 MAJOR_VERSION)
 list (GET v 1 MINOR_VERSION)
-list (GET v 2 3 PATCH_VERSION)
+list (GET v 2 PATCH_VERSION)
 #string (REGEX REPLACE "\\$Revision: ([0-9].*) \\$" "\\1" patch "${version}")
 
 add_custom_target (tarball_version 
@@ -69,8 +69,6 @@ add_custom_target (tarball_version
   COMMENT "Create tarball-version")
 
 ########### Create a distribution ###############
-include( CPack )
-
 set (CPACK_PACKAGE_NAME sedflux)
 set (CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux)
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model")
@@ -82,6 +80,8 @@ set (CPACK_SOURCE_GENERATOR "TGZ")
 set (CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set (CPACK_SOURCE_IGNORE_FILES "/_build/;/_inst/;/.git/")
+
+include( CPack )
 
 add_custom_target (dist
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
@@ -107,6 +107,7 @@ endif ( CMAKE_BUILD_TYPE MATCHES Release )
 message("------------------------------------------------------------------------")
 message("Configuration:")
 message("")
+message("  sedflux version:            ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 message("  Source code location:       ${CMAKE_SOURCE_DIR}")
 message("  Build type:                 ${CMAKE_BUILD_TYPE}")
 message("  Compiler:                   ${CMAKE_C_COMPILER}")
