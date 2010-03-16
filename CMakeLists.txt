@@ -60,13 +60,12 @@ file (STRINGS .version version LIMIT_COUNT 1)
 string (REPLACE "." ";" v "${version}")
 list (GET v 0 MAJOR_VERSION)
 list (GET v 1 MINOR_VERSION)
-list (GET v 2 PATCH_VERSION)
-#string (REGEX REPLACE "\\$Revision: ([0-9].*) \\$" "\\1" patch "${version}")
-
-add_custom_target (tarball_version 
-  COMMAND cat .version > build-aux/tarball-version
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  COMMENT "Create tarball-version")
+list (LENGTH v len)
+if (len GREATER 2)
+  list (GET v 2 PATCH_VERSION)
+else ()
+  set (PATCH_VERSION 0)
+endif ()
 
 ########### Create a distribution ###############
 set (CPACK_PACKAGE_NAME sedflux)
@@ -84,9 +83,9 @@ set (CPACK_SOURCE_IGNORE_FILES "/_build/;/_inst/;/.git/")
 include( CPack )
 
 add_custom_target (dist
+  COMMAND cat ${CMAKE_SOURCE_DIR}/Version > ${CMAKE_SOURCE_DIR}/build-aux/tarball-version
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
-  DEPENDS ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
-add_dependencies (dist tarball_version)
+  COMMAND rm ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 
 ########### Build in subdirectories ###############
 add_subdirectory(ew)
