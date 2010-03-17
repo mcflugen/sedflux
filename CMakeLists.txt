@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project( sedflux )
 
+set (BUILD_SHARED_LIBS ON)
+
 ########### Look for glib-2.0 ###############
 
 include( FindPkgConfig )
