@@ -53,9 +53,12 @@ message(STATUS "Looking for libintl... - found ${LIBINTL_DIR}")
 link_directories( ${LIBINTL_DIR} )
 
 ########### Version number ###############
+set (TARBALL_VERSION ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
+set (PACKAGE_VERSION ${CMAKE_SOURCE_DIR}/build-aux/package-version)
+set (VERSION_GEN ${CMAKE_SOURCE_DIR}/build-aux/version-gen)
 execute_process (
-  COMMAND ./build-aux/version-gen build-aux/tarball-version Version
-  OUTPUT_FILE .version
+  COMMAND ${VERSION_GEN} ${TARBALL_VERSION} ${PACKAGE_VERSION}
+  OUTPUT_FILE ${CMAKE_SOURCE_DIR}/.version
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 file (STRINGS .version version LIMIT_COUNT 1)
@@ -85,7 +88,7 @@ set (CPACK_SOURCE_IGNORE_FILES "/_build/;/_inst/;/.git/")
 include( CPack )
 
 add_custom_target (dist
-  COMMAND cat ${CMAKE_SOURCE_DIR}/Version > ${CMAKE_SOURCE_DIR}/build-aux/tarball-version
+  COMMAND ${CMAKE_SOURCE_DIR}/build-aux/dist-version-get ${CMAKE_SOURCE_DIR}/.version > ${CMAKE_SOURCE_DIR}/build-aux/tarball-version
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
   COMMAND rm ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 
