@@ -46,6 +46,8 @@ CLASS ( Sed_cube )
    GList *shore; //< A doubly liked list that defines the shore line.
    double cell_height; //< Height of a cell of sediment.
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
+
+   double* discharge; //< Water discharge at each column
 };
 
 GQuark
@@ -159,6 +161,8 @@ sed_cube_new_empty( gssize n_x , gssize n_y )
    s->n_y          = n_y;
    s->river        = NULL;
    s->shore        = NULL;
+
+   s->discharge    = eh_new_2 (double, n_x, n_y);
    
    return s;
 }
@@ -286,6 +290,8 @@ sed_cube_free( Sed_cube s , gboolean free_data )
 
       eh_free( s->col[0] );
       eh_free( s->col    );
+
+      eh_free_2 (s->discharge);
 
       sed_cube_remove_all_trunks( s );
 
