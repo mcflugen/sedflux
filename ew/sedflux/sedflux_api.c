@@ -277,6 +277,20 @@ sedflux_set_deposition (Sedflux_state* state, const double* val)
   return;
 }
 
+void
+sedflux_set_discharge (Sedflux_state* state, const double* val)
+{
+  eh_require (state);
+  eh_require (state->p);
+  eh_require (val);
+
+  {
+    sed_cube_set_discharge (state->p, val)
+  }
+
+  return;
+}
+
 double
 sedflux_get_start_time (Sedflux_state* state)
 {
