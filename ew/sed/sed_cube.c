@@ -18,6 +18,8 @@
 //
 //---
 
+#include <string.h>
+
 #include "utils/utils.h"
 #include "sed_cube.h"
 
@@ -47,7 +49,7 @@ CLASS ( Sed_cube )
    double cell_height; //< Height of a cell of sediment.
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 
-   double* discharge; //< Water discharge at each column
+   double** discharge; //< Water discharge at each column
 };
 
 GQuark
@@ -1474,6 +1476,21 @@ Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double 
    sed_column_set_base_height( this_col ,
                                sed_column_base_height( this_col ) + dz );
    return s;
+}
+
+void
+sed_cube_set_discharge (Sed_cube* s, const double* val)
+{
+  eh_require (s);
+  eh_require (s->discharge);
+  eh_require (s->discharge[0]);
+
+  {
+    const int len = sed_cube_size (s);
+    memcpy (s->discharge[0], val, len*sizeof (double))
+  }
+
+  return;
 }
 
 Sed_cube
