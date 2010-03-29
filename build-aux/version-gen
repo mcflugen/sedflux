@@ -182,8 +182,8 @@ elif test -d .svn; then
 
 elif test -d .git; then
 
-    #package_version_commit=`git log -n 1 --format=format:'%H' "$package_version_file"`
-    package_version_commit=`git log -n 1 --format=format:'%H' AUTHORS`
+    package_version_commit=`git log -n 1 --format=format:'%H' "$package_version_file"`
+    #package_version_commit=`git log -n 1 --format=format:'%H' AUTHORS`
     head_commit=`git rev-list --max-count=1 HEAD`
     distance=`git rev-list $package_version_commit..HEAD | wc -l`
     distance=`echo $distance` # remove whitespace before count
