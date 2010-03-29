@@ -50,6 +50,7 @@ CLASS ( Sed_cube )
    Sed_constants constants; //< The physical constants for the profile (g, rho_w, etc)
 
    double** discharge; //< Water discharge at each column
+   double** bed_load_flux; //< Bed load flux at each column
 };
 
 GQuark
@@ -165,6 +166,7 @@ sed_cube_new_empty( gssize n_x , gssize n_y )
    s->shore        = NULL;
 
    s->discharge    = eh_new_2 (double, n_x, n_y);
+   s->bed_load_flux= eh_new_2 (double, n_x, n_y);
    
    return s;
 }
@@ -294,6 +296,7 @@ sed_cube_free( Sed_cube s , gboolean free_data )
       eh_free( s->col    );
 
       eh_free_2 (s->discharge);
+      eh_free_2 (s->bed_load_flux);
 
       sed_cube_remove_all_trunks( s );
 
@@ -1479,7 +1482,7 @@ Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double 
 }
 
 void
-sed_cube_set_discharge (Sed_cube* s, const double* val)
+sed_cube_set_discharge (Sed_cube s, const double* val)
 {
   eh_require (s);
   eh_require (s->discharge);
@@ -1487,7 +1490,22 @@ sed_cube_set_discharge (Sed_cube* s, const double* val)
 
   {
     const int len = sed_cube_size (s);
-    memcpy (s->discharge[0], val, len*sizeof (double))
+    memcpy (s->discharge[0], val, len*sizeof (double));
+  }
+
+  return;
+}
+
+void
+sed_cube_set_bed_load_flux (Sed_cube s, const double* val)
+{
+  eh_require (s);
+  eh_require (s->bed_load_flux);
+  eh_require (s->bed_load_flux[0]);
+
+  {
+    const int len = sed_cube_size (s);
+    memcpy (s->bed_load_flux[0], val, len*sizeof (double));
   }
 
   return;
