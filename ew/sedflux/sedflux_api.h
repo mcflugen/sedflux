@@ -24,6 +24,7 @@ void sedflux_set_basement (Sedflux_state* state, const double* val);
 void sedflux_set_erosion (Sedflux_state* state, const double* val);
 void sedflux_set_deposition (Sedflux_state* state, const double* val);
 void sedflux_set_discharge (Sedflux_state* state, const double* val);
+void sedflux_set_bed_load_flux (Sedflux_state* state, const double* val);
 
 #endif
 
