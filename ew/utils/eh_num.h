@@ -144,7 +144,7 @@ gboolean   eh_dbl_array_is_monotonic_up  ( double *x , gsize n );
 gboolean   eh_dbl_array_is_monotonic_down( double *x , gsize n );
 gboolean   eh_dbl_array_is_monotonic     ( double *x , gsize n );
 double*    eh_linspace                   ( double x1 , double x2 , gssize n );
-gssize*    eh_id_array                   ( gssize i_0 , gssize i_1 , gssize* n );
+gint*      eh_id_array                   (gint i_0, gint i_1, gint* n);
 double*    eh_uniform_array              ( double x1 , double x2 , double dx , gint* n );
 
 double*    eh_dbl_array_linspace         ( double* x , gssize n_x ,  double x_0 , double dx );

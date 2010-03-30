@@ -2307,10 +2307,10 @@ double *eh_linspace( double x1 , double x2 , gssize n )
    return x;
 }
 
-gssize*
-eh_id_array( gssize i_0 , gssize i_1 , gssize* n )
+gint*
+eh_id_array (gint i_0, gint i_1, gint* n)
 {
-   gssize* id = NULL;
+   gint* id = NULL;
 
    eh_require( i_1>=i_0 );
 
@@ -2319,7 +2319,7 @@ eh_id_array( gssize i_0 , gssize i_1 , gssize* n )
       gint i;
       gint len = i_1 - i_0 + 1;
 
-      id = eh_new( gssize , len+1 );
+      id = eh_new (gint, len+1);
 
       for ( i=0 ; i<len ; i++ )
          id[i] = i_0+i;
