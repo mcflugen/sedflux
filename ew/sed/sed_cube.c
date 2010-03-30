@@ -539,14 +539,14 @@ double sed_cube_sea_level( const Sed_cube s )
    return s->sea_level;
 }
 
-double* sed_cube_x( const Sed_cube s , gssize *id )
+double* sed_cube_x (const Sed_cube s, gint *id)
 {
    double *x;
 
    eh_return_val_if_fail( s!=NULL , NULL );
 
    {
-      gssize i, n_x;
+      gint i, n_x;
 
       if ( !id )
       {
@@ -566,14 +566,14 @@ double* sed_cube_x( const Sed_cube s , gssize *id )
    return x;
 }
 
-double* sed_cube_y( const Sed_cube s , gssize *id )
+double* sed_cube_y (const Sed_cube s, gint *id)
 {
    double *y;
 
    eh_return_val_if_fail( s!=NULL , NULL );
 
    {
-      gssize i, n_y;
+      gint i, n_y;
 
       if ( !id )
       {
@@ -601,7 +601,8 @@ double sed_cube_col_x( const Sed_cube s , gssize id )
    return sed_column_x_position( sed_cube_col(s,id) );
 }
 
-double sed_cube_col_x_ij( const Sed_cube s , gssize i , gssize j )
+double
+sed_cube_col_x_ij (const Sed_cube s, gint i, gint j)
 {
    return sed_column_x_position( sed_cube_col_ij(s,i,j) );
 }
@@ -614,12 +615,13 @@ double sed_cube_col_y( const Sed_cube s , gssize id )
    return sed_column_y_position( sed_cube_col(s,id) );
 }
 
-double sed_cube_col_y_ij( const Sed_cube s , gssize i , gssize j )
+double
+sed_cube_col_y_ij (const Sed_cube s, gint i, gint j)
 {
    return sed_column_y_position( sed_cube_col_ij(s,i,j) );
 }
 
-double sed_cube_x_slope( const Sed_cube s , gssize i , gssize j )
+double sed_cube_x_slope (const Sed_cube s, gint i, gint j)
 {
    double slope;
 
@@ -641,7 +643,7 @@ double sed_cube_x_slope( const Sed_cube s , gssize i , gssize j )
    return slope;
 }
 
-double sed_cube_y_slope( const Sed_cube s , gssize i , gssize j )
+double sed_cube_y_slope (const Sed_cube s, gint i, gint j)
 {
    double slope;
 
@@ -683,7 +685,7 @@ double sed_cube_slope( const Sed_cube s , gssize i , gssize j )
    return sqrt( dx*dx + dy*dy );
 }
 
-double sed_cube_slope_dir( const Sed_cube s , gssize i , gssize j )
+double sed_cube_slope_dir (const Sed_cube s, gint i, gint j)
 {
    double dx, dy;
 
@@ -722,14 +724,14 @@ Eh_ind_2 sed_ind2sub( gssize ind , gssize n_y )
 
 Eh_dbl_grid sed_cube_grid( const Sed_cube s   ,
                            Sed_grid_func func ,
-                           gssize *index )
+                           gint *index )
 {
    Eh_dbl_grid g;
 
    eh_require( s );
 
    {
-      gssize i, j;
+      gint i, j;
 
       g = eh_grid_new( double , s->n_x , s->n_y );
 
@@ -749,22 +751,22 @@ Eh_dbl_grid sed_cube_grid( const Sed_cube s   ,
    return g;
 }
 
-Eh_dbl_grid sed_cube_slope_dir_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_slope_dir_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_SLOPE_DIR_FUNC , index );
 }
 
-Eh_dbl_grid sed_cube_x_slope_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_x_slope_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_X_SLOPE_FUNC , index );
 }
 
-Eh_dbl_grid sed_cube_y_slope_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_y_slope_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_Y_SLOPE_FUNC , index );
 }
 
-Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_water_depth_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_WATER_DEPTH_FUNC , index );
 }
@@ -775,12 +777,12 @@ sed_cube_elevation_grid (const Sed_cube s, gint *index)
    return sed_cube_grid (s, S_ELEVATION_FUNC, index);
 }
 
-Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_thickness_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_THICKNESS_FUNC , index );
 }
 
-Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index )
+Eh_dbl_grid sed_cube_load_grid (const Sed_cube s, gint *index)
 {
    return sed_cube_grid( s , S_LOAD_FUNC , index );
 }
@@ -1110,7 +1112,7 @@ Sed_cube sed_cube_set_tidal_range( Sed_cube s , double new_val )
    return s;
 }
 
-double sed_cube_water_depth( const Sed_cube p , gssize i , gssize j )
+double sed_cube_water_depth (const Sed_cube p, gint i, gint j)
 {
    double depth;
 
@@ -1157,7 +1159,7 @@ double sed_cube_water_pressure( const Sed_cube p , gssize i , gssize j )
    return press;
 }
 
-double sed_cube_load( const Sed_cube p , gssize i , gssize j )
+double sed_cube_load(const Sed_cube p, gint i, gint j)
 {
    double load;
 
@@ -1173,7 +1175,7 @@ double sed_cube_load( const Sed_cube p , gssize i , gssize j )
    return load;
 }
 
-double sed_cube_thickness( const Sed_cube p , gssize i , gssize j )
+double sed_cube_thickness (const Sed_cube p, gint i, gint j)
 {
    return sed_column_thickness( p->col[i][j] );
 }

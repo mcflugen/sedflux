@@ -98,7 +98,7 @@ Sed_river;
 
 new_handle( Sed_cube );
 
-typedef double   (*Sed_grid_func) ( const Sed_cube , gssize , gssize );
+typedef double   (*Sed_grid_func) (const Sed_cube, gint, gint);
 typedef gboolean (*Sed_cube_func) ( const Sed_cube , gssize , gssize , gpointer );
 
 #define S_X_FUNC            (&sed_cube_col_x_ij)
@@ -137,24 +137,22 @@ Sed_column sed_cube_col_ij ( const Sed_cube s , gssize i , gssize j );
 Sed_column sed_cube_col_pos( const Sed_cube s , double x , double y );
 
 double sed_cube_sea_level( const Sed_cube s );
-double *sed_cube_x( const Sed_cube s , gssize *id );
-double *sed_cube_y( const Sed_cube s , gssize *id );
+double *sed_cube_x (const Sed_cube s, gint *id);
+double *sed_cube_y (const Sed_cube s, gint *id);
 double sed_cube_col_x( const Sed_cube s , gssize id );
 double sed_cube_col_y( const Sed_cube s , gssize id );
-double sed_cube_col_x_ij( const Sed_cube s , gssize i , gssize j );
-double sed_cube_col_y_ij( const Sed_cube s , gssize i , gssize j );
-double sed_cube_x_slope( const Sed_cube s , gssize i , gssize j );
-double sed_cube_y_slope( const Sed_cube s , gssize i , gssize j );
+double sed_cube_col_x_ij (const Sed_cube s, gint i, gint j);
+double sed_cube_col_y_ij (const Sed_cube s, gint i, gint j);
+double sed_cube_x_slope (const Sed_cube s, gint i, gint j);
+double sed_cube_y_slope (const Sed_cube s, gint i, gint j);
 double sed_cube_slope( const Sed_cube s , gssize i , gssize j );
-double sed_cube_slope_dir( const Sed_cube s , gssize i , gssize j );
+double sed_cube_slope_dir (const Sed_cube s, gint i, gint j);
 double sed_cube_top_height(const Sed_cube p , gssize i , gssize j );
 Eh_ind_2 ind2sub( gssize ind , gssize n_x , gssize n_y );
-Eh_dbl_grid sed_cube_grid( const Sed_cube s ,
-                                Sed_grid_func f   ,
-                                gssize *index );
-Eh_dbl_grid sed_cube_slope_dir_grid( const Sed_cube s , gssize *index );
-Eh_dbl_grid sed_cube_x_slope_grid( const Sed_cube s , gssize *index );
-Eh_dbl_grid sed_cube_y_slope_grid( const Sed_cube s , gssize *index );
+Eh_dbl_grid sed_cube_grid (const Sed_cube s, Sed_grid_func f, gint *index);
+Eh_dbl_grid sed_cube_slope_dir_grid (const Sed_cube s, gint *index);
+Eh_dbl_grid sed_cube_x_slope_grid (const Sed_cube s, gint *index);
+Eh_dbl_grid sed_cube_y_slope_grid (const Sed_cube s, gint *index);
 double sed_cube_time_step( const Sed_cube s );
 double sed_cube_time_step_in_years( const Sed_cube s );
 double sed_cube_time_step_in_seconds( const Sed_cube s );
@@ -178,11 +176,11 @@ double sed_cube_tidal_period( const Sed_cube s );
 Sed_cube sed_cube_set_tidal_period( Sed_cube s , double new_val );
 double sed_cube_tidal_range( const Sed_cube s );
 Sed_cube sed_cube_set_tidal_range( Sed_cube s , double new_val );
-double sed_cube_water_depth(const Sed_cube p , gssize i , gssize j );
+double sed_cube_water_depth (const Sed_cube p, gint i, gint j);
 double sed_cube_elevation (const Sed_cube p, gint i, gint j);
-double sed_cube_load(const Sed_cube p , gssize i , gssize j );
+double sed_cube_load (const Sed_cube p, gint i, gint j);
 double sed_cube_water_pressure( const Sed_cube p , gssize i , gssize j );
-double sed_cube_thickness( const Sed_cube p , gssize i , gssize j );
+double sed_cube_thickness (const Sed_cube p, gint i, gint j);
 gboolean sed_cube_col_is_empty( const Sed_cube p , gssize i , gssize j );
 double sed_cube_base_height( const Sed_cube p , gssize i , gssize j );
 
@@ -238,10 +236,10 @@ Sed_cube sed_cube_set_age( Sed_cube s , double new_age );
 Sed_cube sed_cube_adjust_age( Sed_cube s , double dt );
 Sed_cube sed_cube_increment_age( Sed_cube s );
 
-Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index );
+Eh_dbl_grid sed_cube_water_depth_grid (const Sed_cube s, gint *index );
 Eh_dbl_grid sed_cube_elevation_grid (const Sed_cube s, gint *index);
-Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index );
-Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index );
+Eh_dbl_grid sed_cube_thickness_grid (const Sed_cube s, gint *index );
+Eh_dbl_grid sed_cube_load_grid (const Sed_cube s, gint *index );
 
 Sed_riv       sed_cube_river_by_name   ( Sed_cube s , const char *name );
 Sed_riv       sed_cube_nth_river       ( Sed_cube s , gint n );
