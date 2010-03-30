@@ -274,11 +274,11 @@ sakura_set_bathy_data_from_cube( Sed_cube p , double* width , gssize ind_start ,
 
    if ( p )
    {
-      gssize      len;
-      gssize*     id        = eh_id_array( ind_start , sed_cube_size(p)-1 , &len );
+      gint        len;
+      gint*       id        = eh_id_array (ind_start, sed_cube_size(p)-1, &len);
       double**    bathy     = eh_new_2( double , 3 , sed_cube_size(p) );
       double      basin_len;
-      Eh_dbl_grid g         = sed_cube_water_depth_grid( p , id );
+      Eh_dbl_grid g         = sed_cube_water_depth_grid (p, id);
       gint        n;
 
       eh_require( ind_start>=0               );
