@@ -179,6 +179,7 @@ Sed_cube sed_cube_set_tidal_period( Sed_cube s , double new_val );
 double sed_cube_tidal_range( const Sed_cube s );
 Sed_cube sed_cube_set_tidal_range( Sed_cube s , double new_val );
 double sed_cube_water_depth(const Sed_cube p , gssize i , gssize j );
+double sed_cube_elevation (const Sed_cube p, gint i, gint j);
 double sed_cube_load(const Sed_cube p , gssize i , gssize j );
 double sed_cube_water_pressure( const Sed_cube p , gssize i , gssize j );
 double sed_cube_thickness( const Sed_cube p , gssize i , gssize j );
@@ -238,6 +239,7 @@ Sed_cube sed_cube_adjust_age( Sed_cube s , double dt );
 Sed_cube sed_cube_increment_age( Sed_cube s );
 
 Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index );
+Eh_dbl_grid sed_cube_elevation_grid (const Sed_cube s, gint *index);
 Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index );
 Eh_dbl_grid sed_cube_load_grid( const Sed_cube s , gssize *index );
 

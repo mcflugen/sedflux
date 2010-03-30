@@ -769,6 +769,12 @@ Eh_dbl_grid sed_cube_water_depth_grid( const Sed_cube s , gssize *index )
    return sed_cube_grid( s , S_WATER_DEPTH_FUNC , index );
 }
 
+Eh_dbl_grid
+sed_cube_elevation_grid (const Sed_cube s, gint *index)
+{
+   return sed_cube_grid (s, S_ELEVATION_FUNC, index);
+}
+
 Eh_dbl_grid sed_cube_thickness_grid( const Sed_cube s , gssize *index )
 {
    return sed_cube_grid( s , S_THICKNESS_FUNC , index );
@@ -1113,6 +1119,26 @@ double sed_cube_water_depth( const Sed_cube p , gssize i , gssize j )
    depth = sed_column_water_depth( sed_cube_col_ij(p,i,j) );
 
    return depth;
+}
+
+/** Get the elevation to the top of a Sed_cube column
+
+@param p A Sed_cube
+@param i Row index to the column
+@param j Column index to the column
+
+@return The elevation of the top of the column (in meters)
+*/
+double
+sed_cube_elevation (const Sed_cube p, gint i, gint j)
+{
+  double elevation;
+
+  eh_require (p);
+
+  elevation = sed_column_top_height (sed_cube_col_ij (p, i, j));
+
+  return elevation;
 }
 
 double sed_cube_water_pressure( const Sed_cube p , gssize i , gssize j )
