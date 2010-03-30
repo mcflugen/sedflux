@@ -294,7 +294,7 @@ sedflux_set_discharge (Sedflux_state* state, const double* val)
 void
 sedflux_set_bed_load_flux (Sedflux_state* state, const double* val)
 {
-  eh_require (stat);
+  eh_require (state);
   eh_require (state->p);
   eh_require (val);
 
