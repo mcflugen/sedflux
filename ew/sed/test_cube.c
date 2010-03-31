@@ -429,7 +429,7 @@ test_is_shore_cell ()
 
   {
     int i, j;
-    const shore_j = nland-1;
+    const gint shore_j = nland-1;
 
     for (i=0; i<nx; i++)
       for (j=0; j<ny; j++)
@@ -437,6 +437,93 @@ test_is_shore_cell ()
           g_assert (is_shore_cell (p, i, j));
         else
           g_assert (!is_shore_cell (p, i, j));
+  }
+
+  sed_cube_destroy (p);
+}
+
+void
+test_shore_mask ()
+{
+  const int nx = g_test_rand_int_range (100,200);
+  const int ny = g_test_rand_int_range (100,200);
+  const int nland = ny/4;
+  Sed_cube p = sed_cube_new (nx, ny);
+
+  g_assert (p);
+
+  { /* Set up the cube to have a shoreline */
+    int i, j;
+
+    for (i=0; i<nx; i++)
+    {
+      for (j=0; j<nland; j++)
+        sed_cube_set_base_height (p, i, j, 1);
+      for (j=nland; j<ny; j++)
+        sed_cube_set_base_height (p, i, j, -1);
+    }
+  }
+
+  {
+    gint id;
+    const gint len = nx*ny;
+    const gint shore_j = nland-1;
+    gboolean* mask = NULL;
+
+    mask = sed_cube_shore_mask (p);
+    g_assert (mask!=NULL);
+
+    for (id=0; id<shore_j; id++)
+      g_assert (!mask[id]);
+
+    for (id=shore_j; id<len; id++)
+      if ((id-shore_j)%ny == 0)
+        g_assert (mask[id]);
+      else
+        g_assert (!mask[id]);
+
+    eh_free (mask);
+  }
+
+  sed_cube_destroy (p);
+}
+
+void
+test_shore_ids ()
+{
+  const int nx = g_test_rand_int_range (100,200);
+  const int ny = g_test_rand_int_range (100,200);
+  const int nland = ny/4;
+  Sed_cube p = sed_cube_new (nx, ny);
+
+  g_assert (p);
+
+  { /* Set up the cube to have a shoreline */
+    int i, j;
+
+    for (i=0; i<nx; i++)
+    {
+      for (j=0; j<nland; j++)
+        sed_cube_set_base_height (p, i, j, 1);
+      for (j=nland; j<ny; j++)
+        sed_cube_set_base_height (p, i, j, -1);
+    }
+  }
+
+  {
+    gint i, id;
+    const gint len = nx*ny;
+    const gint shore_j = nland-1;
+    gint* ids = NULL;
+
+    ids = sed_cube_shore_ids (p);
+    g_assert (ids!=NULL);
+
+    for (i=0; ids[i]>=0; i++)
+      g_assert ((ids[i]-shore_j)%ny==0);
+    g_assert_cmpint (i, ==, nx);
+
+    eh_free (ids);
   }
 
   sed_cube_destroy (p);
@@ -782,6 +869,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/add_river",&test_cube_river_add);
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
   g_test_add_func ("/libsed/sed_cube/is_shore_cell",&test_is_shore_cell);
+  g_test_add_func ("/libsed/sed_cube/shore_mask",&test_shore_mask);
+  g_test_add_func ("/libsed/sed_cube/shore_ids",&test_shore_ids);
 
   g_test_add_func ("/libsed/sed_river/new",&test_river_new);
   g_test_add_func ("/libsed/sed_river/dup",&test_river_dup);
