@@ -787,6 +787,28 @@ Eh_dbl_grid sed_cube_load_grid (const Sed_cube s, gint *index)
    return sed_cube_grid( s , S_LOAD_FUNC , index );
 }
 
+gboolean*
+sed_cube_shore_mask (const Sed_cube s)
+{
+  gboolean* mask;
+
+  eh_require (s);
+
+  {
+    gint i, j, id;
+    const gint nx = sed_cube_n_x (s);
+    const gint ny = sed_cube_n_y (s);
+
+    mask = eh_new (gboolean, s->n_x*s->n_y);
+
+    for ( i=0,id=0 ; i<nx ; i++ )
+      for ( j=0 ; j<ny ; j++,id++ )
+        mask[id] = is_shore_cell (s, i, j);
+  }
+
+  return mask;
+}
+
 Sed_riv
 sed_cube_river_by_name( Sed_cube s , const char *name )
 {
@@ -2120,7 +2142,7 @@ gboolean is_shore_cell( Sed_cube s , gssize x , gssize y )
 
    eh_require( s!=NULL );
 
-   if ( x<0 || x>=s->n_x || y<0 || y>=s->n_y )
+   if (sed_cube_is_in_domain (s, x, y))
    {
       int west  = y-1;
       int east  = y+1;
