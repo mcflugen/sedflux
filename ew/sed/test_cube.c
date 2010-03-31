@@ -406,6 +406,43 @@ test_cube_river_add (void)
 }
 
 void
+test_is_shore_cell ()
+{
+  const int nx = g_test_rand_int_range (100,200);
+  const int ny = g_test_rand_int_range (100,200);
+  const int nland = ny/4;
+  Sed_cube p = sed_cube_new (nx, ny);
+
+  g_assert (p);
+
+  { /* Set up the cube to have a shoreline */
+    int i, j;
+
+    for (i=0; i<nx; i++)
+    {
+      for (j=0; j<nland; j++)
+        sed_cube_set_base_height (p, i, j, 1);
+      for (j=nland; j<ny; j++)
+        sed_cube_set_base_height (p, i, j, -1);
+    }
+  }
+
+  {
+    int i, j;
+    const shore_j = nland-1;
+
+    for (i=0; i<nx; i++)
+      for (j=0; j<ny; j++)
+        if (j==shore_j)
+          g_assert (is_shore_cell (p, i, j));
+        else
+          g_assert (!is_shore_cell (p, i, j));
+  }
+
+  sed_cube_destroy (p);
+}
+
+void
 test_cube_river_north (void)
 {
   const int nx = g_test_rand_int_range (100,200);
@@ -744,6 +781,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/base_height",&test_cube_base_height);
   g_test_add_func ("/libsed/sed_cube/add_river",&test_cube_river_add);
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
+  g_test_add_func ("/libsed/sed_cube/is_shore_cell",&test_is_shore_cell);
+
   g_test_add_func ("/libsed/sed_river/new",&test_river_new);
   g_test_add_func ("/libsed/sed_river/dup",&test_river_dup);
   g_test_add_func ("/libsed/sed_river/angle",&test_river_angle);
