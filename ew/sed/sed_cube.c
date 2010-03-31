@@ -790,7 +790,7 @@ Eh_dbl_grid sed_cube_load_grid (const Sed_cube s, gint *index)
 gboolean*
 sed_cube_shore_mask (const Sed_cube s)
 {
-  gboolean* mask;
+  gboolean* mask = NULL;
 
   eh_require (s);
 
@@ -807,6 +807,34 @@ sed_cube_shore_mask (const Sed_cube s)
   }
 
   return mask;
+}
+
+gint*
+sed_cube_shore_ids (const Sed_cube s)
+{
+  gboolean* ids = NULL;
+
+  eh_require (s);
+
+  {
+    gint i, j;
+    gint shore_count = 0;
+    const gint nx = sed_cube_n_x (s);
+    const gint ny = sed_cube_n_y (s);
+
+    ids = eh_new (gint, sed_cube_size (s)+1);
+
+    for (i=0 ;i<nx; i++)
+      for (j=0 ;j<ny; j++)
+        if (is_shore_cell (s, i, j))
+        {
+          ids[shore_count] = sed_cube_id (s, i, j);
+          shore_count++;
+        }
+    ids[shore_count] = -1;
+  }
+
+  return ids;
 }
 
 Sed_riv

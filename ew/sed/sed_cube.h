@@ -241,6 +241,9 @@ Eh_dbl_grid sed_cube_elevation_grid (const Sed_cube s, gint *index);
 Eh_dbl_grid sed_cube_thickness_grid (const Sed_cube s, gint *index );
 Eh_dbl_grid sed_cube_load_grid (const Sed_cube s, gint *index );
 
+gboolean* sed_cube_shore_mask (const Sed_cube s);
+gint* sed_cube_shore_ids (const Sed_cube s);
+
 Sed_riv       sed_cube_river_by_name   ( Sed_cube s , const char *name );
 Sed_riv       sed_cube_nth_river       ( Sed_cube s , gint n );
 gssize        sed_cube_river_id        ( Sed_cube s , Sed_riv river );
