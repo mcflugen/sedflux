@@ -622,6 +622,108 @@ test_river_hinge (void)
   sed_river_destroy (r);
 }
 
+void
+test_cube_grid_elevation_all (void)
+{
+  const int nx = g_test_rand_int_range (100,200);
+  const int ny = g_test_rand_int_range (100,200);
+  const int len = nx*ny;
+  Sed_cube p = sed_cube_new (nx, ny);
+
+  {
+    int i;
+    double* z_save = eh_new (double, len);
+
+    for (i=0; i<len; i++)
+      z_save[i] = g_test_rand_double ();
+
+    for (i=0; i<len; i++)
+      sed_cube_set_base_height (p, 0, i, z_save[i]);
+
+    { /* Get elevations everywhere */
+      Eh_dbl_grid z_grid = NULL;
+      double* z = NULL;
+
+      z_grid = sed_cube_elevation_grid (p, NULL);
+      g_assert (z_grid!=NULL);
+      g_assert_cmpint (eh_grid_n_x (z_grid), ==, nx);
+      g_assert_cmpint (eh_grid_n_y (z_grid), ==, ny);
+
+      z = eh_dbl_grid_data_start (z_grid);
+      g_assert (z!=NULL);
+
+      for (i=0; i<len; i++)
+        g_assert (eh_compare_dbl (z[i], z_save[i], 1e-12));
+
+      eh_grid_destroy (z_grid, TRUE);
+    }
+
+    eh_free (z_save);
+  }
+
+  sed_cube_destroy (p);
+}
+
+void
+test_cube_grid_elevation_some (void)
+{
+  const int nx = g_test_rand_int_range (100,200);
+  const int ny = g_test_rand_int_range (100,200);
+  const int len = nx*ny;
+  Sed_cube p = sed_cube_new (nx, ny);
+
+  {
+    int i;
+    double* z_save = eh_new (double, len);
+
+    for (i=0; i<len; i++)
+      z_save[i] = g_test_rand_double ();
+
+    for (i=0; i<len; i++)
+      sed_cube_set_base_height (p, 0, i, z_save[i]);
+
+    { /* Get elevations are certain columns */
+      Eh_dbl_grid z_grid = NULL;
+      double* z = NULL;
+      gint n_id = g_test_rand_int_range (1, len);
+      gint* id = eh_new (gint, n_id+1);
+      gboolean* is_set = eh_new (gboolean, len);
+
+      for (i=0; i<n_id; i++)
+        id[i] = g_test_rand_int_range (0, len);
+      id[n_id] = -1;
+
+      for (i=0; i<len; i++)
+        is_set[i] = FALSE;
+      for (i=0; i<n_id; i++)
+        is_set[id[i]] = TRUE;
+
+      z_grid = sed_cube_elevation_grid (p, id);
+      g_assert (z_grid!=NULL);
+      g_assert_cmpint (eh_grid_n_x (z_grid), ==, nx);
+      g_assert_cmpint (eh_grid_n_y (z_grid), ==, ny);
+
+      z = eh_dbl_grid_data_start (z_grid);
+      g_assert (z!=NULL);
+    
+      for (i=0; i<n_id; i++)
+        g_assert (eh_compare_dbl (z[id[i]], z_save[id[i]], 1e-12));
+
+      for (i=0; i<len; i++)
+        if (is_set[i] == FALSE)
+          g_assert (eh_compare_dbl (z[i], 0., 1e-12));
+
+      eh_free (is_set);
+      eh_free (id);
+      eh_grid_destroy (z_grid, TRUE);
+    }
+
+    eh_free (z_save);
+  }
+
+  sed_cube_destroy (p);
+}
+
 int
 main (int argc, char* argv[])
 {
@@ -647,6 +749,11 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_river/angle",&test_river_angle);
   g_test_add_func ("/libsed/sed_river/name",&test_river_name);
   g_test_add_func ("/libsed/sed_river/hinge",&test_river_hinge);
+
+  g_test_add_func ("/libsed/sed_cube/grid/elevation_all",
+                   &test_cube_grid_elevation_all);
+  g_test_add_func ("/libsed/sed_cube/grid/elevation_some",
+                   &test_cube_grid_elevation_some);
 
   g_test_run ();
 }
