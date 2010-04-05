@@ -221,7 +221,8 @@ gpointer      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
 void          sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
                                            const gint start[2], double a);
 void          sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
-                                            const gint start[2], double a);
+                                            const gint start[2],
+                                            const gint end[2]);
 gpointer      sed_cube_add_river_mouth (Sed_cube s, gint id, double flux);
 Sed_cube      sed_cube_remove_river( Sed_cube s , Sed_riv r );
 Sed_cube      sed_cube_remove_all_trunks( Sed_cube s );
