@@ -4,6 +4,53 @@
 
 #include "test_sed.h"
 
+Sed_cube
+new_test_cube ()
+{
+  const gint mult = g_test_quick ()?1:10;
+  Sed_cube p = NULL;
+
+  {
+    const gint nx = g_test_rand_int_range (10*mult,20*mult);
+    const gint ny = g_test_rand_int_range (10*mult,20*mult);
+
+    p = sed_cube_new (nx, ny);
+  }
+
+  return p;
+}
+Sed_cube
+new_land_ocean_cube (double i0, double i1, double j0, double j1)
+{
+  Sed_cube p = NULL;
+
+  eh_require (i1>i0);
+  eh_require (j1>j0);
+
+  {
+    p = new_test_cube ();
+
+    {
+      const gint nx = sed_cube_n_x (p);
+      const gint ny = sed_cube_n_y (p);
+      const gint i_start = nx*i0;
+      const gint i_end = nx*i1;
+      const gint j_start = ny*j0;
+      const gint j_end = ny*j1;
+      gint i, j;
+
+      for (i=0; i<nx; i++)
+        for (j=0; j<ny; j++)
+          if (i>=i_start && i<i_end && j>=j_start && j<j_end)
+            sed_cube_set_base_height (p, i, j, 1);
+          else
+            sed_cube_set_base_height (p, i, j, -1);
+    }
+  }
+
+  return p;
+}
+
 void
 test_sed_cube_new (void)
 {
@@ -271,13 +318,12 @@ test_cube_get_size (void)
 void
 test_cube_base_height (void)
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int len = nx*ny;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = new_test_cube ();
 
   {
     int i, j;
+    const int nx = sed_cube_n_x (p);
+    const int ny = sed_cube_n_y (p);
 
     for (i=0; i<nx; i++)
       for (j=0; j<ny; j++)
@@ -295,148 +341,152 @@ test_cube_base_height (void)
 void
 test_cube_river_add (void)
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int len = nx*ny;
-  const int nland = ny/4;
-  Sed_cube p = sed_cube_new (nx, ny);
-  Sed_riv r = sed_river_new ("Trunk 1");
+  Sed_cube p = NULL;
 
+  p = new_land_ocean_cube (0., 1.,  0., .25);
   g_assert (p);
-  g_assert (r);
 
-  { /* Set up the cube to have a shoreline */
-    int i, j;
+  {
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    const gint nland = ny*.25;
+    Sed_riv r = sed_river_new ("Trunk 1");
 
-    for (i=0; i<nx; i++)
-    {
-      for (j=0; j<nland; j++)
-        sed_cube_set_base_height (p, i, j, 1);
-      for (j=nland; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, -1);
+    g_assert (r);
+
+    { /* Find the river mouth of a river */
+      Eh_ind_2 mouth;
+  
+      sed_river_set_hinge (r, nx/2, 0);
+      sed_river_set_angle (r, G_PI*.5);
+      sed_cube_find_river_mouth (p, r);
+  
+      mouth = sed_river_mouth (r);
+  
+      g_assert_cmpint (mouth.i, ==, nx/2);
+      g_assert_cmpint (mouth.j, ==, nland);
+  
+      g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j), <, 0);
+      g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j-1), >, 0);
     }
+  
+    { /* Add the river to a Sed_cube */
+      Sed_riv* r_list = NULL;
+      gpointer rtn = NULL;
+  
+      r_list = sed_cube_all_trunks (p);
+      g_assert (r_list==NULL);
+  
+      rtn = sed_cube_add_trunk (p, r);
+      g_assert (rtn);
+  
+      r_list = sed_cube_all_trunks (p);
+      g_assert (r_list);
+      g_assert_cmpint (g_strv_length ((gchar**)r_list), ==, 1);
+  
+      g_assert (r_list[0]!=r);
+      g_assert (r_list[0]==rtn);
+    }
+  
+    { /* Add another river to the Sed_cube */
+      Sed_riv* r_list = NULL;
+      Sed_riv r2 = sed_river_new ("Trunk 2");
+      gpointer r2_id;
+  
+      sed_river_set_hinge (r2, nx/2, 0);
+      sed_river_set_angle (r2, G_PI*.5);
+      sed_cube_find_river_mouth (p, r2);
+  
+      r2_id = sed_cube_add_trunk (p, r2);
+  
+      r_list = sed_cube_all_trunks (p);
+      g_assert (r_list);
+      g_assert_cmpint (g_strv_length ((gchar**)r_list), ==, 2);
+  
+      g_assert (r_list[0]!=r2);
+      g_assert (r_list[1]!=r);
+  
+      g_assert (sed_cube_nth_river (p, 0)!=r_list[0]);
+      g_assert (sed_cube_nth_river (p, 1)!=r_list[1]);
+  
+      r2 = sed_river_destroy (r2);
+    }
+  
+    { /* Move the river around in the Sed_cube */
+      Eh_ind_2 mouth;
+      Sed_riv r0 = sed_cube_nth_river (p, 0);
+  
+      sed_river_set_hinge (r0, nx/2, nland-1);
+      sed_cube_find_river_mouth (p, r0);
+      mouth = sed_river_mouth (r0);
+  
+      g_assert_cmpint (mouth.i, ==, nx/2);
+      g_assert_cmpint (mouth.j, ==, nland);
+  
+      sed_river_set_hinge (r0, 0, nland-1);
+      mouth = sed_river_mouth (r0);
+  
+      g_assert_cmpint (mouth.i, ==, nx/2);
+      g_assert_cmpint (mouth.j, ==, nland);
+  
+      sed_cube_find_river_mouth (p, r0);
+      mouth = sed_river_mouth (r0);
+  
+      g_assert_cmpint (mouth.i, ==, 0);
+      g_assert_cmpint (mouth.j, ==, nland);
+  
+      sed_river_destroy (r0);
+    }
+
+    r = sed_river_destroy (r);
   }
 
-  { /* Find the river mouth of a river */
-    Eh_ind_2 mouth;
-
-    sed_river_set_hinge (r, nx/2, 0);
-    sed_river_set_angle (r, G_PI*.5);
-    sed_cube_find_river_mouth (p, r);
-
-    mouth = sed_river_mouth (r);
-
-    g_assert_cmpint (mouth.i, ==, nx/2);
-    g_assert_cmpint (mouth.j, ==, nland);
-
-    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j), <, 0);
-    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j-1), >, 0);
-  }
-
-  { /* Add the river to a Sed_cube */
-    Sed_riv* r_list = NULL;
-    gpointer rtn = NULL;
-
-    r_list = sed_cube_all_trunks (p);
-    g_assert (r_list==NULL);
-
-    rtn = sed_cube_add_trunk (p, r);
-    g_assert (rtn);
-
-    r_list = sed_cube_all_trunks (p);
-    g_assert (r_list);
-    g_assert_cmpint (g_strv_length ((gchar**)r_list), ==, 1);
-
-    g_assert (r_list[0]!=r);
-    g_assert (r_list[0]==rtn);
-  }
-
-  { /* Add another river to the Sed_cube */
-    Sed_riv* r_list = NULL;
-    Sed_riv r2 = sed_river_new ("Trunk 2");
-    gpointer r2_id;
-
-    sed_river_set_hinge (r2, nx/2, 0);
-    sed_river_set_angle (r2, G_PI*.5);
-    sed_cube_find_river_mouth (p, r2);
-
-    r2_id = sed_cube_add_trunk (p, r2);
-
-    r_list = sed_cube_all_trunks (p);
-    g_assert (r_list);
-    g_assert_cmpint (g_strv_length ((gchar**)r_list), ==, 2);
-
-    g_assert (r_list[0]!=r2);
-    g_assert (r_list[1]!=r);
-
-    g_assert (sed_cube_nth_river (p, 0)!=r_list[0]);
-    g_assert (sed_cube_nth_river (p, 1)!=r_list[1]);
-
-    r2 = sed_river_destroy (r2);
-  }
-
-  { /* Move the river around in the Sed_cube */
-    Eh_ind_2 mouth;
-    Sed_riv r0 = sed_cube_nth_river (p, 0);
-
-    sed_river_set_hinge (r0, nx/2, nland-1);
-    sed_cube_find_river_mouth (p, r0);
-    mouth = sed_river_mouth (r0);
-
-    g_assert_cmpint (mouth.i, ==, nx/2);
-    g_assert_cmpint (mouth.j, ==, nland);
-
-    sed_river_set_hinge (r0, 0, nland-1);
-    mouth = sed_river_mouth (r0);
-
-    g_assert_cmpint (mouth.i, ==, nx/2);
-    g_assert_cmpint (mouth.j, ==, nland);
-
-    sed_cube_find_river_mouth (p, r0);
-    mouth = sed_river_mouth (r0);
-
-    g_assert_cmpint (mouth.i, ==, 0);
-    g_assert_cmpint (mouth.j, ==, nland);
-
-    sed_river_destroy (r0);
-  }
-
-  r = sed_river_destroy (r);
   sed_cube_destroy (p);
 }
 
 void
-test_is_shore_cell ()
+test_is_land_ocean_cell ()
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int nland = ny/4;
-  Sed_cube p = sed_cube_new (nx, ny);
+  gint nx;
+  gint ny;
+  gint nland;
+  Sed_cube p = NULL;
 
+  p = new_land_ocean_cube (0., 1., 0., .25);
   g_assert (p);
 
-  { /* Set up the cube to have a shoreline */
-    int i, j;
-
-    for (i=0; i<nx; i++)
-    {
-      for (j=0; j<nland; j++)
-        sed_cube_set_base_height (p, i, j, 1);
-      for (j=nland; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, -1);
-    }
-  }
+  nx = sed_cube_n_x (p);
+  ny = sed_cube_n_y (p);
+  nland = .25*ny;
 
   {
-    int i, j;
+    gint i, j;
     const gint shore_j = nland-1;
+    const gint coast_j = nland;
 
     for (i=0; i<nx; i++)
       for (j=0; j<ny; j++)
-        if (j==shore_j)
-          g_assert (is_shore_cell (p, i, j));
+        if (j<shore_j)
+          g_assert (is_land_cell (p, i, j));
+        else if (j==shore_j)
+          g_assert (is_land_cell (p, i, j) && is_shore_cell (p, i, j));
+        else if (j==coast_j)
+          g_assert (is_ocean_cell (p, i, j) && is_coast_cell (p, i, j));
         else
-          g_assert (!is_shore_cell (p, i, j));
+          g_assert (is_ocean_cell (p, i, j));
+
+    for (i=0; i<nx; i++)
+      for (j=0; j<ny; j++)
+        if (j<shore_j)
+          g_assert (!(is_shore_cell (p, i, j) || is_coast_cell (p, i, j) ||
+                      is_ocean_cell (p, i, j)));
+        else if (j==shore_j)
+          g_assert (!(is_coast_cell (p, i, j) || is_ocean_cell (p, i, j)));
+        else if (j==coast_j)
+          g_assert (!(is_land_cell (p, i, j) || is_shore_cell (p, i, j)));
+        else
+          g_assert (!(is_land_cell (p, i, j) || is_shore_cell (p, i, j) ||
+                      is_coast_cell (p, i, j)));
   }
 
   sed_cube_destroy (p);
@@ -445,27 +495,16 @@ test_is_shore_cell ()
 void
 test_shore_mask ()
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int nland = ny/4;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = NULL;
 
+  p = new_land_ocean_cube (0., 1., 0., .25);
   g_assert (p);
-
-  { /* Set up the cube to have a shoreline */
-    int i, j;
-
-    for (i=0; i<nx; i++)
-    {
-      for (j=0; j<nland; j++)
-        sed_cube_set_base_height (p, i, j, 1);
-      for (j=nland; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, -1);
-    }
-  }
 
   {
     gint id;
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    const gint nland = ny*.25;
     const gint len = nx*ny;
     const gint shore_j = nland-1;
     gboolean* mask = NULL;
@@ -491,27 +530,16 @@ test_shore_mask ()
 void
 test_shore_ids ()
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int nland = ny/4;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = NULL;
 
+  p = new_land_ocean_cube (0., 1., 0., .25);
   g_assert (p);
-
-  { /* Set up the cube to have a shoreline */
-    int i, j;
-
-    for (i=0; i<nx; i++)
-    {
-      for (j=0; j<nland; j++)
-        sed_cube_set_base_height (p, i, j, 1);
-      for (j=nland; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, -1);
-    }
-  }
 
   {
     gint i, id;
+    const int nx = sed_cube_n_x (p);
+    const int ny = sed_cube_n_y (p);
+    const int nland = ny*.25;
     const gint len = nx*ny;
     const gint shore_j = nland-1;
     gint* ids = NULL;
@@ -532,38 +560,25 @@ test_shore_ids ()
 void
 test_cube_river_north (void)
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int len = nx*ny;
-  const int nland = nx/4;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = NULL;
   Sed_riv r = sed_river_new ("North");
 
+  p = new_land_ocean_cube (0., .25, 0., 1.);
   g_assert (p);
   g_assert (r);
 
-  { /* Set up the cube to have a shoreline */
-    int i, j;
-
-    for (i=0; i<nland; i++)
-      for (j=0; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, 1);
-    for (i=nland; i<nx; i++)
-      for (j=0; j<ny; j++)
-        sed_cube_set_base_height (p, i, j, -1);
-  }
-
   { /* Find the river mouth of a river */
     Eh_ind_2 mouth;
+    const gint nland = sed_cube_n_x (p)*.25;
 
-    sed_river_set_hinge (r, 0, ny/2);
+    sed_river_set_hinge (r, 0, sed_cube_n_y (p)/2);
     sed_river_set_angle (r, 0);
     sed_cube_find_river_mouth (p, r);
 
     mouth = sed_river_mouth (r);
 
     g_assert_cmpint (mouth.i, ==, nland);
-    g_assert_cmpint (mouth.j, ==, ny/2);
+    g_assert_cmpint (mouth.j, ==, sed_cube_n_y (p)/2);
 
     g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j), <, 0);
     g_assert_cmpfloat (sed_cube_base_height(p, mouth.i-1, mouth.j), >, 0);
@@ -580,6 +595,75 @@ test_cube_river_north (void)
     g_assert_cmpint (g_strv_length ((gchar**)r_list), ==, 1);
 
     g_assert (r_list[0]!=r);
+  }
+
+  r = sed_river_destroy (r);
+  sed_cube_destroy (p);
+}
+
+void
+test_cube_river_path_ray (void)
+{
+  Sed_cube p = NULL;
+  Sed_riv r = sed_river_new ("North");
+
+  p = new_land_ocean_cube (0., .25, 0., 1.);
+  g_assert (p);
+  g_assert (r);
+
+  { /* Find the river mouth of a river */
+    const int nx = sed_cube_n_x (p);
+    const int ny = sed_cube_n_y (p);
+    const int len = nx*ny;
+    const int nland = nx*.25;
+    Eh_ind_2 mouth;
+    const gint hinge[2] = {0, ny/2};
+
+    sed_cube_set_river_path_ray (r, p, hinge, 0.);
+
+    mouth = sed_river_mouth (r);
+
+    g_assert_cmpint (mouth.i, ==, nland);
+    g_assert_cmpint (mouth.j, ==, ny/2);
+
+    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j), <, 0);
+    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i-1, mouth.j), >, 0);
+  }
+
+  r = sed_river_destroy (r);
+  sed_cube_destroy (p);
+}
+
+void
+test_cube_river_path_ends (void)
+{
+  Sed_cube p = NULL;
+  Sed_riv r = sed_river_new ("North");
+
+  p = new_land_ocean_cube (0., .25, 0., 1.);
+  g_assert (p);
+  g_assert (r);
+
+  { /* Find the river mouth of a river */
+    Eh_ind_2 mouth;
+    double angle;
+    const int nx = sed_cube_n_x (p);
+    const int ny = sed_cube_n_y (p);
+    const int nland = nx*.25;
+    const gint start[2] = {0, ny/2};
+    const gint end[2] = {nland, ny/2};
+
+    sed_cube_set_river_path_ends (r, p, start, end);
+
+    mouth = sed_river_mouth (r);
+    angle = sed_river_angle (r);
+
+    g_assert (eh_compare_dbl (angle, 0., 1e-12));
+    g_assert_cmpint (mouth.i, ==, nland);
+    g_assert_cmpint (mouth.j, ==, ny/2);
+
+    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i, mouth.j), <, 0);
+    g_assert_cmpfloat (sed_cube_base_height(p, mouth.i-1, mouth.j), >, 0);
   }
 
   r = sed_river_destroy (r);
@@ -749,13 +833,15 @@ test_river_hinge (void)
 void
 test_cube_grid_elevation_all (void)
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int len = nx*ny;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = new_test_cube ();
+
+  g_assert (p);
 
   {
-    int i;
+    gint i;
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    const gint len = nx*ny;
     double* z_save = eh_new (double, len);
 
     for (i=0; i<len; i++)
@@ -791,13 +877,13 @@ test_cube_grid_elevation_all (void)
 void
 test_cube_grid_elevation_some (void)
 {
-  const int nx = g_test_rand_int_range (100,200);
-  const int ny = g_test_rand_int_range (100,200);
-  const int len = nx*ny;
-  Sed_cube p = sed_cube_new (nx, ny);
+  Sed_cube p = new_test_cube ();
 
   {
-    int i;
+    gint i;
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    const gint len = nx*ny;
     double* z_save = eh_new (double, len);
 
     for (i=0; i<len; i++)
@@ -868,9 +954,15 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/base_height",&test_cube_base_height);
   g_test_add_func ("/libsed/sed_cube/add_river",&test_cube_river_add);
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
-  g_test_add_func ("/libsed/sed_cube/is_shore_cell",&test_is_shore_cell);
+  g_test_add_func ("/libsed/sed_cube/is_land_ocean_cell",
+                   &test_is_land_ocean_cell);
   g_test_add_func ("/libsed/sed_cube/shore_mask",&test_shore_mask);
   g_test_add_func ("/libsed/sed_cube/shore_ids",&test_shore_ids);
+
+  g_test_add_func ("/libsed/sed_cube/river_path/ray",
+                   &test_cube_river_path_ray);
+  g_test_add_func ("/libsed/sed_cube/river_path/ends",
+                   &test_cube_river_path_ends);
 
   g_test_add_func ("/libsed/sed_river/new",&test_river_new);
   g_test_add_func ("/libsed/sed_river/dup",&test_river_dup);
