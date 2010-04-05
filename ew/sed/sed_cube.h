@@ -218,6 +218,11 @@ void          sed_river_attach_susp_grid( Sed_riv r , Sed_cell_grid g );
 Sed_cell_grid sed_river_get_susp_grid( Sed_riv r );
 void          sed_river_detach_susp_grid( Sed_riv r );
 gpointer      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
+void          sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
+                                           const gint start[2], double a);
+void          sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
+                                            const gint start[2], double a);
+gpointer      sed_cube_add_river_mouth (Sed_cube s, gint id, double flux);
 Sed_cube      sed_cube_remove_river( Sed_cube s , Sed_riv r );
 Sed_cube      sed_cube_remove_all_trunks( Sed_cube s );
 
@@ -276,6 +281,7 @@ GList *sed_find_next_shore( GList *shore_list ,
                             Eh_ind_2 *pos     ,
                             GList *ignore_list );
 gboolean is_shore_cell( Sed_cube s , gssize x , gssize y );
+double sed_cube_shore_normal (Sed_cube s, gint i, gint j);
 GList *sed_find_columns_custom( Sed_cube s             ,
                                 gssize i                ,
                                 gssize j                ,

@@ -1737,6 +1737,84 @@ sed_cube_add_trunk (Sed_cube s, Sed_riv new_trunk)
   return river_id;
 }
 
+void
+sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
+                             const gint start[2], double a)
+{
+  eh_require (s);
+  eh_require (r);
+
+  {
+    sed_river_set_hinge (r, start[0], start[1]);
+    sed_river_set_angle (r, a);
+    sed_cube_find_river_mouth (s, r);
+  }
+
+  return;
+}
+
+void
+sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
+                              const gint start[2], const gint end[2])
+{
+  eh_require (s);
+  eh_require (r);
+
+  {
+    const double dx = sed_cube_x_res (s);
+    const double dy = sed_cube_y_res (s);
+    double a;
+
+    eh_require (is_coast_cell (s, end[0], end[1]));
+    eh_require (is_land_cell (s, start[0], start[1]));
+
+    a = atan2 ((end[1]-start[1])*dy, ((end[0]-start[0])*dx));
+
+    sed_river_set_hinge (r, start[0], start[1]);
+    sed_river_set_mouth (r, end[0], end[1]);
+    sed_river_set_angle (r, a);
+  }
+
+  return;
+}
+
+gpointer
+sed_cube_add_river_mouth (Sed_cube s, gint id, double flux)
+{
+  gpointer river_id = NULL;
+
+  eh_require (s);
+  eh_require (id>0);
+  eh_require (id<sed_cube_size (s));
+  eh_require (flux>0);
+
+  {
+    Sed_cell_grid new_grid = sed_cube_create_in_suspension (s);
+    Sed_riv new_trunk = sed_river_new ();
+    Eh_ind_2 ind = sed_cube_sub (s, id);
+    const gint i = ind.i;
+    const gint j = ind.j;
+    const gint end[2] = {i, j};
+    const gint start[2] = {i, j};
+
+    eh_require (sed_cube_is_in_domain (s, i, j));
+    eh_require (is_shore_cell (s, i, j));
+    eh_require (new_grid);
+    eh_require (new_trunk);
+
+    sed_river_set_bedload (new_trunk, flux);
+    sed_cube_set_river_path_ends (new_trunk, s, start, end);
+
+    s->river = g_list_prepend (s->river, new_trunk);
+
+    sed_river_attach_susp_grid (new_trunk, new_grid);
+
+    river_id = (gpointer)new_trunk;
+  }
+
+  return river_id;
+}
+
 Sed_cube
 sed_cube_remove_river( Sed_cube s , Sed_riv r )
 {
@@ -2200,6 +2278,116 @@ gboolean is_shore_cell( Sed_cube s , gssize x , gssize y )
    }
 
    return is_shore;
+}
+
+/** Test if an ocean cell borders a land cell.
+
+In sedflux a 'coastal' cell is a cell that is below sea level and borders
+at least on cell that is above sea level.  This is in contrast to a 'shore'
+cell, which is a land cell bordering the ocean.
+
+\param s A Sed_cube.
+\param i Index to fast dimension.
+\param j Index to slow dimension.
+
+\return TRUE if the column is a coastal cell
+*/
+gboolean
+is_coast_cell (Sed_cube s, gint i, gint j)
+{
+   gboolean is_coast = FALSE;
+
+   eh_require( s!=NULL );
+
+   if (sed_cube_is_in_domain (s, i, j))
+   {
+      int west  = j-1;
+      int east  = j+1;
+      int north = i-1;
+      int south = i+1;
+
+      eh_clamp (west, 0, s->n_y-1);
+      eh_clamp (east, 0, s->n_y-1);
+      eh_clamp (north, 0, s->n_x-1);
+      eh_clamp (south, 0, s->n_x-1);
+
+      //---
+      // If the column is above sea level, it isn't the coast.
+      // Otherwise, if any of its neighbours is above sea level,
+      // then it is a coast column.
+      //---
+      if (is_land_cell (s, i, j))
+         is_coast = FALSE;
+      else if ( is_land_cell (s, i, west) || is_land_cell (s, i, east) ||
+                is_land_cell (s, north, j) || is_land_cell (s, south, j))
+         is_coast = TRUE;
+      else
+         is_coast = FALSE;
+   }
+
+   return is_coast;
+}
+
+gboolean
+is_land_cell (const Sed_cube s, gint i, gint j)
+{
+  return sed_column_is_above (s->col[i][j], s->sea_level);
+}
+
+gboolean
+is_ocean_cell (const Sed_cube s, gint i, gint j)
+{
+  return sed_column_is_below (s->col[i][j], s->sea_level);
+}
+
+double
+_shore_normal (const gchar shore_edge, const double aspect_ratio)
+{
+  double angle;
+
+  eh_require (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
+                          S_SOUTH_EDGE & S_WEST_EDGE))
+
+  eh_return_val_if_fail (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
+                                     S_SOUTH_EDGE & S_WEST_EDGE),
+                         eh_nan ());
+
+  {
+    gint x = 0;
+    gint y = 0;
+
+    if (shore_edge & S_NORTH_EDGE) x--;
+    if (shore_edge & S_EAST_EDGE) y++;
+    if (shore_edge & S_SOUTH_EDGE) x++;
+    if (shore_edge & S_WEST_EDGE) y--;
+
+    if (x==0 && y==0)
+    { /* This could be an island or a discontinuous coast */
+      if (shore_edge & (S_NORTH_EDGE & S_SOUTH_EDGE))
+        x = g_random_boolean ()?-1:1;
+      if (shore_edge & (S_EAST_EDGE & S_WEST_EDGE))
+        y = g_random_boolean ()?-1:1;
+    }
+
+    angle = atan2 (x, y*aspect_ratio);
+  }
+
+  return angle;
+}
+
+double
+sed_cube_shore_normal (Sed_cube s, gint i, gint j)
+{
+  double angle;
+
+  {
+    gchar shore_mask;
+
+    shore_mask = sed_cube_find_shore_edge (s, i, j);
+    angle = _shore_normal (shore_mask, sed_cube_y_res (s)/sed_cube_x_res (s));
+  }
+
+  return angle;
 }
 
 int sed_cube_find_shore_edge( Sed_cube s , gssize i , gssize j )
