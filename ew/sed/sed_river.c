@@ -366,7 +366,7 @@ sed_river_bedload( Sed_riv s )
    eh_return_val_if_fail( s       , 0. );
    eh_return_val_if_fail( s->data , 0. );
 
-   return sed_hydro_velocity( s->data );
+   return sed_hydro_bedload( s->data );
 }
 
 double
