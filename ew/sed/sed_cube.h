@@ -223,7 +223,7 @@ void          sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
 void          sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
                                             const gint start[2],
                                             const gint end[2]);
-gpointer      sed_cube_add_river_mouth (Sed_cube s, gint id, double flux);
+gpointer      sed_cube_add_river_mouth (Sed_cube s, gint id, Sed_hydro hydro);
 Sed_cube      sed_cube_remove_river( Sed_cube s , Sed_riv r );
 Sed_cube      sed_cube_remove_all_trunks( Sed_cube s );
 
@@ -282,6 +282,7 @@ GList *sed_find_next_shore( GList *shore_list ,
                             Eh_ind_2 *pos     ,
                             GList *ignore_list );
 gboolean is_shore_cell( Sed_cube s , gssize x , gssize y );
+gint* sed_cube_shore_normal_shift (Sed_cube s, gint i, gint j);
 double sed_cube_shore_normal (Sed_cube s, gint i, gint j);
 GList *sed_find_columns_custom( Sed_cube s             ,
                                 gssize i                ,
@@ -329,7 +330,9 @@ GList *sed_cube_find_line_path( Sed_cube c         ,
                                 double angle );
 
 double sed_cube_river_angle (Sed_cube c, gpointer river_id);
+double sed_cube_river_bedload (Sed_cube s, gpointer river_id);
 Eh_ind_2 sed_cube_river_mouth (Sed_cube c, gpointer river_id);
+Eh_ind_2 sed_cube_river_hinge (Sed_cube s, gpointer river_id);
 Sed_hydro sed_cube_river_hydro (Sed_cube c, gpointer river_id);
 Sed_cube sed_cube_river_set_hydro (Sed_cube c, gpointer river_id, Sed_hydro h);
 

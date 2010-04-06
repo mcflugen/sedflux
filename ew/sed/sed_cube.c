@@ -68,6 +68,8 @@ sed_cube_error_quark( void )
 static Sedflux_mode __sedflux_mode = SEDFLUX_MODE_NOT_SET;
 static Sed_riv _sed_cube_nth_river (Sed_cube s, gint n);
 static Sed_riv _sed_cube_river (Sed_cube s, gpointer river_id);
+gint* _shore_normal_shift (gchar shore_edge);
+double _shore_normal (const gchar shore_edge, const double aspect_ratio);
 
 void
 sed_mode_set( Sedflux_mode mode )
@@ -1779,14 +1781,14 @@ sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
 }
 
 gpointer
-sed_cube_add_river_mouth (Sed_cube s, gint id, double flux)
+sed_cube_add_river_mouth (Sed_cube s, gint id, Sed_hydro hydro)
 {
   gpointer river_id = NULL;
 
   eh_require (s);
   eh_require (id>0);
   eh_require (id<sed_cube_size (s));
-  eh_require (flux>0);
+  eh_require (hydro);
 
   {
     Sed_cell_grid new_grid = sed_cube_create_in_suspension (s);
@@ -1794,15 +1796,19 @@ sed_cube_add_river_mouth (Sed_cube s, gint id, double flux)
     Eh_ind_2 ind = sed_cube_sub (s, id);
     const gint i = ind.i;
     const gint j = ind.j;
-    const gint end[2] = {i, j};
     const gint start[2] = {i, j};
+    gint* end = NULL;
 
     eh_require (sed_cube_is_in_domain (s, i, j));
     eh_require (is_shore_cell (s, i, j));
     eh_require (new_grid);
     eh_require (new_trunk);
 
-    sed_river_set_bedload (new_trunk, flux);
+    end = sed_cube_shore_normal_shift (s, i, j);
+    end[0] += start[0];
+    end[1] += start[1];
+
+    sed_river_set_hydro (new_trunk, hydro);
     sed_cube_set_river_path_ends (new_trunk, s, start, end);
 
     s->river = g_list_prepend (s->river, new_trunk);
@@ -1810,6 +1816,8 @@ sed_cube_add_river_mouth (Sed_cube s, gint id, double flux)
     sed_river_attach_susp_grid (new_trunk, new_grid);
 
     river_id = (gpointer)new_trunk;
+
+    eh_free (end);
   }
 
   return river_id;
@@ -1920,6 +1928,18 @@ sed_cube_river_angle (Sed_cube s, gpointer river_id)
   return sed_river_angle (r);
 }
 
+double
+sed_cube_river_bedload (Sed_cube s, gpointer river_id)
+{
+  Sed_riv r = NULL;
+  eh_require (s);
+
+  r = _sed_cube_river (s, river_id);
+  eh_require (r);
+
+  return sed_river_bedload (r);
+}
+
 Sed_hydro
 sed_cube_river_hydro (Sed_cube s, gpointer river_id)
 {
@@ -1975,6 +1995,23 @@ sed_cube_river_mouth (Sed_cube s, gpointer river_id)
     eh_require (r);
 
     ind = sed_river_mouth (r);
+  }
+
+  return ind;
+}
+
+Eh_ind_2
+sed_cube_river_hinge (Sed_cube s, gpointer river_id)
+{
+  Eh_ind_2 ind = {-1, -1};
+
+  eh_require (s);
+
+  {
+    Sed_riv r = _sed_cube_river (s, river_id);
+    eh_require (r);
+
+    ind = sed_river_hinge (r);
   }
 
   return ind;
@@ -2340,17 +2377,17 @@ is_ocean_cell (const Sed_cube s, gint i, gint j)
   return sed_column_is_below (s->col[i][j], s->sea_level);
 }
 
-double
-_shore_normal (const gchar shore_edge, const double aspect_ratio)
+gint*
+_shore_normal_shift (gchar shore_edge)
 {
-  double angle;
+  gint *shift = eh_new (gint, 2);
 
   eh_require (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
-                          S_SOUTH_EDGE & S_WEST_EDGE))
+                          S_SOUTH_EDGE & S_WEST_EDGE));
 
   eh_return_val_if_fail (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
                                      S_SOUTH_EDGE & S_WEST_EDGE),
-                         eh_nan ());
+                         NULL);
 
   {
     gint x = 0;
@@ -2369,7 +2406,46 @@ _shore_normal (const gchar shore_edge, const double aspect_ratio)
         y = g_random_boolean ()?-1:1;
     }
 
-    angle = atan2 (x, y*aspect_ratio);
+    shift[0] = x;
+    shift[1] = y;
+  }
+
+  return shift;
+}
+
+gint*
+sed_cube_shore_normal_shift (Sed_cube s, gint i, gint j)
+{
+  gint* shift = NULL;
+
+  {
+    gchar shore_mask;
+
+    shore_mask = sed_cube_find_shore_edge (s, i, j);
+    shift = _shore_normal_shift (shore_mask);
+  }
+
+  return shift;
+}
+
+double
+_shore_normal (const gchar shore_edge, const double aspect_ratio)
+{
+  double angle;
+
+  eh_require (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
+                          S_SOUTH_EDGE & S_WEST_EDGE))
+
+  eh_return_val_if_fail (shore_edge|(S_NORTH_EDGE & S_EAST_EDGE &
+                                     S_SOUTH_EDGE & S_WEST_EDGE),
+                         eh_nan ());
+
+  {
+    gint* shift = _shore_normal_shift (shore_edge);
+    eh_require (shift);
+
+    angle = atan2 (shift[0], shift[1]*aspect_ratio);
+    eh_free (shift);
   }
 
   return angle;
