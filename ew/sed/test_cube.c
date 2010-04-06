@@ -445,6 +445,51 @@ test_cube_river_add (void)
 }
 
 void
+test_cube_add_river_mouth (void)
+{
+  Sed_cube p = NULL;
+
+  p = new_land_ocean_cube (0., 1.,  0., .75);
+  g_assert (p);
+
+  {
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    gint id = sed_cube_id (p, nx/2, ny*3/4-1);
+    gpointer r = NULL;
+    Eh_ind_2 ind;
+    double angle;
+    double set_flux = g_test_rand_double ();
+    double get_flux;
+    Sed_hydro hydro = sed_hydro_new (1);
+
+    g_assert (hydro);
+    sed_hydro_set_bedload (hydro, set_flux);
+
+    r = sed_cube_add_river_mouth (p, id, hydro);
+    g_assert (r!=NULL);
+
+    ind = sed_cube_river_mouth (p, r);
+    g_assert_cmpint (ind.i, ==, nx*.5);
+    g_assert_cmpint (ind.j, ==, ny*.75);
+
+    angle = sed_cube_river_angle (p, r);
+    g_assert (eh_compare_dbl (angle, M_PI/2., 1e-12));
+
+    ind = sed_cube_river_hinge (p, r);
+    g_assert_cmpint (ind.i, ==, nx*.5);
+    g_assert_cmpint (ind.j, ==, ny*.75-1);
+
+    get_flux = sed_cube_river_bedload (p, r);
+    g_assert (eh_compare_dbl (get_flux, set_flux, 1e-12));
+
+    sed_hydro_destroy (hydro);
+  }
+
+  sed_cube_destroy (p);
+}
+
+void
 test_is_land_ocean_cell ()
 {
   gint nx;
@@ -953,6 +998,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/deposit",&test_cube_deposit);
   g_test_add_func ("/libsed/sed_cube/base_height",&test_cube_base_height);
   g_test_add_func ("/libsed/sed_cube/add_river",&test_cube_river_add);
+  g_test_add_func ("/libsed/sed_cube/add_river_mouth",
+                   &test_cube_add_river_mouth);
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
   g_test_add_func ("/libsed/sed_cube/is_land_ocean_cell",
                    &test_is_land_ocean_cell);
