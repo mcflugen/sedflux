@@ -500,6 +500,94 @@ test_cube_add_river_mouth (void)
 }
 
 void
+test_cube_add_river_mouth_grid (void)
+{
+  Sed_cube p = NULL;
+
+  p = new_land_ocean_cube (0., .25,  0., 1.);
+  g_assert (p);
+
+  {
+    const gint nx = sed_cube_n_x (p);
+    const gint ny = sed_cube_n_y (p);
+    double* set_flux = NULL;
+    gpointer* rivers = NULL;
+    gint n_rivers = 0;
+    gint* shore = NULL;
+    gint i;
+
+    shore = sed_cube_shore_ids (p);
+    g_assert (shore!=NULL);
+
+    for (n_rivers=0; shore[n_rivers]>=0; n_rivers++);
+    g_assert_cmpint (n_rivers, ==, ny);
+
+    rivers = eh_new (gpointer, n_rivers+1);
+    rivers[n_rivers] = NULL;
+
+    set_flux = eh_new (double, n_rivers);
+    for (i=0; i<n_rivers; i++)
+      set_flux[i] = g_test_rand_double ();
+
+    { /* Set up a rivers and add them to a cube */
+      Sed_hydro hydro;
+      gint i;
+
+      for (i=0; i<n_rivers; i++)
+      {
+        hydro = sed_hydro_new (1);
+        g_assert (hydro);
+
+        sed_hydro_set_bedload (hydro, set_flux[i]);
+        g_assert (eh_compare_dbl (sed_hydro_bedload (hydro),
+                                  set_flux[i], 1e-12));
+
+        rivers[i] = sed_cube_add_river_mouth (p, shore[i], hydro);
+        g_assert (rivers[i]!=NULL);
+
+        sed_hydro_destroy (hydro);
+      }
+    }
+
+    { /* Test that the rivers were set up correctly */
+      gint i;
+      gpointer* river;
+      Eh_ind_2 ind;
+      Eh_ind_2 shore_ind;
+      double angle;
+      double get_flux;
+
+      for (i=0; i<n_rivers; i++)
+      {
+        shore_ind = sed_cube_sub (p, shore[i]);
+
+        ind = sed_cube_river_mouth (p, rivers[i]);
+        g_assert_cmpint (ind.i, ==, shore_ind.i+1);
+        g_assert_cmpint (ind.j, ==, shore_ind.j);
+
+        angle = sed_cube_river_angle (p, rivers[i]);
+        g_assert (eh_compare_dbl (angle, 0., 1e-12));
+
+        ind = sed_cube_river_hinge (p, rivers[i]);
+        g_assert_cmpint (ind.i, ==, shore_ind.i);
+        g_assert_cmpint (ind.j, ==, shore_ind.j);
+
+        get_flux = sed_cube_river_bedload (p, rivers[i]);
+        g_assert (eh_compare_dbl (get_flux, set_flux[i], 1e-12));
+      }
+    }
+
+    eh_free (set_flux);
+    eh_free (rivers);
+    eh_free (shore);
+  }
+
+  sed_cube_destroy (p);
+
+  return;
+}
+
+void
 test_is_land_ocean_cell ()
 {
   gint nx;
@@ -1010,6 +1098,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/add_river",&test_cube_river_add);
   g_test_add_func ("/libsed/sed_cube/add_river_mouth",
                    &test_cube_add_river_mouth);
+  g_test_add_func ("/libsed/sed_cube/add_river_mouth_grid",
+                   &test_cube_add_river_mouth_grid);
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
   g_test_add_func ("/libsed/sed_cube/is_land_ocean_cell",
                    &test_is_land_ocean_cell);
