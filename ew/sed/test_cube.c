@@ -455,38 +455,48 @@ test_cube_add_river_mouth (void)
   {
     const gint nx = sed_cube_n_x (p);
     const gint ny = sed_cube_n_y (p);
-    gint id = sed_cube_id (p, nx/2, ny*3/4-1);
+    const double set_flux = g_test_rand_double ();
     gpointer r = NULL;
-    Eh_ind_2 ind;
-    double angle;
-    double set_flux = g_test_rand_double ();
-    double get_flux;
-    Sed_hydro hydro = sed_hydro_new (1);
 
-    g_assert (hydro);
-    sed_hydro_set_bedload (hydro, set_flux);
+    { /* Set up a river and add it to a cube */
+      Sed_hydro hydro = sed_hydro_new (1);
+      gint id = sed_cube_id (p, nx/2, ny*3/4-1);
 
-    r = sed_cube_add_river_mouth (p, id, hydro);
-    g_assert (r!=NULL);
+      g_assert (hydro);
+      sed_hydro_set_bedload (hydro, set_flux);
+      g_assert (eh_compare_dbl (sed_hydro_bedload (hydro), set_flux, 1e-12));
 
-    ind = sed_cube_river_mouth (p, r);
-    g_assert_cmpint (ind.i, ==, nx*.5);
-    g_assert_cmpint (ind.j, ==, ny*.75);
+      r = sed_cube_add_river_mouth (p, id, hydro);
+      g_assert (r!=NULL);
 
-    angle = sed_cube_river_angle (p, r);
-    g_assert (eh_compare_dbl (angle, M_PI/2., 1e-12));
+      sed_hydro_destroy (hydro);
+    }
 
-    ind = sed_cube_river_hinge (p, r);
-    g_assert_cmpint (ind.i, ==, nx*.5);
-    g_assert_cmpint (ind.j, ==, ny*.75-1);
+    { /* Test that the river was set up correctly */
+      Eh_ind_2 ind;
+      double angle;
+      double get_flux;
 
-    get_flux = sed_cube_river_bedload (p, r);
-    g_assert (eh_compare_dbl (get_flux, set_flux, 1e-12));
+      ind = sed_cube_river_mouth (p, r);
+      g_assert_cmpint (ind.i, ==, nx*.5);
+      g_assert_cmpint (ind.j, ==, ny*.75);
 
-    sed_hydro_destroy (hydro);
+      angle = sed_cube_river_angle (p, r);
+      g_assert (eh_compare_dbl (angle, M_PI/2., 1e-12));
+
+      ind = sed_cube_river_hinge (p, r);
+      g_assert_cmpint (ind.i, ==, nx*.5);
+      g_assert_cmpint (ind.j, ==, ny*.75-1);
+
+      get_flux = sed_cube_river_bedload (p, r);
+      g_assert (eh_compare_dbl (get_flux, set_flux, 1e-12));
+    }
+
   }
 
   sed_cube_destroy (p);
+
+  return;
 }
 
 void
