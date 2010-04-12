@@ -6,9 +6,9 @@ set (BUILD_SHARED_LIBS ON)
 
 ########### Look for glib-2.0 ###############
 
-if (defined CMAKE_GLIB_DIR)
+if (DEFINED CMAKE_GLIB_DIR)
   set (ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${CMAKE_GLIB_DIR}/lib/pkgconfig")
-endif (defined CMAKE_GLIB_DIR)
+endif (DEFINED CMAKE_GLIB_DIR)
 
 include( FindPkgConfig )
 pkg_check_modules( GLIB2 glib-2.0 )
