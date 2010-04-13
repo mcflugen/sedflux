@@ -97,14 +97,20 @@ add_custom_target (dist
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
   COMMAND rm ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 
+########### Run unit tests ###############
 find_program (GTESTER gtester HINTS ${CMAKE_GLIB_DIR}/bin)
 if (NOT GTESTER)
   message(STATUS
           "Looking for gtester... - NOT found.  Try setting CMAKE_GLIB_DIR") 
+else (NOT GTESTER)
+  message(STATUS "Looking for gtester... - found ${GTESTER}") 
 endif (NOT GTESTER)
 add_custom_target (unit_tests
-  COMMAND ${GTESTER} ew/utils/utils-test-*
-  COMMAND ${GTESTER} ew/sed/sed-test-*)
+  COMMAND ${GTESTER} ew/utils/utils-test-* -m=quick
+  COMMAND ${GTESTER} ew/sed/sed-test-* -m=quick)
+add_custom_target (unit_tests_slow
+  COMMAND ${GTESTER} ew/utils/utils-test-* -m=slow
+  COMMAND ${GTESTER} ew/sed/sed-test-* -m=slow)
 
 ########### Build in subdirectories ###############
 add_subdirectory(ew)
