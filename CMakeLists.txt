@@ -97,6 +97,15 @@ add_custom_target (dist
   COMMAND ${CMAKE_MAKE_PROGRAM} package_source
   COMMAND rm ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 
+find_program (GTESTER gtester HINTS ${CMAKE_GLIB_DIR}/bin)
+if (NOT GTESTER)
+  message(STATUS
+          "Looking for gtester... - NOT found.  Try setting CMAKE_GLIB_DIR") 
+endif (NOT GTESTER)
+add_custom_target (unit_tests
+  COMMAND ${GTESTER} ew/utils/utils-test-*
+  COMMAND ${GTESTER} ew/sed/sed-test-*)
+
 ########### Build in subdirectories ###############
 add_subdirectory(ew)
 
