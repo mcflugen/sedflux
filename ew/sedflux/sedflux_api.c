@@ -323,6 +323,13 @@ sedflux_get_end_time (Sedflux_state* state)
   return sed_epoch_end (e);
 }
 
+double
+sedflux_get_current_time (Sedflux_state* state)
+{
+  eh_require (state);
+  return sed_cube_age_in_years (state->p);
+}
+
 int
 sedflux_get_nx (Sedflux_state* state)
 {
