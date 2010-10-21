@@ -22,7 +22,7 @@
 #include <sed/sed_sedflux.h>
 #include "diffusion.h"
 
-static char *help_msg[] =
+static const char *help_msg[] =
 {
 "                                                                             ",
 " diffusion [options] [parameters]                                            ",

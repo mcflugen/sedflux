@@ -1141,7 +1141,7 @@ Eh_dbl_grid diffuse_grid( Eh_dbl_grid g , double **k_x , double **k_y ,
 }
 
 
-static gchar* _default_config[] = {
+static const gchar* _default_config[] = {
 "diffusion constant",
 "diffusion 1% depth",
 "long-shore diffusion constant",
@@ -1153,7 +1153,7 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_config);
+    return g_strjoinv ("\n", (gchar**)_default_config);
   else
     return NULL;
 }

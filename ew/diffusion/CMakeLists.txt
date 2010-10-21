@@ -16,10 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_diffusion DESTINATION bin RENAM
 
 ########### next target ###############
 
-SET(diffusion_LIB_SRCS
-   diffusion.c
-)
+set (diffusion_LIB_SRCS diffusion.c)
 
+set_source_files_properties (${diffusion_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(diffusion ${diffusion_LIB_SRCS})
 
 target_link_libraries(diffusion sedflux)
