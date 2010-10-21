@@ -3,9 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/ew )
 
 ########### next target ###############
 
-SET(earthquake_SRCS
-   earthquake_main.c
-)
+set (earthquake_SRCS earthquake_main.c)
 
 add_executable(run_earthquake ${earthquake_SRCS})
 
@@ -16,8 +14,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_earthquake DESTINATION bin RENA
 
 ########### next target ###############
 
-SET(quake_LIB_SRCS earthquake.c)
+set (quake_LIB_SRCS earthquake.c)
 
+set_source_files_properties (${quake_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(quake ${quake_LIB_SRCS})
 
 target_link_libraries(quake utils)
@@ -27,7 +26,7 @@ install(TARGETS quake DESTINATION lib COMPONENT sedflux)
 
 ########### install files ###############
 
-
+install(FILES earthquake.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 
 
 #original Makefile.am contents follow:

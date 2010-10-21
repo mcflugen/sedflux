@@ -26,8 +26,10 @@
 
 #include <utils/utils.h>
 
+#include "earthquake.h"
+
 /*** Self Documentation ***/
-static char *help_msg[] =
+static const char *help_msg[] =
 {
 "                                                                             ",
 " earthquake [options] [parameters]                                           ",
@@ -63,7 +65,7 @@ static char *help_msg[] =
 NULL
 };
 
-static char *omori_msg[] =
+static const char *omori_msg[] =
 {
 "                                                                             ",
 " The Omori Seismic Scale                                                     ",
@@ -136,7 +138,7 @@ static char *omori_msg[] =
 NULL
 };
 
-static char *mercalli_msg[] =
+static const char *mercalli_msg[] =
 {
 "                                                                             ",
 " The Modified Mercalli Intensity Scale                                       ",
