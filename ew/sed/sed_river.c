@@ -75,7 +75,7 @@ sed_river_hinge_destroy( Sed_riv_hinge* h )
 }
 
 Sed_riv
-sed_river_new( gchar* name )
+sed_river_new (const gchar* name)
 {
    Sed_riv r;
 
@@ -175,11 +175,22 @@ sed_river_set_angle( Sed_riv s , double a )
 {
    if ( s && s->hinge )
    {
-      if ( eh_compare_dbl( a , G_PI , 1e-12 ) )
+      if (eh_compare_dbl (a, G_PI, 1e-12))
          a -= 1e-12;
-      s->hinge->angle = eh_reduce_angle( a );
 
-      eh_clamp( s->hinge->angle , s->hinge->min_angle , s->hinge->max_angle );
+      a = eh_reduce_angle (a);
+
+      if (sed_river_max_angle (s)<G_PI)
+        s->hinge->angle = a;
+      else
+      {
+        if (a<sed_river_min_angle (s))
+          s->hinge->angle = a + 2.*G_PI;
+        else
+          s->hinge->angle = a;
+      }
+
+      eh_clamp (s->hinge->angle, s->hinge->min_angle, s->hinge->max_angle);
    }
    return s;
 }
@@ -200,8 +211,15 @@ sed_river_set_angle_limit( Sed_riv s , double a_min , double a_max )
       if ( eh_compare_dbl( a_max , G_PI , 1e-12 ) )
          a_max -= 1e-12;
 
+      eh_require (a_min<=a_max);
+      s->hinge->min_angle = a_min;
+      s->hinge->max_angle = a_max;
+
       a_min = eh_reduce_angle( a_min );
       a_max = eh_reduce_angle( a_max );
+
+      if (a_max<a_min)
+        a_max += 2.*G_PI;
 
       if ( a_min<=a_max )
       {
@@ -209,7 +227,7 @@ sed_river_set_angle_limit( Sed_riv s , double a_min , double a_max )
          s->hinge->max_angle = a_max;
       }
       else
-         eh_require_not_reached();
+        eh_require_not_reached ();
 
       sed_river_set_angle (s, s->hinge->angle);
    }
@@ -566,7 +584,7 @@ Sed_riv**
 sed_river_leaves_helper( Sed_riv s , Sed_riv** leaf )
 {
    if ( !sed_river_has_children(s) )
-      eh_strv_append( (gpointer)leaf , (gpointer)s );
+      eh_strv_append( (gchar***)leaf , (gchar*)s );
    else
    {
       sed_river_leaves_helper( s->l , leaf );
@@ -615,7 +633,7 @@ sed_river_branches_helper( Sed_riv s , Sed_riv** leaf )
       sed_river_branches_helper( s->l , leaf );
       sed_river_branches_helper( s->r , leaf );
 
-      eh_strv_append( (gpointer)leaf , (gpointer)s );
+      eh_strv_append( (gchar***)leaf , (gchar*)s );
    }
 
    return leaf;

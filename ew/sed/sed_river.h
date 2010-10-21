@@ -5,9 +5,11 @@
 #include "utils/utils.h"
 #include "sed_hydro.h"
 
+G_BEGIN_DECLS
+
 new_handle( Sed_riv );
 
-Sed_riv sed_river_new( );
+Sed_riv sed_river_new (const gchar* name);
 Sed_riv sed_river_copy( Sed_riv d , Sed_riv s );
 Sed_riv sed_river_dup ( Sed_riv s );
 
@@ -17,7 +19,7 @@ Sed_riv sed_river_set_depth( Sed_riv s , double depth );
 Sed_riv sed_river_set_velocity( Sed_riv s , double velocity );
 Sed_riv sed_river_set_bedload( Sed_riv s , double bedload );
 Sed_riv sed_river_set_angle( Sed_riv s , double a );
-Sed_riv sed_river_set_increment_angle( Sed_riv s , double da );
+Sed_riv sed_river_increment_angle( Sed_riv s , double da );
 Sed_riv sed_river_set_angle_limit( Sed_riv s , double a_min , double a_max );
 Sed_riv sed_river_set_hinge( Sed_riv r , gint i , gint j );
 Sed_riv sed_river_set_mouth( Sed_riv r , gint i , gint j );
@@ -62,5 +64,7 @@ Sed_riv*   sed_river_branches( Sed_riv s );
 gint    sed_river_fprint( FILE* fp , Sed_riv s );
 Sed_riv sed_river_fread ( FILE* fp , Sed_riv d );
 gint    sed_river_fwrite( FILE* fp , Sed_riv s );
+
+G_END_DECLS
 
 #endif
