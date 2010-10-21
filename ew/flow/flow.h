@@ -21,8 +21,10 @@
 #if !defined( GLIB_H )
 #define GLIB_H
 
-#include "glib.h"
+#include <glib.h>
 #include <utils/utils.h>
+
+G_BEGIN_DECLS
 
 double *solve_excess_pore_pressure( double *psi , double *k , double *c , int n , double dz , double dt , double psi_top , double sed_rate );
 void get_matrix_coefficients( double *psi , double *k , double *c , double ds , double dz , double dt , double psi_top , int n , double f ,  double *l , double *d , double *u , double *b );
@@ -62,6 +64,8 @@ double **allocate_2d( int );
 double ***allocate_3d( int );
 void free_2d( double** );
 void free_3d( double*** );
+
+G_END_DECLS
 
 #endif
 

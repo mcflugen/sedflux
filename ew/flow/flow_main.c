@@ -82,7 +82,7 @@
 
 void print_profile( double t , double *psi , int n );
 
-static char *help_msg[] = {
+static const char *help_msg[] = {
 " flow - sovle the 1d consolidation equation.                         ",
 "                                                                     ",
 " options:                                                            ",
