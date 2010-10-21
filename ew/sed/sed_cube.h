@@ -22,6 +22,9 @@
 #define SED_CUBE_H
 
 #include <glib.h>
+
+G_BEGIN_DECLS
+
 #include "utils/utils.h"
 
 #include "sed_sediment.h"
@@ -127,7 +130,8 @@ GSList* sed_cube_storm_list( Sed_cube c );
 Sed_cube sed_cube_set_storm_list( Sed_cube c , GSList *storms );
 Sed_cube sed_cube_adjust_sea_level( Sed_cube s , double dz );
 Sed_cube sed_cube_destroy_storm_list( Sed_cube c );
-Sed_cube sed_cube_set_bathy( Sed_cube c , Eh_dbl_grid g );
+Sed_cube sed_cube_set_bathy (Sed_cube c, Eh_dbl_grid g);
+Sed_cube sed_cube_set_bathy_data (Sed_cube c, double* z);
 Sed_cube sed_cube_set_dz( Sed_cube p , double new_dz );
 gint sed_cube_size( const Sed_cube s );
 gint sed_cube_n_x( const Sed_cube s );
@@ -203,7 +207,8 @@ Sed_cube sed_cube_set_base_height( Sed_cube s , gssize i , gssize j , double hei
 Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double dz );
 void sed_cube_set_discharge (Sed_cube s, const double* val);
 void sed_cube_set_bed_load_flux (Sed_cube s, const double* val);
-Sed_cube    sed_cube_set_nth_river             ( Sed_cube s , gssize n , Sed_riv river );
+Sed_cube sed_cube_set_nth_river (Sed_cube s, gssize n, Sed_riv river);
+Sed_riv sed_cube_borrow_nth_river (Sed_cube s, gint n);
 Eh_pt_2*    sed_cube_river_mouth_position      ( Sed_cube s , Sed_riv this_river );
 Sed_hydro   sed_cube_river_data( Sed_cube s , GList *this_river );
 /*
@@ -282,7 +287,6 @@ GList *sed_find_next_shore( GList *shore_list ,
                             Sed_cube s       ,
                             Eh_ind_2 *pos     ,
                             GList *ignore_list );
-gboolean is_shore_cell( Sed_cube s , gssize x , gssize y );
 gint* sed_cube_shore_normal_shift (Sed_cube s, gint i, gint j);
 double sed_cube_shore_normal (Sed_cube s, gint i, gint j);
 GList *sed_find_columns_custom( Sed_cube s             ,
@@ -395,6 +399,16 @@ gboolean sed_cube_is_in_domain_id ( Sed_cube p , gssize id );
 gboolean sed_cube_is_in_domain_pos( Sed_cube p , double x , double y );
 gboolean sed_cube_is_1d( Sed_cube p );
 
+gboolean is_shore_cell (Sed_cube s, gint x, gint y);
+gboolean is_shore_cell_id (Sed_cube s, gint id);
+gboolean is_coast_cell (Sed_cube s, gint i, gint j);
+gboolean is_coast_cell_id (Sed_cube s, gint id);
+gboolean is_land_cell (const Sed_cube s, gint i, gint j);
+gboolean is_land_cell_id (const Sed_cube s, gint id);
+gboolean is_ocean_cell (const Sed_cube s, gint i, gint j);
+gboolean is_ocean_cell_id (const Sed_cube s, gint id);
+gboolean is_boundary_cell_id (const Sed_cube s, gint id);
+
 gssize   sed_cube_fprint( FILE* fp , Sed_cube c );
 
 Sed_cell sed_cube_to_cell( Sed_cube c , Sed_cell d );
@@ -407,6 +421,9 @@ Sed_cube sed_cube_erode (Sed_cube c, double* dz);
 Sed_cube sed_cube_deposit_cell (Sed_cube c,
                                 double const* dz,
                                 Sed_cell const add_cell);
+Sed_cube sed_cube_col_deposit_equal_amounts (Sed_cube c, gint id, double t);
+
+G_END_DECLS
 
 #endif
 
