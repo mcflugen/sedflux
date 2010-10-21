@@ -112,7 +112,8 @@ typedef gboolean (*Sed_cube_func) ( const Sed_cube , gssize , gssize , gpointer 
 #define S_LOAD_FUNC         (&sed_cube_load)
 
 Sed_cube sed_cube_new( gssize n_x , gssize n_y );
-Sed_cube sed_cube_new_from_file( const gchar* file , GError** error );
+Sed_cube sed_cube_new_from_file (const gchar* file, const gchar* prefix,
+                                 GError** error);
 Sed_cube sed_cube_new_empty( gssize n_x , gssize n_y );
 Sed_cube sed_cube_free( Sed_cube c , gboolean free_data );
 Sed_cube sed_cube_free_river( Sed_cube p );

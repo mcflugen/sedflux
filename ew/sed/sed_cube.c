@@ -184,7 +184,7 @@ sed_cube_new_empty( gssize n_x , gssize n_y )
 #define SED_KEY_SEDIMENT_FILE  "sediment file"
 
 Sed_cube
-sed_cube_new_from_file( const gchar* file , GError** error )
+sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
 {
    Sed_cube p = NULL;
 
@@ -201,41 +201,72 @@ sed_cube_new_from_file( const gchar* file , GError** error )
       /* Scan the initialization file */
       if ( !tmp_err )
       {
-         Eh_key_file key_file = eh_key_file_scan( file , &tmp_err );
+         gchar* full_name = NULL;
+         Eh_key_file key_file = NULL;
+
+         if (prefix)
+           full_name = g_build_filename (prefix, file, NULL);
+         else
+           full_name = g_strdup (file);
+
+         key_file = eh_key_file_scan (full_name, &tmp_err);
 
          if ( key_file )
          {
             /* Scan Sed_cube parameters from key-file */
-            name          = eh_key_file_get_value    ( key_file , "global" , SED_KEY_MARGIN_NAME   );
-            z_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_V_RES         );
-            x_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_X_RES         );
-            y_res         = eh_key_file_get_dbl_value( key_file , "global" , SED_KEY_Y_RES         );
-            bathy_file    = eh_key_file_get_value    ( key_file , "global" , SED_KEY_BATHY_FILE    );
-            sediment_file = eh_key_file_get_value    ( key_file , "global" , SED_KEY_SEDIMENT_FILE );
+            name = eh_key_file_get_value (key_file,
+                     "global", SED_KEY_MARGIN_NAME);
+            z_res = eh_key_file_get_dbl_value (key_file,
+                      "global", SED_KEY_V_RES);
+            x_res = eh_key_file_get_dbl_value (key_file,
+                      "global", SED_KEY_X_RES);
+            y_res = eh_key_file_get_dbl_value (key_file,
+                      "global", SED_KEY_Y_RES);
+            bathy_file = eh_key_file_get_value (key_file,
+                           "global", SED_KEY_BATHY_FILE);
+            sediment_file = eh_key_file_get_value (key_file,
+                              "global", SED_KEY_SEDIMENT_FILE);
          }
 
-         eh_key_file_destroy ( key_file );
+         eh_key_file_destroy (key_file);
+         g_free (full_name);
       }
 
       /* Scan in the sediment and set the environment. */
       if ( !tmp_err )
       {
-         Sed_sediment sediment_type = sed_sediment_scan( sediment_file , &tmp_err );
+         gchar* full_name = NULL;
+         Sed_sediment sediment_type = NULL;
+
+         if (prefix)
+           full_name = g_build_filename (prefix, sediment_file, NULL);
+         else
+           full_name = g_strdup (sediment_file);
+
+         sediment_type = sed_sediment_scan (full_name, &tmp_err);
 
          if ( sediment_type )
          {
             sed_sediment_set_env( sediment_type );
             sed_sediment_destroy( sediment_type );
          }
+
+         g_free (full_name);
       }
 
       /* Scan the bathymetry file */
       if ( !tmp_err )
       {
+         gchar* full_name = NULL;
          Eh_dbl_grid grid = NULL;
 
+         if (prefix)
+           full_name = g_build_filename (prefix, bathy_file, NULL);
+         else
+           full_name = g_strdup (bathy_file);
+
          /* Read the bathymetry.  The method depends if the profile is 1 or 2 D. */
-         grid = sed_bathy_grid_scan( bathy_file , x_res , y_res , &tmp_err );
+         grid = sed_bathy_grid_scan (full_name, x_res, y_res, &tmp_err);
 
          if ( grid )
          {
@@ -268,6 +299,7 @@ sed_cube_new_from_file( const gchar* file , GError** error )
          }
 
          eh_grid_destroy     ( grid , TRUE   );
+         g_free (full_name);
       }
 
       if ( tmp_err )
