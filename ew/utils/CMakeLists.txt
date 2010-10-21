@@ -49,15 +49,15 @@ install(TARGETS utils DESTINATION lib COMPONENT sedflux)
 
 ########### next target ###############
 
-SET(test_SRCS
-   test.c
+SET(test_scanner_SRCS
+   test_scanner.c
 )
 
-add_executable(test ${test_SRCS})
+add_executable(test_scanner ${test_scanner_SRCS})
 
-target_link_libraries(test utils utils m)
+target_link_libraries(test_scanner utils utils m)
 
-install(TARGETS test DESTINATION bin COMPONENT sedflux)
+install(TARGETS test_scanner DESTINATION bin COMPONENT sedflux)
 
 ########### Optional unit tests ###############
 
