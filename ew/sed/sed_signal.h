@@ -3,6 +3,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 typedef gint32 Sed_sig_num;
 
 #define SED_SIG_NONE (0)
@@ -18,5 +20,7 @@ gint      sed_signal_set_action( void );
 gboolean  sed_signal_is_pending( Sed_sig_num sig );
 void      sed_signal_reset     ( Sed_sig_num sig );
 void      sed_signal_set       ( Sed_sig_num sig );
+
+G_END_DECLS
 
 #endif /* SED_SIGNAL_H */

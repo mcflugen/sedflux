@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 typedef struct
 {
    int    n_grains;
@@ -89,5 +91,7 @@ gint               sed_hydrotrend_fseek      ( FILE* fp , gint offset , gint whe
 gint               sed_hydrotrend_record_size( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
 gint               sed_hydrotrend_n_grains   ( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
 gint               sed_hydrotrend_data_start ( FILE* fp , gint byte_order , Sed_hydrotrend_header* h );
+
+G_END_DECLS
 
 #endif /* hydrotrend.h is included */

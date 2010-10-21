@@ -27,6 +27,8 @@
 
 #include "utils/eh_types.h"
 
+G_BEGIN_DECLS
+
 new_handle( Sed_hydro );
 new_handle( Sed_hydro_file );
 
@@ -109,6 +111,7 @@ gssize        sed_hydro_fprint      ( FILE* fp , Sed_hydro  rec   );
 //Sed_hydro     sed_hydro_init( char *file );
 Sed_hydro*    sed_hydro_scan          ( const gchar* file , GError** error );
 Sed_hydro*    sed_hydro_scan_text     (const gchar* buffer, GError** error);
+gchar* sed_hydro_default_text ();
 Sed_hydro*    sed_hydro_scan_n_records( const gchar* file , gint n_recs , GError** error );
 Sed_hydro*    sed_hydro_scan_text_n_records (const gchar* buffer, gint n_recs, GError** error);
 
@@ -196,5 +199,7 @@ Sed_hydro_file sed_hydro_file_new( const char*         filename     ,
                                    GError** error );
 Sed_hydro_file sed_hydro_file_destroy( Sed_hydro_file fp );
 Sed_hydro*     sed_hydro_file_fill_buffer( Sed_hydro_file fp );
+
+G_END_DECLS
 
 #endif /* hydro.h is included */

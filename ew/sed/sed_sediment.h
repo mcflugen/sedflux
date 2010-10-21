@@ -26,6 +26,8 @@
 
 #include "datadir_path.h"
 
+G_BEGIN_DECLS
+
 #if !defined( DATADIR )
 # define DATADIR "/usr/local/share"
 #endif
@@ -289,6 +291,8 @@ double sed_set_rho_quartz          ( double new_val  );
 double sed_rho_mantle              ( void            );
 double sed_rho_mantle_units        ( Sed_units units );
 double sed_set_rho_mantle          ( double new_val  );
+
+G_END_DECLS
 
 #endif /* sed_sediment.h is included */
 

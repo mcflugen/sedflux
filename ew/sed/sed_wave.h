@@ -5,6 +5,8 @@
 
 #include "utils/eh_types.h"
 
+G_BEGIN_DECLS
+
 new_handle( Sed_wave );
 new_handle( Sed_ocean_storm );
 
@@ -56,5 +58,7 @@ Sed_ocean_storm sed_ocean_storm_set_duration ( Sed_ocean_storm s , double dt_in_
 Sed_ocean_storm sed_ocean_storm_set_val      ( Sed_ocean_storm s , double val        );
 
 gssize sed_ocean_storm_fprint( FILE* fp , Sed_ocean_storm s );
+
+G_END_DECLS
 
 #endif

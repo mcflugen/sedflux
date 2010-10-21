@@ -24,6 +24,7 @@
 #include "utils/utils.h"
 #include "sed_hydro.h"
 #include "sed_hydrotrend.h"
+#include "sed_input_files.h"
 
 CLASS ( Sed_hydro )
 {
@@ -71,8 +72,8 @@ static Sed_hydro              _hydro_read_hydrotrend_record_buffer( Sed_hydro_fi
 void
 sed_hydro_fprint_default_inline_file( FILE *fp )
 {
-   char *text[]=DEFAULT_HYDRO_INLINE_FILE;
-   char **p;
+   const char *text[]=DEFAULT_HYDRO_INLINE_FILE;
+   const char **p;
    for ( p = text ; *p ; p++ )
       fprintf( fp , "%s\n" , *p );
 }
@@ -166,6 +167,12 @@ Sed_hydro*
 sed_hydro_scan_text (const gchar* buffer, GError** error)
 {
    return sed_hydro_scan_text_n_records (buffer, -1, error);
+}
+
+gchar*
+sed_hydro_default_text ()
+{
+  return g_strjoinv ("\n",_default_hydro_inline_file);
 }
 
 Sed_hydro*
@@ -304,7 +311,7 @@ sed_hydro_scan_text_n_records (const gchar* buffer, gint n_recs, GError** error)
 #define SED_HYDRO_LABEL_WIDTH           "Width"
 #define SED_HYDRO_LABEL_DEPTH           "Depth"
 
-static gchar* required_labels[] =
+static const gchar* required_labels[] =
 {
    SED_HYDRO_LABEL_DURATION         ,
    SED_HYDRO_LABEL_BEDLOAD          ,
@@ -343,7 +350,7 @@ sed_hydro_new_from_table( Eh_symbol_table t , GError** error )
 
          r = sed_hydro_new( n_susp_grains );
 
-         r->conc      = memcpy( r->conc , c , sizeof(double)*n_susp_grains );
+         r->conc = (double*)memcpy(r->conc, c, sizeof(double)*n_susp_grains);
 
          r->duration  = eh_symbol_table_time_value( t , SED_HYDRO_LABEL_DURATION  );
          r->bedload   = eh_symbol_table_dbl_value ( t , SED_HYDRO_LABEL_BEDLOAD   );
@@ -455,7 +462,7 @@ sed_hydro_file_guess_type( const gchar* file , GError** error )
 {
    Sed_hydro_file_type type = SED_HYDRO_UNKNOWN;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+   eh_require (error==NULL || *error==NULL);
 
    if ( file )
    {

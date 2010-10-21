@@ -4,6 +4,11 @@
 #include "utils/utils.h"
 #include "sed_property_file.h"
 
+#define ROCK_VALUE (G_MAXDOUBLE)
+#define WATER_VALUE (-G_MAXDOUBLE)
+//#define ROCK_VALUE (9999)
+//#define WATER_VALUE (-9999)
+
 CLASS ( Sed_property_file_attr )
 {
    Sed_get_val_func get_val;
@@ -106,8 +111,8 @@ Sed_property_file_attr sed_property_file_attr_new( )
    a->get_val = NULL;
    a->lower_clip = -G_MAXDOUBLE;
    a->upper_clip =  G_MAXDOUBLE;
-   a->water_val  = -G_MAXDOUBLE;
-   a->rock_val   =  G_MAXDOUBLE;
+   a->water_val  =  WATER_VALUE;
+   a->rock_val   =  ROCK_VALUE;
    a->x_res      =  0;
    a->y_res      =  0;
    a->z_res      =  0;
@@ -296,8 +301,8 @@ Sed_property_file_header sed_property_file_header_new( const Sed_cube p ,
       hdr->ref_x        = eh_ndgrid_x( g , 0 )[0];
       hdr->byte_order   = G_BYTE_ORDER;
       hdr->element_size = sizeof(double);
-      hdr->rock_value   =  G_MAXDOUBLE;
-      hdr->water_value  = -G_MAXDOUBLE;
+      hdr->rock_value   =  ROCK_VALUE;
+      hdr->water_value  =  WATER_VALUE;
    }
 
    return hdr;
@@ -435,7 +440,7 @@ Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
       }
 
       for (j=0,k=0 ;j<water_rows;j++,k++)
-         eh_dbl_grid_set_val( g , i , k , -G_MAXDOUBLE );
+         eh_dbl_grid_set_val( g , i , k , WATER_VALUE );
 
       for ( j=top_sed ; j>=bot_sed ; j--,k++)
          eh_dbl_grid_set_val( g , i , k , sed_property_measure( property ,
@@ -443,7 +448,7 @@ Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
                                                                 (with_load)?(load[j-bot_sed]):(-1) ) );
 
       for (j=0;j<rock_rows;j++,k++)
-         eh_dbl_grid_set_val( g , i , k , G_MAXDOUBLE );
+         eh_dbl_grid_set_val( g , i , k , ROCK_VALUE );
 
       if ( with_load )
          eh_free( load );

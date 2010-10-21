@@ -42,7 +42,7 @@ CLASS ( Sed_type )
    double rho_max;
    double gz_in_m;
    double gz_in_phi;
-   Sed_size_class class;
+   Sed_size_class size_class;
    double viscosity;
    double dynamic_viscosity;
    double relative_density;
@@ -583,8 +583,8 @@ void sed_sediment_fprint_default( FILE *fp )
 
    if ( fp )
    {
-      char *text[] = DEFAULT_SEDIMENT_FILE;
-      char **p;
+      const char *text[] = DEFAULT_SEDIMENT_FILE;
+      const char **p;
       for ( p = text ; *p ; p++ )
          fprintf( fp , "%s\n" , *p );
    }

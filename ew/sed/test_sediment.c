@@ -101,7 +101,7 @@ test_sed_sediment_scan (void)
    {
       GError* error = NULL;
       gchar* buffer = g_strjoinv ("\n",_default_sediment_file);
-      Sed_sediment s = sed_sediment_scan_text (buffer, error);
+      Sed_sediment s = sed_sediment_scan_text (buffer, &error);
 
       g_assert (s!=NULL);
       g_assert (error==NULL);

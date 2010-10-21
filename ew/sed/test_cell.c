@@ -243,6 +243,50 @@ test_cell_add (void)
 }
 
 void
+test_cell_add_equal_amounts (void)
+{
+  {
+    const double init_t = g_test_rand_double_range (1e-6, 100.);
+    const double add_t = g_test_rand_double_range (1e-6, 100.);
+    const double new_t = init_t + add_t;
+    const double f[5] = {.2, .2, .2, .2, .2};
+    Sed_cell a = sed_cell_new_sized (5, init_t, f);
+
+    g_assert (sed_cell_is_size (a, init_t));
+    sed_cell_add_equal_amounts (a, add_t);
+    g_assert (sed_cell_is_size (a, new_t));
+
+    {
+      const gint len = sed_cell_n_types (a);
+      gint n;
+      for (n=0; n<len; n++)
+        g_assert (eh_compare_dbl (sed_cell_fraction (a, n), .2, 1e-12));
+    }
+  }
+
+  {
+    const double init_t = g_test_rand_double_range (1e-6, 100.);
+    const double add_t = g_test_rand_double_range (1e-6, 100.);
+    const double new_t = init_t + add_t;
+    const double f[5] = {.0, .0, 1., .0, .0};
+    Sed_cell a = sed_cell_new_sized (5, init_t, f);
+
+    g_assert (sed_cell_is_size (a, init_t));
+    sed_cell_add_equal_amounts (a, add_t);
+    g_assert (sed_cell_is_size (a, new_t));
+
+    {
+      const gint len = sed_cell_n_types (a);
+      gint n;
+
+      for (n=0; n<len; n++)
+        g_assert (eh_compare_dbl (sed_cell_fraction (a, n),
+                                 (f[n]*init_t+.2*add_t)/new_t, 1e-12));
+    }
+  }
+}
+
+void
 test_cell_resize (void)
 {
    {
@@ -550,6 +594,7 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cell/clear", &test_cell_clear );
   g_test_add_func ("/libsed/sed_cell/getset", &test_cell_set_and_get_functions );
   g_test_add_func ("/libsed/sed_cell/add", &test_cell_add );
+  g_test_add_func ("/libsed/sed_cell/add_equal", &test_cell_add_equal_amounts);
   g_test_add_func ("/libsed/sed_cell/resize", &test_cell_resize );
   g_test_add_func ("/libsed/sed_cell/resize_neg", &test_cell_resize_neg );
   g_test_add_func ("/libsed/sed_cell/resize_zero", &test_cell_resize_zero );

@@ -83,7 +83,7 @@ test_sed_river_leaves (void)
 
       river_mouth = sed_river_leaves( r );
 
-      g_assert_cmpint (g_strv_length (river_mouth), ==, 4);
+      g_assert_cmpint (g_strv_length ((gchar**)river_mouth), ==, 4);
    }
 }
 
@@ -101,7 +101,7 @@ test_sed_river_branches (void)
 
       river_branch = sed_river_branches( r );
 
-      g_assert_cmpint (g_strv_length (river_branch), ==, 7);
+      g_assert_cmpint (g_strv_length ((gchar**)river_branch), ==, 7);
    }
 }
 
@@ -195,6 +195,39 @@ test_sed_river_set_angle (void)
 
    sed_river_set_angle( r , -.75*G_PI );
    g_assert (eh_compare_dbl (sed_river_angle(r), 0., 1e-12));
+
+   {
+     const double min_angle = .75*G_PI;
+     const double max_angle = 1.25*G_PI;
+
+     sed_river_set_angle_limit (r, min_angle, max_angle);
+     g_assert (eh_compare_dbl (sed_river_min_angle(r), min_angle, 1e-12));
+     g_assert (eh_compare_dbl (sed_river_max_angle(r), max_angle, 1e-12));
+
+     sed_river_set_angle (r, G_PI);
+     g_assert (eh_compare_dbl (sed_river_angle(r), G_PI, 1e-12));
+   }
+
+   {
+     const double min_angle = .75*G_PI;
+     const double max_angle = 2.5*G_PI;
+
+     sed_river_set_angle_limit (r, min_angle, max_angle);
+     g_assert (eh_compare_dbl (sed_river_min_angle(r), min_angle, 1e-12));
+     g_assert (eh_compare_dbl (sed_river_max_angle(r), max_angle, 1e-12));
+
+     sed_river_set_angle (r, G_PI);
+     g_assert (eh_compare_dbl (sed_river_angle(r), G_PI, 1e-12));
+
+     sed_river_set_angle (r, 0);
+     g_assert (eh_compare_dbl (sed_river_angle(r), 2.*G_PI, 1e-12));
+
+     sed_river_set_angle (r, .25*G_PI);
+     g_assert (eh_compare_dbl (sed_river_angle(r), 2.25*G_PI, 1e-12));
+
+     sed_river_set_angle (r, -.5*G_PI);
+     g_assert (eh_compare_dbl (sed_river_angle(r), 1.5*G_PI, 1e-12));
+   }
 }
 
 int
@@ -210,6 +243,7 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_river/leaves", &test_sed_river_leaves);
   g_test_add_func ("/libsed/sed_river/branches", &test_sed_river_branches);
   g_test_add_func ("/libsed/sed_river/n_branches", &test_sed_river_n_branches);
+  g_test_add_func ("/libsed/sed_river/set/angle", &test_sed_river_set_angle);
 
   g_test_run ();
 }

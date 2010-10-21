@@ -21,8 +21,11 @@
 #if !defined(SED_COLUMN_H)
 # define SED_COLUMN_H
 
+
 #include <glib.h>
 #include "utils/utils.h"
+
+G_BEGIN_DECLS
 
 #ifndef S_ADDBINS
 # define S_ADDBINS (16)
@@ -124,6 +127,8 @@ Sed_column sed_column_resize           ( Sed_column c , gssize n );
 Sed_column sed_column_resize_cell      ( Sed_column c , gssize i , double t );
 Sed_column sed_column_compact_cell     ( Sed_column c , gssize i , double t );
 double     sed_column_add_cell         ( Sed_column c , const Sed_cell cell );
+double sed_column_add_cell_real (Sed_column col, Sed_cell cell,
+                                 gboolean update_pressure);
 double     sed_column_stack_cell       ( Sed_column c , const Sed_cell cell );
 double     sed_column_stack_cell_loc   ( Sed_column c , const Sed_cell cell );
 Sed_cell   sed_column_top_cell         ( const Sed_column c );
@@ -137,6 +142,7 @@ Sed_cell sed_column_extract_top_fill( Sed_column col  ,
                                       Sed_cell fill   ,
                                       Sed_cell dest );
 Sed_column sed_column_remove_top     ( Sed_column col , double t );
+Sed_column sed_column_remove_top_erode (Sed_column col, double t);
 Sed_column sed_column_remove_top_cell(Sed_column,double);
 Sed_cell   sed_column_extract_top    ( Sed_column , double , Sed_cell );
 Sed_cell sed_column_separate_top(Sed_column,double,double[],Sed_cell);
@@ -233,6 +239,8 @@ double     sed_column_stack_cell_real    ( Sed_column c , Sed_cell cell , gboole
 double     sed_column_stack_cell_loc_real( Sed_column c , Sed_cell cell , gboolean update_pressure );
 double     sed_column_stack_cell         ( Sed_column c , Sed_cell cell );
 double     sed_column_stack_cell_loc     ( Sed_column c , Sed_cell cell );
+
+G_END_DECLS
 
 #endif /* sed_column.h is included */
 

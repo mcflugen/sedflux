@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <glib.h>
 
-char* _default_init_file[] = {
+const char* _default_init_file[] = {
 "[ global ]",
 "margin name:            Earth",
 "vertical resolution:    .5",
@@ -18,7 +18,7 @@ char* _default_init_file[] = {
 NULL
 };
 
-char* _default_2d_bathy_file[] = {
+const char* _default_2d_bathy_file[] = {
 "# Elevations are in meters. ",
 "# Rows are constant x",
 "# Columns are constant y",
@@ -40,7 +40,7 @@ char* _default_2d_bathy_file[] = {
 NULL
 };
 
-char* _default_1d_bathy_file[] = {
+const char* _default_1d_bathy_file[] = {
 "# First column is cross-shore distance (m)",
 "# Second column is elevation (m)",
 "0; 0",
@@ -48,7 +48,7 @@ char* _default_1d_bathy_file[] = {
 NULL
 };
 
-char* _default_hydro_inline_file[] = {
+const char* _default_hydro_inline_file[] = {
 "[ 'Season 1' ]",
 "Duration (y): .25y",
 "Bedload (kg/s): 100.0",
@@ -80,7 +80,7 @@ char* _default_hydro_inline_file[] = {
 NULL
 };
 
-char* _default_sediment_file[] = {
+const char* _default_sediment_file[] = {
 "--- 'Grain 1 (bedload)' ---",
 "grain size (microns):       200",
 "grain density (kg/m^3):     2625",
@@ -134,7 +134,7 @@ char* _default_sediment_file[] = {
 NULL
 };
 
-char* _default_process_file[] = {
+const char* _default_process_file[] = {
 "active: yes",
 "logging: no",
 "repeat interval: always",
@@ -145,17 +145,17 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_init_file);
+    return g_strjoinv ("\n", (gchar**)_default_init_file);
   if (g_ascii_strcasecmp (file, "bathy-1d")==0)
-    return g_strjoinv ("\n", _default_1d_bathy_file);
+    return g_strjoinv ("\n", (gchar**)_default_1d_bathy_file);
   if (g_ascii_strcasecmp (file, "bathy-2d")==0)
-    return g_strjoinv ("\n", _default_2d_bathy_file);
+    return g_strjoinv ("\n", (gchar**)_default_2d_bathy_file);
   if (g_ascii_strcasecmp (file, "hydro")==0)
-    return g_strjoinv ("\n", _default_hydro_inline_file);
+    return g_strjoinv ("\n", (gchar**)_default_hydro_inline_file);
   if (g_ascii_strcasecmp (file, "sediment")==0)
-    return g_strjoinv ("\n", _default_sediment_file);
+    return g_strjoinv ("\n", (gchar**)_default_sediment_file);
   if (g_ascii_strcasecmp (file, "process")==0)
-    return g_strjoinv ("\n", _default_sediment_file);
+    return g_strjoinv ("\n", (gchar**)_default_sediment_file);
   else
     return NULL;
 }

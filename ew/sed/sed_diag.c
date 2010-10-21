@@ -163,7 +163,7 @@ sed_diag_reset( Sed_diag d )
    return m;
 }
 
-static gchar* target_s[] =
+static const gchar* target_s[] =
 {
    "Sed_cube"   ,
    "Sed_column" ,
@@ -171,7 +171,7 @@ static gchar* target_s[] =
    "Unknown"
 };
 
-gchar*
+const gchar*
 _sed_diag_target_s( Sed_diag d )
 {
    return target_s[d->type];

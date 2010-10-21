@@ -1,7 +1,10 @@
 #if !defined(CSDMS_H)
 # define CSDMS_H
 
+
 #include <glib.h>
+
+G_BEGIN_DECLS
 
 typedef struct _CSDMSComp CSDMSComp;
 
@@ -61,6 +64,8 @@ CSDMSComp* csdms_comp_destroy ( CSDMSComp* c );
 CSDMSComp* csdms_comp_set_irf ( CSDMSComp* c , CSDMSInitFunc , CSDMSGetValFunc , CSDMSFinalizeFunc );
 
 gpointer   csdms_comp_data( CSDMSComp* c );
+
+G_END_DECLS
 
 #endif /* csdms.h is included */
 

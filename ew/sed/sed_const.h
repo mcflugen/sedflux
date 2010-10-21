@@ -21,6 +21,10 @@
 #if !defined( SED_CONST_H )
 # define SED_CONST_H
 
+#include <glib.h>
+
+G_BEGIN_DECLS
+
 #define PROGRAM_NAME "sedflux"
 #define SED_MAJOR_VERSION_S "2"
 #define SED_MINOR_VERSION_S "0"
@@ -179,5 +183,6 @@ NULL }
 NULL }
 
 
+G_END_DECLS
 #endif
 

@@ -74,13 +74,13 @@ sed_signal_set( Sed_sig_num sig )
    return;
 }
 
-static gchar* head_msg[] =
+static const gchar* head_msg[] =
 {
    "-----------------------------------------------" ,
    NULL
 };
 
-static gchar* body_msg[] =
+static const gchar* body_msg[] =
 {
    "  (1) End run after this time step."             ,
    "  (2) Dump results and continue."                ,
@@ -90,12 +90,13 @@ static gchar* body_msg[] =
    NULL
 };
 
-static gchar* tail_msg[] =
+static const gchar* tail_msg[] =
 {
    "-----------------------------------------------" ,
    NULL
 };
 
+#ifndef __cplusplus
 static const gchar* pending_msg[] =
 {
    [SED_SIG_QUIT] = "Quitting sedflux..." ,
@@ -104,6 +105,7 @@ static const gchar* pending_msg[] =
    [SED_SIG_NEXT] = "Jumping to next epoch..." ,
    [SED_SIG_EXIT] = "Exiting sedflux..." ,
 };
+#endif
 
 G_GNUC_INTERNAL
 void
@@ -116,10 +118,13 @@ clear_to_eol( FILE* fp)
 void
 _print_choices( int sig_num )
 {
-   gchar**  msg;
+   const gchar**  msg;
    Sed_sig_num signal;
    gchar ch;
 
+#ifdef __cplusplus
+  signal = SED_SIG_EXIT;
+#else
    for ( msg=head_msg ; *msg ; msg++ ) fprintf( stdout , "%s\n" , *msg );
    for ( msg=body_msg ; *msg ; msg++ ) fprintf( stdout , "%s\n" , *msg );
    for ( msg=tail_msg ; *msg ; msg++ ) fprintf( stdout , "%s\n" , *msg );
@@ -139,10 +144,13 @@ _print_choices( int sig_num )
    }
 
    if ( ch!='\n' ) clear_to_eol( stdin );
+#endif
 
    sed_signal_set( signal );
 
+#ifndef __cplusplus
    fprintf( stdout , "   %s\n" , pending_msg[signal] );
+#endif
 
    if ( sed_signal_is_pending( SED_SIG_EXIT ) ) eh_exit( EXIT_SUCCESS );
 

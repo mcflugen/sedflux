@@ -5,6 +5,8 @@
 #include "sed_property.h"
 #include "sed_cube.h"
 
+G_BEGIN_DECLS
+
 new_handle( Sed_property_file_attr );
 new_handle( Sed_property_file_header );
 new_handle( Sed_property_file );
@@ -36,6 +38,8 @@ Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
                                      double lower_left[3]  ,
                                      double upper_right[3] ,
                                      double resolution[3] );
+
+G_END_DECLS
 
 #endif
 

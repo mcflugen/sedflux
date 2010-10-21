@@ -30,6 +30,8 @@ SET(sedflux_LIB_SRCS
    sed_input_files.c
 )
 
+set_source_files_properties (${sedflux_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+
 add_library(sedflux ${sedflux_LIB_SRCS})
 
 target_link_libraries(sedflux m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} utils)

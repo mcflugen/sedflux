@@ -1,8 +1,11 @@
 #ifndef __SED_DIAG_H__
 #define __SED_DIAG_H__
 
+
 #include <utils/eh_utils.h>
 #include <sed/sed_sedflux.h>
+
+G_BEGIN_DECLS
 
 new_handle( Sed_diag );
 
@@ -19,5 +22,7 @@ double sed_diag_continue( Sed_diag d );
 double sed_diag_reset   ( Sed_diag d );
 
 gint sed_diag_fprint( FILE* fp , Sed_diag d );
+
+G_END_DECLS
 
 #endif

@@ -636,6 +636,32 @@ test_is_land_ocean_cell ()
 }
 
 void
+test_is_boundary_cell ()
+{
+  Sed_cube p = NULL;
+  gint nx;
+  gint ny;
+
+  p = new_test_cube ();
+  g_assert (p);
+
+  nx = sed_cube_n_x (p);
+  ny = sed_cube_n_y (p);
+
+  g_assert (is_boundary_cell_id (p, 0));
+  g_assert (is_boundary_cell_id (p, ny-1));
+  g_assert (is_boundary_cell_id (p, ny));
+  g_assert (is_boundary_cell_id (p, nx*ny-1));
+  g_assert (is_boundary_cell_id (p, (nx-1)*ny));
+  g_assert (is_boundary_cell_id (p, (nx-1)*ny-1));
+
+  g_assert (!is_boundary_cell_id (p, ny+1));
+
+  // Don't check for overrun.
+  g_assert (is_boundary_cell_id (p, nx*ny));
+}
+
+void
 test_shore_mask ()
 {
   Sed_cube p = NULL;
@@ -1103,6 +1129,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
   g_test_add_func ("/libsed/sed_cube/is_land_ocean_cell",
                    &test_is_land_ocean_cell);
+  g_test_add_func ("/libsed/sed_cube/is_boundary_cell",
+                   &test_is_boundary_cell);
   g_test_add_func ("/libsed/sed_cube/shore_mask",&test_shore_mask);
   g_test_add_func ("/libsed/sed_cube/shore_ids",&test_shore_ids);
 
