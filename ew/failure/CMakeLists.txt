@@ -3,12 +3,9 @@ include_directories(${CMAKE_SOURCE_DIR}/ew )
 
 ########### next target ###############
 
-SET(failure_LIB_SRCS
-   failure.c
-   getsurface.c
-   decider.c
-)
+set (failure_LIB_SRCS failure.c getsurface.c decider.c)
 
+set_source_files_properties (${failure_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(failure ${failure_LIB_SRCS})
 
 target_link_libraries(failure sedflux)

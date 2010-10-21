@@ -22,6 +22,9 @@
 # define _FAILURE_INCLUDED_
 
 #include <sed/sed_sedflux.h>
+#include <glib.h>
+
+G_BEGIN_DECLS
 
 # ifndef MIN_FAILURE_LENGTH
 #  define MIN_FAILURE_LENGTH (5)
@@ -174,6 +177,8 @@ gboolean fail_check_failure_plane_is_valid( const Sed_cube p ,
                                             int start ,
                                             int len ,
                                             const double *failure_plane );
+
+G_END_DECLS
 
 #endif /* failure.h is included */
 
