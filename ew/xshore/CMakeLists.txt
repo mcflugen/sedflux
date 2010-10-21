@@ -3,10 +3,9 @@ include_directories(${CMAKE_SOURCE_DIR}/ew )
 
 ########### next target ###############
 
-SET(xshore_LIB_SRCS
-   xshore.c
-)
+set (xshore_LIB_SRCS xshore.c)
 
+set_source_files_properties (${xshore_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(xshore ${xshore_LIB_SRCS})
 
 target_link_libraries(xshore sedflux)

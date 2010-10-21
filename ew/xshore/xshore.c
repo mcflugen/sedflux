@@ -313,7 +313,7 @@ Xshore_info xshore( Sed_cube p               ,
 
          bruun_zone_data.p        = p;
          bruun_zone_data.ind_len  = sed_cube_n_y(bruun_zones[0]);
-         bruun_zone_data.ind      = g_memdup( bruun_ind[0] , sizeof(gint)*bruun_zone_data.ind_len );
+         bruun_zone_data.ind      = (gint*)g_memdup( bruun_ind[0] , sizeof(gint)*bruun_zone_data.ind_len );
          bruun_zone_data.w        = deep_water_wave;
          bruun_zone_data.u_0      = xshore_current;
          bruun_zone_data.k        = g_new( double , sed_sediment_env_n_types() );
@@ -385,7 +385,7 @@ Xshore_info xshore( Sed_cube p               ,
       }
       zone_dt[n_zones] = zone_dt[n_zones-1];
 
-      info.dt = g_memdup( zone_dt , sizeof(double)*n_zones );
+      info.dt = (double*)g_memdup( zone_dt , sizeof(double)*n_zones );
    }
 
 
@@ -1095,8 +1095,8 @@ double** get_sediment_flux( Sed_cube p , Sed_wave deep_wave , double u_0 , Bruun
       double            dy = sed_cube_y_res( p );
       Eh_dbl_grid   z_grid = sed_cube_water_depth_grid( p , NULL );
       Eh_dbl_grid dz_dy_grid = sed_cube_y_slope_grid( p , NULL );
-      double*            z = eh_grid_data_start( z_grid );
-      double*        dz_dy = eh_grid_data_start( dz_dy_grid );
+      double*            z = (double*)eh_grid_data_start( z_grid );
+      double*        dz_dy = (double*)eh_grid_data_start( dz_dy_grid );
       double depth, y_b, y, *k_b;
       double* gz  = sed_sediment_property( NULL , &sed_type_grain_size_in_meters );
       double* w_s = sed_sediment_property( NULL , &sed_type_settling_velocity );

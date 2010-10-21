@@ -26,6 +26,10 @@
 
 #define XSHORE_BRUUN_M ( 0.6 )
 
+# include <glib.h>
+
+G_BEGIN_DECLS
+
 typedef struct
 {
    Sed_cell added;
@@ -108,5 +112,7 @@ double     near_bed_velocity_func_stokes ( double water_depth ,
                                            double breaker_depth      );
 double     get_grain_size_threshold      ( double orbital_velocity ,
                                            double wave_period        );
+G_END_DECLS
+
 #endif
 
