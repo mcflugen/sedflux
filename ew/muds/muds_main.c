@@ -22,7 +22,7 @@
 #include <sed/sed_sedflux.h>
 #include "muds.h"
 
-static char *help_msg[] =
+static const char *help_msg[] =
 {
 "                                                                             ",
 " mud [options] [parameters]                                                  ",

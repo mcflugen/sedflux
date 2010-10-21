@@ -16,10 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_muds DESTINATION bin RENAME mud
 
 ########### next target ###############
 
-SET(muds_LIB_SRCS
-   muds.c
-)
+set (muds_LIB_SRCS muds.c)
 
+set_source_files_properties (${muds_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(muds ${muds_LIB_SRCS})
 
 target_link_libraries(muds sedflux)

@@ -24,6 +24,12 @@
 # include <utils/utils.h>
 # include <sed/sed_sedflux.h>
 
+# include <glib.h>
+
+G_BEGIN_DECLS
+
 int muddy(Sed_cube prof,Sed_cell *deposit, double *wave, double duration );
+
+G_END_DECLS
 
 #endif
