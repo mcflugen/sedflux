@@ -16,9 +16,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_inflow DESTINATION bin RENAME i
 
 ########### next target ###############
 
-SET(pseudoplume_SRCS
-   pseudoplume.c
-)
+set (pseudoplume_SRCS pseudoplume.c)
 
 add_executable(pseudoplume ${pseudoplume_SRCS})
 
@@ -29,12 +27,9 @@ install(TARGETS pseudoplume DESTINATION bin COMPONENT sedflux)
 
 ########### next target ###############
 
-SET(inflow_LIB_SRCS
-  inflow.c
-  inflow_io.c
-  inflow_sedflux_interface.c
-)
+set (inflow_LIB_SRCS inflow.c inflow_io.c inflow_sedflux_interface.c)
 
+set_source_files_properties (${inflow_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(inflow ${inflow_LIB_SRCS})
 
 target_link_libraries(inflow sedflux)

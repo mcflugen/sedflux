@@ -30,7 +30,7 @@
 #include <utils/utils.h>
 
 /*** Self Documentation ***/
-char *help_msg[] =
+static const char *help_msg[] =
 {
 "                                                                             ",
 " pseudoplume [options] [parameters]  [filein]                                ",

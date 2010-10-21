@@ -39,6 +39,8 @@
 #include <glib.h>
 #include <sed/sed_sedflux.h>
 
+G_BEGIN_DECLS
+
 #include <sed/datadir_path.h>
 #if !defined( DATADIR )
 # define DATADIR "/usr/local/share"
@@ -100,5 +102,7 @@ gboolean  sed_inflow( Sed_cube         p       ,
                       gint             i_start ,
                       double           dx      ,
                       Inflow_const_st* c );
+
+G_END_DECLS
 
 #endif /* inflow.h is included */

@@ -12,7 +12,7 @@ inflow_error_quark( void )
 
 static Inflow_param_st p;
 
-static Eh_key_file_entry template[] =
+static Eh_key_file_entry tmpl[] =
 {
  { "Length of basin"                                 , EH_ARG_DBL    , &p.basin_len       } ,
  { "Bin spacing"                                     , EH_ARG_DBL    , &p.dx              } ,
@@ -75,7 +75,7 @@ inflow_scan_parameter_file( const gchar* file , GError** error )
       eh_message( "Reading parameter from default file: %s" , file );
    }
 
-   eh_key_file_scan_from_template( file , "INFLOW" , template , &tmp_error );
+   eh_key_file_scan_from_template( file , "INFLOW" , tmpl , &tmp_error );
 
    if ( !tmp_error )
    {
@@ -391,7 +391,7 @@ inflow_set_constant_data( Inflow_param_st* p )
    b->phe_bottom      = p->bottom_fraction;
    b->n_grains        = p->n_grains;
    c->get_phe_data    = b;
-   c->get_phe         = inflow_get_phe;
+   c->get_phe         = (Inflow_query_func)inflow_get_phe;
 
    return c;
 }

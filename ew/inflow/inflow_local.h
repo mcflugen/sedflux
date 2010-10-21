@@ -36,6 +36,8 @@
 #include <sed/sed_sedflux.h>
 #include "inflow.h"
 
+G_BEGIN_DECLS
+
 typedef struct
 {
    double* x;
@@ -186,5 +188,7 @@ typedef struct
 }
 Inflow_t;
 */
+
+G_END_DECLS
 
 #endif /* inflow.h is included */
