@@ -1,17 +1,20 @@
 #include <stdio.h>
 #include <glib.h>
+#include <string.h>
 
 #include "sed_tripod.h"
 
 CLASS ( Sed_measurement )
 {
    char* name;
+   char* unit;
    Sed_tripod_func f;
 };
 
 typedef struct
 {
-   char* name;
+   const char* name;
+   const char* unit;
    Sed_tripod_func f;
 } Sed_measurement_static;
 
@@ -49,23 +52,23 @@ CLASS ( Sed_tripod )
 };
 
 static Sed_measurement_static all_measurements[17] = {
-   { "SLOPE"        , &sed_measure_cube_slope } ,
-   { "DEPTH"        , &sed_measure_cube_water_depth } ,
-   { "ELEVATION"    , &sed_measure_cube_elevation } ,
-   { "THICKNESS"    , &sed_measure_cube_thickness } ,
-   { "GRAIN"        , &sed_measure_cube_grain_size } ,
-   { "AGE"          , &sed_measure_cube_age } ,
-   { "SAND"         , &sed_measure_cube_sand_fraction } ,
-   { "SILT"         , &sed_measure_cube_silt_fraction } ,
-   { "CLAY"         , &sed_measure_cube_clay_fraction } ,
-   { "MUD"          , &sed_measure_cube_mud_fraction } ,
-   { "FACIES"       , &sed_measure_cube_facies } ,
-   { "DENSITY"      , &sed_measure_cube_density } ,
-   { "POROSITY"     , &sed_measure_cube_porosity } ,
-   { "PERMEABILITY" , &sed_measure_cube_permeability } ,
-   { "BASEMENT"     , &sed_measure_cube_basement } ,
-   { "RIVER MOUTH"  , &sed_measure_cube_river_mouth } ,
-   { NULL , NULL }
+   {"SLOPE", "meter/meter", &sed_measure_cube_slope},
+   {"DEPTH", "meter", &sed_measure_cube_water_depth},
+   {"ELEVATION", "meter", &sed_measure_cube_elevation},
+   {"THICKNESS", "meter", &sed_measure_cube_thickness},
+   {"GRAIN", "micrometer", &sed_measure_cube_grain_size},
+   {"AGE", "year", &sed_measure_cube_age},
+   {"SAND", "1", &sed_measure_cube_sand_fraction},
+   {"SILT", "1", &sed_measure_cube_silt_fraction},
+   {"CLAY", "1", &sed_measure_cube_clay_fraction},
+   {"MUD", "1", &sed_measure_cube_mud_fraction},
+   {"FACIES", "1", &sed_measure_cube_facies},
+   {"DENSITY", "kilogram/meter^3", &sed_measure_cube_density},
+   {"POROSITY", "1", &sed_measure_cube_porosity},
+   {"PERMEABILITY", "meter^2", &sed_measure_cube_permeability},
+   {"BASEMENT", "meter", &sed_measure_cube_basement},
+   {"RIVER_MOUTH", "meter", &sed_measure_cube_river_mouth},
+   {NULL, NULL, NULL}
 };
 
 Sed_tripod sed_tripod_new( const char* file , Sed_measurement x , Sed_tripod_attr attr )
@@ -277,6 +280,67 @@ char* sed_measurement_name( Sed_measurement m )
       name = NULL;
 
    return name;
+}
+
+gchar**
+sed_measurement_all_names ()
+{
+  gchar** names = NULL;
+
+  {
+    int i;
+    int len = 0;
+
+    for (i=0 ; all_measurements[i].name ; i++ )
+      len++;
+    names = eh_new (gchar*, len+1);
+    for (i=0; i<len; i++)
+      names[i] = g_strconcat ("SeaFloor", all_measurements[i].name, NULL);
+      //names[i] = g_strdup (all_measurements[i].name);
+    names[i] = NULL;
+  }
+
+  return names;
+}
+
+gchar**
+sed_measurement_all_units ()
+{
+  gchar** units = NULL;
+
+  {
+    int i;
+    int len = 0;
+
+    for (i=0 ; all_measurements[i].name ; i++ )
+      len++;
+    units = eh_new (gchar*, len+1);
+    for (i=0; i<len; i++)
+      units[i] = g_strdup (all_measurements[i].unit);
+    units[i] = NULL;
+  }
+
+  return units;
+
+}
+
+gchar*
+sed_measurement_unit (gchar* name)
+{
+  gchar* unit = NULL;
+
+  {
+    int i;
+
+    if (g_str_has_prefix (name, "SeaFloor"))
+      name += strlen ("SeaFloor");
+
+    for (i=0; unit==NULL && all_measurements[i].name; i++)
+      if (g_ascii_strcasecmp (all_measurements[i].name, name) == 0)
+        unit = g_strdup (all_measurements[i].unit);
+  }
+
+  return unit;
 }
 
 double

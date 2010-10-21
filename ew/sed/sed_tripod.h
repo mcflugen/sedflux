@@ -5,6 +5,8 @@
 #include <glib.h>
 #include "utils/utils.h"
 
+G_BEGIN_DECLS
+
 new_handle( Sed_tripod );
 new_handle( Sed_tripod_header );
 new_handle( Sed_tripod_attr );
@@ -29,6 +31,10 @@ Sed_measurement sed_measurement_copy           ( Sed_measurement dest , Sed_meas
 Sed_measurement sed_measurement_dup            ( Sed_measurement src );
 Sed_measurement sed_measurement_destroy        ( Sed_measurement m );
 char*           sed_measurement_name           ( Sed_measurement m );
+gchar**         sed_measurement_all_names      (void);
+gchar** sed_measurement_all_units (void);
+gchar* sed_measurement_unit (gchar* name);
+
 double          sed_measurement_make           ( Sed_measurement m , Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_slope         ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_water_depth   ( Sed_cube p , gssize i , gssize j );
@@ -55,5 +61,7 @@ gssize            sed_tripod_write               ( Sed_tripod t , Sed_cube cube 
 Sed_tripod sed_tripod_set_len( Sed_tripod t , gssize len );
 Sed_tripod sed_tripod_set_n_x( Sed_tripod t , gssize n_x );
 Sed_tripod sed_tripod_set_n_y( Sed_tripod t , gssize n_y );
+
+G_END_DECLS
 
 #endif

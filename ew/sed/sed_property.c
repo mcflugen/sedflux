@@ -2,10 +2,10 @@
 
 typedef struct
 {
-   gchar*                 name;   ///< The name of the property
-   gchar*                 ext;    ///< The file extension for the property
+   const gchar* name;   ///< The name of the property
+   const gchar* ext;    ///< The file extension for the property
    Sed_cell_property_func f;      ///< The function used to get the property from a Sed_cell
-   gssize                 n_args; ///< Number of args for the property function
+   gssize n_args; ///< Number of args for the property function
 } Sed_property_static;
 
 /** Class to describe a sediment property of a Sed_cell
@@ -21,46 +21,99 @@ CLASS( Sed_property )
 //const Sed_property S_AGE = sed_property_new_full( "age" , "age" , &sed_cell_age , 1 );
 
 static Sed_property_static all_properties[41] = {
-   { "age"                , "age"      , {(Sed_cell_property_func_0)(&sed_cell_age)}     , 1 } ,
-   { "facies"             , "facies"   , {(Sed_cell_property_func_0)(&sed_cell_facies)}  , 1 } ,
-//   { "facies"             , "facies"   , {&sed_cell_facies}            , 1 } ,
+   {"age", "age", sed_cell_age, 1},
+   {"shear_strength", "sheer", sed_cell_shear_strength, 2},
+   {"facies", "facies", (Sed_cell_property_func_0)sed_cell_facies, 1},
+   {"pressure", "press", sed_cell_pressure, 1},
+   {"density", "bulk", sed_cell_density, 1},
+   {"grain_density", "rhograin", sed_cell_grain_density, 1 } ,
+   {"max_density", "rho_max", sed_cell_max_density, 1 } ,
+   {"grain", "grain", sed_cell_grain_size_in_phi, 1 } ,
+   {"grain_in_meters", "grain", sed_cell_grain_size, 1 } ,
+   {"sand", "sand"     , sed_cell_sand_fraction, 1 } ,
+   {"silt", "silt"     , sed_cell_silt_fraction, 1 } ,
+   {"clay", "clay"     , sed_cell_clay_fraction, 1 } ,
+   {"mud", "mud"      , sed_cell_mud_fraction, 1 } ,
+   {"velocity", "vel"      , sed_cell_velocity, 1 } ,
+   {"viscosity", "visc"     , sed_cell_viscosity, 1 } ,
+   {"relative_density", "dr"       , sed_cell_relative_density, 1 } ,
+   {"porosity", "por"      , sed_cell_porosity, 1 } ,
+   {"porosity_min", "pormin"   , sed_cell_porosity_min, 1 } ,
+   {"porosity_max", "pormax"   , sed_cell_porosity_max, 1 } ,
+   {"pi", "pi"       , sed_cell_plastic_index, 1 } ,
+   {"permeability", "perm"     , sed_cell_permeability, 1 } ,
+   {"void_ratio", "void"     , sed_cell_void_ratio, 1 } ,
+   {"void_ratio_min", "emin"     , sed_cell_void_ratio_min, 1 } ,
+   {"void_ratio_max", "emax"     , sed_cell_void_ratio_max, 1 } ,
+   {"friction_angle", "angle"    , sed_cell_friction_angle, 1 } ,
+   {"consolidation", "cc"       , sed_cell_cc, 1 } ,
+   {"yield_strength", "yield"    , sed_cell_yield_strength, 1 } ,
+   {"dynamic_viscosity", "nu"       , sed_cell_dynamic_viscosity, 1 } ,
+   {"mv", "mv"       , sed_cell_compressibility, 1 } ,
+   {"cv", "cv"       , sed_cell_cv, 1 } ,
+   {"cv", "cv"       , sed_cell_bulk_cv, 1 } ,
+   {"hydraulic_con", "hydro"    , sed_cell_bulk_hydraulic_conductivity, 1 } ,
+   {"shear_strength", "sheer", sed_cell_shear_strength, 2},
+   {"cohesion", "cohesion", sed_cell_cohesion, 2},
+   {"consolidation", "con", sed_cell_consolidation, 2},
+   {"consolidation_rate", "du", sed_cell_consolidation_rate, 2},
+   {"excess_pressure", "excess", sed_cell_excess_pressure, 2},
+   {"relative_pressure", "rel", sed_cell_relative_pressure, 2},
+   {"fraction", "fraction", (Sed_cell_property_func_0)sed_cell_fraction, 2},
+   {NULL, NULL, (Sed_cell_property_func_0)NULL, 0}
+};
+
+#ifndef __cplusplus
+static Sed_property_static all_properties[41] = {
+   {"age", "age",
+    {(Sed_cell_property_func_0)(&sed_cell_age)}, 1},
+   {"facies", "facies",
+    {(Sed_cell_property_func_0)(&sed_cell_facies)}, 1},
    { "pressure"           , "press"    , {&sed_cell_pressure}          , 1 } ,
    { "density"            , "bulk"     , {&sed_cell_density}           , 1 } ,
-   { "grain density"      , "rhograin" , {&sed_cell_grain_density}     , 1 } ,
-   { "max density"        , "rho_max"  , {&sed_cell_max_density}       , 1 } ,
+   { "grain_density"      , "rhograin" , {&sed_cell_grain_density}     , 1 } ,
+   { "max_density"        , "rho_max"  , {&sed_cell_max_density}       , 1 } ,
    { "grain"              , "grain"    , {&sed_cell_grain_size_in_phi} , 1 } ,
-   { "grain in meters"    , "grain"    , {&sed_cell_grain_size}        , 1 } ,
+   { "grain_in_meters"    , "grain"    , {&sed_cell_grain_size}        , 1 } ,
    { "sand"               , "sand"     , {&sed_cell_sand_fraction}     , 1 } ,
    { "silt"               , "silt"     , {&sed_cell_silt_fraction}     , 1 } ,
    { "clay"               , "clay"     , {&sed_cell_clay_fraction}     , 1 } ,
    { "mud"                , "mud"      , {&sed_cell_mud_fraction}      , 1 } ,
    { "velocity"           , "vel"      , {&sed_cell_velocity}          , 1 } ,
    { "viscosity"          , "visc"     , {&sed_cell_viscosity}         , 1 } ,
-   { "relative density"   , "dr"       , {&sed_cell_relative_density}  , 1 } ,
+   { "relative_density"   , "dr"       , {&sed_cell_relative_density}  , 1 } ,
    { "porosity"           , "por"      , {&sed_cell_porosity}          , 1 } ,
-   { "porosity min"       , "pormin"   , {&sed_cell_porosity_min}      , 1 } ,
-   { "porosity max"       , "pormax"   , {&sed_cell_porosity_max}      , 1 } ,
+   { "porosity_min"       , "pormin"   , {&sed_cell_porosity_min}      , 1 } ,
+   { "porosity_max"       , "pormax"   , {&sed_cell_porosity_max}      , 1 } ,
    { "pi"                 , "pi"       , {&sed_cell_plastic_index}     , 1 } ,
    { "permeability"       , "perm"     , {&sed_cell_permeability}      , 1 } ,
-   { "void ratio"         , "void"     , {&sed_cell_void_ratio}        , 1 } ,
-   { "void ratio min"     , "emin"     , {&sed_cell_void_ratio_min}    , 1 } ,
-   { "void ratio max"     , "emax"     , {&sed_cell_void_ratio_max}    , 1 } ,
-   { "friction angle"     , "angle"    , {&sed_cell_friction_angle}    , 1 } ,
+   { "void_ratio"         , "void"     , {&sed_cell_void_ratio}        , 1 } ,
+   { "void_ratio_min"     , "emin"     , {&sed_cell_void_ratio_min}    , 1 } ,
+   { "void_ratio_max"     , "emax"     , {&sed_cell_void_ratio_max}    , 1 } ,
+   { "friction_angle"     , "angle"    , {&sed_cell_friction_angle}    , 1 } ,
    { "consolidation"      , "cc"       , {&sed_cell_cc}                , 1 } ,
-   { "yield strength"     , "yield"    , {&sed_cell_yield_strength}    , 1 } ,
-   { "dynamic viscosity"  , "nu"       , {&sed_cell_dynamic_viscosity} , 1 } ,
+   { "yield_strength"     , "yield"    , {&sed_cell_yield_strength}    , 1 } ,
+   { "dynamic_viscosity"  , "nu"       , {&sed_cell_dynamic_viscosity} , 1 } ,
    { "mv"                 , "mv"       , {&sed_cell_compressibility}   , 1 } ,
    { "cv"                 , "cv"       , {&sed_cell_cv}                , 1 } ,
    { "cv"                 , "cv"       , {&sed_cell_bulk_cv}           , 1 } ,
-   { "hydraulic con"      , "hydro"    , {&sed_cell_bulk_hydraulic_conductivity} , 1 } ,
-   { "shear strength"     , "sheer"    , {&sed_cell_shear_strength}    , 2 } ,
-   { "cohesion"           , "cohesion" , {&sed_cell_cohesion}       , 2 } ,
-   { "consolidation"      , "con"      , {&sed_cell_consolidation}  , 2 } ,
-   { "consolidation rate" , "du"       , {&sed_cell_consolidation_rate}  , 2 } ,
-   { "excess pressure"    , "excess"   , {&sed_cell_excess_pressure} , 2 } ,
-   { "relative pressure"  , "rel"      , {&sed_cell_relative_pressure} , 2 } ,
-   { "fraction"           , "fraction" , {&sed_cell_fraction} , 2 } ,
-   { NULL , NULL , {NULL} , 0 } };
+   { "hydraulic_con"      , "hydro"    , {&sed_cell_bulk_hydraulic_conductivity} , 1 } ,
+   {"shear_strength", "sheer",
+    {(Sed_cell_property_func_1)(sed_cell_shear_strength)}, 2},
+   {"cohesion", "cohesion",
+    {(Sed_cell_property_func_2)&sed_cell_cohesion}, 2},
+   {"consolidation", "con",
+    {(Sed_cell_property_func_2)&sed_cell_consolidation}, 2},
+   {"consolidation_rate", "du",
+    {(Sed_cell_property_func_2)&sed_cell_consolidation_rate}, 2},
+   {"excess_pressure", "excess",
+    {(Sed_cell_property_func_2)&sed_cell_excess_pressure}, 2},
+   {"relative_pressure", "rel",
+    {(Sed_cell_property_func_2)&sed_cell_relative_pressure}, 2},
+   {"fraction", "fraction",
+    {(Sed_cell_property_func_2)&sed_cell_fraction}, 2},
+   {NULL, NULL, {NULL}, 0}};
+#endif
 
 Sed_property sed_property_new_full( char* name , char* ext , Sed_cell_property_func f , gssize n_args )
 {
@@ -109,7 +162,7 @@ sed_property_new( const char *name )
          prop = NULL;
       }
       else
-         prop = sed_property_dup( &(all_properties[i]) );
+         prop = sed_property_dup ((Sed_property)&(all_properties[i]) );
 
       g_strfreev( split_name );
    }
@@ -224,5 +277,25 @@ Sed_property sed_property_destroy( Sed_property p )
    }
 
    return NULL;
+}
+
+gchar**
+sed_property_all_names (void)
+{
+  gchar** names = NULL;
+
+  {
+    int len = 0;
+    int i = 0;
+
+    for (len=0; all_properties[len].name; len++);
+
+    names = g_new (gchar*, len+1);
+    for (i=0; i<len; i++)
+      names[i] = g_strdup (all_properties[i].name);
+    names[len] = NULL;
+  }
+
+  return names;
 }
 

@@ -1,7 +1,11 @@
 #if !defined( SED_PROPERTY_H )
 #define SED_PROPERTY_H
 
+#include <glib.h>
+
 #include "utils/eh_types.h"
+
+G_BEGIN_DECLS
 
 new_handle( Sed_property );
 
@@ -18,6 +22,10 @@ char*        sed_property_name      ( Sed_property p );
 gssize       sed_property_n_args    ( Sed_property p );
 double       sed_property_measure   ( Sed_property p , Sed_cell c , ... );
 Sed_property sed_property_destroy   ( Sed_property p );
+
+gchar** sed_property_all_names (void);
+
+G_END_DECLS
 
 #endif
 
