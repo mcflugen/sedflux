@@ -38,6 +38,8 @@
 #include "sakura.h"
 #include "sakura_utils.h"
 
+G_BEGIN_DECLS
+
 // LIST OF FUNCTIONS defined only for sakura
 // define constants
 #define HMIN 0.0000001
@@ -304,5 +306,7 @@ typedef struct
 }
 Sakura_t;
 */
+
+G_END_DECLS
 
 #endif /* sakura_local.h is included */

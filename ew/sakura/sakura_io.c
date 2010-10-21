@@ -12,7 +12,7 @@ sakura_error_quark( void )
 
 static Sakura_param_st p;
 
-static Eh_key_file_entry template[] =
+static Eh_key_file_entry tmpl[] =
 {
 // { "Length of basin"                                 , EH_ARG_DBL    , &p.basin_len       } , // unused
  { "Bin spacing"                                     , EH_ARG_DBL    , &p.dx              } ,
@@ -138,7 +138,7 @@ sakura_scan_parameter_file( const gchar* file , GError** error )
       eh_message( "Reading parameter from default file: %s" , file );
    }
 
-   eh_key_file_scan_from_template( file , "SAKURA" , template , &tmp_error );
+   eh_key_file_scan_from_template( file , "SAKURA" , tmpl, &tmp_error );
 
    if ( !tmp_error )
    {

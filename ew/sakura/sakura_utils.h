@@ -21,6 +21,8 @@
 #if !defined( SAKURA_UTILS_H )
 #define SAKURA_UTILS_H
 
+G_BEGIN_DECLS
+
 //double **dmatrix(int nrl, int nrh, int ncl, int nch);
 void bathyC(double *Xi, double *Zi, double *Si, double dx);
 int interpolate2(double *x,double *y,int len,double *xNew,double *yNew,int lenNew, double dx);
@@ -31,5 +33,7 @@ double tvdleft(double u, double f, double fl, double fr, double fll, double frr)
 double minmod2(double x, double y);
 void outputData(FILE *fp, int NNODES, double totTime, double *U, double *HH, double *CC, double *SED, double *Utemp, double *SEDRATE, double xhead, double uhead, int node);
 void getTime(double totTime, int *day, int *hr, int *min, double *sec);
+
+G_END_DECLS
 
 #endif // sakura_utils.h is included */

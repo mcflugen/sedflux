@@ -34,6 +34,8 @@
 #define SAKURA_TEST_BATHY_FILE DATADIR "/ew/sakura_bathy.csv"
 #define SAKURA_TEST_FLOOD_FILE DATADIR "/ew/sakura_flood.kvf"
 
+G_BEGIN_DECLS
+
 typedef enum
 {
    SAKURA_ERROR_BAD_PARAMETER
@@ -137,5 +139,7 @@ gboolean  sed_sakura( Sed_cube         p       ,
                       gint             i_start ,
                       double           dx      ,
                       Sakura_const_st* c );
+
+G_END_DECLS
 
 #endif /* sakura.h is included */

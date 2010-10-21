@@ -21,6 +21,7 @@ SET(sakura_LIB_SRCS
    sakura_utils.c
 )
 
+set_source_files_properties (${sakura_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(sakura ${sakura_LIB_SRCS})
 
 target_link_libraries(sakura sedflux)
