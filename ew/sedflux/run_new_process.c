@@ -34,7 +34,7 @@
 Sed_process_info
 run_new_process( Sed_process proc , Sed_cube prof )
 {
-   New_process_t*   data = sed_process_user_data(proc);
+   New_process_t*   data = (New_process_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    /* Do something to the Sed_cube */
@@ -82,7 +82,7 @@ destroy_new_process( Sed_process p )
 {
    if ( p )
    {
-      New_process_t* data = sed_process_user_data( p );
+      New_process_t* data = (New_process_t*)sed_process_user_data( p );
 
       if ( data )
       {

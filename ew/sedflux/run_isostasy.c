@@ -39,7 +39,7 @@ gboolean init_isostasy_data      ( Sed_process proc , Sed_cube prof );
 Sed_process_info
 run_isostasy( Sed_process proc , Sed_cube prof )
 {
-   Isostasy_t*      data = sed_process_user_data(proc);
+   Isostasy_t*      data = (Isostasy_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double full_n_x, full_n_y;
    gint   small_n_x, small_n_y;
@@ -300,7 +300,7 @@ iter++;
 #define ISOSTASY_KEY_YOUNGS_MODULUS  "Youngs modulus"
 #define ISOSTASY_KEY_RELAXATION_TIME "relaxation time"
 
-static gchar* isostasy_req_labels[] =
+static const gchar* isostasy_req_labels[] =
 {
    ISOSTASY_KEY_EET             ,
    ISOSTASY_KEY_YOUNGS_MODULUS  ,
@@ -351,7 +351,7 @@ init_isostasy( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_isostasy_data( Sed_process proc , Sed_cube prof )
 {
-   Isostasy_t* data = sed_process_user_data( proc );
+   Isostasy_t* data = (Isostasy_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -370,7 +370,7 @@ destroy_isostasy( Sed_process p )
 {
    if ( p )
    {
-      Isostasy_t* data = sed_process_user_data( p );
+      Isostasy_t* data = (Isostasy_t*)sed_process_user_data( p );
 
       if ( data )
       {

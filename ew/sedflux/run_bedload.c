@@ -52,7 +52,7 @@ gboolean bed_load_1d_domain( double x , double y , Bed_load_data *user_data );
 Sed_process_info
 run_bedload( Sed_process p , Sed_cube prof )
 {
-   Bedload_dump_t*  data       = sed_process_user_data(p);
+   Bedload_dump_t*  data       = (Bedload_dump_t*)sed_process_user_data(p);
    Sed_process_info info       = SED_EMPTY_INFO;
    Sed_riv          this_river = sed_cube_river_by_name( prof , data->river_name );
 
@@ -217,7 +217,7 @@ run_bedload( Sed_process p , Sed_cube prof )
 #define BEDLOAD_KEY_RETAINED   "fraction of bedload retained in the delta plain"
 #define BEDLOAD_KEY_RIVER_NAME "river name"
 
-static gchar* bedload_req_labels[] =
+static const gchar* bedload_req_labels[] =
 {
    BEDLOAD_KEY_DUMP_LEN   ,
    BEDLOAD_KEY_RATIO      ,
@@ -264,7 +264,7 @@ destroy_bedload( Sed_process p )
 {
    if ( p )
    {
-      Bedload_dump_t* data = sed_process_user_data( p );
+      Bedload_dump_t* data = (Bedload_dump_t*)sed_process_user_data( p );
 
       if ( data )
       {

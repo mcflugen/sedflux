@@ -30,7 +30,7 @@
 Sed_process_info
 run_constants( Sed_process proc , Sed_cube prof )
 {
-   Constants_t*     data = sed_process_user_data(proc);
+   Constants_t* data = (Constants_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    {
@@ -103,7 +103,7 @@ destroy_constants( Sed_process p )
 {
    if ( p )
    {
-      Constants_t* data = sed_process_user_data( p );
+      Constants_t* data = (Constants_t*)sed_process_user_data( p );
 
       if ( data )
       {

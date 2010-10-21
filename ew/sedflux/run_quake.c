@@ -34,7 +34,7 @@ gboolean init_quake_data( Sed_process proc , Sed_cube prof , GError** error );
 Sed_process_info
 run_quake( Sed_process proc , Sed_cube prof )
 {
-   Quake_t *    data = sed_process_user_data(proc);
+   Quake_t *    data = (Quake_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double a, acceleration, time_step;
 
@@ -109,7 +109,7 @@ init_quake( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_quake_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Quake_t* data = sed_process_user_data( proc );
+   Quake_t* data = (Quake_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -127,7 +127,7 @@ destroy_quake( Sed_process p )
 {
    if ( p )
    {
-      Quake_t* data = sed_process_user_data( p );
+      Quake_t* data = (Quake_t*)sed_process_user_data( p );
       
       if ( data )
       {

@@ -31,7 +31,7 @@ run_slump( Sed_process proc , Sed_cube prof )
    int              i;
    Sed_cube         fail;
 
-   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
    //fail = data->failure;
 
    // Add the failure to the profile shifted by an amount based

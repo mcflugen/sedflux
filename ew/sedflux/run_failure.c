@@ -44,7 +44,7 @@ failure_profile_data_quark( void )
 Sed_process_info
 run_failure( Sed_process proc , Sed_cube p )
 {
-   Failure_proc_t*  data = sed_process_user_data(proc);
+   Failure_proc_t*  data = (Failure_proc_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_cube fail;
    int decision;
@@ -262,7 +262,7 @@ init_failure( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_failure_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Failure_proc_t* data = sed_process_user_data(proc);
+   Failure_proc_t* data = (Failure_proc_t*)sed_process_user_data(proc);
 
    if ( data )
    {
@@ -290,7 +290,7 @@ destroy_failure( Sed_process p )
 {
    if ( p )
    {
-      Failure_proc_t* data = sed_process_user_data( p );
+      Failure_proc_t* data = (Failure_proc_t*)sed_process_user_data( p );
 
       if ( data )
       {

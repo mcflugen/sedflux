@@ -53,7 +53,7 @@ plume_hydro_data_quark( void )
 Sed_process_info
 run_plume( Sed_process proc , Sed_cube p )
 {
-   Plume_t*         data = sed_process_user_data(proc);
+   Plume_t*         data = (Plume_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    if ( sed_process_run_count(proc)==0 )
@@ -100,7 +100,7 @@ run_plume( Sed_process proc , Sed_cube p )
 Sed_process_info
 run_plume_hypo( Sed_process proc , Sed_cube prof )
 {
-   Plume_hypo_t*    data = sed_process_user_data(proc);
+   Plume_hypo_t*    data = (Plume_hypo_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Plume_sediment*  sediment_data;
    gssize           n_grains;
@@ -173,7 +173,7 @@ run_plume_hypo( Sed_process proc , Sed_cube prof )
                             sed_cube_y_res(prof) );
       }
 
-      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
+      this_river = (Sed_riv)sed_process_use( proc , PLUME_HYDRO_DATA );
       hydro_data = sed_river_hydro( this_river );
    
       // copy the river discharge data.
@@ -321,6 +321,18 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
                     * sed_cube_x_res( prof )
                     * sed_cube_y_res( prof );
 
+         printf ("time                  : %f\n", sed_cube_age(prof) );
+         printf ("sediment input (kg)   : %g\n", input_mass           );
+         printf ("sediment added (kg)   : %g\n", final_mass-init_mass );
+         printf ("shore normal          : %f\n", river_data.rdirection );
+         printf ("river angle           : %f\n", river_data.rma );
+         printf ("current velocity (m/s): %f\n", plume_const.current_velocity );
+         printf ("river velocity (m/s)  : %f\n", sed_hydro_velocity( hydro_data ) );
+         printf ("river width (m)       : %f\n", sed_hydro_width   ( hydro_data ) );
+         printf ("river depth (m)       : %f\n", sed_hydro_depth   ( hydro_data ) );
+         for ( i=0 ; i<n_susp_grains ; i++ )
+            printf ("river conc %d (kg/m^3): %f\n", i , sed_hydro_nth_concentration(hydro_data,i) );
+
          eh_message( "time                  : %f" , sed_cube_age(prof) );
          eh_message( "sediment input (kg)   : %g" , input_mass           );
          eh_message( "sediment added (kg)   : %g" , final_mass-init_mass );
@@ -352,7 +364,7 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
 #define PLUME_KEY_HYPO_MODEL      "Hypopycnal plume model"
 #define PLUME_KEY_HYPER_MODEL     "Hyperpycnal plume model"
 
-static gchar* plume_req_labels[] =
+static const gchar* plume_req_labels[] =
 {
    PLUME_KEY_HYPO_MODEL  ,
    PLUME_KEY_HYPER_MODEL ,
@@ -384,7 +396,7 @@ destroy_plume( Sed_process p )
 {
    if ( p )
    {
-      Plume_t* data = sed_process_user_data( p );
+      Plume_t* data = (Plume_t*)sed_process_user_data( p );
 
       if ( data )
       {
@@ -400,7 +412,7 @@ destroy_plume( Sed_process p )
 gboolean
 init_plume_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Plume_t* data = sed_process_user_data( proc );
+   Plume_t* data = (Plume_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -417,7 +429,7 @@ init_plume_data( Sed_process proc , Sed_cube prof , GError** error )
 #define HYPO_KEY_X_SHORE_NODES    "number of grid nodes in cross-shore"
 #define HYPO_KEY_RIVER_NODES      "number of grid nodes in river mouth"
 
-static gchar* hypo_3d_req_labels[] =
+static const gchar* hypo_3d_req_labels[] =
 {
    HYPO_KEY_CONCENTRATION ,
    HYPO_KEY_CURRENT_VEL   ,
@@ -427,7 +439,7 @@ static gchar* hypo_3d_req_labels[] =
    NULL
 };
 
-static gchar* hypo_2d_req_labels[] =
+static const gchar* hypo_2d_req_labels[] =
 {
    HYPO_KEY_CONCENTRATION ,
    HYPO_KEY_WIDTH         ,
@@ -492,7 +504,7 @@ init_plume_hypo( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_plume_hypo_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Plume_hypo_t* data = sed_process_user_data( proc );
+   Plume_hypo_t* data = (Plume_hypo_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -517,7 +529,7 @@ destroy_plume_hypo( Sed_process p )
 {
    if ( p )
    {
-      Plume_hypo_t* data = sed_process_user_data( p );
+      Plume_hypo_t* data = (Plume_hypo_t*)sed_process_user_data( p );
       
       if ( data )
       {

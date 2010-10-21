@@ -115,7 +115,7 @@ Sed_depth_query_t;
 Sed_process_info
 run_turbidity_inflow( Sed_process proc , Sed_cube p )
 {
-   Inflow_t*        data = sed_process_user_data(proc);
+   Inflow_t*        data = (Inflow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_cube         fail;
    Inflow_const_st  inflow_const;
@@ -129,7 +129,7 @@ run_turbidity_inflow( Sed_process proc , Sed_cube p )
    if ( sed_mode_is_3d() )
       return info;
 
-   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
 
    eh_require( fail );
 
@@ -165,7 +165,7 @@ run_turbidity_inflow( Sed_process proc , Sed_cube p )
 Sed_process_info
 run_turbidity_sakura( Sed_process proc , Sed_cube p )
 {
-   Inflow_t*        data = sed_process_user_data(proc);
+   Inflow_t*        data = (Inflow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_cube         fail;
    Sakura_const_st  sakura_const;
@@ -179,7 +179,7 @@ run_turbidity_sakura( Sed_process proc , Sed_cube p )
    if ( sed_mode_is_3d() )
       return info;
 
-   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
    //fail = data->failure;
 
    // Transfer over the (inflow) turbidity current flow constants.
@@ -214,7 +214,7 @@ run_turbidity_sakura( Sed_process proc , Sed_cube p )
 Sed_process_info
 run_plume_hyper_inflow( Sed_process proc , Sed_cube p )
 {
-   Inflow_t*        data = sed_process_user_data(proc);
+   Inflow_t*        data = (Inflow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    //---
@@ -245,7 +245,7 @@ run_plume_hyper_inflow( Sed_process proc , Sed_cube p )
       ind_start  = sed_cube_river_mouth_1d( p );
 
       // initial flow conditions.
-      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
+      this_river = (Sed_riv)sed_process_use( proc , PLUME_HYDRO_DATA );
       flow       = sed_river_hydro( this_river );
 
       eh_require( this_river                            );
@@ -265,7 +265,7 @@ run_plume_hyper_inflow( Sed_process proc , Sed_cube p )
 Sed_process_info
 run_plume_hyper_sakura( Sed_process proc , Sed_cube p )
 {
-   Inflow_t*        data = sed_process_user_data(proc);
+   Inflow_t*        data = (Inflow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    //---
@@ -297,7 +297,7 @@ run_plume_hyper_sakura( Sed_process proc , Sed_cube p )
       ind_start  = sed_cube_river_mouth_1d( p );
 
       // initial flow conditions.
-      this_river = sed_process_use( proc , PLUME_HYDRO_DATA );
+      this_river = (Sed_riv)sed_process_use( proc , PLUME_HYDRO_DATA );
       flow       = sed_river_hydro( this_river );
 
       eh_require( this_river                            );
@@ -665,7 +665,7 @@ data->algorithm = TURBIDITY_CURRENT_ALGORITHM_INFLOW;
 #define S_KEY_CHANNEL_WIDTH  "width of channel"
 #define S_KEY_CHANNEL_LENGTH "length of channel"
 
-static gchar* inflow_labels[] =
+static const gchar* inflow_labels[] =
 {
    S_KEY_SUA            ,
    S_KEY_SUB            ,
@@ -743,7 +743,7 @@ destroy_inflow( Sed_process p )
 {
    if ( p )
    {
-      Inflow_t* data = sed_process_user_data( p );
+      Inflow_t* data = (Inflow_t*)sed_process_user_data( p );
       
       if ( data ) eh_free( data );
    }

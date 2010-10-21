@@ -25,6 +25,7 @@
 #include "my_processes.h"
 
 #include "sedflux.h"
+#include "flow.h"
 
 void run_exponential_flow( Sed_column c , double time_now_in_years );
 void run_terzaghi_flow( Sed_column c , double time_now_in_years );
@@ -33,7 +34,7 @@ void run_darcy_flow( Sed_column c , double dt_in_years );
 Sed_process_info
 run_flow( Sed_process proc , Sed_cube p )
 {
-   Flow_t*          data = sed_process_user_data(proc);
+   Flow_t*          data = (Flow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double           dt_in_years;
    double           time_now;
@@ -124,7 +125,7 @@ destroy_flow( Sed_process p )
 {
    if ( p )
    {
-      Flow_t* data = sed_process_user_data( p );
+      Flow_t* data = (Flow_t*)sed_process_user_data( p );
 
       if ( data ) eh_free( data );
    }
@@ -240,8 +241,8 @@ void run_darcy_flow( Sed_column col , double dt_in_years )
    double hydro_static, dz, sed_rate;
    double max_k, mean_k, mean_c;
    double time, dt_in_secs;
-   double *solve_excess_pore_pressure( double* , double* , double* , int ,
-                                       double  , double  , double  , double );
+   //double *solve_excess_pore_pressure( double* , double* , double* , int ,
+   //                                    double  , double  , double  , double );
    Sed_cell this_cell;
 
    dt_in_secs   = years_to_secs( dt_in_years );

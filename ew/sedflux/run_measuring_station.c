@@ -41,7 +41,7 @@ gboolean init_met_station_data( Sed_process proc , Sed_cube prof , GError** erro
 Sed_process_info
 run_met_station( Sed_process proc , Sed_cube prof )
 {
-   Met_station_t*   data = sed_process_user_data(proc);
+   Met_station_t*   data = (Met_station_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    if ( sed_process_run_count(proc)==0 )
@@ -57,7 +57,7 @@ run_met_station( Sed_process proc , Sed_cube prof )
 #define MET_KEY_POSITION   "position of station"
 #define MET_KEY_FILENAME   "filename"
 
-static gchar* measuring_station_req_labels[] =
+static const gchar* measuring_station_req_labels[] =
 {
    MET_KEY_PARAMETER ,
    MET_KEY_WHENCE    ,
@@ -122,7 +122,7 @@ init_met_station( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_met_station_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Met_station_t* data = sed_process_user_data( proc );
+   Met_station_t* data = (Met_station_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -145,7 +145,7 @@ destroy_met_station( Sed_process p )
 {
    if ( p )
    {
-      Met_station_t* data = sed_process_user_data( p );
+      Met_station_t* data = (Met_station_t*)sed_process_user_data( p );
 
       if ( data )
       {

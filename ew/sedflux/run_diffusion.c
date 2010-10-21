@@ -35,7 +35,7 @@
 Sed_process_info
 run_diffusion( Sed_process proc , Sed_cube prof )
 {
-   Diffusion_t*     data = sed_process_user_data(proc);
+   Diffusion_t*     data = (Diffusion_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double           k_max;
    double           skin_depth;
@@ -93,7 +93,7 @@ run_diffusion( Sed_process proc , Sed_cube prof )
 #define DIFFUSION_KEY_K_LONG_MAX    "long-shore diffusion constant"
 #define DIFFUSION_KEY_K_CROSS_MAX   "cross-shore diffusion constant"
 
-static gchar* diffusion_req_labels[] =
+static const gchar* diffusion_req_labels[] =
 {
    DIFFUSION_KEY_K_MAX       ,
    DIFFUSION_KEY_SKIN_DEPTH  ,
@@ -138,7 +138,7 @@ destroy_diffusion( Sed_process p )
 {
    if ( p )
    {
-      Diffusion_t* data = sed_process_user_data( p );
+      Diffusion_t* data = (Diffusion_t*)sed_process_user_data( p );
 
       if ( data )
       {

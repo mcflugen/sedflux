@@ -35,7 +35,7 @@ gboolean      init_cpr_data      ( Sed_process proc , Sed_cube prof , GError** e
 Sed_process_info
 run_cpr( Sed_process proc , Sed_cube prof )
 {
-   Cpr_t*           data = sed_process_user_data(proc);
+   Cpr_t*           data = (Cpr_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    gchar* file_name;
    FILE*  fp;
@@ -83,7 +83,7 @@ init_cpr( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_cpr_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Cpr_t* data = sed_process_user_data( proc );
+   Cpr_t* data = (Cpr_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -107,7 +107,7 @@ destroy_cpr( Sed_process p )
 {
    if ( p )
    {
-      Cpr_t* data = sed_process_user_data( p );
+      Cpr_t* data = (Cpr_t*)sed_process_user_data( p );
 
       if ( data )
       {

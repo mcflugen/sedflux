@@ -35,7 +35,7 @@
 Sed_process_info
 run_squall( Sed_process proc , Sed_cube prof )
 {
-   Squall_t *       data = sed_process_user_data(proc);
+   Squall_t* data = (Squall_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double t=0, dt, total_t;
 
@@ -114,7 +114,7 @@ destroy_squall( Sed_process p )
 {
    if ( p )
    {
-      Squall_t* data = sed_process_user_data( p );
+      Squall_t* data = (Squall_t*)sed_process_user_data( p );
       
       if ( data ) eh_free( data );
    }

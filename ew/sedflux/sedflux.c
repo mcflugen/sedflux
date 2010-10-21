@@ -21,6 +21,7 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 #include "my_sedflux.h"
+#include "sedflux_api.h"
 
 Sedflux_param_st* sedflux_setup        ( gchar* command_s );
 
@@ -40,14 +41,18 @@ sedflux_setup( gchar* command_s )
    argv = g_strsplit( command_s , " " , 0 );
    argc = g_strv_length( argv );
 
-   command_str = eh_render_command_str( argc , argv );
+   command_str = eh_render_command_str (argc, (const char**)argv);
 
    /* Parse command line arguments */
-   p = sedflux_parse_command_line( argc , argv , &error );
+   p = sedflux_parse_command_line (argc, (const char**)argv, &error);
    eh_exit_on_error( error , "Error parsing command line arguments" );
 
+   if (!p->input_dir)
+     p->input_dir = g_strdup (".");
+
    /* Create the project directory and check permissions */
-   sedflux_setup_project_dir( &p->init_file , &p->working_dir , &error );
+   sedflux_setup_project_dir (&p->init_file, &p->input_dir, &p->working_dir,
+                              &error);
    eh_exit_on_error( error , "Error setting up project directory" );
 
    sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
@@ -68,6 +73,7 @@ sedflux_setup( gchar* command_s )
 
 \return Newly-allocated array of the variable measured at the specified time and place(s).
 */
+#if 0
 double*
 sedflux_get_val_at( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* here , double now )
 {
@@ -121,6 +127,7 @@ sedflux_get_val_at( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* 
 
    return data;
 }
+#endif
 
 gboolean
 sedflux_set_val_at( Sed_cube p , const gchar* val_s , gint* here, const double* val )

@@ -31,7 +31,7 @@
 Sed_process_info
 run_tide( Sed_process proc , Sed_cube prof )
 {
-   Tide_t*          data = sed_process_user_data(proc);
+   Tide_t*          data = (Tide_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    if ( data->tidal_period<0 )
@@ -94,7 +94,7 @@ destroy_tide( Sed_process p )
 {
    if ( p )
    {
-      Tide_t* data = sed_process_user_data( p );
+      Tide_t* data = (Tide_t*)sed_process_user_data( p );
       
       if ( data ) eh_free( data );
    }

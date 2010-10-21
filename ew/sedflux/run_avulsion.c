@@ -35,7 +35,7 @@ gboolean init_avulsion_data( Sed_process p , Sed_cube prof );
 Sed_process_info
 run_avulsion( Sed_process p , Sed_cube prof )
 {
-   Avulsion_t*      data = sed_process_user_data(p);
+   Avulsion_t*      data = (Avulsion_t*)sed_process_user_data(p);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_riv          this_river;
 
@@ -84,10 +84,23 @@ run_avulsion( Sed_process p , Sed_cube prof )
          sed_river_set_angle( this_river , .5*(max_angle+min_angle) );
       }
 
-      sed_river_set_angle_limit( this_river , min_angle     , max_angle     );
-      sed_river_set_hinge      ( this_river , data->hinge_i , data->hinge_j );
+      sed_river_set_angle_limit (this_river, min_angle, max_angle);
+      if (sed_process_run_count(p)==0)
+        sed_river_set_hinge (this_river, data->hinge_i, data->hinge_j);
 
       sed_cube_avulse_river( prof , this_river );
+/*
+      printf ("time         : %f\n", sed_cube_age_in_years (prof));
+      printf ("river name   : %s\n", data->river_name);
+      printf ("minimum angle: %f\n", sed_river_min_angle (this_river ));
+      printf ("maximum angle: %f\n", sed_river_max_angle (this_river ));
+      printf ("angle        : %f\n", sed_river_angle_to_deg (this_river ));
+      printf ("position (x) : %d\n", sed_river_mouth (this_river ).i);
+      printf ("position (y) : %d\n", sed_river_mouth (this_river ).j);
+      printf ("fraction     : %f\n", fraction);
+      printf ("no. branches : %d\n", sed_river_n_branches (this_river));
+      fflush (stdout);
+*/
 /*
       eh_message( "time         : %f" , sed_cube_age_in_years (prof)           );
       eh_message( "river name   : %s" , data->river_name                       );
@@ -139,7 +152,7 @@ run_avulsion( Sed_process p , Sed_cube prof )
 #define AVULSION_KEY_SEED        "seed for random number generator"
 /* @} */
 
-static gchar* avulsion_req_labels[] =
+static const gchar* avulsion_req_labels[] =
 {
    AVULSION_KEY_STDDEV      ,
    AVULSION_KEY_MIN_ANGLE   ,
@@ -150,7 +163,7 @@ static gchar* avulsion_req_labels[] =
    AVULSION_KEY_SEED        ,
    NULL
 };
-static gchar* avulsion_3d_req_labels[] =
+static const gchar* avulsion_3d_req_labels[] =
 {
    AVULSION_KEY_HINGE_POINT ,
    NULL
@@ -219,7 +232,7 @@ init_avulsion( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_avulsion_data( Sed_process p , Sed_cube prof )
 {
-   Avulsion_t* data = sed_process_user_data( p );
+   Avulsion_t* data = (Avulsion_t*)sed_process_user_data( p );
 
    if ( data )
    {
@@ -241,7 +254,7 @@ destroy_avulsion( Sed_process p )
 {
    if ( p )
    {
-      Avulsion_t* data = sed_process_user_data( p );
+      Avulsion_t* data = (Avulsion_t*)sed_process_user_data( p );
 
       if ( data )
       {

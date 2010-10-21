@@ -29,7 +29,7 @@
 Sed_process_info
 run_data_dump( Sed_process proc , Sed_cube prof )
 {
-   Data_dump_t*     data = sed_process_user_data(proc);
+   Data_dump_t*     data = (Data_dump_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    int i;
    char str[S_NAMEMAX], *filename;
@@ -91,7 +91,7 @@ eh_warning( "property file attributes are not being used." );
 #define DATA_DUMP_KEY_X_LIM     "horizontal limits"
 #define DATA_DUMP_KEY_PROPERTY  "property"
 
-static gchar* data_dump_req_labels[] =
+static const gchar* data_dump_req_labels[] =
 {
    DATA_DUMP_KEY_DIR      ,
    DATA_DUMP_KEY_VRES     ,
@@ -195,7 +195,7 @@ destroy_data_dump( Sed_process p )
 {
    if ( p )
    {
-      Data_dump_t* data = sed_process_user_data( p );
+      Data_dump_t* data = (Data_dump_t*)sed_process_user_data( p );
 
       if ( data )
       {

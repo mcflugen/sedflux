@@ -55,7 +55,7 @@ Sed_cell erode_river_profile( Sed_cube p , Sed_riv r , double slope , gint metho
 Sed_process_info
 run_erosion( Sed_process proc , Sed_cube p )
 {
-   Erosion_t*       data = sed_process_user_data(proc);
+   Erosion_t*       data = (Erosion_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_riv* all;
 
@@ -75,7 +75,7 @@ run_erosion( Sed_process proc , Sed_cube p )
 
       for ( r=all ; *r ; r++ )
       {
-         eh_debug( "Eroding along river %s" , sed_river_name_loc( *r ) );
+         eh_message( "Eroding along river %s" , sed_river_name_loc( *r ) );
 
          eroded_sed = erode_river_profile( p , *r , data->slope , data->method );
          sed_cell_destroy( eroded_sed );
@@ -247,13 +247,13 @@ run_erosion( Sed_process proc , Sed_cube p )
 #define EROSION_KEY_RELIEF          "relief of highest order stream"
 #define EROSION_KEY_METHOD          "method"
 
-static gchar* erosion_req_labels[] =
+static const gchar* erosion_req_labels[] =
 {
    EROSION_KEY_METHOD ,
    NULL
 };
 
-static gchar* erosion_slope_req_labels[] =
+static const gchar* erosion_slope_req_labels[] =
 {
    EROSION_KEY_REACH  ,
    EROSION_KEY_RELIEF ,
@@ -310,7 +310,7 @@ destroy_erosion( Sed_process p )
 {
    if ( p )
    {
-      Erosion_t* data = sed_process_user_data( p );
+      Erosion_t* data = (Erosion_t*)sed_process_user_data( p );
 
       if ( data ) eh_free( data );
    }

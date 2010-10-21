@@ -59,7 +59,7 @@ gboolean init_storm_data( Sed_process proc , Sed_cube prof , GError** error );
 Sed_process_info
 run_storm( Sed_process proc , Sed_cube prof )
 {
-   Storm_t*         data       = sed_process_user_data(proc);
+   Storm_t*         data       = (Storm_t*)sed_process_user_data(proc);
    Sed_process_info info       = SED_EMPTY_INFO;
    GSList*          storm_list = NULL;
    double           n_days;
@@ -106,7 +106,7 @@ run_storm( Sed_process proc , Sed_cube prof )
 
       for ( this_link=storm_list ; this_link ; this_link=this_link->next )
       {
-         this_storm = this_link->data;
+         this_storm = (Sed_ocean_storm)this_link->data;
 
          eh_dbl_set_max( significant_storm , sed_ocean_storm_wave_height( this_storm ) );
 
@@ -163,7 +163,7 @@ run_storm( Sed_process proc , Sed_cube prof )
 #define STORM_KEY_NON_EVENTS      "average non-events?"
 /*@}*/
 
-static gchar* storm_req_labels[] =
+static const gchar* storm_req_labels[] =
 {
    STORM_KEY_FRACTION    ,
    STORM_KEY_NON_EVENTS  ,
@@ -221,7 +221,7 @@ init_storm( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_storm_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Storm_t* data = sed_process_user_data( proc );
+   Storm_t* data = (Storm_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -238,7 +238,7 @@ destroy_storm( Sed_process p )
 {
    if ( p )
    {
-      Storm_t* data = sed_process_user_data( p );
+      Storm_t* data = (Storm_t*)sed_process_user_data( p );
       
       if ( data )
       {
@@ -415,8 +415,8 @@ GSList *get_equivalent_storm( GFunc get_storm           ,
             this_link ;
             this_link = this_link->next )
       {
-         this_storm = this_link->data;
-         prev_storm = prev_link->data;
+         this_storm = (Sed_ocean_storm)this_link->data;
+         prev_storm = (Sed_ocean_storm)prev_link->data;
 
          if ( sed_ocean_storm_index(prev_storm)+1 != sed_ocean_storm_index(this_storm) )
          {
@@ -429,11 +429,11 @@ GSList *get_equivalent_storm( GFunc get_storm           ,
 
       for ( this_link=calm_period ; this_link ; this_link=this_link->next )
       {
-         this_storm = average_storms( this_link->data );
+         this_storm = average_storms ((GSList*)this_link->data);
          final_list = g_slist_append( final_list , this_storm );
 
-         g_slist_foreach( this_link->data , &free_link_data , NULL );
-         g_slist_free( this_link->data );
+         g_slist_foreach ((GSList*)this_link->data , &free_link_data , NULL );
+         g_slist_free ((GSList*)this_link->data);
       }
       g_slist_free( calm_period );
 
@@ -483,7 +483,7 @@ Sed_ocean_storm average_storms( GSList *storm_list )
 
       for ( this_link = storm_list ; this_link ; this_link = this_link->next )
       {
-         this_storm = this_link->data;
+         this_storm = (Sed_ocean_storm)this_link->data;
 
          duration  += sed_ocean_storm_duration(this_storm);
          storm_val += pow(sed_ocean_storm_val(this_storm),2.5)*sed_ocean_storm_duration(this_storm);

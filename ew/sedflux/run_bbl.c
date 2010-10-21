@@ -40,7 +40,7 @@ gboolean init_bbl_data                    ( Sed_process p , Sed_cube prof      ,
 Sed_process_info
 run_bbl( Sed_process p , Sed_cube prof )
 {
-   Bbl_t*           data = sed_process_user_data(p);
+   Bbl_t*           data = (Bbl_t*)sed_process_user_data(p);
    Sed_process_info info = SED_EMPTY_INFO;
    gint             n_rivers;
 
@@ -94,7 +94,7 @@ run_bbl( Sed_process p , Sed_cube prof )
 #define BBL_KEY_ALGORITHM     "algorithm"
 #define BBL_KEY_SOURCE_FILE   "external sediment source file"
 
-static gchar* bbl_req_labels[] =
+static const gchar* bbl_req_labels[] =
 {
    BBL_KEY_ALGORITHM   ,
    BBL_KEY_SOURCE_FILE ,
@@ -104,46 +104,56 @@ static gchar* bbl_req_labels[] =
 gboolean
 init_bbl( Sed_process p , Eh_symbol_table t , GError** error )
 {
-   Bbl_t*   data    = sed_process_new_user_data( p , Bbl_t );
-   GError*  tmp_err = NULL;
-   gboolean is_ok   = TRUE;
+   Bbl_t* data = (Bbl_t*)sed_process_new_user_data (p, Bbl_t);
+   GError* tmp_err = NULL;
+   gboolean is_ok = TRUE;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
-   eh_require( t );
+   eh_return_val_if_fail (error==NULL || *error==NULL, FALSE);
+   eh_require (t);
 
-   data->src_seq   = NULL;
+   data->src_seq = NULL;
    data->last_year = 0.;
 
-   if ( eh_symbol_table_require_labels( t , bbl_req_labels , &tmp_err ) )
+   if (eh_symbol_table_require_labels (t, bbl_req_labels, &tmp_err))
    {
-      gchar* src_file = eh_symbol_table_value ( t , BBL_KEY_SOURCE_FILE );
-      gchar* key      = eh_symbol_table_lookup( t , BBL_KEY_ALGORITHM   );
+     gchar* src_file = eh_symbol_table_value (t, BBL_KEY_SOURCE_FILE);
+     gchar* key = eh_symbol_table_lookup (t, BBL_KEY_ALGORITHM);
+     gchar* prefix = sed_process_prefix (p);
 
-      if ( g_ascii_strcasecmp( src_file , "NONE" )==0 )
-      {
-         eh_free( src_file );
-         src_file = NULL;
-      }
+     if (!prefix)
+       prefix = g_strdup (".");
 
-      data->src_file = src_file;
+     if (g_ascii_strcasecmp (src_file, "NONE")==0)
+     {
+       g_free (src_file);
+       data->src_file = NULL;
+       src_file = NULL;
+     }
+     else
+       data->src_file = g_build_filename (prefix, src_file, NULL);
 
-      if      ( g_ascii_strcasecmp( key , "MUDS" )==0 ) data->algorithm = BBL_ALGORITHM_MUDS;
-      else if ( g_ascii_strcasecmp( key , "NONE" )==0 ) data->algorithm = BBL_ALGORITHM_NONE;
-      else
-         g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_ALGORITHM ,
-                      "Invalid bbl algorithm (muds or none): %s" , key );
+     if (g_ascii_strcasecmp (key, "MUDS")==0)
+       data->algorithm = BBL_ALGORITHM_MUDS;
+     else if (g_ascii_strcasecmp (key, "NONE")==0)
+       data->algorithm = BBL_ALGORITHM_NONE;
+     else
+       g_set_error (&tmp_err, SEDFLUX_ERROR, SEDFLUX_ERROR_BAD_ALGORITHM,
+                    "Invalid bbl algorithm (muds or none): %s", key);
 
-      if ( data->algorithm==BBL_ALGORITHM_MUDS && sed_mode_is_3d() )
-      {
-         eh_warning( "Sedflux3D requires bbl algorithm to be 'NONE'." );
-         data->algorithm = BBL_ALGORITHM_NONE;
-      }
+     if (data->algorithm==BBL_ALGORITHM_MUDS && sed_mode_is_3d())
+     {
+       eh_warning ("Sedflux3D requires bbl algorithm to be 'NONE'.");
+       data->algorithm = BBL_ALGORITHM_NONE;
+     }
+
+     g_free (prefix);
+     g_free (src_file);
    }
 
-   if ( tmp_err )
+   if (tmp_err)
    {
-      g_propagate_error( error , tmp_err );
-      is_ok = FALSE;
+     g_propagate_error (error, tmp_err);
+     is_ok = FALSE;
    }
 
    return is_ok;
@@ -153,7 +163,7 @@ gboolean
 init_bbl_data( Sed_process p , Sed_cube prof , GError** error )
 {
    gboolean is_ok = TRUE;
-   Bbl_t*   data  = sed_process_user_data( p );
+   Bbl_t*   data  = (Bbl_t*)sed_process_user_data( p );
 
    if ( data )
    {
@@ -195,7 +205,7 @@ destroy_bbl( Sed_process p )
 {
    if ( p )
    {
-      Bbl_t* data = sed_process_user_data( p );
+      Bbl_t* data = (Bbl_t*)sed_process_user_data( p );
 
       if ( data )
       {
@@ -203,7 +213,7 @@ destroy_bbl( Sed_process p )
          {
             gint i;
             for ( i=0 ; i<data->src_seq->len ; i++ )
-               eh_grid_destroy( data->src_seq->data[i] , TRUE );
+               eh_grid_destroy ((Eh_dbl_grid)data->src_seq->data[i], TRUE);
 
             eh_destroy_sequence( data->src_seq , FALSE );
          }
@@ -231,7 +241,7 @@ double add_sediment_from_external_source( Sed_cube p       ,
       gssize i;
       for ( i=0 ; i<seq->len ; i++ )
       {
-         g = seq->data[i];
+         g = (Eh_dbl_grid)seq->data[i];
 
          eh_require( sed_cube_n_x(p)==eh_grid_n_x(g) );
          eh_require( sed_cube_n_y(p)==eh_grid_n_y(g) );
@@ -255,7 +265,7 @@ double add_sediment_from_external_source( Sed_cube p       ,
    //---
    if ( seq->len == 1 && time_step>1e-6 )
    {
-      double **dzdt = eh_dbl_grid_data( seq->data[0] );
+      double **dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[0]);
       double h;
       gssize i, j;
 
@@ -277,7 +287,7 @@ double add_sediment_from_external_source( Sed_cube p       ,
    }
    else if ( time_step>1e-6 )
    {
-      double **dzdt = eh_dbl_grid_data( seq->data[0] );
+      double **dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[0]);
       gssize i, j, n;
       double h, total_time, lower_edge, upper_edge;
 
@@ -305,7 +315,7 @@ double add_sediment_from_external_source( Sed_cube p       ,
          if ( time_step > 0 )
          {
             total_time += time_step;
-            dzdt        = eh_dbl_grid_data( seq->data[n] );
+            dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[n]);
             for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
                for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
                {

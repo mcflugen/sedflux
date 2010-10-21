@@ -17,42 +17,43 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME 
 
 ########### next target ###############
 
-SET(sedflux-2.0_LIB_SRCS
-sedflux_api.c
-sedflux_command_line.c 
-run_constants.c 
-run_squall.c 
-run_cpr.c 
-run_flow.c 
-                            rain_sediment.c 
-                            run_bbl.c 
-                            run_avulsion.c 
-                            run_measuring_station.c 
-                            run_data_dump.c 
-                            run_failure.c 
-                            run_isostasy.c 
-                            run_diffusion.c 
-                            run_xshore.c 
-                            run_storm.c 
-                            run_river.c 
-                            run_new_process.c 
-                            run_bedload.c 
-                            run_debris_flow.c 
-                            run_subsidence.c 
-                            run_compaction.c 
-                            run_erosion.c 
-                            run_sea_level.c 
-                            run_quake.c 
-                            run_tide.c 
-                            run_slump.c 
-                            run_turbidity_current.c 
-                            run_plume.c 
-                            sedflux.c 
-                            init.c 
-                            my_sedflux.c 
-                            sedflux_esmf.c
+set (sedflux-2.0_LIB_SRCS
+  sedflux_api.c
+  sedflux_command_line.c 
+  run_constants.c 
+  run_squall.c 
+  run_cpr.c 
+  run_flow.c 
+  rain_sediment.c 
+  run_bbl.c 
+  run_avulsion.c 
+  run_measuring_station.c 
+  run_data_dump.c 
+  run_failure.c 
+  run_isostasy.c 
+  run_diffusion.c 
+  run_xshore.c 
+  run_storm.c 
+  run_river.c 
+  run_new_process.c 
+  run_bedload.c 
+  run_debris_flow.c 
+  run_subsidence.c 
+  run_compaction.c 
+  run_erosion.c 
+  run_sea_level.c 
+  run_quake.c 
+  run_tide.c 
+  run_slump.c 
+  run_turbidity_current.c 
+  run_plume.c 
+  sedflux.c 
+  init.c 
+  my_sedflux.c 
+  sedflux_esmf.c
 )
 
+set_source_files_properties (${sedflux-2.0_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(sedflux-2.0 ${sedflux-2.0_LIB_SRCS})
 
 target_link_libraries(sedflux-2.0 sedflux ${sedflux_LIBS})

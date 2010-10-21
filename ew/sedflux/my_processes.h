@@ -6,6 +6,8 @@
 #include <sed/sed_sedflux.h>
 #include "sedflux.h"
 
+G_BEGIN_DECLS
+
 /* All of the initialize functions for my processes
 */
 gboolean         init_avulsion    ( Sed_process , Eh_symbol_table , GError** );
@@ -421,5 +423,7 @@ typedef struct
    double tidal_period;
 }
 Tide_t;
+
+G_END_DECLS
 
 #endif /* MY_PROCESSES_H */

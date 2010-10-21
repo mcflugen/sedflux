@@ -38,7 +38,7 @@
 Sed_process_info
 run_debris_flow( Sed_process proc , Sed_cube p )
 {
-   Debris_flow_t*   data = sed_process_user_data(proc);
+   Debris_flow_t*   data = (Debris_flow_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_cell c, flow_cell;
    int i;
@@ -71,7 +71,7 @@ run_debris_flow( Sed_process proc , Sed_cube p )
    prof->constants  = p->constants;
 */
 
-   fail = sed_process_use( proc , FAILURE_PROFILE_DATA );
+   fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
    //fail = data->failure;
 
    deposit = eh_new( double , sed_cube_n_y(p) );
@@ -264,7 +264,7 @@ destroy_debris_flow( Sed_process p )
 {
    if ( p )
    {
-      Debris_flow_t* data = sed_process_user_data( p );
+      Debris_flow_t* data = (Debris_flow_t*)sed_process_user_data( p );
 
       if ( data )
          eh_free( data );

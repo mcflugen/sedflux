@@ -37,7 +37,7 @@ gboolean init_xshore_data( Sed_process proc , Sed_cube prof , GError** error );
 Sed_process_info
 run_xshore( Sed_process proc , Sed_cube prof )
 {
-   Xshore_t*        data = sed_process_user_data(proc);
+   Xshore_t*        data = (Xshore_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double dt;
    double start_time, end_time, current_time;
@@ -87,7 +87,7 @@ run_xshore( Sed_process proc , Sed_cube prof )
                                               current_time );
       mass_before = sed_cube_mass( prof );
 
-      this_storm = this_link->data;
+      this_storm = (Sed_ocean_storm)this_link->data;
 
       storm_wave = sed_ocean_storm_wave_height( this_storm );
 
@@ -227,7 +227,7 @@ init_xshore( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_xshore_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   Xshore_t* data = sed_process_user_data( proc );
+   Xshore_t* data = (Xshore_t*)sed_process_user_data( proc );
 
    if ( data )
       data->last_time = sed_cube_age_in_years( prof );
@@ -240,7 +240,7 @@ destroy_xshore( Sed_process p )
 {
    if ( p )
    {
-      Xshore_t* data = sed_process_user_data( p );
+      Xshore_t* data = (Xshore_t*)sed_process_user_data( p );
       
       if ( data )
       {

@@ -3,22 +3,26 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 typedef struct
 {
    gboolean mode_3d;
    gboolean mode_2d;
    gchar*   init_file;
+   gchar*   input_dir;
    gchar*   out_file;
    gchar*   working_dir;
    gchar*   run_desc;
    gboolean just_plume;
    gboolean just_rng;
    gboolean summary;
+   gboolean set_signals;
    gboolean warn;
    gint     verbosity;
    gboolean verbose;
    gboolean version;
-   char**   active_procs;
+   const char** active_procs;
 }
 Sedflux_param_st;
 
@@ -48,8 +52,11 @@ GQuark sedflux_error_quark( void );
 
 //gboolean          sedflux                    ( const gchar* init_file );
 
-Sedflux_param_st* sedflux_parse_command_line ( int argc , char *argv[] , GError** error );
-gboolean          sedflux_setup_project_dir  ( gchar** init_file , gchar** working_dir , GError** error );
+Sedflux_param_st* sedflux_parse_command_line (const int argc,
+                                              const char *argv[],
+                                              GError** error);
+gboolean sedflux_setup_project_dir (gchar** init_file, gchar** input_dir,
+                                    gchar** working_dir, GError** error);
 gint              sedflux_print_info_file    ( const gchar* init_file , const gchar* wd ,
                                                const gchar* cmd_str   , const gchar* desc );
 
@@ -66,5 +73,7 @@ gboolean          sed_set_func     ( CSDMSComp* c,
                                      const gint* here,
                                      const double* vals );
 gboolean          sed_finalize_func( CSDMSComp* c );
+
+G_END_DECLS
 
 #endif /* SEDFLUX_H */
