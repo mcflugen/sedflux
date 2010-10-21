@@ -36,7 +36,7 @@ gboolean init_sea_level_data( Sed_process proc , Sed_cube prof , GError** error 
 Sed_process_info
 run_sea_level( Sed_process proc , Sed_cube prof )
 {
-   Sea_level_t*     data = sed_process_user_data(proc);
+   Sea_level_t*     data = (Sea_level_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    double new_sea_level;
    double year;
@@ -51,7 +51,7 @@ run_sea_level( Sed_process proc , Sed_cube prof )
    if ( eh_isnan( new_sea_level ) )
    {
       eh_warning( "The current time is out of range of the sea level curve." );
-      eh_warning( "Sea level will be held constant constant." );
+      eh_warning( "Sea level will be held constant." );
    }
    else
       sed_cube_set_sea_level(prof,new_sea_level);
@@ -71,11 +71,12 @@ run_sea_level( Sed_process proc , Sed_cube prof )
 
 #define SEA_LEVEL_KEY_FILENAME "sea level file"
 
-static gchar* sea_level_req_labels[] =
+static const gchar* sea_level_req_labels[] =
 {
    SEA_LEVEL_KEY_FILENAME ,
    NULL
 };
+
 gboolean
 init_sea_level( Sed_process p , Eh_symbol_table tab , GError** error )
 {
@@ -84,22 +85,38 @@ init_sea_level( Sed_process p , Eh_symbol_table tab , GError** error )
    gboolean     is_ok   = TRUE;
    gint         len;
 
+   eh_message ("initializing sea level");
    data->start_year = 0.;
 
    eh_symbol_table_require_labels( tab , sea_level_req_labels , &tmp_err );
 
    if ( !tmp_err )
    {
-      data->filename   = eh_symbol_table_value( tab , SEA_LEVEL_KEY_FILENAME );
-      data->sea_level  = sed_scan_sea_level_curve( data->filename , &len , &tmp_err );
-      data->len        = len;
+     gchar* prefix = sed_process_prefix (p);
+     gchar* file = NULL;
+
+     if (!prefix)
+       prefix = g_strdup (".");
+
+     file = eh_symbol_table_value (tab, SEA_LEVEL_KEY_FILENAME);
+
+     data->filename = g_build_filename (prefix, file, NULL);
+     data->sea_level = sed_scan_sea_level_curve (data->filename, &len,
+                                                 &tmp_err);
+     data->len = len;
+
+     g_free (file);
+     g_free (prefix);
    }
 
    if ( tmp_err )
    {
       g_propagate_error( error , tmp_err );
       is_ok = FALSE;
+      eh_message ("There was an error: %s", (*error)->message);
+      eh_exit (-1);
    }
+   eh_message ("done");
 
    return is_ok;
 }
@@ -108,7 +125,7 @@ gboolean
 init_sea_level_data( Sed_process proc , Sed_cube prof , GError** error )
 {
    gboolean     is_ok = TRUE;
-   Sea_level_t* data  = sed_process_user_data( proc );
+   Sea_level_t* data  = (Sea_level_t*)sed_process_user_data( proc );
 
    if ( data )
       data->start_year = sed_cube_age_in_years(prof);
@@ -121,7 +138,7 @@ destroy_sea_level( Sed_process p )
 {
    if ( p )
    {
-      Sea_level_t* data = sed_process_user_data( p );
+      Sea_level_t* data = (Sea_level_t*)sed_process_user_data( p );
       
       if ( data )
       {

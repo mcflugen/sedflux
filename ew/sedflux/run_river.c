@@ -35,7 +35,7 @@ gboolean init_river_data( Sed_process proc , Sed_cube prof , GError** error );
 Sed_process_info
 run_river( Sed_process proc , Sed_cube prof )
 {
-   River_t*         data = sed_process_user_data(proc);
+   River_t*         data = (River_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_hydro        river_data;
 
@@ -76,10 +76,15 @@ run_river( Sed_process proc , Sed_cube prof )
              * sed_cell_size( sed_cube_to_add(prof) );
 
       sed_cell_resize   ( sed_cube_to_add(prof) , volume );
+eh_watch_dbl (dt);
+eh_watch_dbl (sed_cell_size (sed_cube_to_add (prof)));
 
       sed_hydro_add_cell( river_data , sed_cube_to_add(prof) );
-      sed_cell_clear    ( sed_cube_to_add(prof) );
 
+//      sed_cell_resize (sed_cube_to_add (prof), volume/(sed_cube_x_res (prof)*sed_cube_y_res (prof)));
+      sed_cell_clear (sed_cube_to_add(prof));
+
+      eh_watch_dbl (sed_hydro_total_load( river_data ));
       //---
       // Remove any sediment that was deposited within the river.
       //---
@@ -99,6 +104,21 @@ run_river( Sed_process proc , Sed_cube prof )
 
       //sed_river_set_hydro( data->this_river , river_data );
       sed_cube_river_set_hydro (prof, data->this_river, river_data);
+
+      printf ( "time         : %f\n" , sed_cube_age_in_years(prof) );
+      printf ( "duration     : %f\n" , sed_cube_time_step_in_years(prof) );
+      printf ( "velocity     : %f\n" , sed_hydro_velocity(river_data) );
+      printf ( "width        : %f\n" , sed_hydro_width   (river_data) );
+      printf ( "depth        : %f\n" , sed_hydro_depth   (river_data) );
+      printf ( "bedload      : %f\n" , sed_hydro_bedload (river_data) );
+      for ( i=0 ; i<sed_hydro_size(river_data) ; i++ )
+         printf ( "conc[%d]      : %f\n" , i , sed_hydro_nth_concentration(river_data,i) );
+      printf ( "eroded sediment added (m^3): %g\n"        , volume );
+      printf ( "sediment removed (kg): %g\n"              , mass_removed );
+      printf ( "suspended mass (kg): %g\n"                , susp_mass );
+      printf ( "bedload mass (kg): %g\n"                  , bedload_mass );
+      printf ( "total sediment added to basin (kg): %g\n" , data->total_mass );
+      printf ( "total sediment added to river (kg): %g\n" , data->total_mass_from_river );
 
       eh_message( "time         : %f" , sed_cube_age_in_years(prof) );
       eh_message( "duration     : %f" , sed_cube_time_step_in_years(prof) );
@@ -132,7 +152,7 @@ run_river( Sed_process proc , Sed_cube prof )
 #define RIVER_KEY_RIVER_FILE "river file"
 #define RIVER_KEY_RIVER_NAME "river name"
 
-static gchar* river_req_labels[] =
+static const gchar* river_req_labels[] =
 {
    RIVER_KEY_FILE_TYPE  ,
    RIVER_KEY_RIVER_FILE ,
@@ -157,12 +177,22 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
 
    if ( eh_symbol_table_require_labels( tab , river_req_labels , &tmp_err ) )
    {
-      str              = eh_symbol_table_lookup( tab , RIVER_KEY_FILE_TYPE  );
-      data->filename   = eh_symbol_table_value ( tab , RIVER_KEY_RIVER_FILE );
-      data->river_name = eh_symbol_table_value ( tab , RIVER_KEY_RIVER_NAME );
+     gchar* prefix = sed_process_prefix (p);
+     gchar* file = NULL;
+
+     if (!prefix)
+       prefix = g_strdup (".");
+
+     file = eh_symbol_table_value (tab, RIVER_KEY_RIVER_FILE);
+     str = eh_symbol_table_lookup (tab, RIVER_KEY_FILE_TYPE);
+     data->river_name = eh_symbol_table_value (tab, RIVER_KEY_RIVER_NAME);
+
+     data->filename = g_build_filename (prefix, file, NULL);
+
+     g_free (file);
+     g_free (prefix);
 
       data->location     = 0;
-      data->type         = 0;
       data->buffer_is_on = FALSE;
 
       data->type = sed_hydro_str_to_type( str );
@@ -222,7 +252,7 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
 gboolean
 init_river_data( Sed_process proc , Sed_cube prof , GError** error )
 {
-   River_t* data = sed_process_user_data( proc );
+   River_t* data = (River_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -248,7 +278,7 @@ destroy_river( Sed_process p )
 {
    if ( p )
    {
-      River_t* data = sed_process_user_data( p );
+      River_t* data = (River_t*)sed_process_user_data( p );
       
       if ( data )
       {

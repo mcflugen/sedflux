@@ -45,7 +45,7 @@ gboolean init_subsidence_data( Sed_process proc , Sed_cube prof , GError** error
 Sed_process_info
 run_subsidence( Sed_process proc , Sed_cube prof )
 {
-   Subsidence_t*    data = sed_process_user_data(proc);
+   Subsidence_t*    data = (Subsidence_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
    gsize i, j, n;
    double year;
@@ -74,7 +74,7 @@ run_subsidence( Sed_process proc , Sed_cube prof )
    //---
    if ( data->subsidence_seq->len == 1 && time_step>1e-6 )
    {
-      double** sub_grid = eh_dbl_grid_data(data->subsidence_seq->data[0]);
+      double** sub_grid = eh_dbl_grid_data((Eh_dbl_grid)data->subsidence_seq->data[0]);
       for ( i=0 ; i<sed_cube_n_x(prof) ; i++ )
          for ( j=0 ; j<sed_cube_n_y(prof) ; j++ )
             sed_cube_adjust_base_height( prof , i , j , sub_grid[i][j]*time_step );
@@ -105,8 +105,8 @@ run_subsidence( Sed_process proc , Sed_cube prof )
          if ( time_step > 0 )
          {
             double dz;
-            double** sub_grid_l = eh_dbl_grid_data(data->subsidence_seq->data[n]  );
-            double** sub_grid_h = eh_dbl_grid_data(data->subsidence_seq->data[n+1]);
+            double** sub_grid_l = eh_dbl_grid_data((Eh_dbl_grid)data->subsidence_seq->data[n]  );
+            double** sub_grid_h = eh_dbl_grid_data((Eh_dbl_grid)data->subsidence_seq->data[n+1]);
             
             total_time += time_step;
             for ( i=0 ; i<sed_cube_n_x(prof) ; i++ )
@@ -140,7 +140,7 @@ run_subsidence( Sed_process proc , Sed_cube prof )
 
 #define SUBSIDENCE_KEY_FILENAME "subsidence file"
 
-static gchar* subsidence_req_labels[] =
+static const gchar* subsidence_req_labels[] =
 {
    SUBSIDENCE_KEY_FILENAME ,
    NULL
@@ -162,9 +162,20 @@ init_subsidence( Sed_process p , Eh_symbol_table tab , GError** error )
 
    if ( !tmp_err )
    {
-      data->filename = eh_symbol_table_value( tab , SUBSIDENCE_KEY_FILENAME );
+     gchar* prefix = sed_process_prefix (p);
+     gchar* file = NULL;
 
-      eh_touch_file( data->filename , O_RDONLY , &tmp_err );
+     if (!prefix)
+       prefix = g_strdup (".");
+
+     file = eh_symbol_table_value (tab , SUBSIDENCE_KEY_FILENAME);
+
+     data->filename = g_build_filename (prefix, file, NULL);
+
+     eh_touch_file( data->filename , O_RDONLY , &tmp_err );
+
+     g_free (file);
+     g_free (prefix);
    }
 
    if ( tmp_err )
@@ -180,7 +191,7 @@ gboolean
 init_subsidence_data( Sed_process proc , Sed_cube prof , GError** error )
 {
    gboolean      is_ok = TRUE;
-   Subsidence_t* data  = sed_process_user_data( proc );
+   Subsidence_t* data  = (Subsidence_t*)sed_process_user_data( proc );
 
    if ( data )
    {
@@ -219,7 +230,7 @@ destroy_subsidence( Sed_process p )
 {
    if ( p )
    {
-      Subsidence_t* data = sed_process_user_data( p );
+      Subsidence_t* data = (Subsidence_t*)sed_process_user_data( p );
       
       if ( data )
       {
@@ -228,7 +239,7 @@ destroy_subsidence( Sed_process p )
          if ( data->subsidence_seq )
          {
             for ( i=0 ; i<data->subsidence_seq->len ; i++ )
-               eh_grid_destroy( data->subsidence_seq->data[i] , TRUE );
+               eh_grid_destroy((Eh_dbl_grid)data->subsidence_seq->data[i] , TRUE );
             eh_destroy_sequence( data->subsidence_seq , FALSE );
          }
 
