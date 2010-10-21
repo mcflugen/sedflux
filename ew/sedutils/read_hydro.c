@@ -22,7 +22,7 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
-static char *help_msg[] = {
+static const char *help_msg[] = {
 " read_hydro - read a hydrotrend output file.          ",
 "                                                      ",
 " options:                                             ",

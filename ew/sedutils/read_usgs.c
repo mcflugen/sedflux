@@ -22,7 +22,7 @@
 #include <glib.h>
 #include <utils/utils.h>
 
-static char *help_msg[] = {
+static const char *help_msg[] = {
 " read_usgs - read a usgs daily values file.           ",
 "                                                      ",
 " options:                                             ",
