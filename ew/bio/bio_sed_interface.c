@@ -48,7 +48,7 @@ bio_get_option_group( void )
 Sed_process_info
 bio_run( Sed_process proc , Sed_cube p )
 {
-   Bio_param_t*     data = sed_process_user_data(proc);
+   Bio_param_t* data = (Bio_param_t*)sed_process_user_data(proc);
    Sed_process_info info = SED_EMPTY_INFO;
 
    eh_require( data               );
@@ -115,9 +115,9 @@ static const gchar* bio_conv_req_label[] = { [BIO_KEY_R]     = "Conveyor rate"  
 #define BIO_KEY_K       "diffusion coefficient"
 #define BIO_KEY_R       "conveyor rate"
 
-static gchar* bio_diff_req_label[] = { BIO_KEY_K     , NULL };
-static gchar* bio_conv_req_label[] = { BIO_KEY_R     , NULL };
-static gchar* bio_req_label     [] = { BIO_KEY_DEPTH , BIO_KEY_MODEL , NULL };
+static const gchar* bio_diff_req_label[] = { BIO_KEY_K     , NULL };
+static const gchar* bio_conv_req_label[] = { BIO_KEY_R     , NULL };
+static const gchar* bio_req_label     [] = { BIO_KEY_DEPTH , BIO_KEY_MODEL , NULL };
 
 /*
 gint
@@ -189,7 +189,7 @@ bio_destroy( Sed_process p )
 {
    if ( p )
    {
-      Bio_param_t* data = sed_process_user_data( p );
+      Bio_param_t* data = (Bio_param_t*)sed_process_user_data( p );
 
       if ( data )
       {

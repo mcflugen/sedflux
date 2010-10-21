@@ -16,11 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bio DESTINATION bin RENAME bio 
 
 ########### next target ###############
 
-SET(bio_LIB_SRCS
-   bio.c
-   bio_sed_interface.c
-)
+set(bio_LIB_SRCS bio.c bio_sed_interface.c)
 
+set_source_files_properties (${bio_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(bio ${bio_LIB_SRCS})
 
 target_link_libraries(bio sedflux)

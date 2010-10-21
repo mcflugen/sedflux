@@ -5,6 +5,8 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
+G_BEGIN_DECLS
+
 #define BIO_PROGRAM_NAME     "bio"
 #define BIO_MAJOR_VERSION_S  "0"
 #define BIO_MINOR_VERSION_S  "1"
@@ -40,5 +42,7 @@ double** bio_conveyor_layers( double* t , gint n_layers , double dz , double r ,
 Sed_proc_init    bio_init;
 Sed_proc_run     bio_run;
 Sed_proc_destroy bio_destroy;
+
+G_END_DECLS
 
 #endif /* bio.h */

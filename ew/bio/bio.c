@@ -218,7 +218,7 @@ bio_conveyor( double* u , gint len , double dz , double r , double total_t )
 */
 
 
-static gchar* _default_config[] = {
+const static gchar* _default_config[] = {
 "depth of bioturbation",
 "bioturbation diffusion coefficient",
 NULL
@@ -228,7 +228,7 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_config);
+    return g_strjoinv ("\n", (gchar**)_default_config);
   else
     return NULL;
 }
