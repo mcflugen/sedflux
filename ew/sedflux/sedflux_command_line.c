@@ -11,11 +11,13 @@
 
 #include "sedflux.h"
 
+G_BEGIN_DECLS
 Eh_project fill_sedflux_info_file             ( Eh_project p         ,
                                                 const gchar* cmd_str ,
                                                 const gchar* desc    );
 gchar*     sedflux_get_file_name_interactively( gchar **working_dir ,
                                                 gchar **in_file     );
+G_END_DECLS
 
 /* Command line options */
 static gboolean mode_3d      = FALSE;
@@ -23,16 +25,18 @@ static gboolean mode_2d      = FALSE;
 static gchar*   init_file    = NULL;
 static gchar*   out_file     = NULL; 
 static gchar*   working_dir  = NULL;
+static gchar*   input_dir    = NULL;
 static gchar*   run_desc     = NULL;
 static gboolean just_plume   = FALSE;
 static gboolean just_rng     = FALSE;
 static gboolean summary      = FALSE;
+static gboolean set_signals  = TRUE;
 static gboolean warn         = FALSE;
 static gint     verbosity    = -1;
 static gboolean verbose      = FALSE;
 static gboolean silent       = FALSE;
 static gboolean version      = FALSE;
-static char**   active_procs = NULL;
+static const char** active_procs = NULL;
 
 /* Define the command line options */
 static GOptionEntry command_line_entries[] =
@@ -42,11 +46,14 @@ static GOptionEntry command_line_entries[] =
    { "init-file"   , 'i' , 0 , G_OPTION_ARG_FILENAME     , &init_file   , "Initialization file"        , "<file>" } ,
    { "out-file"    , 'o' , 0 , G_OPTION_ARG_FILENAME     , &out_file    , "Output file"                , "<file>" } ,
    { "working-dir" , 'd' , 0 , G_OPTION_ARG_FILENAME     , &working_dir , "Working directory"          , "<dir>"  } ,
+   { "input-dir" , 'I' , 0 , G_OPTION_ARG_FILENAME     , &input_dir , "Input file directory"          , "<dir>"  } ,
    { "msg"         , 'm' , 0 , G_OPTION_ARG_STRING       , &run_desc    , "Run description"            , "<msg>"  } ,
    { "active-proc" , 'a' , 0 , G_OPTION_ARG_STRING_ARRAY , &active_procs, "Specify active process"     , "<name>" } ,
    { "just-plume"  , 'p' , 0 , G_OPTION_ARG_NONE         , &just_plume  , "Run just the plume"         , NULL     } ,
    { "just-rng"    , 'r' , 0 , G_OPTION_ARG_NONE         , &just_rng    , "Run just the rng processes" , NULL     } ,
    { "summary"     , 's' , 0 , G_OPTION_ARG_NONE         , &summary     , "Print a summary and quit"   , NULL     } ,
+   {"no-signals", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &set_signals,
+    "Do not set up signal handling", NULL},
    { "warn"        , 'w' , 0 , G_OPTION_ARG_NONE         , &warn        , "Print warnings"             , NULL     } ,
    { "verbosity"   , 'l' , 0 , G_OPTION_ARG_INT          , &verbosity   , "Verbosity level"            , "n"      } ,
    { "verbose"     , 'V' , 0 , G_OPTION_ARG_NONE         , &verbose     , "Be verbose"                 , NULL     } ,
@@ -55,11 +62,13 @@ static GOptionEntry command_line_entries[] =
    { NULL }
 };
 
-static gchar* just_plume_procs[] = { "plume"      , "river"  ,  "bbl" , NULL }; //< Processes to run with just-plume option
-static gchar* just_rng_procs[]   = { "earthquake" , "storms" , NULL };          //< Process to run with just-rng option
+static const gchar* just_plume_procs[] = {
+  "plume", "river", "bbl", NULL}; //< Processes to run with just-plume option
+static const gchar* just_rng_procs[] = {
+  "earthquake", "storms", NULL}; //< Process to run with just-rng option
 
 Sedflux_param_st*
-sedflux_parse_command_line (int argc, char *argv[], GError** error)
+sedflux_parse_command_line (const int argc, const char *argv[], GError** error)
 {
   Sedflux_param_st* p = NULL;
 
@@ -70,11 +79,20 @@ sedflux_parse_command_line (int argc, char *argv[], GError** error)
     GError*         tmp_err = NULL;
     GOptionContext* context = g_option_context_new (
                                 "Run basin filling model sedflux-2.0" );
+    gchar** argv_copy;
+    gint argc_copy = argc;
+    int i;
+
+    { /* Copy argv/argc in case g_option_context_parse changes it. */
+      argv_copy = g_new (gchar*, argc);
+      for (i=0; i<argc; i++)
+        argv_copy[i] = g_strdup (argv[i]);
+    }
 
     g_option_context_add_main_entries (context, command_line_entries, NULL);
     g_option_context_add_group (context, bio_get_option_group());
 
-    g_option_context_parse (context, &argc, &argv, &tmp_err);
+    g_option_context_parse (context, &argc_copy, &argv_copy, &tmp_err);
 
     if ( (mode_3d && mode_2d) && !tmp_err )
       g_set_error( &tmp_err ,
@@ -98,6 +116,8 @@ sedflux_parse_command_line (int argc, char *argv[], GError** error)
                                 S_MICRO_VERSION );
 
       eh_free (prog_name);
+      //for (i=0; i<argc_copy; i++)
+      //  g_free (argv_copy[i]);
 
       eh_exit (EXIT_SUCCESS);
     }
@@ -138,10 +158,12 @@ sedflux_parse_command_line (int argc, char *argv[], GError** error)
       p->init_file    = init_file;
       p->out_file     = out_file;
       p->working_dir  = working_dir;
+      p->input_dir    = input_dir;
       p->run_desc     = run_desc;
       p->just_plume   = just_plume;
       p->just_rng     = just_rng;
       p->summary      = summary;
+      p->set_signals  = set_signals;
       p->warn         = warn;
       p->verbosity    = verbosity;
       p->verbose      = verbose;
@@ -161,8 +183,24 @@ sedflux_error_quark( void )
    return g_quark_from_static_string( "sedflux-error-quark" );
 }
 
+/** Check that project directories are valid
+
+Check to see that project directories are valid.  This means that they
+exist and are readable and/or writable.  If an output directory does not
+exist then we try to create it.  If any of the supplied project directories
+are NULL, they are set to the current directory (".").
+
+@param init_file Pointer to name of initialization file
+@param input_dir Pointer to name of input directory
+@param working_dir Pointer to name of output directory
+@param error Pointer to a GError
+
+@returns TRUE if everything went ok, FALSE otherwise (and @param error is
+         set).
+*/
 gboolean
-sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** error )
+sedflux_setup_project_dir (gchar** init_file, gchar** input_dir,
+                           gchar** working_dir, GError** error)
 {
    gboolean rtn_val = TRUE;
    GError*  tmp_err = NULL;
@@ -177,6 +215,9 @@ sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** er
    if ( !(*working_dir) )
       (*working_dir) = g_strdup( "." );
 
+   if ( !(*input_dir) )
+      (*input_dir) = g_strdup( "." );
+
    /* Create the working directory */
    if ( g_mkdir_with_parents( *working_dir , 0 ) == -1 )
       eh_set_file_error_from_errno( &tmp_err , *working_dir , errno );
@@ -189,9 +230,20 @@ sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** er
    if ( !tmp_err && g_chdir( *working_dir )!=0 )
       eh_set_file_error_from_errno( &tmp_err , *working_dir , errno );
 
-   /* Make sure the initialization file is readable */
-   if ( !tmp_err && g_access( *init_file , R_OK ) == -1 )
-      eh_set_file_error_from_errno( &tmp_err , *init_file , errno );
+   /* Make sure there is an input directory */
+   if (!tmp_err &&
+       !g_file_test (*input_dir, G_FILE_TEST_IS_DIR))
+      eh_set_file_error_from_errno( &tmp_err , *input_dir, errno );
+
+   {
+     gchar* path = g_build_filename (*input_dir, *init_file, NULL);
+
+     /* Make sure the initialization file is readable */
+     if (!tmp_err && g_access (path, R_OK) == -1)
+        eh_set_file_error_from_errno (&tmp_err, path, errno);
+
+     g_free (path);
+   }
 
    if ( tmp_err )
    {
@@ -202,7 +254,7 @@ sedflux_setup_project_dir( gchar** init_file , gchar** working_dir , GError** er
    return rtn_val;
 }
 
-gchar* copyleft_msg[] =
+static const gchar* copyleft_msg[] =
 {
 "                                                                             ",
 " sedflux - A process based basin fill model.                                 ",

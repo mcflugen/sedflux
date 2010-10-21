@@ -59,6 +59,45 @@ main (int argc, char *argv[])
   GError* error       = NULL;
   gchar*  command_str = NULL;
   gchar* init_file = NULL;
+  gchar* input_dir = NULL;
+  gchar* work_dir = NULL;
+  gchar* run_desc = NULL;
+  gint dimen = 0;
+
+  g_thread_init (NULL);
+  eh_init_glib ();
+  g_log_set_handler (NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
+
+  { /* Initialze sedflux and then run it. */
+    Sedflux_state* state = sedflux_initialize (argc, (const char**)argv);
+
+    if (state)
+    {
+      double start = sedflux_get_start_time (state);
+      double end = sedflux_get_end_time (state);
+
+      sedflux_run_until (state, end);
+    }
+
+    sedflux_finalize (state);
+  }
+
+  if (g_getenv("SED_MEM_CHECK"))
+    eh_heap_dump( "heap_dump.txt" );
+
+  eh_exit (EXIT_SUCCESS);
+
+  return EXIT_SUCCESS;
+}
+
+#if 0
+int
+old_main (int argc, char *argv[])
+{
+  GError* error       = NULL;
+  gchar*  command_str = NULL;
+  gchar* init_file = NULL;
+  gchar* input_dir = NULL;
   gchar* work_dir = NULL;
   gchar* run_desc = NULL;
   gint dimen = 0;
@@ -76,6 +115,10 @@ main (int argc, char *argv[])
     eh_exit_on_error( error , "Error parsing command line arguments" );
 
     init_file = g_strdup (p->init_file);
+    if (p->input_dir)
+      input_dir = g_strdup (p->input_dir);
+    else
+      input_dir = g_strdup (".");
     work_dir = g_strdup (p->working_dir);
     run_desc = g_strdup (p->run_desc);
     dimen = p->mode_2d?(2):(3);
@@ -84,7 +127,7 @@ main (int argc, char *argv[])
   }
 
   { /* Create the project directory and check permissions */
-    sedflux_setup_project_dir( &init_file , &work_dir , &error );
+    sedflux_setup_project_dir( &init_file , &input_dir, &work_dir , &error );
     eh_exit_on_error( error , "Error setting up project directory" );
 
     sedflux_print_info_file (init_file, work_dir, command_str, run_desc);
@@ -94,7 +137,7 @@ main (int argc, char *argv[])
   sed_signal_set_action();
 
   { /* Initialze sedflux and then run it. */
-    Sedflux_state* state = sedflux_initialize (init_file, dimen);
+    Sedflux_state* state = sedflux_initialize (init_file, input_dir, dimen);
 
     if (state)
     {
@@ -105,6 +148,8 @@ main (int argc, char *argv[])
       gchar* prefix = NULL;
       int i;
 
+      sedflux_run_until (state, end);
+#if 0
       for (t=start+dt, i=0; t<end; t+=dt, i++)
       {
         sedflux_run_until (state, t);
@@ -117,6 +162,7 @@ main (int argc, char *argv[])
         eh_free (prefix);
 */
       }
+#endif
     }
 
     sedflux_finalize (state);
@@ -129,6 +175,7 @@ main (int argc, char *argv[])
 
   return EXIT_SUCCESS;
 }
+#endif
 
 #if defined(OLD_WAY)
 int
