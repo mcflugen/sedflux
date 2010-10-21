@@ -22,7 +22,7 @@
 #include <sed/sed_sedflux.h>
 #include "squall.h"
 
-static char *help_msg[] =
+static const char *help_msg[] =
 {
 "                                                                             ",
 " squall [options] [parameters]                                               ",

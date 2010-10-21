@@ -16,10 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_squall DESTINATION bin RENAME s
 
 ########### next target ###############
 
-SET(squall_LIB_SRCS
-   squall.c
-)
+set (squall_LIB_SRCS squall.c)
 
+set_source_files_properties (${squall_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(squall ${squall_LIB_SRCS})
 
 target_link_libraries(squall sedflux)

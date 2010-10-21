@@ -968,7 +968,7 @@ double get_threshold_depth( double wave_length , double wave_height ,
                    * pow( M_PI*c_sq/(wave_period*grain_size) , 1./3 ) );
 }
 
-static gchar* _default_config[] = {
+static const gchar* _default_config[] = {
 "time step",
 "duration of squall",
 NULL
@@ -978,7 +978,7 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_config);
+    return g_strjoinv ("\n", (gchar**)_default_config);
   else
     return NULL;
 }

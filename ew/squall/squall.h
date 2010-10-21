@@ -33,6 +33,8 @@
 # define SQUALL_DEFAULT_C_H       (1.)
 # define SQUALL_DEFAULT_ALPHA_REF (.005)
 
+G_BEGIN_DECLS
+
 void write_output_file( const char *file , Sed_cube p );
 gboolean squall( Sed_cube , double );
 double get_erosion_rate_from_profile( Sed_cube p , int i ,
@@ -56,6 +58,8 @@ double *get_moveable_grains( double water_depth ,
                              double wave_period ,
                              Sed_sediment sed   ,
                              double *is_moveable );
+
+G_END_DECLS
 
 #endif
 
