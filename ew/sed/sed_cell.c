@@ -19,6 +19,7 @@
 //---
 
 #include "sed_cell.h"
+#include "sed_sediment.h"
 
 /**
    \defgroup sed_cell_group Sed_cell
@@ -118,7 +119,7 @@ sed_cell_new_env( void )
 \return A newly created cell.  NULL is returned if there was a problem allocating the memory.
 */
 Sed_cell
-sed_cell_new_sized( gssize n , double t , double* f )
+sed_cell_new_sized (gint n, double t, const double* f)
 {
    Sed_cell c = sed_cell_new( n );
 
@@ -170,7 +171,7 @@ sed_cell_new_typed( Sed_sediment s , double t , Sed_type a_type )
 \return A newly created cell.  NULL is returned if there was a problem allocating the memory.
 */
 Sed_cell
-sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class )
+sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class size_class )
 {
    Sed_cell c = NULL;
 
@@ -185,7 +186,7 @@ sed_cell_new_classed( Sed_sediment s , double t , Sed_size_class class )
 
       for ( i=0 ; i<len ; i++ )
          //if ( sed_type_is_size_class( sed_sediment_type( s , i ) , class ) )
-         if ( class & sed_type_size_class(sed_sediment_type(s,i)) )
+         if ( size_class & sed_type_size_class(sed_sediment_type(s,i)) )
             f[i] = 1.;
 
       eh_dbl_array_normalize( f , len );
@@ -531,7 +532,7 @@ sed_set_cell_fraction is called.
 \return     The Sed_cell that was set.
 */
 Sed_cell
-sed_cell_set_fraction(Sed_cell c , double f[] )
+sed_cell_set_fraction(Sed_cell c , const double f[] )
 {
    eh_require( c );
    eh_require( f );
@@ -940,6 +941,25 @@ sed_cell_add_amount( Sed_cell a , const double t[] )
    }
 
    return a;   
+}
+
+Sed_cell
+sed_cell_add_equal_amounts (Sed_cell a, double t)
+{
+  eh_return_val_if_fail (a, NULL);
+
+  if (t>0)
+  {
+    Sed_cell c = sed_cell_dup (a);
+
+    sed_cell_set_equal_fraction (c);
+    sed_cell_resize (c, t);
+    sed_cell_add (a, c);
+
+    sed_cell_destroy (c);
+  }
+
+  return a;   
 }
 
 /** Remove sediment from one cell based on another cell
@@ -1613,15 +1633,15 @@ units).  The mean grain size is then placed into a sand (phi<4), silt (4<phi<9),
 Sed_size_class
 sed_cell_size_class( const Sed_cell c )
 {
-   Sed_size_class class = S_SED_TYPE_NONE;
+   Sed_size_class size_class = S_SED_TYPE_NONE;
 
    if ( c )
    {
       double d_mean = sed_sediment_property_avg( NULL , c->f , &sed_type_grain_size_in_phi );
-      class = sed_size_class( d_mean );
+      size_class = sed_size_class( d_mean );
    }
 
-   return class;
+   return size_class;
 }
 
 /** \brief Return the percentage of a certain size class with a Sed_cell.
@@ -2195,7 +2215,7 @@ sed_cell_grid_init( Sed_cell_grid g , gssize n_grains )
 
    if ( g )
    {
-      Sed_cell* data = eh_grid_data_start(g);
+      Sed_cell* data = (Sed_cell*)eh_grid_data_start(g);
       gssize i, n_i = eh_grid_n_el( g );
 
       for ( i=0 ; i<n_i ; i++ )
@@ -2220,7 +2240,7 @@ sed_cell_grid_free( Sed_cell_grid g )
 {
    if ( g )
    {
-      Sed_cell* data = eh_grid_data_start(g);
+      Sed_cell* data = (Sed_cell*)eh_grid_data_start(g);
       gssize i, n_i = eh_grid_n_el( g );
 
       for ( i=0 ; i<n_i ; i++ )
@@ -2247,7 +2267,7 @@ sed_cell_grid_free_data( Sed_cell_grid g )
    {
       gssize i;
       gssize n_i  = eh_grid_n_el( g );
-      Sed_cell* c = eh_grid_data_start( g );
+      Sed_cell* c = (Sed_cell*)eh_grid_data_start( g );
 
       for ( i=0 ; i<n_i ; i++ )
          sed_cell_destroy( c[i] );
@@ -2267,8 +2287,8 @@ sed_cell_grid_add( Sed_cell_grid g_1 , Sed_cell_grid g_2 )
 {
    gssize i;
    gssize n_i    = eh_grid_n_el( g_1 );
-   Sed_cell* c_1 = eh_grid_data_start( g_1 );
-   Sed_cell* c_2 = eh_grid_data_start( g_2 );
+   Sed_cell* c_1 = (Sed_cell*)eh_grid_data_start( g_1 );
+   Sed_cell* c_2 = (Sed_cell*)eh_grid_data_start( g_2 );
 
    eh_require( eh_grid_is_compatible( g_1 , g_2 ) )
    {
@@ -2284,8 +2304,8 @@ sed_cell_grid_copy_data( Sed_cell_grid dest , Sed_cell_grid src )
 {
    gssize i;
    gssize n_i    = eh_grid_n_el( dest );
-   Sed_cell* c_1 = eh_grid_data_start( dest );
-   Sed_cell* c_2 = eh_grid_data_start( src  );
+   Sed_cell* c_1 = (Sed_cell*)eh_grid_data_start( dest );
+   Sed_cell* c_2 = (Sed_cell*)eh_grid_data_start( src  );
 
    eh_require( eh_grid_is_compatible( dest , src ) )
    {
@@ -2303,7 +2323,7 @@ sed_cell_grid_clear( Sed_cell_grid g )
    {
       gssize i;
       gssize n_i  = eh_grid_n_el( g );
-      Sed_cell* c = eh_grid_data_start( g );
+      Sed_cell* c = (Sed_cell*)eh_grid_data_start( g );
 
       for ( i=0 ; i<n_i ; i++ )
          sed_cell_clear( c[i] );
@@ -2321,7 +2341,7 @@ sed_cell_grid_mass( Sed_cell_grid g )
    {
       gssize i;
       gssize n_i  = eh_grid_n_el( g );
-      Sed_cell* c = eh_grid_data_start( g );
+      Sed_cell* c = (Sed_cell*)eh_grid_data_start( g );
 
       for ( i=0 ; i<n_i ; i++ )
          sum += sed_cell_mass( c[i] );

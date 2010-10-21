@@ -24,6 +24,8 @@
 #include <glib.h>
 #include <utils/utils.h>
 
+G_BEGIN_DECLS
+
 new_handle( Sed_cell );
 
 typedef double (*Sed_cell_property_func_0) ( const Sed_cell );
@@ -31,13 +33,21 @@ typedef double (*Sed_cell_property_func_1) ( const Sed_cell , double );
 typedef double (*Sed_cell_property_func_2) ( const Sed_cell , double , double );
 typedef double (*Sed_cell_property_func_data) ( const Sed_cell , gpointer user_data );
 
-typedef union
+union _Sed_cell_property_func
 {
    Sed_cell_property_func_0 f_0;
    Sed_cell_property_func_1 f_1;
    Sed_cell_property_func_2 f_2;
-}
-Sed_cell_property_func;
+
+#ifdef __cplusplus
+  _Sed_cell_property_func () {};
+  _Sed_cell_property_func (Sed_cell_property_func_0 f) : f_0 (f) {};
+  _Sed_cell_property_func (Sed_cell_property_func_1 f) : f_1 (f) {};
+  _Sed_cell_property_func (Sed_cell_property_func_2 f) : f_2 (f) {};
+#endif
+};
+
+typedef union _Sed_cell_property_func Sed_cell_property_func;
 
 #include "sed_property.h"
 #include "sed_sediment.h"
@@ -63,9 +73,10 @@ derived_handle( Eh_grid , Sed_cell_grid );
 
 Sed_cell     sed_cell_new                ( gssize n );
 Sed_cell     sed_cell_new_env            ( void );
-Sed_cell     sed_cell_new_sized          ( gssize n , double t , double* f );
+Sed_cell sed_cell_new_sized (gint n, double t, const double* f);
 Sed_cell     sed_cell_new_typed          ( Sed_sediment s , double t , Sed_type a_type );
-Sed_cell     sed_cell_new_classed        ( Sed_sediment s , double t , Sed_size_class class );
+Sed_cell sed_cell_new_classed (Sed_sediment s, double t,
+                               Sed_size_class size_class );
 Sed_cell     sed_cell_new_bedload        ( Sed_sediment s , double t );
 
 Sed_cell     sed_cell_dup                ( Sed_cell src );
@@ -82,7 +93,8 @@ Sed_cell     sed_cell_set_facies         ( Sed_cell c , Sed_facies new_facies );
 Sed_cell     sed_cell_add_facies         ( Sed_cell c , Sed_facies f );
 Sed_cell     sed_cell_set_amount         ( Sed_cell c , const double t[] );
 Sed_cell     sed_cell_add_amount         ( Sed_cell a , const double t[] );
-Sed_cell     sed_cell_set_fraction       ( Sed_cell c , double new_f[] );
+Sed_cell sed_cell_add_equal_amounts (Sed_cell a, double t);
+Sed_cell sed_cell_set_fraction (Sed_cell c, const double new_f[]);
 Sed_cell     sed_cell_set_equal_fraction ( Sed_cell c );
 Sed_cell     sed_cell_add                ( Sed_cell c_1 , const Sed_cell c_2 );
 
@@ -203,6 +215,8 @@ Sed_cell* sed_cell_array_free        ( Sed_cell* a );
 double    sed_cell_array_mass        ( Sed_cell* a );
 gint      sed_cell_array_fprint      ( FILE* fp , Sed_cell* a );
 Sed_cell* sed_cell_array_delete_empty( Sed_cell* a );
+
+G_END_DECLS
 
 #endif /* sed_cell.h is included */
 
