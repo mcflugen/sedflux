@@ -37,6 +37,10 @@
 #include <utils/utils.h>
 #include "plume_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //extern grid_type_3d *grid;
 
 /*
@@ -134,5 +138,9 @@ Plume_data *plume_data_init( Plume_data* );
 void destroy_plume_data( Plume_data* );
 
 Eh_dbl_grid* plume_grid_to_dbl_grid( Plume_grid* g , const gint n_grains );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // plumeinput.h is included

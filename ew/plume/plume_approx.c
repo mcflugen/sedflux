@@ -161,7 +161,7 @@ Sed_cell_grid plume_width_averaged_deposit( Sed_cell_grid g , Sed_hydro r , Sed_
    {
       gssize len = eh_grid_n_y(g);
 
-      x = g_memdup( eh_grid_y( g ) , sizeof(double)*len );
+      x = (double*)g_memdup( eh_grid_y( g ) , sizeof(double)*len );
 
       eh_dbl_array_mult( x , len , 1./sed_hydro_width(r) );
    }
@@ -284,7 +284,7 @@ Sed_cell_grid plume_centerline_deposit( Sed_cell_grid g , Sed_hydro r , Sed_sedi
    {
       gssize len = eh_grid_n_y(g);
 
-      x = g_memdup( eh_grid_y( g ) , sizeof(double)*len );
+      x = (double*)g_memdup( eh_grid_y( g ) , sizeof(double)*len );
 
       eh_dbl_array_mult( x , len , 1./sed_hydro_width(r) );
 
@@ -944,7 +944,7 @@ Sed_cell_grid plume_width_averaged_deposit_num( Sed_cell_grid g , Sed_hydro r , 
    {
       gssize len = eh_grid_n_y(g);
 
-      x = g_memdup( eh_grid_y( g ) , sizeof(double)*len );
+      x = (double*)g_memdup( eh_grid_y( g ) , sizeof(double)*len );
 
       eh_dbl_array_mult( x , len , 1./sed_hydro_width(r) );
    }

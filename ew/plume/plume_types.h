@@ -21,6 +21,10 @@
 #if !defined(PLUME_TYPES_H)
 # define PLUME_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct 
 {
    double *x;   // i's
@@ -146,6 +150,10 @@ typedef struct
 Plume_enviro;
 
 typedef Plume_grid Plume_data;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

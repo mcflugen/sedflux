@@ -51,6 +51,7 @@ SET(plume_LIB_SRCS
    plumeset.c
 )
 
+set_source_files_properties (${plume_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(plume ${plume_LIB_SRCS})
 
 target_link_libraries(plume sedflux)

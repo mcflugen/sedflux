@@ -13,7 +13,7 @@ plume_error_quark( void )
 
 static Plume_param_st _p;
 
-static Eh_key_file_entry template[] =
+static Eh_key_file_entry tmpl[] =
 {
  { "Bulk density"                                    , EH_ARG_DARRAY , &_p.bulk_density    , &_p.n_grains } ,
  { "Removal rate constant"                           , EH_ARG_DARRAY , &_p.lambda          , &_p.n_grains } ,
@@ -44,7 +44,7 @@ plume_scan_parameter_file( const gchar* file , GError** error )
 
    eh_require( file );
 
-   eh_key_file_scan_from_template( file , "PLUME" , template , &tmp_error );
+   eh_key_file_scan_from_template( file , "PLUME" , tmpl, &tmp_error );
 
    if ( !tmp_error )
    {

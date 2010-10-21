@@ -32,6 +32,11 @@
 #include <math.h>
 #include <ctype.h>
 #include <time.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *	Useful values
  */
@@ -97,5 +102,9 @@ extern int lc, lpc, lx, ly, zx, zy;
  *	(Qsw[4] size must match xi[4] size and assignments in PlumeMass.c)
  */
 //extern double Qsr, Qsw[4], Tsr, Tsd[2], merr;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* plumevars.h is included*/

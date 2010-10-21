@@ -10,6 +10,10 @@
 
 #include <sed/sed_sedflux.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 double plume_centerline_inv_at( double x , double l );
 double* plume_centerline_inv_nd( double* inv , double* x , gssize len , double l );
 double* plume_centerline_inv( double* inv , double* x   , gssize len ,
@@ -34,6 +38,10 @@ double plume_plug_width         ( double x );
 
 Sed_cell_grid plume_width_averaged_deposit_num( Sed_cell_grid g , Sed_hydro r , Sed_sediment s , double dy );
 double* plume_width_averaged_deposit_nd_num( double* dep , double* x , gssize len , double l );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

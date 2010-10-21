@@ -25,6 +25,7 @@
 #include <string.h>
 #include <glib.h>
 #include <utils/utils.h>
+#include "plumevars.h"
 
 /*
  *	convert n to characters in s

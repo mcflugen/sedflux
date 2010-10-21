@@ -4,6 +4,8 @@
 #include <glib.h>
 #include <sed/sed_sedflux.h>
 
+G_BEGIN_DECLS
+
 #define PLUME_MAJOR_VERSION 0
 #define PLUME_MINOR_VERSION 9
 #define PLUME_MICRO_VERSION 0
@@ -55,5 +57,7 @@ Eh_dbl_grid* plume_dbl_grid_rebin   ( Eh_dbl_grid* grid , Eh_dbl_grid* dest );
 Eh_dbl_grid* plume_dbl_grid_rotate  ( Eh_dbl_grid* grid , gint i , gint j , double alpha );
 Eh_dbl_grid* plume_dbl_grid_scale   ( Eh_dbl_grid* grid , double* vol_in );
 Eh_dbl_grid* plume_dbl_grid_trim    ( Eh_dbl_grid* grid , double val );
+
+G_END_DECLS
 
 #endif
