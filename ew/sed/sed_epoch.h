@@ -21,19 +21,23 @@
 #if !defined(SED_EPOCH_H)
 # define SED_EPOCH_H
 
+
 #include "sed_cube.h"
 #include "sed_process.h"
+
+G_BEGIN_DECLS
 
 new_handle( Sed_epoch       );
 new_handle( Sed_epoch_queue );
 
 typedef enum
 {
-   SED_EPOCH_ERROR_OPEN_FILE ,
-   SED_EPOCH_ERROR_MISSING_LABEL ,
-   SED_EPOCH_ERROR_BAD_TIME_STEP ,
-   SED_EPOCH_ERROR_NEGATIVE_TIME_STEP ,
-   SED_EPOCH_ERROR_NEGATIVE_DURATION
+   SED_EPOCH_ERROR_OPEN_FILE,
+   SED_EPOCH_ERROR_MISSING_LABEL,
+   SED_EPOCH_ERROR_BAD_TIME_STEP,
+   SED_EPOCH_ERROR_NEGATIVE_TIME_STEP,
+   SED_EPOCH_ERROR_NEGATIVE_DURATION,
+   SED_EPOCH_ERROR_BAD_PREFIX
 }
 Sed_epoch_error;
 
@@ -50,8 +54,11 @@ Sed_epoch     sed_epoch_set_number     ( Sed_epoch e , gssize name      );
 Sed_epoch     sed_epoch_set_duration   ( Sed_epoch e , double duration  );
 Sed_epoch     sed_epoch_set_time_step  ( Sed_epoch e , double time_step );
 Sed_epoch     sed_epoch_set_filename   ( Sed_epoch e , const gchar* filename  );
+Sed_epoch     sed_epoch_set_prefix (Sed_epoch e, const gchar* prefix);
 
 Sed_epoch     sed_epoch_sscan_filename ( Sed_epoch e , const gchar* file_s     , GError** error );
+Sed_epoch sed_epoch_sscan_prefix (Sed_epoch e, const gchar* prefix,
+                                  GError** error);
 Sed_epoch     sed_epoch_sscan_number   ( Sed_epoch e , const gchar* number_s   , GError** error );
 Sed_epoch     sed_epoch_sscan_time     ( Sed_epoch e , const gchar* time_s     , GError** error );
 Sed_epoch     sed_epoch_sscan_duration ( Sed_epoch e , const gchar* duration_s , GError** error );
@@ -67,22 +74,26 @@ double        sed_epoch_time_step      ( Sed_epoch e );
 const char*   sed_epoch_filename       ( Sed_epoch e );
 Sed_process_queue sed_epoch_proc_queue ( Sed_epoch e );
 
-Sed_epoch_queue sed_epoch_queue_new_sscan_old( const gchar* number_s    ,
-                                               const gchar* time_step_s ,
-                                               const gchar* file_s      ,
-                                               const gchar* duration_s  ,
-                                               GError** error );
-Sed_epoch_queue sed_epoch_queue_new_sscan    ( const gchar* time_s      ,
-                                               const gchar* time_step_s ,
-                                               const gchar* file_s      ,
-                                               GError** error );
+Sed_epoch_queue sed_epoch_queue_new_sscan_old (const gchar* number_s,
+                                               const gchar* time_step_s,
+                                               const gchar* file_s,
+                                               const gchar* prefix,
+                                               const gchar* duration_s,
+                                               GError** error);
+Sed_epoch_queue sed_epoch_queue_new_sscan     (const gchar* time_s,
+                                               const gchar* time_step_s,
+                                               const gchar* file_s,
+                                               const gchar* prefix,
+                                               GError** error);
 
-Sed_epoch_queue sed_epoch_queue_new    ( const gchar* file , GError** error );
-Sed_epoch_queue sed_epoch_queue_new_full( const gchar*       file          ,
-                                          Sed_process_init_t proc_defs[]   ,
-                                          Sed_process_family proc_family[] ,
-                                          Sed_process_check  proc_checks[] ,
-                                          GError**           error );
+Sed_epoch_queue sed_epoch_queue_new    (const gchar* file, const gchar* prefix,
+                                        GError** error );
+Sed_epoch_queue sed_epoch_queue_new_full( const gchar* file,
+                                          const gchar* prefix,
+                                          Sed_process_init_t proc_defs[],
+                                          Sed_process_family proc_family[],
+                                          Sed_process_check proc_checks[],
+                                          GError** error);
 
 Sed_epoch_queue sed_epoch_queue_dup    ( const Sed_epoch_queue s );
 Sed_epoch_queue sed_epoch_queue_concat ( Sed_epoch_queue q_1 , Sed_epoch_queue q_2 );
@@ -121,5 +132,7 @@ Sed_epoch_queue sed_epoch_queue_run     ( Sed_epoch_queue       q        ,
 
 Sed_epoch_queue sed_epoch_queue_tic      ( Sed_epoch_queue epoch_q , Sed_cube p );
 Sed_epoch_queue sed_epoch_queue_run_until( Sed_epoch_queue epoch_q , Sed_cube p , double t_in_years );
+
+G_END_DECLS
 
 #endif /* sed_epoch.h */

@@ -34,6 +34,7 @@ CLASS( Sed_epoch )
    double            duration;    //< Duration of the epoch
    double            time_step;   //< Time step of the epoch
 
+   char* prefix; //< Prefix for input files (NULL for CWD)
    char*             filename;    //< Initialization file
    Sed_process_queue proc_q;      //< List of processes to run during the epoch
 };
@@ -63,6 +64,7 @@ sed_epoch_new( void )
    e->duration  =  0;
    e->time_step =  0;
 
+   e->prefix = NULL;
    e->filename  = NULL;
    e->proc_q    = NULL;
 
@@ -84,6 +86,7 @@ sed_epoch_copy( Sed_epoch d , const Sed_epoch s )
       d->duration  = s->duration;
       d->time_step = s->time_step;
 
+      d->prefix = g_strdup (s->prefix);
       d->filename  = g_strdup( s->filename );
 
       if ( d->proc_q )
@@ -110,8 +113,9 @@ sed_epoch_dup( const Sed_epoch s )
 #define SED_KEY_EPOCH_ACTIVE       "active"
 #define SED_KEY_EPOCH_TIME_STEP    "time step"
 #define SED_KEY_EPOCH_FILE         "process file"
+#define SED_KEY_EPOCH_PREFIX "prefix"
 
-static gchar* old_required_labels[] =
+static const gchar* old_required_labels[] =
 {
    SED_KEY_EPOCH_NUMBER       ,
    SED_KEY_EPOCH_DURATION     ,
@@ -120,7 +124,7 @@ static gchar* old_required_labels[] =
    NULL
 };
 
-static gchar* required_labels[] =
+static const gchar* required_labels[] =
 {
    SED_KEY_EPOCH_ACTIVE       ,
    SED_KEY_EPOCH_TIME_STEP    ,
@@ -143,6 +147,7 @@ sed_epoch_new_from_table( Eh_symbol_table t , GError** error )
       gchar*  number_s    = eh_symbol_table_value( t , SED_KEY_EPOCH_NUMBER    );
       gchar*  duration_s  = eh_symbol_table_value( t , SED_KEY_EPOCH_DURATION  );
       gchar*  file_s      = eh_symbol_table_value( t , SED_KEY_EPOCH_FILE      );
+      gchar*  prefix = eh_symbol_table_value (t, SED_KEY_EPOCH_PREFIX);
       gchar*  time_step_s = eh_symbol_table_value( t , SED_KEY_EPOCH_TIME_STEP );
 
       /* Still support the old way of specifying epoch durations and times */
@@ -164,8 +169,12 @@ sed_epoch_new_from_table( Eh_symbol_table t , GError** error )
       }
 
       /* Scan the active times the new way */
-      if ( !tmp_err && time_s   ) q = sed_epoch_queue_new_sscan    ( time_s   , time_step_s , file_s , &tmp_err );
-      if ( !tmp_err && number_s ) q = sed_epoch_queue_new_sscan_old( number_s , time_step_s , file_s , duration_s , &tmp_err );
+      if (!tmp_err && time_s)
+        q = sed_epoch_queue_new_sscan (time_s, time_step_s, file_s,
+                                       prefix, &tmp_err);
+      if (!tmp_err && number_s)
+        q = sed_epoch_queue_new_sscan_old (number_s, time_step_s, file_s,
+                                           prefix, duration_s, &tmp_err);
 
       if ( tmp_err )
       {
@@ -184,11 +193,12 @@ sed_epoch_new_from_table( Eh_symbol_table t , GError** error )
 }
 
 Sed_epoch_queue
-sed_epoch_queue_new_sscan_old( const gchar* number_s    ,
-                               const gchar* time_step_s ,
-                               const gchar* file_s      ,
-                               const gchar* duration_s  ,
-                               GError** error )
+sed_epoch_queue_new_sscan_old (const gchar* number_s,
+                               const gchar* time_step_s,
+                               const gchar* file_s,
+                               const gchar* prefix,
+                               const gchar* duration_s,
+                               GError** error)
 {
    Sed_epoch_queue q = NULL;
 
@@ -202,6 +212,7 @@ sed_epoch_queue_new_sscan_old( const gchar* number_s    ,
       if ( !tmp_err ) sed_epoch_sscan_duration ( e , duration_s  , &tmp_err );
       if ( !tmp_err ) sed_epoch_sscan_time_step( e , time_step_s , &tmp_err );
       if ( !tmp_err ) sed_epoch_sscan_filename ( e , file_s      , &tmp_err );
+      if (!tmp_err) sed_epoch_sscan_prefix (e, prefix, &tmp_err);
       if ( !tmp_err )
       {
          NEW_OBJECT( Sed_epoch_queue , q );
@@ -221,10 +232,11 @@ sed_epoch_queue_new_sscan_old( const gchar* number_s    ,
 }
 
 Sed_epoch_queue
-sed_epoch_queue_new_sscan( const gchar* time_s      ,
-                           const gchar* time_step_s ,
-                           const gchar* file_s      ,
-                           GError** error )
+sed_epoch_queue_new_sscan( const gchar* time_s,
+                           const gchar* time_step_s,
+                           const gchar* file_s,
+                           const gchar* prefix,
+                           GError** error)
 {
    Sed_epoch_queue q = NULL;
 
@@ -252,6 +264,7 @@ sed_epoch_queue_new_sscan( const gchar* time_s      ,
             if ( !tmp_err ) sed_epoch_sscan_time      ( e , time_str[i] , &tmp_err );
             if ( !tmp_err ) sed_epoch_sscan_time_step ( e , dt_str[i]   , &tmp_err );
             if ( !tmp_err ) sed_epoch_sscan_filename  ( e , file_s      , &tmp_err );
+            if (!tmp_err) sed_epoch_sscan_prefix (e, prefix, &tmp_err);
 
             sed_epoch_queue_push_tail( q , e );
             
@@ -266,6 +279,7 @@ sed_epoch_queue_new_sscan( const gchar* time_s      ,
             if ( !tmp_err ) sed_epoch_sscan_time      ( e , time_str[i] , &tmp_err );
             if ( !tmp_err ) sed_epoch_sscan_time_step ( e , dt_str[0]   , &tmp_err );
             if ( !tmp_err ) sed_epoch_sscan_filename  ( e , file_s      , &tmp_err );
+            if (!tmp_err) sed_epoch_sscan_prefix (e, prefix, &tmp_err);
 
             sed_epoch_queue_push_tail( q , e );
          }
@@ -290,7 +304,7 @@ sed_epoch_queue_new_sscan( const gchar* time_s      ,
 }
 
 Sed_epoch_queue
-sed_epoch_queue_new( const gchar* file , GError** error )
+sed_epoch_queue_new (const gchar* file, const gchar* prefix, GError** error)
 {
    Sed_epoch_queue q = NULL;
 
@@ -299,22 +313,31 @@ sed_epoch_queue_new( const gchar* file , GError** error )
 
    if ( file )
    {
-      GError*     tmp_err  = NULL;
+      GError*tmp_err = NULL;
       Eh_key_file key_file = NULL;
+      gchar* full_name = NULL;
 
-      key_file = eh_key_file_scan( file , &tmp_err );
+      if (prefix)
+        full_name = g_build_filename (prefix, file, NULL);
+      else
+        full_name = g_strdup (file);
+
+      key_file = eh_key_file_scan (full_name, &tmp_err);
 
       if ( key_file )
       {
-         Eh_symbol_table* tables     = eh_key_file_get_symbol_tables( key_file , "epoch" );
+         Eh_symbol_table* tables = eh_key_file_get_symbol_tables (
+                                     key_file, "epoch");
          Eh_symbol_table* this_table;
-         Sed_epoch_queue  new_q;
+         Sed_epoch_queue new_q;
 
          NEW_OBJECT( Sed_epoch_queue , q );
          q->l = NULL;
 
          for ( this_table=tables ; !tmp_err && *this_table ; this_table++ )
          {
+            eh_symbol_table_replace (*this_table, SED_KEY_EPOCH_PREFIX, prefix);
+
             new_q = sed_epoch_new_from_table( *this_table , &tmp_err );
 
             q = sed_epoch_queue_concat( q , new_q );
@@ -336,30 +359,34 @@ sed_epoch_queue_new( const gchar* file , GError** error )
       }
 
       eh_key_file_destroy( key_file );
+      g_free (full_name);
    }
 
    return q;
 }
 
 Sed_epoch_queue
-sed_epoch_queue_new_full( const gchar*       file          ,
-                          Sed_process_init_t proc_defs[]   ,
-                          Sed_process_family proc_family[] ,
-                          Sed_process_check  proc_checks[] ,
-                          GError**           error )
+sed_epoch_queue_new_full (const gchar* file,
+                          const gchar* prefix,
+                          Sed_process_init_t proc_defs[],
+                          Sed_process_family proc_family[],
+                          Sed_process_check proc_checks[],
+                          GError** error)
 {
    Sed_epoch_queue q = NULL;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+   eh_return_val_if_fail (error==NULL || *error==NULL, NULL);
 
-   if ( file )
+   if (file)
    {
       GError* tmp_err = NULL;
 
-      q = sed_epoch_queue_new( file , &tmp_err );
+      q = sed_epoch_queue_new (file, prefix, &tmp_err);
 
-      if ( !tmp_err ) sed_epoch_queue_set_processes( q , proc_defs , proc_family , proc_checks , &tmp_err );
-      if (  tmp_err ) g_propagate_error( error , tmp_err );
+      if (!tmp_err) sed_epoch_queue_set_processes (q,
+                      proc_defs, proc_family, proc_checks, &tmp_err);
+
+      if (tmp_err ) g_propagate_error (error, tmp_err);
    }
 
    return q;
@@ -378,8 +405,8 @@ sed_epoch_queue_dup( const Sed_epoch_queue s )
       d->l = NULL;
 
       for ( l=s->l ; l ; l=l->next )
-         d->l = g_list_prepend( d->l , sed_epoch_dup( l->data ) );
-      d->l = g_list_reverse( d->l );
+         d->l = g_list_prepend (d->l , sed_epoch_dup ((Sed_epoch)l->data));
+      d->l = g_list_reverse(d->l);
    }
 
    return d;
@@ -394,7 +421,7 @@ sed_epoch_queue_concat( Sed_epoch_queue q_1 , Sed_epoch_queue q_2 )
       GList* new_l = NULL;
 
       for ( l=q_2->l ; l ; l=l->next )
-         new_l = g_list_prepend( new_l , sed_epoch_dup( l->data ) );
+         new_l = g_list_prepend (new_l , sed_epoch_dup ((Sed_epoch)l->data));
       q_1->l = g_list_concat( q_1->l , g_list_reverse(new_l) );
    }
    else if ( !q_1       )
@@ -459,7 +486,7 @@ sed_epoch_queue_destroy( Sed_epoch_queue list )
       GList* link;
 
       for ( link=list->l ; link ; link = link->next )
-         sed_epoch_destroy( link->data );
+         sed_epoch_destroy ((Sed_epoch)link->data);
 
       g_list_free( list->l );
       eh_free( list );
@@ -515,6 +542,34 @@ sed_epoch_sscan_filename( Sed_epoch e , const gchar* file_s , GError** error )
    }
 
    return e;
+}
+
+Sed_epoch
+sed_epoch_sscan_prefix (Sed_epoch e, const gchar* prefix, GError** error)
+{
+  eh_return_val_if_fail(error==NULL || *error==NULL, NULL);
+
+  if (e)
+  {
+    GError* tmp_err = NULL;
+
+    if (prefix)
+    {
+      if (!g_file_test (prefix, G_FILE_TEST_IS_DIR))
+        g_set_error (&tmp_err ,
+                     SED_EPOCH_ERROR ,
+                     SED_EPOCH_ERROR_BAD_PREFIX ,
+                     "Could not locate prefix directory: %s", prefix);
+
+    }
+
+    if (!tmp_err)
+      sed_epoch_set_prefix (e, prefix);
+    else
+      g_propagate_error (error, tmp_err);
+  }
+
+  return e;
 }
 
 Sed_epoch
@@ -680,6 +735,20 @@ sed_epoch_set_filename( Sed_epoch e , const gchar* filename )
    return e;
 }
 
+Sed_epoch
+sed_epoch_set_prefix (Sed_epoch e, const gchar* prefix)
+{
+  if (e)
+  {
+    if (e->prefix)
+      eh_free (e->prefix);
+
+    e->prefix = g_strdup (prefix);
+  }
+
+  return e;
+}
+
 const gchar*
 sed_epoch_name( Sed_epoch e )
 {
@@ -736,6 +805,14 @@ sed_epoch_filename( Sed_epoch e )
    return e->filename;
 }
 
+const gchar*
+sed_epoch_prefix (Sed_epoch e)
+{
+  eh_return_val_if_fail( e , NULL );
+
+  return e->prefix;
+}
+
 Sed_process_queue
 sed_epoch_proc_queue( Sed_epoch e )
 {
@@ -771,7 +848,7 @@ sed_epoch_queue_order( Sed_epoch_queue q )
    if ( q )
    {
       /* If the first epoch was given in the new format, sort by start time */
-      if ( q->l && sed_epoch_number( q->l->data ) < 0 )
+      if (q->l && sed_epoch_number ((Sed_epoch)q->l->data) < 0)
          q->l = g_list_sort( q->l , (GCompareFunc)sed_epoch_start_cmp );
       else
          q->l = g_list_sort( q->l , (GCompareFunc)sed_epoch_number_cmp );
@@ -795,7 +872,7 @@ sed_epoch_queue_pop( Sed_epoch_queue q )
 
    if ( q && q->l )
    {
-      e = (q->l)->data;
+      e = (Sed_epoch)(q->l)->data;
 
       q->l = g_list_delete_link( q->l , q->l );
    }
@@ -810,7 +887,7 @@ sed_epoch_queue_nth( Sed_epoch_queue q , gssize n )
 
    if ( q && q->l )
    {
-      e = g_list_nth_data( q->l , n );
+      e = (Sed_epoch)g_list_nth_data( q->l , n );
    }
 
    return e;
@@ -838,7 +915,7 @@ sed_epoch_queue_find( Sed_epoch_queue q , double t )
       GList* l = g_list_find_custom( q->l , &t , (GCompareFunc)sed_epoch_is_in_range );
 
       if ( l )
-         e = l->data;
+         e = (Sed_epoch)l->data;
    }
 
    return e;
@@ -851,7 +928,7 @@ sed_epoch_fprint( FILE* fp , Sed_epoch e )
 
    if ( e )
    {
-      gchar* file = (e->filename)?e->filename:"(null)";
+      const gchar* file = (e->filename)?e->filename:"(null)";
 
       n += fprintf( fp , "[Epoch Info]\n" );
 
@@ -880,7 +957,7 @@ sed_epoch_queue_fprint( FILE* fp , Sed_epoch_queue q )
 
       for ( link=q->l ; link ; link=link->next )
       {
-         n += sed_epoch_fprint( fp , link->data );
+         n += sed_epoch_fprint (fp, (Sed_epoch)link->data);
       }
 
    }
@@ -889,23 +966,33 @@ sed_epoch_queue_fprint( FILE* fp , Sed_epoch_queue q )
 }
 
 Sed_epoch
-sed_epoch_scan_proc_queue( Sed_epoch          e          ,
-                           Sed_process_init_t p_list[]   ,
-                           Sed_process_family p_family[] ,
-                           Sed_process_check  p_check[]  ,
-                           GError** error )
+sed_epoch_scan_proc_queue (Sed_epoch e,
+                           Sed_process_init_t p_list[],
+                           Sed_process_family p_family[],
+                           Sed_process_check p_check[],
+                           GError** error)
 {
-   eh_require( e );
+   eh_require (e);
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+   eh_return_val_if_fail (error==NULL || *error==NULL, NULL);
 
    if ( e )
    {
       GError* tmp_err = NULL;
+      const gchar* prefix = sed_epoch_prefix (e);
+      gchar* full_name = NULL;
 
-      e->proc_q  = sed_process_queue_init( sed_epoch_filename(e) , p_list , p_family , p_check , &tmp_err );
-      if ( tmp_err )
-         g_propagate_error( error , tmp_err );
+      if (prefix)
+        full_name = g_build_filename (prefix, sed_epoch_filename (e), NULL);
+      else
+        full_name = g_strdup (sed_epoch_filename (e));
+
+      e->proc_q  = sed_process_queue_init (full_name, prefix, p_list, p_family,
+                                           p_check, &tmp_err);
+      if (tmp_err)
+         g_propagate_error (error, tmp_err);
+
+      g_free (full_name);
    }
 
    return e;
@@ -927,7 +1014,8 @@ sed_epoch_queue_set_processes( Sed_epoch_queue    q          ,
       GError* tmp_err = NULL;
 
       for ( l=q->l ; !tmp_err && l ; l=l->next )
-         sed_epoch_scan_proc_queue( l->data , p_list , p_family , p_check , &tmp_err );
+         sed_epoch_scan_proc_queue ((Sed_epoch)l->data, p_list, p_family,
+                                    p_check , &tmp_err);
 
       if ( tmp_err ) g_propagate_error( error , tmp_err );
    } 
@@ -957,7 +1045,10 @@ sed_epoch_queue_test_run( const Sed_epoch_queue q          ,
       for ( epoch = sed_epoch_queue_pop( epoch_q ) ;
             epoch && !tmp_err ;
             epoch = sed_epoch_queue_pop( epoch_q ) )
-         proc_q  = sed_process_queue_init( sed_epoch_filename(epoch) , p_list , p_family , p_check , &tmp_err );
+         proc_q  = sed_process_queue_init (sed_epoch_filename(epoch),
+                                           sed_epoch_prefix(epoch),
+                                           p_list, p_family, p_check,
+                                           &tmp_err);
 
       if ( tmp_err )
       {
@@ -1083,7 +1174,6 @@ sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
       //      t_0                          t_1
       if ( !eh_compare_dbl( t_in_years , t_start , 1e-12 ) )
       { /* If the times are the same, do nothing.  Otherwise, run until stop time. */
-
          if ( t_in_years > t_start )
          { /* Run until the stop time */
             Sed_epoch         epoch     = sed_epoch_queue_find( epoch_q , t_start );
@@ -1110,7 +1200,9 @@ sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
             }
          }
          else
-            eh_warning( "End time less than start time.  Exiting without doing anything." );
+            eh_warning ("End time less than start time.  "
+                        "Exiting without doing anything. (%f<%f)",
+                        t_in_years, t_start);
       }
    }
 

@@ -44,6 +44,7 @@ CLASS ( Sed_process )
 {
    gchar*           name;
    gchar*           tag;
+   gchar* prefix;
 
    gpointer         data;
 
@@ -79,6 +80,20 @@ typedef struct
    GList*      obj_list;
 }
 __Sed_process_link;
+
+#define SED_KEY_TAG "process tag"
+#define SED_KEY_ACTIVE "active"
+#define SED_KEY_LOGGING "logging"
+#define SED_KEY_INTERVAL "repeat interval"
+#define SED_KEY_PREFIX "prefix"
+
+static const gchar* sed_process_req_labels[] =
+{
+   SED_KEY_ACTIVE,
+   SED_KEY_LOGGING,
+   SED_KEY_INTERVAL,
+   NULL
+};
 
 #define SED_PROCESS( ptr )      ( (Sed_process)(ptr) )
 #define SED_PROCESS_LINK( ptr ) ( (__Sed_process_link*)(ptr) )
@@ -143,7 +158,7 @@ sed_process_queue_copy( Sed_process_queue d , Sed_process_queue s )
       d = sed_process_queue_new( );
 
       for ( l=s->l ; l ; l=l->next )
-         d->l = g_list_append( d->l , sed_process_dup( l->data ) );
+         d->l = g_list_append (d->l, sed_process_dup ((Sed_process)l->data));
       
    }
    return d;
@@ -195,7 +210,7 @@ sed_process_queue_destroy( Sed_process_queue q )
       GList* link;
 
       for ( link=q->l ; link ; link=link->next )
-         sed_process_link_destroy( link->data );
+         sed_process_link_destroy ((__Sed_process_link*)link->data);
 
       g_list_free( q->l );
 
@@ -219,11 +234,12 @@ sed_process_link_destroy( __Sed_process_link* link )
 }
 
 Sed_process_queue
-sed_process_queue_init( const gchar*       file       ,
-                        Sed_process_init_t p_list[]   ,
-                        Sed_process_family p_family[] ,
-                        Sed_process_check  p_check[]  ,
-                        GError**           error )
+sed_process_queue_init (const gchar* file,
+                        const gchar* prefix,
+                        Sed_process_init_t p_list[],
+                        Sed_process_family p_family[],
+                        Sed_process_check  p_check[],
+                        GError** error)
 {
    Sed_process_queue q = NULL;
 
@@ -241,6 +257,8 @@ sed_process_queue_init( const gchar*       file       ,
       if ( key_file )
       {
          gssize i;
+
+         eh_key_file_reset_value (key_file, NULL, SED_KEY_PREFIX, prefix);
 
          q = sed_process_queue_new( );
          for ( i=0 ; p_list[i].name ; i++ )
@@ -384,7 +402,7 @@ sed_process_queue_scan( Sed_process_queue q , Eh_key_file file , GError** error 
 
       for ( link=q->l ; !tmp_e && link ; link=link->next )
       {
-         data = link->data;
+         data = (__Sed_process_link*)link->data;
 
          new_p = sed_process_scan( file , data->p , &tmp_e );
 
@@ -496,7 +514,9 @@ sed_process_queue_find_nth_obj( Sed_process_queue q , const gchar* name , gssize
    if ( n>=0 && name && q )
    {
       GList* link = sed_process_queue_find( q , name );
-      if ( link ) obj = g_list_nth_data( SED_PROCESS_LINK(link->data)->obj_list , n );
+      if ( link ) obj = (Sed_process)g_list_nth_data (
+                                       SED_PROCESS_LINK(link->data)->obj_list,
+                                       n);
    }
 
    return obj;
@@ -532,7 +552,7 @@ sed_process_queue_delete( Sed_process_queue q , const gchar* name )
    {
       GList* link = sed_process_queue_find( q , name );
 
-      link->data = sed_process_link_destroy( link->data );
+      link->data = sed_process_link_destroy ((__Sed_process_link*)link->data);
 
       q->l = g_list_delete_link( q->l , link );
    }
@@ -571,7 +591,7 @@ sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
                t < t_total
             && !sed_signal_is_pending( SED_SIG_QUIT )
             && !sed_signal_is_pending( SED_SIG_NEXT ) ;
-            t += sed_cube_time_step( p ) )
+            t = sed_cube_age_in_years (p) )
       {
          sed_process_queue_run( q , p );
 
@@ -664,6 +684,7 @@ Sed_process sed_process_create( const char*  name   ,
 
    p->name         = g_strdup( name );
    p->tag          = NULL;
+   p->prefix = NULL;
    p->interval     = -1;
    p->next_event   = g_array_new(TRUE,TRUE,sizeof(double));
 
@@ -714,6 +735,7 @@ Sed_process sed_process_copy(Sed_process d , Sed_process s)
          g_array_append_val(d->next_event,g_array_index(s->next_event,double,i));
 
       d->tag = g_strdup( s->tag );
+      d->prefix = g_strdup (s->prefix);
 
       //g_memmove( d->data , s->data , s->data_size );
       d->data = s->data;
@@ -752,26 +774,27 @@ sed_process_dup( Sed_process s )
 }
 
 Sed_process
-sed_process_destroy( Sed_process p )
+sed_process_destroy (Sed_process p)
 {
-   if ( p )
-   {
-      if ( p->f_destroy ) p->f_destroy( p );
+  if (p)
+  {
+    if (p->f_destroy) p->f_destroy (p);
 
-      g_array_free(p->next_event,TRUE);
+    g_array_free (p->next_event, TRUE);
 
-      g_timer_destroy( p->info->timer );
+    g_timer_destroy (p->info->timer);
 
-      eh_free( p->child     );
-      eh_free( p->parent    );
-      eh_free( p->info      );
-      eh_free( p->log_files );
-      eh_free( p->name      );
-      eh_free( p->tag       );
-      eh_free( p            );
-   }
+    eh_free (p->child);
+    eh_free (p->parent);
+    eh_free (p->info);
+    eh_free (p->log_files);
+    eh_free (p->name);
+    eh_free (p->tag);
+    eh_free (p->prefix);
+    eh_free (p);
+  }
 
-   return NULL;
+  return NULL;
 }
 
 void
@@ -863,14 +886,16 @@ sed_process_run_now( Sed_process a , Sed_cube p )
 
    if ( a && a->f_run && a->is_set )
    {
-      gchar*           log_name;
+      const gchar* log_name;
       Sed_process_info info;
       gulong           u_secs = 0;
 
       g_timer_start( a->info->timer );
 
-      if ( a->logging ) log_name = a->name;
-      else              log_name = "/dev/null";
+      if ( a->logging )
+        log_name = a->name;
+      else
+        log_name = "/dev/null";
 
       eh_redirect_log( log_name , DEFAULT_LOG );
 
@@ -929,19 +954,6 @@ sed_process_init( Sed_process p , Eh_symbol_table t , GError** error )
    p->is_set = TRUE;
 }
 
-#define SED_KEY_TAG         "process tag"
-#define SED_KEY_ACTIVE      "active"
-#define SED_KEY_LOGGING     "logging"
-#define SED_KEY_INTERVAL    "repeat interval"
-
-static gchar* sed_process_req_labels[] =
-{
-   SED_KEY_ACTIVE   ,
-   SED_KEY_LOGGING  ,
-   SED_KEY_INTERVAL ,
-   NULL
-};
-
 GList*
 sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
 {
@@ -971,6 +983,7 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
       gchar**          active_s = eh_key_file_get_str_values   ( k , p->name , SED_KEY_ACTIVE  );
       gboolean*        logging  = eh_key_file_get_bool_values  ( k , p->name , SED_KEY_LOGGING );
       gchar**          interval = eh_key_file_get_all_values   ( k , p->name , SED_KEY_INTERVAL );
+      gchar** prefix = eh_key_file_get_str_values (k, p->name, SED_KEY_PREFIX);
       gssize           len      = eh_key_file_group_size       ( k , p->name );
       gssize           i;
       Sed_process      new_proc;
@@ -983,6 +996,7 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
       {
          new_proc      = sed_process_dup( p );
          new_proc->tag = tag[i];
+         new_proc->prefix = prefix[i];
 
          if ( eh_str_is_boolean( active_s[i] ) )
          {
@@ -1036,12 +1050,11 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
             else
                new_proc->log_files[0] = NULL;
 
-            g_log_set_handler( new_proc->name ,
-                                 G_LOG_LEVEL_MASK 
-                               | G_LOG_FLAG_FATAL 
-                               | G_LOG_FLAG_RECURSION ,
-                               eh_logger ,
-                               new_proc->log_files );
+            g_log_set_handler (new_proc->name,
+                               (GLogLevelFlags)(G_LOG_LEVEL_MASK|
+                                                G_LOG_FLAG_FATAL|
+                                                G_LOG_FLAG_RECURSION),
+                               eh_logger, new_proc->log_files);
          }
          p_array = g_list_append(p_array,new_proc);
       }
@@ -1056,11 +1069,12 @@ sed_process_scan( Eh_key_file k , Sed_process p , GError** error )
       for ( i=0 ; i<len ; i++ )
          eh_symbol_table_destroy( t[i] );
 
-      eh_free( t       );
-      eh_free( active_s );
-      eh_free( logging );
-      eh_free( tag     );
-      g_strfreev( interval );
+      eh_free (t);
+      eh_free (active_s);
+      eh_free (logging);
+      eh_free (tag);
+      eh_free (prefix);
+      g_strfreev (interval);
    }
 
    if ( tmp_err )
@@ -1138,9 +1152,9 @@ sed_process_queue_summary( FILE* fp , Sed_process_queue q )
 
       for ( this_link=q->l ; this_link ; this_link=this_link->next )
       {
-         link = this_link->data;
+         link = (__Sed_process_link*)this_link->data;
          for ( this_obj=link->obj_list ; this_obj ; this_obj=this_obj->next )
-            n += sed_process_summary( fp , this_obj->data );
+            n += sed_process_summary (fp, (Sed_process)this_obj->data);
       }
    }
    return n;
@@ -1164,9 +1178,9 @@ sed_process_queue_fprint( FILE* fp , Sed_process_queue q )
 
       for ( this_link=q->l ; this_link ; this_link=this_link->next )
       {
-         link = this_link->data;
+         link = (__Sed_process_link*)this_link->data;
          for ( this_obj=link->obj_list ; this_obj ; this_obj=this_obj->next )
-            n += sed_process_fprint( fp , this_obj->data );
+            n += sed_process_fprint (fp, (Sed_process)this_obj->data);
       }
    }
    return n;
@@ -1198,7 +1212,7 @@ sed_process_queue_n_active( Sed_process_queue q )
 
          /* Cycle through each object of this process */
          for ( this_obj=obj_list ; this_obj && !is_active ; this_obj=this_obj->next )
-            is_active = sed_process_is_active( this_obj->data );
+            is_active = sed_process_is_active ((Sed_process)this_obj->data);
 
          if ( is_active )
             n += 1;
@@ -1302,6 +1316,13 @@ sed_process_name( Sed_process p )
 {
    eh_return_val_if_fail( p!=NULL , NULL );
    return g_strdup( p->name );
+}
+
+gchar*
+sed_process_prefix (Sed_process p)
+{
+  eh_return_val_if_fail (p!=NULL, NULL);
+  return g_strdup (p->prefix);
 }
 
 gint
@@ -1516,8 +1537,8 @@ sed_process_queue_check_item( Sed_process_queue q , const gchar* p_name )
          /* Check if the time step of each instance is set to always */
          for ( l=list ; l ; l=l->next )
          {
-            is_active |= sed_process_is_active( l->data );
-            is_always &= sed_process_interval_is_always( l->data );
+            is_active |= sed_process_is_active ((Sed_process)l->data);
+            is_always &= sed_process_interval_is_always ((Sed_process)l->data);
          }
       
          /* Check if any of the instances are turned on */
@@ -1586,9 +1607,9 @@ sed_process_queue_item_interval( Sed_process_queue q , const gchar* name )
 
       for ( l=obj_list ; l && !is_found ; l=l->next )
       {
-         if ( sed_process_is_active( l->data ) )
+         if (sed_process_is_active ((Sed_process)l->data))
          {
-            interval = sed_process_interval( l->data );
+            interval = sed_process_interval ((Sed_process)l->data);
             is_found = TRUE;
          }
       }
@@ -1685,7 +1706,7 @@ sed_process_flag_str( gint flag )
 
    if ( flag )
    {
-      gchar* s = NULL;
+      const gchar* s = NULL;
 
       switch ( flag )
       {

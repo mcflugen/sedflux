@@ -26,6 +26,8 @@
 
 #include "sed_cube.h"
 
+G_BEGIN_DECLS
+
 #define PROCESS_ALWAYS    ( 1 << 3 )
 #define PROCESS_REGULAR   ( 1 << 2 )
 #define PROCESS_IRREGULAR ( 1 << 1 )
@@ -101,7 +103,7 @@ typedef gboolean         (*dump_func)  (gpointer,FILE*);
 
 typedef struct
 {
-   gchar*       name;      //< The name of the process
+   const gchar* name;      //< The name of the process
    init_func    init_f;    //< Function that initialize the process
    run_func     run_f;     //< Function that runs the process
    destroy_func destroy_f; //< Function that destroys the process
@@ -157,6 +159,7 @@ double         sed_process_interval           ( Sed_process p );
 gboolean       sed_process_interval_is_always ( Sed_process p );
 gboolean       sed_process_interval_is_at_end ( Sed_process p );
 gchar*         sed_process_name               ( Sed_process p );
+gchar* sed_process_prefix (Sed_process p);
 gint           sed_process_run_count          ( Sed_process p );
 gboolean       sed_process_is_set             ( Sed_process p );
 gpointer       sed_process_user_data          ( Sed_process p );
@@ -178,11 +181,12 @@ Sed_process_queue sed_process_queue_new     ( void );
 Sed_process_queue sed_process_queue_dup     ( Sed_process_queue );
 Sed_process_queue sed_process_queue_copy    ( Sed_process_queue , Sed_process_queue );
 Sed_process_queue sed_process_queue_destroy ( Sed_process_queue );
-Sed_process_queue sed_process_queue_init    ( const gchar*        file       ,
-                                              Sed_process_init_t* p_list     ,
-                                              Sed_process_family  p_family[] ,
-                                              Sed_process_check   p_check[]  ,
-                                              GError**            error );
+Sed_process_queue sed_process_queue_init    ( const gchar* file,
+                                              const gchar* prefix,
+                                              Sed_process_init_t* p_list,
+                                              Sed_process_family p_family[],
+                                              Sed_process_check p_check[],
+                                              GError** error);
 Sed_process_queue sed_process_queue_set_families( Sed_process_queue q , Sed_process_family f[] , GError** error );
 Sed_process_queue sed_process_queue_scan    ( Sed_process_queue , Eh_key_file , GError** );
 Sed_process_queue sed_process_queue_remove  ( Sed_process_queue , gchar*   );
@@ -216,5 +220,7 @@ gboolean          sed_process_queue_validate  ( Sed_process_queue q , Sed_proces
 //#define sed_new_process(name,type,f_init,f_run,f_load,f_dump) ( sed_process_create(name,sizeof(type),f_init,f_run,f_load,f_dump) )
 
 //#define sed_process_data_val(p,member,type) ( ((type*)((p)->data))->member )
+
+G_END_DECLS
 
 #endif /* process.h is included */
