@@ -23,6 +23,8 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
+#include "compact.h"
+
 #ifdef HAVE_OMP_H
 # include <omp.h>
 #endif

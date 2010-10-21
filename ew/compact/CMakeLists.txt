@@ -16,10 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_compact DESTINATION bin RENAME 
 
 ########### next target ###############
 
-SET(compact_LIB_SRCS
-   compact.c
-)
+set (compact_LIB_SRCS compact.c)
 
+set_source_files_properties (${compact_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(compact ${compact_LIB_SRCS})
 
 target_link_libraries(compact sedflux)
