@@ -1,13 +1,10 @@
 #if !defined (SUBSIDENCE_API_H)
 #define SUBSIDENCE_API_H
 
-/** Subidence model state variable
+#include <glib.h>
+#include "subside.h"
 
-This is a completely opaque data structure that holds the state of a
-subsidence model.
-
-*/
-typedef struct Subside_state Subside_state;
+G_BEGIN_DECLS
 
 /** Create and initialize a new Subside_state
 
@@ -49,9 +46,12 @@ int sub_get_nx (Subside_state*);
 int sub_get_ny (Subside_state*);
 
 void sub_set_load (Subside_state*, double*);
+void sub_set_load_at (Subside_state* state, double load, int i, int j);
 void sub_set_eet (Subside_state*, double);
 void sub_set_youngs (Subside_state*, double);
 void sub_set_relax_time (Subside_state*, double);
+
+G_END_DECLS
 
 #endif
 

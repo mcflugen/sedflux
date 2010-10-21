@@ -121,14 +121,14 @@ subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y )
 #pragma omp parallel for num_threads(4)
             for ( j=0 ; j<n_x ; j++ )
             {
-               double* w_row = eh_grid_row(w,j);
+               double* w_row = (double*)eh_grid_row(w,j);
                gint i;
                gint d_row;
                for ( i=0 ; i<n_x ; i++ )
                { /* For each row of loads */
                   d_row = abs(j-i);
                   subside_parallel_row( w_row,
-                                        eh_grid_row(v_0,i),
+                                        (double*)eh_grid_row(v_0,i),
                                         n_y,
                                         dy,
                                         d_row*dx,
@@ -411,7 +411,7 @@ get_flexure_parameter( double h , double E , gssize n_dim )
    return alpha;
 }
 
-static gchar* _default_config[] = {
+static const gchar* _default_config[] = {
 "effective elastic thickness",
 "Youngs modulus",
 "relaxation time",
@@ -422,7 +422,7 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_config);
+    return g_strjoinv ("\n", (gchar**)_default_config);
   else
     return NULL;
 }

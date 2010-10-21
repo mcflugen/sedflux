@@ -16,11 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME 
 
 ########### next target ###############
 
-SET(subside_LIB_SRCS
-   subside.c
-   subside_api.c
-)
+set (subside_LIB_SRCS subside.c subside_api.c)
 
+set_source_files_properties (${subside_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(subside ${subside_LIB_SRCS})
 
 target_link_libraries(subside sedflux)
