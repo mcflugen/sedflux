@@ -119,16 +119,49 @@ sed_river_set_avulsion_data( Sed_riv r , Avulsion_st* data )
 Sed_riv
 sed_river_impart_avulsion_data( Sed_riv r )
 {
+  Sed_riv left = sed_river_left (r);
+  Sed_riv right = sed_river_right (r);
+  Avulsion_st* parent_data = sed_river_avulsion_data(r);
+
+  if (left)
+  {
+    if (sed_river_avulsion_data (left)==NULL)
+    {
+      Avulsion_st* left_data = avulsion_dup (parent_data);
+      left_data->std_dev  *=.5;
+      sed_river_set_avulsion_data (left, left_data);
+    }
+    else
+      sed_river_impart_avulsion_data (left);
+  }
+
+  if (right)
+  {
+    if (sed_river_avulsion_data (right)==NULL)
+    {
+      Avulsion_st* right_data = avulsion_dup (parent_data);
+      right_data->std_dev  *=.5;
+      sed_river_set_avulsion_data (right, right_data);
+    }
+  else
+    sed_river_impart_avulsion_data (right);
+  }
+
+/*
    Avulsion_st* parent_data = sed_river_avulsion_data(r);
    Avulsion_st* left_data   = avulsion_dup( parent_data );
    Avulsion_st* right_data  = avulsion_dup( parent_data );
 
    left_data->std_dev  *=.5;
-   right_data->std_dev *=2.;
+   right_data->std_dev *=.5;
 
+eh_watch_ptr (sed_river_left (r));
+eh_watch_ptr (left_data);
+eh_watch_ptr (sed_river_right (r));
+eh_watch_ptr (right_data);
    sed_river_set_avulsion_data( sed_river_left (r) , left_data  );
    sed_river_set_avulsion_data( sed_river_right(r) , right_data );
-
+*/
    return r;
 }
 
@@ -142,7 +175,7 @@ sed_river_unset_avulsion_data( Sed_riv r )
 Avulsion_st*
 sed_river_avulsion_data( Sed_riv r )
 {
-   return g_dataset_id_get_data( r , AVULSION_DATA );
+   return (Avulsion_st*)g_dataset_id_get_data( r , AVULSION_DATA );
 }
 
 Sed_riv
@@ -156,6 +189,7 @@ sed_river_avulse( Sed_riv r )
       double       last_angle = sed_river_angle        ( r );
       Avulsion_st* data       = sed_river_avulsion_data( r );
 
+//eh_watch_ptr (r);
       eh_require( data );
 
       if ( data && data->std_dev>0 )
@@ -224,7 +258,7 @@ sed_cube_avulse_all_rivers( Sed_cube c )
    return sed_cube_foreach_river( c , (GFunc)&sed_cube_avulse_river_helper , c );
 }
 
-gchar* _default_avulsion_config [] = {
+const gchar* _default_avulsion_config [] = {
 "standard deviation: 0.75",
 "minimum angle (degrees): 0",
 "maximum angle (degrees): 180",
@@ -240,8 +274,11 @@ gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_avulsion_config);
+    return g_strjoinv ("\n", (gchar**)_default_avulsion_config);
   else
     return NULL;
 }
+
+
+
 

@@ -22,9 +22,12 @@
 #define AVULSION_H
 
 #include <glib.h>
-#include "sed/sed_sedflux.h"
+#include "sed/sed_cube.h"
+#include "sed/sed_river.h"
 
-#define AVULSION_PROGRAM_NAME  "avlusion"
+G_BEGIN_DECLS
+
+#define AVULSION_PROGRAM_NAME  "avulsion"
 #define AVULSION_MAJOR_VERSION (1)
 #define AVULSION_MINOR_VERSION (0)
 #define AVULSION_MICRO_VERSION (0)
@@ -51,6 +54,8 @@ Sed_riv      sed_river_impart_avulsion_data( Sed_riv r );
 Avulsion_st* sed_river_avulsion_data       ( Sed_riv r );
 Sed_cube     sed_cube_avulse_river         ( Sed_cube c , Sed_riv r );
 Sed_cube     sed_cube_avulse_all_rivers    ( Sed_cube c );
+
+G_END_DECLS
 
 #endif
 

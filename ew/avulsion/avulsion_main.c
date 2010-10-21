@@ -24,6 +24,7 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 #include "avulsion.h"
+#include "avulsion_api.h"
 
 static double   init_angle = 90.;
 static double   min_angle  = 0.;
@@ -84,6 +85,11 @@ Avulsion_out_type output_type;
 
 int main( int argc , char *argv[] )
 {
+   g_thread_init (NULL);
+   eh_init_glib ();
+   g_log_set_handler (NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
+
+  {
    GError* error = NULL;
    GOptionContext* context = g_option_context_new( "Run random walk avulsion model" );
    gchar** command_line = eh_new0( gchar* , argc );
@@ -91,8 +97,6 @@ int main( int argc , char *argv[] )
 
    for ( i=1 ; i<argc ; i++ )
       command_line[i-1] = g_strdup( argv[i] );
-
-   g_thread_init(NULL);
 
    g_option_context_add_main_entries( context , entries , NULL );
 
@@ -141,11 +145,14 @@ int main( int argc , char *argv[] )
    if ( lite )
       avulsion_lite( );
    else
-      avulsion_full( );
+      main_new ();
+      //avulsion_full( );
 
    g_strfreev( command_line );
 
-   return 0;
+  }
+
+  return 0;
 }
 
 int
@@ -252,7 +259,7 @@ int avulsion_full( )
          for ( i=0 ; i<n_rivers ; i++ )
          {
             river_data[i][0] = 0.;
-            river_data[i][1] = 180.;
+            river_data[i][1] = 90.;
             river_data[i][2] = std_dev*S_DEGREES_PER_RAD;
          }
       }
@@ -329,6 +336,101 @@ int avulsion_full( )
    sed_sediment_unset_env();
 
    return 0;
+}
+
+int
+main_new ()
+{
+  Avulsion_state* s = avulsion_init (NULL);
+
+  eh_message ("Read sediment file");
+  {
+    GError* error = NULL;
+    //Sed_sediment sediment_type = sed_sediment_scan (NULL, &error);
+    gchar* buffer = sed_sediment_default_text ();
+    Sed_sediment sediment_type = sed_sediment_scan_text (buffer, &error);
+
+    if (!sediment_type)
+      eh_error ("%s: Unable to read sediment file: %s", SED_SEDIMENT_TEST_FILE,
+                error->message);
+
+    sed_sediment_set_env( sediment_type );
+    sed_sediment_destroy( sediment_type );
+  }
+
+  eh_message ("Set the grid");
+  { /* Set the grid */
+    Eh_dbl_grid bathy_grid = sed_get_floor_3_default (3, n_i, n_j);
+    gint shape[2] = {n_j, n_i};
+    double res[2] = {1., 1.};
+
+    avulsion_set_grid (s, shape, res);
+    avulsion_set_elevation (s, eh_dbl_grid_data_start (bathy_grid));
+
+    eh_grid_destroy (bathy_grid, TRUE);
+  }
+
+  eh_message ("Set avulsion data");
+  {
+    gchar* buffer = sed_hydro_default_text ();
+    Sed_hydro* hydro_data = sed_hydro_scan_text (buffer, NULL);
+
+    eh_message ("Set angle limits");
+    {
+      double limit[2];
+      limit[0] = min_angle;
+      limit[1] = max_angle;
+
+      avulsion_set_river_angle_limit (s, limit);
+    }
+
+    eh_message ("Set variance");
+    {
+      double variance = std_dev;
+
+      avulsion_set_variance (s, variance);
+    }
+
+    eh_message ("Set hinge");
+    {
+      gint hinge[2];
+      hinge[0] = 0;
+      hinge[1] = n_i/2;
+
+      avulsion_set_river_hinge (s, hinge);
+    }
+
+    eh_message ("Set hydro");
+    //avulsion_set_river_hydro (s, hydro_data[0]);
+
+    eh_message ("Run the model");
+    {
+      int i;
+      for (i=1; i<=n_times; i++)
+      {
+        avulsion_run_until (s, i);
+        fprintf (stderr, "%f\n", avulsion_get_angle (s));
+      }
+
+      {
+        gint lower[3], upper[3], stride[3];
+        double* data = avulsion_get_value_data (s, "discharge", lower, upper,
+                                                stride);
+        const int len = n_i*n_j;
+        for (i=0; i<len; i++)
+          fprintf (stdout,"%f\n", data[i]);
+      }
+    }
+
+    eh_message ("Clean up the model");
+    avulsion_finalize (s, FALSE);
+
+    eh_message ("Done");
+    sed_sediment_unset_env();
+
+  }
+
+  return 0;
 }
 
 void deposit_sediment_helper( Sed_riv this_river , Sed_cube c );
