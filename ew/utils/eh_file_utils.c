@@ -145,10 +145,10 @@ eh_open_file( const char *filename , const char *type )
 }
 
 FILE*
-eh_open_temp_file( const char *template , char **name_used )
+eh_open_temp_file( const char *tmpl, char **name_used )
 {
    GError *error;
-   int fd = g_file_open_tmp( template , name_used , &error );
+   int fd = g_file_open_tmp( tmpl, name_used , &error );
    return fdopen( fd , "w+" );
 }
 

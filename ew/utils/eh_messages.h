@@ -1,6 +1,9 @@
 #ifndef __EH_MESSAGES_H__
 #define __EH_MESSAGES_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #if defined( DISABLE_WATCH_POINTS )
 
 #define eh_watch_int( val ) {}
@@ -176,5 +179,9 @@
 #define eh_return_if_fail( expr ) if ( !(expr) ) { return; } else
 
 #endif /* disable checks */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* eh_messages.h */

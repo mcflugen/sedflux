@@ -1,6 +1,9 @@
 #ifndef __EH_NDGRID_H__
 #define __EH_NDGRID_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 #include <utils/eh_types.h>
 #include <utils/eh_grid.h>
@@ -31,6 +34,10 @@ gssize      eh_ndgrid_write       ( FILE *fp         , Eh_ndgrid g          );
 
 double* eh_ndgrid_start (Eh_ndgrid g);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

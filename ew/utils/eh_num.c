@@ -1109,7 +1109,7 @@ double rtsafe(void (*funcd)(double, double *, double *, double *), double x1, do
 }
 #undef MAXIT
 
-void nrerror(char error_text[])
+void nrerror(const char error_text[])
 {
    fprintf( stderr , "%s\n" , error_text );
    eh_exit(-1);
@@ -2516,7 +2516,7 @@ void ludcmp( double** a , gssize n , gssize* indx , double* d )
 
 void savgol(double* c, gssize np , gssize nl , gssize nr , gssize ld , gssize m )
 {
-   void lubksb(),ludcmp();
+   //void lubksb(),ludcmp();
    gssize imj,ipj,j,k,kk,mm,*indx;
    double d,fac,sum,**a,*b;
 

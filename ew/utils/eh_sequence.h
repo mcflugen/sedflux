@@ -1,6 +1,9 @@
 #ifndef __EH_SEQUENCE_H__
 #define __EH_SEQUENCE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 
 /** A sequence of data
@@ -16,5 +19,9 @@ Eh_sequence;
 Eh_sequence* eh_create_sequence ( void );
 Eh_sequence* eh_add_to_sequence ( Eh_sequence* s , double t , gpointer data );
 void         eh_destroy_sequence( Eh_sequence* s , gboolean free_mem );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

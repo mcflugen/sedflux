@@ -1,6 +1,9 @@
 #ifndef __EH_STATUS_BAR_H__
 #define __EH_STATUS_BAR_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 
 typedef enum
@@ -30,6 +33,10 @@ Eh_status_bar* eh_status_bar_pause     ( Eh_status_bar* b );
 Eh_status_bar* eh_status_bar_destroy   ( Eh_status_bar* b );
 
 gchar*   eh_render_time_str( double sec );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* eh_status_bar.h */
 

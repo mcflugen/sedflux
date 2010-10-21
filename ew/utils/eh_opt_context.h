@@ -21,6 +21,9 @@
 #ifndef __EH_OPT_CONTEXT_H__
 #define __EH_OPT_CONTEXT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <utils/eh_types.h>
@@ -66,6 +69,10 @@ double         eh_opt_dbl_value        ( Eh_opt_context c , char *label );
 void           eh_opt_print_key_file   ( Eh_opt_context c , FILE *fp );
 void           eh_opt_print_all_opts   ( Eh_opt_context c , FILE *fp );
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

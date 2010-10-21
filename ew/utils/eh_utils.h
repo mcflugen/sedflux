@@ -1,6 +1,10 @@
 #ifndef __EH_UTILS_H__
 #define __EH_UTILS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -38,5 +42,9 @@
 #include <utils/eh_messages.h>
 #include <utils/eh_macros.h>
 #include <utils/eh_misc.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

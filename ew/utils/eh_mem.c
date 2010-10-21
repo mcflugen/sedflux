@@ -132,10 +132,10 @@ typedef struct Heap_Prefix*  Heap_Prefix;
 typedef struct Heap_Postfix* Heap_Postfix;
 #define new_handle( Handle ) typedef struct tag_##Handle *Handle
 */
-typedef struct Heap_Prefix*  Heap_Prefix;
-typedef struct Heap_Postfix* Heap_Postfix;
+typedef struct _Heap_Prefix*  Heap_Prefix;
+typedef struct _Heap_Postfix* Heap_Postfix;
 
-typedef struct Heap_Prefix
+typedef struct _Heap_Prefix
 {
    char pad[4];
    Heap_Prefix prev;
@@ -147,7 +147,7 @@ typedef struct Heap_Prefix
    Class_Desc class_desc;
 } Prefix;
 
-typedef struct Heap_Postfix
+typedef struct _Heap_Postfix
 {
    Heap_Prefix prefix;
 } Postfix;
@@ -271,7 +271,7 @@ void API_ENTRY eh_free_c_style( gpointer mem )
 gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
                                const char *file , int line_no )
 {
-   void *new = NULL;
+   void *new_ptr = NULL;
 
    if ( old )
    {
@@ -297,8 +297,8 @@ gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
          pre->postfix->prefix = pre;
          pre->mem             = pre+1;
 
-         new = ( new_prefix?&new_prefix[1]:NULL );
-         if ( !new )
+         new_ptr = ( new_prefix?&new_prefix[1]:NULL );
+         if ( !new_ptr )
          {
             assert_error;
          }
@@ -314,10 +314,10 @@ gpointer API_ENTRY eh_realloc( gpointer old     , gsize w_size ,
    }
    else
    {
-      new = eh_malloc( w_size , NULL , file , line_no );
+      new_ptr = eh_malloc( w_size , NULL , file , line_no );
    }
 
-   return new;
+   return new_ptr;
 }
 
 gpointer API_ENTRY eh_realloc_c_style( gpointer old , gsize w_size )

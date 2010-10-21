@@ -21,6 +21,9 @@
 #ifndef __EH_GET_OPT_H__
 #define __EH_GET_OPT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <utils/eh_types.h>
@@ -76,7 +79,8 @@ void eh_args_insert_default(Eh_args *t, char *key, char *value);
 //             : the check.
 // help_mesage : a help message to print to stderr if an error is encountered, or if
 //             : help=yes is supplied on the command line.  null if no error message.
-gboolean eh_check_opts( Eh_args* args, char **required , char **possible , char **help_message );
+gboolean eh_check_opts (Eh_args* args, char **required, char **possible,
+                        const char **help_message);
 
 // get the value (expresed as a string) given by the command line option, label or
 // NULL if not given.
@@ -137,9 +141,13 @@ double eh_get_opt_dbl( Eh_args *args , char *label , double default_val );
 // fp          : a file pointer.
 // message     : a null terminated list of text line to print.  a new line character is
 //             : added to the end of each line weather there is already one there or not.
-gint eh_print_message( FILE *fp , char *message[] );
+gint eh_print_message( FILE *fp , const char *message[] );
 
 void eh_print_all_opts( Eh_args *args , char *prog_name , FILE *fp );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

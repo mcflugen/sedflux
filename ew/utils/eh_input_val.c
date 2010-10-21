@@ -57,13 +57,13 @@ eh_input_val_new( )
 Eh_input_val
 eh_input_val_destroy( Eh_input_val val )
 {
-   if ( val )
+   if (val)
    {
-      eh_free( val->x         );
-      eh_free( val->y         );
-      eh_free( val->file      );
-      g_rand_free( val->rand );
-      eh_free( val );
+      eh_free (val->x);
+      eh_free (val->y);
+      eh_free (val->file);
+      g_rand_free (val->rand);
+      eh_free (val);
    }
    return NULL;
 }
@@ -170,8 +170,8 @@ eh_input_val_set( const char *input_str , GError** err )
                val->type = type;
                val->file = file;
                val->len = n_cols;
-               val->x   = g_memdup( data[0] , sizeof(double)*n_cols );
-               val->y   = g_memdup( data[1] , sizeof(double)*n_cols );
+               val->x = (double*)g_memdup (data[0], sizeof(double)*n_cols);
+               val->y = (double*)g_memdup (data[1], sizeof(double)*n_cols);
             }
          }
 

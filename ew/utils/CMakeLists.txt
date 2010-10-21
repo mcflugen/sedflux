@@ -40,6 +40,9 @@ SET(utils_LIB_SRCS
    eh_file_utils.c
 )
 
+set_source_files_properties (${utils_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+
+
 add_library(utils ${utils_LIB_SRCS})
 
 target_link_libraries(utils m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} )
@@ -49,15 +52,14 @@ install(TARGETS utils DESTINATION lib COMPONENT sedflux)
 
 ########### next target ###############
 
-SET(test_scanner_SRCS
-   test_scanner.c
-)
+#SET(test_scanner_SRCS test_scanner.c)
 
-add_executable(test_scanner ${test_scanner_SRCS})
+#set_source_files_properties (${test_scanner_SRCS} PROPERTIES LANGUAGE CXX)
+#add_executable(test_scanner ${test_scanner_SRCS})
 
-target_link_libraries(test_scanner utils utils m)
+#target_link_libraries(test_scanner utils m)
 
-install(TARGETS test_scanner DESTINATION bin COMPONENT sedflux)
+#install(TARGETS test_scanner DESTINATION bin COMPONENT sedflux)
 
 ########### Optional unit tests ###############
 
@@ -93,8 +95,10 @@ add_executable (utils-test-symbol-table ${symbol_table_tests_SRCS})
 target_link_libraries (utils-test-symbol-table utils)
 
 set (grid_tests_SRCS test_grid.c)
+set_source_files_properties (${grid_test_SRCS} PROPERTIES LANGUAGE CXX)
 add_executable (utils-test-grid ${grid_tests_SRCS})
 target_link_libraries (utils-test-grid utils)
+set_target_properties (utils-test-grid PROPERTIES LINKER_LANGUAGE CXX)
 
 set (num_tests_SRCS test_num.c)
 add_executable (utils-test-num ${num_tests_SRCS})

@@ -597,8 +597,8 @@ gboolean eh_dbl_grid_cmp( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 , double eps )
    else
    {
       gssize i, n_elem = eh_grid_n_el(g_1);
-      double* data_1 = eh_grid_data_start( g_1 );
-      double* data_2 = eh_grid_data_start( g_2 );
+      double* data_1 = (double*)eh_grid_data_start( g_1 );
+      double* data_2 = (double*)eh_grid_data_start( g_2 );
       for ( i=0,is_same=TRUE ; i<n_elem && is_same ; i++ )
          if ( fabs( data_1[i] - data_2[i] ) > eps )
             is_same = FALSE;
@@ -738,7 +738,7 @@ int eh_dbl_grid_write( FILE *fp , Eh_dbl_grid g )
    int n, i, i_0;
    int one = 1, size;
    double this_val;
-   double* data = eh_grid_data_start(g);
+   double* data = (double*)eh_grid_data_start(g);
 
    for ( i_0=0 ; i_0<n_i ; i_0+=n )
    {
@@ -807,8 +807,8 @@ eh_dbl_grid_subtract( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 )
    {
       gint       i;
       const gint n_i      = g_1->n_x*g_1->n_y;
-      double*    g_1_data = eh_grid_data_start(g_1);
-      double*    g_2_data = eh_grid_data_start(g_2);
+      double*    g_1_data = (double*)eh_grid_data_start(g_1);
+      double*    g_2_data = (double*)eh_grid_data_start(g_2);
 
       eh_require( eh_grid_is_compatible( g_1 , g_2 ) );
 
@@ -838,8 +838,8 @@ eh_dbl_grid_add( Eh_dbl_grid g_1 , Eh_dbl_grid g_2 )
    {
       gint       i;
       const gint n_i      = g_1->n_x*g_1->n_y;
-      double*    g_1_data = eh_grid_data_start(g_1);
-      double*    g_2_data = eh_grid_data_start(g_2);
+      double*    g_1_data = (double*)eh_grid_data_start(g_1);
+      double*    g_2_data = (double*)eh_grid_data_start(g_2);
 
       eh_require( eh_grid_is_compatible( g_1 , g_2 ) );
 
@@ -885,7 +885,7 @@ eh_dbl_grid_sum_bad_val( Eh_dbl_grid g , double bad_val )
    {
       gint          i;
       const gint    n_i  = eh_grid_n_el(g);
-      double*       data = eh_grid_data_start( g );
+      double*       data = (double*)eh_grid_data_start( g );
 
       if ( eh_isnan( bad_val ) )
       {
@@ -918,7 +918,7 @@ eh_dbl_grid_set( Eh_dbl_grid g , const double val )
    {
       gint       i;
       const gint n_i  = eh_grid_n_el( g );
-      double*    data = eh_grid_data_start( g );
+      double*    data = (double*)eh_grid_data_start( g );
       for ( i=0 ; i<n_i ; i++ )
          data[i] = val;
    }
@@ -942,7 +942,7 @@ eh_dbl_grid_randomize( Eh_dbl_grid g )
    {
       gint       i;
       const gint n_i  = eh_grid_n_el( g );
-      double*    data = eh_grid_data_start( g );
+      double*    data = (double*)eh_grid_data_start( g );
       for ( i=0 ; i<n_i ; i++ )
          data[i] = g_random_double();
    }
@@ -967,7 +967,7 @@ eh_dbl_grid_scalar_mult( Eh_dbl_grid g , double val )
    {
       gint       i;
       const gint n_i  = eh_grid_n_el(g);
-      double*    data = eh_grid_data_start(g);
+      double*    data = (double*)eh_grid_data_start(g);
 
       for ( i=0 ; i<n_i ; i++ )
          data[i] *= val;
@@ -1200,9 +1200,10 @@ interpolate_2_bad_val( Eh_dbl_grid source , Eh_dbl_grid dest ,
    temp_dest   = eh_new( double , eh_grid_n_x(dest)   );
 
    for ( i=0 ; i<eh_grid_n_x(source) ; i++ )
-      interpolate_bad_val( eh_grid_y(source) , eh_grid_row(source,i) , eh_grid_n_y(source) ,
-                           eh_grid_y(dest)   , eh_grid_row(temp,i)   , eh_grid_n_y(dest)   ,
-                           bad_val );
+      interpolate_bad_val (eh_grid_y(source), (double*)eh_grid_row(source,i),
+                           eh_grid_n_y(source), eh_grid_y(dest),
+                           (double*)eh_grid_row(temp,i), eh_grid_n_y(dest),
+                           bad_val);
 
    for ( j=0 ; j<eh_grid_n_y(dest) ; j++ )
    {
@@ -1466,9 +1467,9 @@ eh_dbl_grid_rebin_bad_val( Eh_dbl_grid source , Eh_dbl_grid dest , double bad_va
          { /* Rebin the rows of the destination grid */
             gint i;
             for ( i=0 ; i<source->n_x ; i++ )
-               eh_rebin_dbl_array_bad_val( source->y , source->data[i] , source->n_y ,
-                                           dest->y   , temp[i]         , dest->n_y   ,
-                                           bad_val );
+               eh_rebin_dbl_array_bad_val (source->y, (double*)source->data[i],
+                                           source->n_y, dest->y, temp[i],
+                                           dest->n_y, bad_val);
          }
 
 //   dest_data = dest->data;
@@ -1684,7 +1685,8 @@ eh_dbl_grid_diff( Eh_dbl_grid g , gssize n , gssize dim )
       gssize i;
 
       for ( i=0 ; i<g->n_x ; i++ )
-         eh_dbl_array_diff( diff->data[i] , g->data[i] , n , g->n_y );
+         eh_dbl_array_diff ((double*)diff->data[i], (double*)g->data[i], n,
+                            g->n_y);
    }
 
    if ( dim==1 )
@@ -1874,7 +1876,7 @@ eh_dbl_grid_row_is_gt( Eh_dbl_grid g , gint row , double val )
 
    if ( g )
    {
-      double* x = eh_grid_row( g , row );
+      double* x = (double*)eh_grid_row (g, row);
 
       if ( x )
       {

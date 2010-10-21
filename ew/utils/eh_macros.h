@@ -21,6 +21,9 @@
 #ifndef __EH_MACROS_H__
 #define __EH_MACROS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define E_BADVAL (G_MAXFLOAT)
 #define E_NOVAL  (G_MAXFLOAT)
 
@@ -47,7 +50,7 @@
 #define eh_clamp( val , low , high ) \
    ( val = ((val)<(low))?(low):(((val)>(high))?(high):(val)) )
 
-#define EH_SWAP_PTR( a , b ) { void* t=(b); (b)=(a); (a)=t; }
+#define EH_SWAP_PTR( a , b ) { __typeof__ (b) t=(b); (b)=(a); (a)=t; }
 #define swap_int( a , b ) { int temp=b; b=a; a=temp; }
 #define swap_dbl( a , b ) { double temp=b; b=a; a=temp; }
 #define swap_dbl_vec( x , i , j ) { double temp=x[i]; x[i]=x[j]; x[j]=temp; }
@@ -152,5 +155,9 @@
 			   }
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* eh_macros.h is included */

@@ -1,6 +1,9 @@
 #ifndef __EH_KEY_FILE_H__
 #define __EH_KEY_FILE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 //#include "utils.h"
 #include <utils/eh_types.h>
@@ -113,5 +116,9 @@ Eh_symbol_table eh_key_file_scan_text_for (const gchar* buffer,
                                            Eh_symbol_table tab,
                                            GError** error);
 Eh_symbol_table eh_key_file_pop_group       ( Eh_key_file f );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

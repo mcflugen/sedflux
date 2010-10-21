@@ -21,6 +21,9 @@
 #ifndef __EH_NUM_H__
 #define __EH_NUM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <utils/complex.h>
@@ -198,5 +201,9 @@ Eh_num_method;
 double* eh_dbl_array_diffuse_implicit( double* x , gint len , double c );
 double* eh_dbl_array_diffuse_explicit( double* x , gint len , double c );
 double* eh_dbl_array_diffuse         ( double* x , gint len , double c , Eh_num_method method );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

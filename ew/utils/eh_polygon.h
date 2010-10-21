@@ -1,6 +1,9 @@
 #ifndef __EH_POLYGON_H__
 #define __EH_POLYGON_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 
 /** A point defined by an x-y pair.
@@ -46,5 +49,9 @@ double *derivative(pos_t v) G_GNUC_DEPRECATED;
 
 Eh_pt_2  eh_create_pt_2( double x , double y );
 gboolean eh_cmp_pt_2   ( Eh_pt_2 a , Eh_pt_2 b , double eps );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

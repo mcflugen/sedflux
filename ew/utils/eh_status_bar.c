@@ -71,8 +71,8 @@ print_status( gpointer data )
    double  eta;
    gchar*  t_str;
    gchar*  eta_str;
-   gchar*  status_bar[] = { "." , "o" , "0" , "O" , NULL };
-   gchar** p = status_bar;
+   const gchar*  status_bar[] = { "." , "o" , "0" , "O" , NULL };
+   const gchar** p = status_bar;
 
    fprintf( stderr , "\n" );
    fprintf( stderr , " Current        |   Elapsed   |     ETA     \n" );

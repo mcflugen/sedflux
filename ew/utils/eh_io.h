@@ -1,6 +1,9 @@
 #ifndef __EH_IO_H__
 #define __EH_IO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 
@@ -75,8 +78,12 @@ double*   eh_scan_dbl_array      ( FILE* fp , gint* len , GError** error );
 gboolean* eh_scan_boolean_array  ( FILE *fp , gint* len , GError** error );
 
 void     eh_print_msg            ( int   msg_level , char *function_name , char *msg );
-gchar*   eh_input_str            ( char* msg , char *default_str );
-gboolean eh_input_boolean        ( char* msg , gboolean default_val );
-gchar*   eh_get_input_val        ( FILE* fp  , char *msg , char *default_str );
+gchar*   eh_input_str            ( const char* msg , const char *default_str );
+gboolean eh_input_boolean (const char* msg, gboolean default_val);
+gchar*   eh_get_input_val        ( FILE* fp  , const char *msg , const char *default_str );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

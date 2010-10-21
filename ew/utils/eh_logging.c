@@ -55,7 +55,7 @@ eh_open_log( const char *log_name )
    if ( log_name )
    {
 
-      log_fp_vec = g_hash_table_lookup( _log_files_ , log_name );
+      log_fp_vec = (GPtrArray*)g_hash_table_lookup (_log_files_, log_name);
       if ( log_fp_vec )
          fp = (FILE*)g_ptr_array_index(log_fp_vec,log_fp_vec->len-1);
       else
@@ -165,18 +165,18 @@ void eh_reset_log(const char *log_file)
      g_ptr_array_remove_index(log_fp_vec,log_fp_vec->len-1);
 }
 
-static GLogLevelFlags eh_ignore_log_level = 0;
+static GLogLevelFlags eh_ignore_log_level = (GLogLevelFlags)0;
 
 void
-eh_set_ignore_log_level( GLogLevelFlags ignore )
+eh_set_ignore_log_level (GLogLevelFlags ignore)
 {
-   eh_ignore_log_level |= ignore;
+   eh_ignore_log_level = (GLogLevelFlags)(eh_ignore_log_level | ignore);
 }
 
 GLogLevelFlags
 eh_set_verbosity_level( gint verbosity )
 {
-   GLogLevelFlags ignore = 0;
+   GLogLevelFlags ignore = (GLogLevelFlags)0;
 
    if ( verbosity<0 )
       verbosity = 0;
@@ -187,17 +187,17 @@ eh_set_verbosity_level( gint verbosity )
    switch ( verbosity )
    {
       case 0:
-         ignore |= G_LOG_LEVEL_ERROR;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_ERROR);
       case 1:
-         ignore |= G_LOG_LEVEL_CRITICAL;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_CRITICAL);
       case 2:
-         ignore |= G_LOG_LEVEL_WARNING;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_WARNING);
       case 3:
-         ignore |= G_LOG_LEVEL_MESSAGE;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_MESSAGE);
       case 4:
-         ignore |= G_LOG_LEVEL_INFO;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_INFO);
       case 5:
-         ignore |= G_LOG_LEVEL_DEBUG;
+         ignore = (GLogLevelFlags)(ignore | G_LOG_LEVEL_DEBUG);
    }
 
    eh_set_ignore_log_level( ignore );
@@ -230,7 +230,9 @@ void eh_logger( const gchar*   log_domain ,
                 gpointer       user_data )
 {
    FILE **fp_list;
-   gchar *log_label = NULL;
+   const gchar* warning_label = "Warning";
+   const gchar* error_label = "Error";
+   const gchar *log_label = NULL;
    gboolean is_fatal = (log_level & G_LOG_FLAG_FATAL) != 0;
    int i;
 
@@ -250,13 +252,13 @@ void eh_logger( const gchar*   log_domain ,
    }
 
    if ( log_level & G_LOG_LEVEL_WARNING )
-      log_label = "Warning";
+      log_label = warning_label;
    else if ( log_level & G_LOG_LEVEL_ERROR )
-      log_label = "Error";
+      log_label = error_label;
 
    for ( i=0 ; fp_list[i]!=NULL ; i++ )
    {
-      if ( log_label )
+      if (log_label)
          fprintf( fp_list[i] , "%s: " , log_label );
       if ( log_domain && !(log_level&EH_LOG_LEVEL_DATA) )
          fprintf( fp_list[i] , "%s: " , log_domain );

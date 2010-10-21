@@ -77,18 +77,20 @@ Eh_symbol_table eh_data_record_table( Eh_data_record p )
    return p->t;
 }
 
-double* eh_data_record_row( Eh_data_record p , gssize row )
+double*
+eh_data_record_row (Eh_data_record p, gssize row)
 {
    if ( p && row < eh_grid_n_x(p->g) && row >=0 )
-      return eh_grid_row(p->g,row);
+      return (double*)eh_grid_row(p->g,row);
 
    return NULL;
 }
 
-double* eh_data_record_dup_row( Eh_data_record p , gssize row )
+double*
+eh_data_record_dup_row (Eh_data_record p, gssize row)
 {
-   return g_memdup( eh_data_record_row(p,row) , eh_data_record_size(p,1)*sizeof(double) );
-   
+   return (double*)g_memdup (eh_data_record_row(p,row),
+                             eh_data_record_size (p,1)*sizeof(double));
 }
 
 void eh_data_record_set_row( Eh_data_record p , int row , double* a )
@@ -129,8 +131,8 @@ void eh_data_record_interpolate_rows( Eh_data_record p , gssize row , double* y 
       for ( i=0 ; i<eh_grid_n_x(p->g) ; i++ )
       {
          if ( i!=row )
-            interpolate( y_0 , eh_grid_row(p->g,i)     , eh_grid_n_y(p->g) ,
-                         y   , eh_grid_row(new_grid,i) , new_len );
+            interpolate (y_0, (double*)eh_grid_row(p->g,i), eh_grid_n_y(p->g),
+                         y, (double*)eh_grid_row(new_grid,i), new_len);
       }
 
       eh_grid_destroy( p->g , TRUE );

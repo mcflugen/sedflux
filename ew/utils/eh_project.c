@@ -101,7 +101,7 @@ Eh_project eh_project_set_info_val( Eh_project p     ,
 }
 
 Eh_project
-eh_project_add_info_val( Eh_project p , char* key , const gchar* val )
+eh_project_add_info_val( Eh_project p , const char* key , const gchar* val )
 {
    char* group_name = construct_project_group_name( p );
 

@@ -21,6 +21,10 @@
 #ifndef __COMPLEX_H__
 #define __COMPLEX_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    double r;
@@ -37,6 +41,10 @@ Complex c_conj(Complex z);
 double  c_abs(Complex z);
 Complex c_sqrt(Complex z);
 Complex c_rcmul(double x, Complex a);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 
 

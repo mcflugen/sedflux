@@ -1,6 +1,9 @@
 #ifndef __EH_PROJECT_H__
 #define __EH_PROJECT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <utils/eh_types.h>
@@ -19,7 +22,7 @@ Eh_project eh_project_set_info_val        ( Eh_project p     ,
                                             const gchar* key ,
                                             const gchar* value             );
 Eh_project eh_project_add_info_val        ( Eh_project p ,
-                                            char* key    ,
+                                            const char* key    ,
                                             const gchar* val                      );
 
 Eh_project eh_set_project_dir             ( Eh_project proj  ,
@@ -35,5 +38,9 @@ FILE*      eh_open_project_file           ( Eh_project proj  ,
 void       eh_close_project_file          ( Eh_project proj ,
                                             FILE *fp                       );
 void       eh_close_project_file_all      ( Eh_project proj                );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -742,7 +742,7 @@ doublereal r1mach_(integer *i__)
 #define small ((integer *)&equiv_4)
 #define diver ((integer *)&equiv_4 + 3)
 #define right ((integer *)&equiv_4 + 2)
-    extern /* Subroutine */ int xerror_(char *, integer *, integer *, integer 
+    extern /* Subroutine */ int xerror_(const char *, integer *, integer *, integer 
 	    *, ftnlen);
 
 /* ***BEGIN PROLOGUE  R1MACH */
@@ -1107,7 +1107,7 @@ doublereal old_d1mach_(integer *i__)
 #define small ((integer *)&equiv_4)
 #define diver ((integer *)&equiv_4 + 6)
 #define right ((integer *)&equiv_4 + 4)
-    extern /* Subroutine */ int xerror_(char *, integer *, integer *, integer 
+    extern /* Subroutine */ int xerror_(const char *, integer *, integer *, integer 
 	    *, ftnlen);
 
 /* ***BEGIN PROLOGUE  D1MACH */

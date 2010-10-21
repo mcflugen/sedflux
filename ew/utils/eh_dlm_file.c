@@ -3,13 +3,13 @@
 /* Local function declarations */
 gchar*     eh_dlm_prepare                ( const gchar* file ,
                                            GError** err );
-double**   eh_dlm_read_data              ( gchar* str        ,
-                                           gchar* delims     ,
-                                           gint* n_rows      ,
-                                           gint* n_cols      ,
-                                           GError** err );
+double**   eh_dlm_read_data              ( gchar* str,
+                                           const gchar* delims,
+                                           gint* n_rows,
+                                           gint* n_cols,
+                                           GError** err);
 
-gint       eh_dlm_find_n_cols            ( gchar* content , gchar* delims );
+gint eh_dlm_find_n_cols (gchar* content, const gchar* delims);
 gint       eh_dlm_find_n_rows            ( gchar* content , gint delim );
 
 gchar**    eh_dlm_split_records          ( gchar* str             ,
@@ -65,7 +65,7 @@ elements.  Rows with fewer columns are padded with zeros.
 */
 double**
 eh_dlm_read( const gchar* file , 
-             gchar* delims     ,
+             const gchar* delims     ,
              gint* n_rows      ,
              gint* n_cols      ,
              GError** err )
@@ -117,7 +117,7 @@ what were columns in the file are now rows in the returned matrix.
 
 */
 double** eh_dlm_read_swap( const gchar* file ,
-                           gchar* delims     ,
+                           const gchar* delims,
                            gint* n_rows      ,
                            gint* n_cols      ,
                            GError** err )
@@ -178,8 +178,8 @@ by eh_dlm_read.
 \sa eh_dlm_read, eh_dlm_read_full_swap
 */
 double***
-eh_dlm_read_full( const gchar* file ,
-                  gchar* delims     ,
+eh_dlm_read_full (const gchar* file,
+                  const gchar* delims,
                   gint** n_rows     ,
                   gint** n_cols     ,
                   gchar*** rec_data ,
@@ -252,13 +252,13 @@ matrices are swapped.
 \sa eh_dlm_read_swap, eh_dlm_read_full
 */
 double***
-eh_dlm_read_full_swap( const gchar* file ,
-                       gchar* delims     ,
-                       gint** n_rows     ,
-                       gint** n_cols     ,
-                       gchar*** rec_data ,
-                       gint max_records  ,
-                       GError** err )
+eh_dlm_read_full_swap (const gchar* file,
+                       const gchar* delims,
+                       gint** n_rows,
+                       gint** n_cols,
+                       gchar*** rec_data,
+                       gint max_records,
+                       GError** err)
 {
    double*** data = NULL;
 
@@ -289,7 +289,7 @@ eh_dlm_read_full_swap( const gchar* file ,
       }
       data[n_recs] = 0;
 
-      EH_SWAP_PTR( *n_rows , *n_cols );
+      EH_SWAP_PTR (*n_rows, *n_cols);
 
       eh_free( tmp );
    }
@@ -298,11 +298,11 @@ eh_dlm_read_full_swap( const gchar* file ,
 }
 
 double**
-eh_dlm_read_data( gchar* str        ,
-                  gchar* delims     ,
-                  gint* n_rows      ,
-                  gint* n_cols      ,
-                  GError** err )
+eh_dlm_read_data (gchar* str,
+                  const gchar* delims,
+                  gint* n_rows,
+                  gint* n_cols,
+                  GError** err)
 {
    double** data;
 
@@ -368,7 +368,7 @@ eh_dlm_find_n_rows( gchar* str , gint delim )
 }
 
 gint
-eh_dlm_find_n_cols( gchar* str , gchar* delims )
+eh_dlm_find_n_cols( gchar* str , const gchar* delims )
 {
    gint n_cols = 0;
 
@@ -636,7 +636,7 @@ eh_bov_print (const char* prefix, const double* x, const char* name,
 
       if (!tmp_err)
       {
-        char* endian = NULL;
+        const char* endian = NULL;
 
         switch (G_BYTE_ORDER)
         {

@@ -21,6 +21,9 @@
 #ifndef __EH_GLIB_H__
 #define __EH_GLIB_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // #define           EH_NPOS                          G_MAXLONG
 // #define           EH_WHITESPACE                    " \t\n"
 //
@@ -77,4 +80,8 @@ char *eh_string_c_str(GString*);
 GSList *eh_slist_remove_and_free( GSList *l , gpointer p );
 
 void eh_free_slist_data( gpointer data , gpointer user_data );
+#ifdef __cplusplus
+}
+#endif
+
 #endif

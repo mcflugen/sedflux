@@ -1,6 +1,10 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "utils/eh_mem.h"
 #include "utils/eh_rand.h"
 #include "utils/eh_logging.h"
@@ -29,5 +33,9 @@
 #include "utils/eh_messages.h"
 #include "utils/eh_macros.h"
 #include "utils/eh_misc.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

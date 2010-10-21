@@ -1,6 +1,9 @@
 #ifndef __EH_GRID_H__
 #define __EH_GRID_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <utils/eh_types.h>
@@ -132,5 +135,9 @@ Eh_grid     eh_grid_malloc_uniform   ( gssize n_x , gssize n_y , gssize size , d
 #define eh_grid_val( g , t , i , j ) ( *((t*)eh_grid_loc(g,i,j)) )
 #define eh_grid_new( t , n_x , n_y ) eh_grid_malloc( (n_x) , (n_y) , sizeof(t) )
 #define eh_grid_new_uniform( t , n_x , n_y , dx , dy ) eh_grid_malloc_uniform( (n_x) , (n_y) , sizeof(t) , dx , dy )
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

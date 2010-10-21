@@ -1,6 +1,10 @@
 #ifndef __EH_TYPES_H__
 #define __EH_TYPES_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define API_ENTRY
 
 /*
@@ -10,7 +14,7 @@ typedef struct
 }
 Class_Desc;
 */
-typedef char* Class_Desc;
+typedef const char* Class_Desc;
 
 #define _CD( type ) type##_Class_Desc
 #define CLASS( type ) \
@@ -24,6 +28,7 @@ typedef char* Class_Desc;
 //   static Class_Desc _CD( type ) = { #type } ; typedef struct tag##base_type type
 
 #define USE_MY_VTABLE
+//#undef USE_MY_VTABLE
 #if defined( USE_MY_VTABLE )
 
 #define NEW_OBJECT( type , obj ) \
@@ -40,6 +45,10 @@ typedef char* Class_Desc;
 
 #define new_handle( Handle ) typedef struct tag_##Handle *Handle
 #define derived_handle( Base_handle , Handle ) typedef struct tag_##Base_handle *Handle
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

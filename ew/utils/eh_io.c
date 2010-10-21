@@ -291,7 +291,7 @@ eh_scan_str( FILE* fp , GError** error )
 
       if ( s )
       {
-         s    = g_memdup( s , n+1 );
+         s = (gchar*)g_memdup (s, n+1);
          s[n] = '\0';
       }
       else if ( feof(fp) )
@@ -606,7 +606,7 @@ eh_print_msg( int msg_level , char *function_name , char *msg )
 
 }
 
-char *eh_input_str( char *msg , char *default_str )
+char *eh_input_str( const char *msg , const char *default_str )
 {
    char *str = eh_new( char , S_LINEMAX );
 
@@ -631,7 +631,7 @@ char *eh_input_str( char *msg , char *default_str )
 }
 
 gboolean
-eh_input_boolean( char *msg , gboolean default_val )
+eh_input_boolean (const char *msg, gboolean default_val)
 {
    char *str = eh_new( char , S_LINEMAX );
    gboolean ans, valid_ans = FALSE;
@@ -667,7 +667,7 @@ eh_input_boolean( char *msg , gboolean default_val )
 }
 
 gchar*
-eh_get_input_val( FILE *fp , char *msg , char *default_str )
+eh_get_input_val( FILE *fp , const char *msg , const char *default_str )
 {
    char *str = eh_new( char , S_LINEMAX );
 

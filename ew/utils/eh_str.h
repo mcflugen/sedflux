@@ -1,6 +1,10 @@
 #ifndef __EH_STR_H__
 #define __EH_STR_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <glib.h>
 #include <utils/eh_symbol_table.h>
 
@@ -40,10 +44,11 @@ gchar*          eh_str_remove                 ( gchar* str , gchar* start , gint
 gchar*          eh_str_remove_blocks          ( gchar* str ,
                                                 gchar** block_start ,
                                                 gchar** block_end );
-Eh_symbol_table eh_str_parse_key_value        ( gchar* str , gchar* delim_1 , gchar* delim_2 );
+Eh_symbol_table eh_str_parse_key_value (gchar* str, const gchar* delim_1,
+                                        const gchar* delim_2);
 gint            eh_str_count_chr              ( gchar* str , gchar* end , gint delim );
 
-gchar*          eh_str_remove_to_eol_comments ( gchar* str , gchar* com_start );
+gchar* eh_str_remove_to_eol_comments (gchar* str, const gchar* com_start);
 gchar*          eh_str_remove_c_style_comments( gchar* str );
 gchar*          eh_str_remove_comments        ( gchar* str             ,
                                                 const gchar* start_str ,
@@ -53,5 +58,9 @@ gchar*          eh_str_remove_comments        ( gchar* str             ,
 gchar* eh_str_trim_left         ( gchar *str );
 gchar* eh_str_trim_right        ( gchar *str );
 gchar* eh_str_remove_white_space( gchar *str );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EH_STR_H */

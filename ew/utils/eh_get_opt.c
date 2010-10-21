@@ -142,7 +142,9 @@ Label_is_valid_st;
 void check_label_is_possible( char *key , char *value , Label_is_valid_st *user_data );
 void check_label_is_valid( char *key , char *value , int *err_flag );
 
-gboolean eh_check_opts( Eh_args* args , char **required , char **possible , char *help[] )
+gboolean
+eh_check_opts (Eh_args* args, char **required, char **possible,
+               const char *help[])
 {
    gboolean print_help=FALSE;
    int i, err_flag=0;
@@ -341,12 +343,12 @@ double eh_get_opt_dbl( Eh_args *args , char *label , double default_val )
 }
 
 gint
-eh_print_message( FILE *fp , char *msg[] )
+eh_print_message( FILE *fp , const char *msg[] )
 {
    gint n = 0;
    if ( fp )
    {
-      gchar **p;
+      const gchar **p;
       for ( p=msg ; *p ; p++ )
          n += fprintf(fp,"%s\n",*p);
    }

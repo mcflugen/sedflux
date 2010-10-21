@@ -21,6 +21,9 @@
 #ifndef __EH_SCANNER_H__
 #define __EH_SCANNER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 #include <utils/eh_symbol_table.h>
 #include <utils/eh_data_record.h>
@@ -46,7 +49,7 @@ Eh_record_file;
 typedef struct
 {
    char *filename;
-   char *delimeter;
+   const char *delimeter;
    gboolean row_major;
    gint fast_dim;
    gboolean with_header;
@@ -342,5 +345,9 @@ GArray *eh_interpolate_data_file( Eh_data_file *data_file , GArray *interp_data 
 // i            : the record to get.
 // return value : the i-th data record.
 //Eh_data_record *eh_get_data_from_file( Eh_data_file *data_file , int i );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

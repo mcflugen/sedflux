@@ -1,6 +1,9 @@
 #ifndef __EH_MEM_H__
 #define __EH_MEM_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 #include <utils/eh_types.h>
 
@@ -26,6 +29,7 @@
 void API_ENTRY report_win_assert( char *file_name , int line_no );
 
 #define USE_MY_VTABLE
+//#undef USE_MY_VTABLE
 
 gpointer API_ENTRY eh_malloc         ( gsize    w_size   , Class_Desc desc , const char* file    , int line_no );
 gpointer API_ENTRY eh_realloc        ( gpointer old      , gsize w_size , const char *file , int line_no );
@@ -53,14 +57,15 @@ void     API_ENTRY eh_free_c_style   ( gpointer    mem  );
                                                         ((gsize)sizeof(type))*((gsize)(n)) , \
                                                         __FILE__ , \
                                                         __LINE__ ) )
-#define eh_free( mem ) ( (mem) = eh_free_mem( mem ) )
+//#define eh_free (mem) ((mem) = eh_free_mem ((void*)(mem)))
+#define eh_free(mem) (eh_free_mem ((void*)(mem)))
 
 #else
 
 #define eh_new( type , n )         ( g_new0( type , n ) )
 #define eh_new0( type , n )        ( g_new0( type , n ) )
 #define eh_renew( type , old , n ) ( g_renew( type , old , n ) )
-#define eh_free( mem )             ( g_free( mem ) )
+#define eh_free(mem)              (g_free((void*)(mem)))
 #define eh_free_mem                ( g_free )
 #define eh_free_c_style            ( g_free )
 #define eh_heap_dump( file )       ( g_mem_profile() )
@@ -69,6 +74,10 @@ void     API_ENTRY eh_free_c_style   ( gpointer    mem  );
 
 void** eh_alloc_2    ( gsize m , gsize n , gsize size );
 void   eh_free_void_2( void **p );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

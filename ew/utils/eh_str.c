@@ -528,7 +528,7 @@ holds all of the key-value pairs.
 \return A Eh_symbol_table of key-value pairs.  Use eh_symbol_table_destroy to free.
 */
 Eh_symbol_table
-eh_str_parse_key_value( gchar* str , gchar* delim_1 , gchar* delim_2 )
+eh_str_parse_key_value (gchar* str, const gchar* delim_1, const gchar* delim_2)
 {
    Eh_symbol_table tab = NULL;
 
@@ -606,7 +606,7 @@ The pointer to \p str is returned to allow the nesting of functions.
 \return \p str
 */
 gchar*
-eh_str_remove_to_eol_comments( gchar* str , gchar* com_start )
+eh_str_remove_to_eol_comments( gchar* str , const gchar* com_start )
 {
    return eh_str_remove_comments( str , com_start , NULL , NULL );
 }

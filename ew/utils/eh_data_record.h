@@ -1,6 +1,10 @@
 #ifndef __EH_DATA_RECORD_H__
 #define __EH_DATA_RECORD_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <glib.h>
 #include <utils/eh_types.h>
 #include <utils/eh_symbol_table.h>
@@ -48,6 +52,10 @@ Eh_data_record  eh_data_record_scan            ( GScanner* s          ,
                                                  const char* delim    ,
                                                  int fast_dim         ,
                                                  gboolean with_header );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

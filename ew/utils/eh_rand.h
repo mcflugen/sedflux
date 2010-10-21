@@ -21,6 +21,9 @@
 #ifndef __EH_RAND_H__
 #define __EH_RAND_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <math.h>
 #include <glib.h>
 
@@ -61,5 +64,9 @@ double eh_rand_user            ( GRand* rand , double *x   , double *F  , gssize
 double    eh_get_fuzzy_dbl      ( double min  , double max );
 double    eh_get_fuzzy_dbl_norm ( double mean , double std );
 gint32    eh_get_fuzzy_int      ( gint32 min  , gint32 max );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

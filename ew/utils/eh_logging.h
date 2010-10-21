@@ -21,6 +21,9 @@
 #ifndef __EH_LOGGING_H__
 #define __EH_LOGGING_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <glib.h>
 #include <string.h>
@@ -158,6 +161,10 @@ static void eh_data( const char* format , ... )
    va_start( args , format );
    g_logv( EH_LOG_DOMAIN , EH_LOG_LEVEL_DATA , format , args );
    va_end( args );
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

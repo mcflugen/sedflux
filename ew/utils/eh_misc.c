@@ -96,7 +96,7 @@ eh_print_on_error( GError* error , const gchar* format , ... )
    }
 }
 
-gchar* brief_copyleft_msg[] =
+const gchar* brief_copyleft_msg[] =
 {
 "Copywrite (C) 2006 Eric Hutton." ,
 "This is free software; see the source for copying conditions.  This is NO" ,
@@ -138,6 +138,15 @@ gboolean
 eh_is_in_domain( gssize n_i , gssize n_j , gssize i , gssize j )
 {
    return i>=0 && j>=0 && i<n_i && j<n_j;
+}
+
+gboolean
+eh_is_boundary_id (gint nx, gint ny, gint id)
+{
+  if (id < ny || id >= ny*(nx-1) || id%ny == 0 || (id+1)%ny == 0 )
+    return TRUE;
+  else
+    return FALSE;
 }
 
 double
@@ -263,7 +272,7 @@ eh_render_error_str( GError* error , const gchar* err_str )
 }
 
 gchar*
-eh_render_command_str( int argc , char* argv[] )
+eh_render_command_str (const int argc, const char* argv[])
 {
    gchar* str = NULL;
 
@@ -275,11 +284,11 @@ eh_render_command_str( int argc , char* argv[] )
       gchar** str_array = NULL;
 
       for ( i=0 ; i<argc ; i++ )
-         eh_strv_append( &str_array , argv[i] );
+         eh_strv_append (&str_array, g_strdup (argv[i]));
 
       str = g_strjoinv( " " , str_array );
       
-      eh_free( str_array );
+      g_strfreev (str_array);
    }
 
    return str;

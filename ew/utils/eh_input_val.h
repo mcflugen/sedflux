@@ -1,6 +1,9 @@
 #ifndef __EH_INPUT_VAL_H__
 #define __EH_INPUT_VAL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <glib.h>
 #include <utils/eh_types.h>
 
@@ -42,6 +45,10 @@ Eh_input_val    eh_input_val_new      (                                      );
 Eh_input_val    eh_input_val_destroy  ( Eh_input_val val                     );
 Eh_input_val    eh_input_val_set      ( const char *input_str , GError** err );
 double          eh_input_val_eval     ( Eh_input_val val      , ...          );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

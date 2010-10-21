@@ -9527,7 +9527,7 @@ L150:
     return 0;
 } /* zuni2_ */
 
-/* Subroutine */ int xerror_(char *mess, integer *nmess, integer *l1, integer 
+/* Subroutine */ int xerror_(const char *mess, integer *nmess, integer *l1, integer 
 	*l2, ftnlen mess_len)
 {
     /* Format strings */

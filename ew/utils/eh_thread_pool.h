@@ -1,6 +1,10 @@
 #ifndef __EH_THREAD_POOL_H__
 #define __EH_THREAD_POOL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <pthread.h>
 
 typedef struct tpool_work
@@ -33,5 +37,9 @@ void tpool_init(tpool_t *tpoolp, int num_worker_threads, int max_queue_size, int
 void tpool_thread( tpool_t tpool );
 int  tpool_add_work( tpool_t tpool , void *routine , void *arg );
 int  tpool_destroy( tpool_t tpool , int finish );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* eh_thread_pool.h */

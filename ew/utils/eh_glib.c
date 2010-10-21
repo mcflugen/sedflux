@@ -41,7 +41,7 @@ void eh_string_remove_chr(GString *s,char c)
 
 void eh_string_remove_white_space(GString *s)
 {
-   char *p=G_WHITESPACE;
+   char *p=(gchar*)G_WHITESPACE;
    gsize i, len=strlen(p);
    for ( i=0 ; i<len ; i++, p++ )
       eh_string_remove_chr(s,*p);

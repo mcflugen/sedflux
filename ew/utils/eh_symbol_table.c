@@ -34,7 +34,7 @@ void eh_symbol_table_free_label( gpointer label )
 
 guint eh_str_case_hash(gconstpointer key)
 {
-   gchar* new_key = g_ascii_strup( key , -1 );
+   gchar* new_key = g_ascii_strup ((const gchar*)key, -1);
    guint ans;
 
    ans = g_str_hash(new_key);
@@ -137,7 +137,8 @@ void eh_symbol_table_insert(Eh_symbol_table s, char *key, char *value)
    g_hash_table_insert(s->t,g_strdup(key),g_strdup(value));
 }
 
-void eh_symbol_table_replace( Eh_symbol_table s , char* key , char* value )
+void
+eh_symbol_table_replace (Eh_symbol_table s, const char* key, const char* value)
 {
    g_hash_table_replace(s->t,g_strdup(key),g_strdup(value));
 }
@@ -189,7 +190,8 @@ Eh_symbol_table eh_symbol_table_destroy( Eh_symbol_table s )
    return NULL;
 }
 
-gboolean eh_symbol_table_has_label( Eh_symbol_table s , gchar* label )
+gboolean
+eh_symbol_table_has_label (Eh_symbol_table s, const gchar* label)
 {
    if ( s && label )
    {
@@ -202,13 +204,13 @@ gboolean eh_symbol_table_has_label( Eh_symbol_table s , gchar* label )
 }
 
 gboolean
-eh_symbol_table_has_labels( Eh_symbol_table s , gchar** labels )
+eh_symbol_table_has_labels( Eh_symbol_table s , const gchar** labels )
 {
    gboolean has_all_labels = TRUE;
 
    if ( labels )
    {
-      gchar** this_label;
+      const gchar** this_label;
 
       for ( this_label=labels ; *this_label && has_all_labels ; this_label++ )
          has_all_labels = has_all_labels && eh_symbol_table_has_label( s , *this_label );
@@ -218,7 +220,7 @@ eh_symbol_table_has_labels( Eh_symbol_table s , gchar** labels )
 }
 
 gboolean
-eh_symbol_table_require_labels( Eh_symbol_table s , gchar** labels , GError** error )
+eh_symbol_table_require_labels( Eh_symbol_table s , const gchar** labels , GError** error )
 {
    gboolean has_all_labels = TRUE;
 
@@ -228,7 +230,7 @@ eh_symbol_table_require_labels( Eh_symbol_table s , gchar** labels , GError** er
    {
       GError* tmp_err = NULL;
       gchar** err_s   = NULL;
-      gchar** this_label;
+      const gchar** this_label;
 
       for ( this_label=labels ; *this_label ; this_label++ )
       {
@@ -250,12 +252,24 @@ eh_symbol_table_require_labels( Eh_symbol_table s , gchar** labels , GError** er
    return has_all_labels;
 }
 
+/** Return value string from a symbol table
+
+Retrieve a copy of the string associated with a label in a Eh_symbol_table.
+If symbol table does not contain the label, return NULL.  Note that there
+is no way to tell the difference between the case where the requested value
+is NULL and the table not containing the specified label.
+
+@param s A Eh_symbol_table
+@param label The label to lookup
+
+@returns The associated value, or NULL if the label is not found.
+*/
 gchar*
 eh_symbol_table_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* ans = NULL;
    if ( s && label )
-      ans = g_strdup( g_hash_table_lookup( s->t , label ) );
+      ans = g_strdup ((const gchar*)g_hash_table_lookup (s->t, label));
    return ans;
 }
 
@@ -283,7 +297,7 @@ eh_symbol_table_values( Eh_symbol_table s , const gchar* label , const gchar* de
 }
 
 double
-eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
+eh_symbol_table_dbl_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    double ans;
@@ -299,7 +313,7 @@ eh_symbol_table_dbl_value( Eh_symbol_table s , gchar* label )
 }
 
 double*
-eh_symbol_table_dbl_range( Eh_symbol_table s , gchar* label )
+eh_symbol_table_dbl_range( Eh_symbol_table s , const gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    double* ans;
@@ -314,7 +328,7 @@ eh_symbol_table_dbl_range( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
-double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , gchar* label , gint* len , const gchar* delims )
+double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , const gchar* label , gint* len , const gchar* delims )
 {
    double* dbl_array = NULL;
 
@@ -345,7 +359,7 @@ double* eh_symbol_table_dbl_array_value( Eh_symbol_table s , gchar* label , gint
 }
 
 double
-eh_symbol_table_time_value( Eh_symbol_table s , gchar* label )
+eh_symbol_table_time_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    double ans;
@@ -361,7 +375,7 @@ eh_symbol_table_time_value( Eh_symbol_table s , gchar* label )
 }
 
 double*
-eh_symbol_table_time_array_value( Eh_symbol_table s , gchar* label , gint* len , const gchar* delims )
+eh_symbol_table_time_array_value( Eh_symbol_table s , const gchar* label , gint* len , const gchar* delims )
 {
    double* dbl_array = NULL;
 
@@ -392,7 +406,7 @@ eh_symbol_table_time_array_value( Eh_symbol_table s , gchar* label , gint* len ,
 }
 
 double*
-eh_symbol_table_time_range( Eh_symbol_table s , gchar* label )
+eh_symbol_table_time_range( Eh_symbol_table s , const gchar* label )
 {
    gchar*  str = eh_symbol_table_value( s , label );
    double* ans;
@@ -407,7 +421,7 @@ eh_symbol_table_time_range( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
-gboolean eh_symbol_table_bool_value( Eh_symbol_table s , gchar* label )
+gboolean eh_symbol_table_bool_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    gboolean ans;
@@ -420,7 +434,7 @@ gboolean eh_symbol_table_bool_value( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
-gint eh_symbol_table_int_value( Eh_symbol_table s , gchar* label )
+gint eh_symbol_table_int_value( Eh_symbol_table s , const gchar* label )
 {
    gchar* str = eh_symbol_table_value( s , label );
    gint ans = G_MAXINT;
@@ -433,7 +447,7 @@ gint eh_symbol_table_int_value( Eh_symbol_table s , gchar* label )
    return ans;
 }
 
-Eh_input_val eh_symbol_table_input_value( Eh_symbol_table s , gchar* label , GError** err )
+Eh_input_val eh_symbol_table_input_value( Eh_symbol_table s , const gchar* label , GError** err )
 {
    return eh_input_val_set( eh_symbol_table_lookup( s , label ) , err );
 }

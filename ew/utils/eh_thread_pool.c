@@ -80,7 +80,8 @@ tpool_thread( tpool_t tpool )
          pthread_cond_signal( &(tpool->queue_empty) );
 
       pthread_mutex_unlock( &(tpool->queue_lock) );
-      (*(my_workp->routine))(my_workp->arg);
+      //(*(my_workp->routine))(my_workp->arg);
+      (*(my_workp->routine))();
       eh_free(my_workp);
    }
 }

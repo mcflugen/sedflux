@@ -7,6 +7,10 @@
 #ifndef __F2C_H__
 #define __F2C_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef long int integer;
 typedef unsigned long int uinteger;
 typedef char *address;
@@ -220,4 +224,9 @@ typedef doublereal E_f;	/* real function with -R not specified */
 #undef unix
 #undef vax
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

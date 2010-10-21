@@ -47,7 +47,7 @@ gboolean add_new_value( const gchar* option_name ,
    else
       eh_require_not_reached();
 
-   eh_symbol_table_replace( data , new_str , g_strdup(value) );
+   eh_symbol_table_replace ((Eh_symbol_table)data, new_str, g_strdup(value));
 
    return TRUE;
 }
@@ -70,7 +70,7 @@ GOptionEntry convert_eh_option_entry_to_g_option_entry( Eh_opt_entry entry )
    new_entry.flags           = 0;
    
    new_entry.arg             = G_OPTION_ARG_CALLBACK;
-   new_entry.arg_data        = &add_new_value;
+   new_entry.arg_data        = (gpointer)&add_new_value;
 
    new_entry.description     = entry.description;
    new_entry.arg_description = entry.arg_description;
@@ -312,9 +312,10 @@ double eh_opt_dbl_value( Eh_opt_context c , char *label )
    return rtn;
 }
 
-void eh_opt_print_label_value_helper( gchar* label , gchar* value , gpointer fp )
+void
+eh_opt_print_label_value_helper (gchar* label, gchar* value, gpointer fp)
 {
-   fprintf( fp , "%s=%s\n" , label , value );
+   fprintf ((FILE*)fp, "%s=%s\n", label, value);
 }
 
 void eh_opt_print_key_file( Eh_opt_context c , FILE *fp )
