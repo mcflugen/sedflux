@@ -21,7 +21,10 @@
 #ifndef _BING_IS_INCLUDED
 # define _BING_IS_INCLUDED
 
+#include <glib.h>
 #include <utils/utils.h>
+
+G_BEGIN_DECLS
 
 typedef struct
 {
@@ -49,5 +52,7 @@ bing_t;
 #define PI 3.14159265359
 
 double *bing(pos_t*,pos_t*,bing_t,double*);
+
+G_END_DECLS
 
 #endif /* bing.h is included */

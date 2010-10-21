@@ -16,10 +16,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bing DESTINATION bin RENAME bin
 
 ########### next target ###############
 
-SET(bing_LIB_SRCS
-   bing.c
-)
+set (bing_LIB_SRCS bing.c)
 
+set_source_files_properties (${bing_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(bing ${bing_LIB_SRCS})
 
 target_link_libraries(bing sedflux)

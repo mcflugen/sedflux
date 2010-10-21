@@ -26,7 +26,7 @@
 #include <sed/sed_sedflux.h>
 
 /*** Self Documentation ***/
-char *help_msg[] =
+const char *help_msg[] =
 {
 "                                                                             ",
 " bing [options] [parameters]  [filein]                                       ",

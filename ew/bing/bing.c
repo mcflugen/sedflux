@@ -623,7 +623,7 @@ void calculate_forces( gpointer data , gpointer user_data )
 
 #endif
 
-gchar* _default_bing_config[] = {
+const gchar* _default_bing_config[] = {
 "yield strength (Pa): 100",
 "kinematic viscosity: 0.083",
 "artificial viscosity: 0.5",
@@ -632,11 +632,11 @@ gchar* _default_bing_config[] = {
 NULL
 };
 
-gchar*
+const gchar*
 get_config_text (const gchar* file)
 {
   if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", _default_bing_config);
+    return g_strjoinv ("\n", (gchar**)_default_bing_config);
   else
     return NULL;
 }
