@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "utils/utils.h"
 
@@ -18,8 +19,13 @@ typedef struct
   double now;
   double time_step;
   double sed_flux;
+  double init_discharge;
   int total_river_mouths;
   double bed_load_exponent;
+  double discharge_exponent;
+
+  double* qb;
+  double* q;
 
   double* angles;
   int len;
@@ -146,7 +152,6 @@ _avulsion_update_elevation (Avulsion_state* self)
     for (i=0; i<len; i++)
     {
       s->elevation[i] = sed_cube_elevation (s->p, 0, i);
-//eh_watch_dbl (s->elevation[i]);
     }
   }
 
@@ -258,10 +263,18 @@ avulsion_set_elevation_from_file (Avulsion_state* self, gchar* file)
 }
 
 Avulsion_state*
-avulsion_set_sed_flux (Avulsion_state* self, double flux)
+avulsion_set_sed_flux (Avulsion_state* self, const double flux)
 {
   State *p = (State *) self;
   p->sed_flux = flux;
+  return self;
+}
+
+Avulsion_state*
+avulsion_set_discharge (Avulsion_state* self, const double q)
+{
+  State *p = (State *) self;
+  p->init_discharge = q;
   return self;
 }
 
@@ -274,10 +287,23 @@ avulsion_set_bed_load_exponent (Avulsion_state* self, double exponent)
 }
 
 Avulsion_state*
+avulsion_set_discharge_exponent (Avulsion_state* self, double exponent)
+{
+  State *p = (State *) self;
+  p->discharge_exponent = exponent;
+  return self;
+}
+
+Avulsion_state*
 avulsion_set_total_river_mouths (Avulsion_state* self, int n_branches)
 {
   State *p = (State *) self;
-  p->total_river_mouths = n_branches;
+  if (p->total_river_mouths != n_branches)
+  {
+    p->total_river_mouths = n_branches;
+    p->qb = g_renew (double, p->qb, n_branches);
+    p->q = g_renew (double, p->q, n_branches);
+  }
   return self;
 }
 
@@ -297,6 +323,38 @@ avulsion_set_elevation (Avulsion_state* self, double* val)
       p->elevation[i] = val[i];
 
     sed_cube_set_bathy_data (p->p, val);
+  }
+
+  return self;
+}
+
+Avulsion_state*
+avulsion_set_value (Avulsion_state* self, const gchar* val_s, double* data,
+                    gint lower[3], gint upper[3], gint stride[3])
+{
+  State *p = (State *) self;
+
+  {
+    const int size = sed_cube_size (p->p);
+    const int dimen[3] = {avulsion_get_nx (self), avulsion_get_ny (self), 0};
+    const int len[3] = {upper[0]-lower[0], upper[1]-lower[1],
+                        upper[2]-lower[2]};
+    int i, j, k;
+    int id;
+    int id_0;
+
+    for (i=0, k=0; i<dimen[0]; i++)
+    {
+      id_0 = (i-lower[0])*stride[0];
+      for (j=0; j<dimen[1]; j++, k++)
+      {
+        id = id_0 + (j-lower[1])*stride[1];
+        p->elevation[k] = data[id];
+        //p->elevation[i][j] = data[id];
+      }
+    }
+
+    sed_cube_set_bathy_data (p->p, p->elevation);
   }
 
   return self;
@@ -392,9 +450,14 @@ avulsion_get_value (Avulsion_state* self, const gchar* val_string,
   
   {
     double* src = NULL;
-    const int len = avulsion_get_nx (self)*avulsion_get_ny (self);
 
-    if (g_ascii_strcasecmp (val_string, "elevation")==0)
+    if (g_ascii_strcasecmp (val_string,
+                            "mean_bed_load_flux_from_river")==0)
+      src = p->qb;
+    else if (g_ascii_strcasecmp (val_string,
+                                "mean_water_discharge_from_river")==0)
+      src = p->q;
+    else if (g_ascii_strcasecmp (val_string, "elevation")==0)
       src = p->elevation;
     else if (g_ascii_strcasecmp (val_string, "discharge")==0 ||
              g_ascii_strcasecmp (val_string, "SedimentFlux")==0)
@@ -402,11 +465,26 @@ avulsion_get_value (Avulsion_state* self, const gchar* val_string,
 
     if (src)
     {
-      vals = (double*)g_memdup (src, sizeof (double)*len);
-
       dimen[0] = 1;
-      dimen[1] = avulsion_get_nx (self);
-      dimen[2] = avulsion_get_ny (self);
+      if (g_ascii_strcasecmp (val_string,
+                              "mean_bed_load_flux_from_river")==0 ||
+          g_ascii_strcasecmp (val_string,
+                              "mean_water_discharge_from_river")==0)
+      {
+        const int len = avulsion_get_nx (self)*avulsion_get_ny (self);
+        vals = (double*)g_memdup (src, sizeof (double)*len);
+
+        dimen[1] = 1;
+        dimen[2] = len;
+      }
+      else
+      {
+        const int len = avulsion_get_nx (self)*avulsion_get_ny (self);
+        vals = (double*)g_memdup (src, sizeof (double)*len);
+
+        dimen[1] = avulsion_get_nx (self);
+        dimen[2] = avulsion_get_ny (self);
+      }
     }
     else
     {
@@ -448,7 +526,205 @@ _avulsion_initialize (State* s)
     return FALSE;
 }
 
+double*
+_split_discharge (double* slope, const int len, const double n,
+                  const double q_total, double* mem)
+{
+  double* q = NULL;
 
+  {
+    int i;
+    double normalize;
+
+    if (mem)
+      q = mem;
+    else
+      q = g_new (double, len );
+
+    for (i=0, normalize=0.; i<len; i++)
+      normalize += pow (slope[i], n);
+    normalize = q_total / normalize;
+
+    for (i=0; i<len; i++)
+      q[i] = pow (slope[i], n) * normalize;
+  }
+
+  return q;
+}
+
+double*
+_split_bed_load (double* slope, double* q, const int len, const double m,
+                 const double qb_total, double* mem)
+{
+  double* qb = NULL;
+
+  {
+    int i;
+    double total;
+
+    if (mem)
+      qb = mem;
+    else
+      qb = g_new (double, len);
+
+    for (i=0; i<len; i++)
+      qb[i] = pow (q[i]*slope[i], m);
+
+    for (i=0; i<len; i++)
+      total += qb[i];
+
+    total = qb_total / total;
+    for (i=0; i<len; i++)
+      qb[i] *= total;
+  }
+
+  return qb;
+}
+
+double*
+_avulsion_branch_length (State* s, int* len)
+{
+  double* l = NULL;
+
+  *len = 0;
+
+  { /* Calculate leaf lengths, and total length */
+    int n;
+    Eh_ind_2 hinge;
+    Eh_ind_2 mouth;
+    const double dx = sed_cube_x_res (s->p);
+    const double dy = sed_cube_y_res (s->p);
+    double di, dj;
+    const Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
+    Sed_riv* leaves = sed_river_leaves (r);
+    Sed_riv* leaf;
+    const int n_leaves = g_strv_length ((gchar**)leaves);
+
+    l = g_new (double, n_leaves);
+
+    for (leaf=leaves, n=0; *leaf; leaf++, n++)
+    {
+      hinge = sed_river_hinge (*leaf);
+      mouth = sed_river_mouth (*leaf);
+      di = (hinge.i - mouth.i)*dy;
+      dj = (hinge.j - mouth.j)*dx;
+
+      l[n] = sqrt (di*di + dj*dj);
+    }
+
+    *len = n_leaves;
+
+    eh_free (leaves);
+  }
+
+  return l;
+}
+    
+/** The discharge to each branch
+*/
+double*
+_avulsion_branch_discharge (State* s, int* len)
+{
+  double* q = NULL;
+
+  *len = 0;
+
+  {
+    int i;
+    const Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
+    const Sed_riv* leaves = sed_river_leaves (r);
+    //const double q_total = sed_river_water_flux (r);
+    //const double q_total = 10000;
+    const double q_total = s->init_discharge;
+    const double n = s->discharge_exponent;
+    const int n_leaves = g_strv_length ((gchar**)leaves);
+    double* length = NULL;
+    double* slope = NULL;
+
+    slope = g_new (double, n_leaves);
+
+    length = _avulsion_branch_length (s, len);
+    eh_require (length);
+    eh_require (*len==n_leaves);
+
+    for (i=0; i<n_leaves; i++)
+      slope[i] = 1./length[i];
+
+    q = _split_discharge (slope, n_leaves, n, q_total, s->q);
+
+    g_free  (length);
+    g_free  (slope);
+
+    eh_free (leaves);
+
+    *len = n_leaves;
+  }
+
+  return q;
+}
+
+/** The bed load flux to each branch
+*/
+double*
+_avulsion_branch_bed_load (State* s, int* len)
+{
+  double* qb = NULL;
+
+  *len = 0;
+
+  {
+    int i;
+    const Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
+    //const double qb_total = sed_river_bedload (r);
+    const double qb_total = s->sed_flux;
+    const Sed_riv* leaves = sed_river_leaves (r);
+    const double m = s->bed_load_exponent;
+    const int n_leaves = g_strv_length ((gchar**)leaves);
+    double* length = NULL;
+    double* slope = NULL;
+    //double* q = NULL;
+
+    slope = g_new (double, n_leaves);
+
+    length = _avulsion_branch_length (s, len);
+
+    for (i=0; i<n_leaves; i++)
+      slope[i] = 1./length[i];
+
+    //q = _avulsion_branch_discharge (s, len);
+    _avulsion_branch_discharge (s, len);
+
+    eh_require (*len==n_leaves);
+    qb = _split_bed_load (slope, s->q, n_leaves, m, qb_total, s->qb);
+
+    { /* Print leaf info */
+      double* angle = g_new (double, n_leaves);
+
+      for (i=0; i<n_leaves; i++)
+      {
+        angle[i] = sed_river_angle (leaves[i]);
+      }
+
+      for (i=0; i<n_leaves; i++)
+      {
+        fprintf (stderr, "Avulsion: %d: %f: %f: %f: %f\n",
+                          i, length[i], s->q[i], qb[i], angle[i]);
+      }
+
+      g_free (angle);
+    }
+
+    //g_free (q);
+    g_free (length);
+    g_free (slope);
+
+    eh_free (leaves);
+  }
+
+  return qb;
+}
+
+#if 0
 double*
 avulsion_branch_load_fraction (State* s, Sed_riv* leaves, int* len)
 {
@@ -493,7 +769,7 @@ avulsion_branch_load_fraction (State* s, Sed_riv* leaves, int* len)
 
       for (n=0; n<n_leaves; n++)
       {
-        f[n] = powf ((total_length/lengths[n]), a);
+        f[n] = pow ((total_length/lengths[n]), a);
         total += f[n];
       }
       for (n=0; n<n_leaves; n++)
@@ -507,6 +783,7 @@ avulsion_branch_load_fraction (State* s, Sed_riv* leaves, int* len)
 
   return f;
 }
+#endif
 
 void
 _avulsion_reset_discharge (State* s)
@@ -533,11 +810,14 @@ _avulsion_update_discharge (State* s)
   Sed_riv* leaves;
   int n_leaves;
   int n;
-  double* f;
+  //double* qb = NULL;
+  //double* f;
 
   leaves = sed_river_leaves (r);
 
-  f = avulsion_branch_load_fraction (s, leaves, &n_leaves);
+  _avulsion_branch_bed_load (s, &n_leaves);
+
+  //f = avulsion_branch_load_fraction (s, leaves, &n_leaves);
 
   for (n=0; n<n_leaves; n++)
   {
@@ -557,12 +837,15 @@ _avulsion_update_discharge (State* s)
   }
 */
 
-    s->discharge[*path] += p->sed_flux*f[n];
-//eh_watch_dbl (f[n]);
+    //s->discharge[*path] += p->sed_flux*f[n];
+
+    s->discharge[*path] += s->qb[n];
   }
 
+  //g_free (qb);
+
   eh_free (leaves);
-  eh_free (f);
+  //eh_free (f);
 
 //  eh_watch_int (*path);
 //  eh_watch_dbl (s->discharge[*path]);
@@ -660,6 +943,9 @@ avulsion_init_state (State* s)
     s->total_river_mouths = 1;
     s->bed_load_exponent = 5.;
 
+    s->qb = g_new (double, s->total_river_mouths);
+    s->q = g_new (double, s->total_river_mouths);
+
     s->now = 0;
     s->time_step = 1.;
 
@@ -706,6 +992,14 @@ avulsion_free_state (State* s)
     g_free (s->angles);
     s->angles = NULL;
     s->len = 0;
+
+    g_free (s->q);
+    s->q = NULL;
+
+    g_free (s->qb);
+    s->qb = NULL;
+
+    s->total_river_mouths = 0;
   }
   return;
 }
