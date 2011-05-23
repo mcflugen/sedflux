@@ -2,19 +2,6 @@
 #include <utils/utils.h>
 #include "subside_api.h"
 
-struct Subside_state
-{
-  Eh_dbl_grid z; //< Elevation (m)
-  Eh_dbl_grid load; //< Overlying load
-  double eet; //< Effective elastic thickness (m)
-  double youngs; //< Young's modulus
-  double relaxation; //< Relaxation time (y)
-  double rho_w; //< Density of water (kg/m3)
-  double rho_m; //< Density of mantle (kg/m3)
-
-  double time; //< The current time (y)
-};
-
 Subside_state*
 sub_init (int nx, int ny, double dx, double dy)
 {
