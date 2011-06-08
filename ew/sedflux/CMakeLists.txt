@@ -1,5 +1,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../sakura ${CMAKE_CURRENT_SOURCE_DIR}/../avulsion ${CMAKE_CURRENT_SOURCE_DIR}/../bio ${CMAKE_CURRENT_SOURCE_DIR}/../diffusion ${CMAKE_CURRENT_SOURCE_DIR}/../subside ${CMAKE_CURRENT_SOURCE_DIR}/../xshore ${CMAKE_CURRENT_SOURCE_DIR}/../squall ${CMAKE_CURRENT_SOURCE_DIR}/../flow ${CMAKE_CURRENT_SOURCE_DIR}/../muds ${CMAKE_CURRENT_SOURCE_DIR}/../bing ${CMAKE_CURRENT_SOURCE_DIR}/../failure ${CMAKE_CURRENT_SOURCE_DIR}/../quake ${CMAKE_CURRENT_SOURCE_DIR}/../compact ${CMAKE_CURRENT_SOURCE_DIR}/../inflow ${CMAKE_CURRENT_SOURCE_DIR}/../plume )
 
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc )
+
 set( sedflux_LIBS
   utils sedflux sakura avulsion bio diffusion subside xshore squall flow muds bing failure quake compact inflow plume )
 
@@ -18,6 +20,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME 
 ########### next target ###############
 
 set (sedflux-2.0_LIB_SRCS
+  sedflux_cmi.c
   sedflux_api.c
   sedflux_command_line.c 
   run_constants.c 
@@ -59,11 +62,12 @@ add_library(sedflux-2.0 ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(sedflux-2.0 sedflux ${sedflux_LIBS})
 
 install(TARGETS sedflux-2.0 DESTINATION lib COMPONENT sedflux)
+install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 
 ########### install files ###############
 
-install(FILES  sedflux.h sedflux_api.h DESTINATION include/ew-2.0 COMPONENT sedflux)
+install(FILES  sedflux.h sedflux_api.h sedflux_cmi.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 #install(FILES  runsedflux sedflux-run-batch DESTINATION )
 
 
