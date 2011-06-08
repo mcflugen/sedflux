@@ -77,6 +77,8 @@ else ()
 endif ()
 string (REGEX MATCH "([0-9]+)" RELEASE_VERSION ${PATCH_VERSION})
 
+set (SEDFLUX_VERSION ${MAJOR_VERSION}.${MINOR_VERSION})
+
 ########### Create a distribution ###############
 set (CPACK_PACKAGE_NAME sedflux)
 set (CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux)
