@@ -5,7 +5,7 @@ set( DATADIR ${CMAKE_INSTALL_PREFIX}/share )
 set( PLUGINDIR ${CMAKE_INSTALL_PREFIX}/lib )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/datadir_path.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/datadir_path.h )
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sed.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sed.pc )
 
 
 ########### next target ###############
@@ -106,7 +106,7 @@ install(TARGETS sed-print-input DESTINATION bin COMPONENT sedflux)
 
 install(FILES  sed.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 install(FILES  csdms.h                             sed_cell.h                             sed_column.h                             sed_const.h                             sed_cube.h                             sed_diag.h                             sed_epoch.h                             sed_hydro.h                             sed_hydrotrend.h                             sed_process.h                             sed_property.h                             sed_property_file.h                             sed_river.h                             sed_sediment.h                             sed_signal.h                             sed_tripod.h                             sed_wave.h                             etk_addrem.h                             etk_keyvalue.h                             datadir_path.h DESTINATION include/ew-2.0/sed COMPONENT sedflux)
-install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
+install(FILES  sed.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 
 
