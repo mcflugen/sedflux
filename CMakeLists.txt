@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 
-project( sedflux )
+project (sedflux)
+include (CTest)
+
+enable_testing ()
+
+add_test (Help ${CMAKE_CURRENT_BINARY_DIR}/ew/sedflux/run_sedflux --help)
 
 set (BUILD_SHARED_LIBS ON)
 
