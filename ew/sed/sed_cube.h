@@ -423,6 +423,7 @@ Sed_cube sed_cube_deposit_cell (Sed_cube c,
                                 Sed_cell const add_cell);
 Sed_cube sed_cube_col_deposit_equal_amounts (Sed_cube c, gint id, double t);
 
+double sed_cube_get_angle (const Sed_cube c, const int start[2], const int end[2]);
 G_END_DECLS
 
 #endif

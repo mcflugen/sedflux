@@ -239,7 +239,7 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          gchar* full_name = NULL;
          Sed_sediment sediment_type = NULL;
 
-         if (prefix)
+         if (prefix && sediment_file[0]!='/')
            full_name = g_build_filename (prefix, sediment_file, NULL);
          else
            full_name = g_strdup (sediment_file);
@@ -261,7 +261,7 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          gchar* full_name = NULL;
          Eh_dbl_grid grid = NULL;
 
-         if (prefix)
+         if (prefix && bathy_file[0]!='/')
            full_name = g_build_filename (prefix, bathy_file, NULL);
          else
            full_name = g_strdup (bathy_file);
@@ -4604,5 +4604,30 @@ sed_cube_col_deposit_equal_amounts (Sed_cube c, gint id, double t)
   }
 
   return c;
+}
+
+/** Calculate the angle of the ray that joins two points of a Sed_cube.
+
+@param c      A Sed_cube
+@param start  i,j indices of the start of the ray
+@param end    i,j indices of the end of the ray
+
+@return The angle in degrees.
+*/
+double
+sed_cube_get_angle (const Sed_cube c, const int start[2], const int end[2])
+{
+  double angle;
+
+  eh_require (c);
+
+  {
+    const double dx = sed_cube_x_res (c);
+    const double dy = sed_cube_y_res (c);
+
+    angle = atan2 ((end[1]-start[1])*dy, (end[0]-start[0])*dx);
+  }
+
+  return angle;
 }
 
