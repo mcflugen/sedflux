@@ -33,7 +33,7 @@ Sed_measurement sed_measurement_destroy        ( Sed_measurement m );
 char*           sed_measurement_name           ( Sed_measurement m );
 gchar**         sed_measurement_all_names      (void);
 gchar** sed_measurement_all_units (void);
-gchar* sed_measurement_unit (gchar* name);
+gchar* sed_measurement_unit (const gchar* name);
 
 double          sed_measurement_make           ( Sed_measurement m , Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_slope         ( Sed_cube p , gssize i , gssize j );

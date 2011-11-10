@@ -325,7 +325,7 @@ sed_measurement_all_units ()
 }
 
 gchar*
-sed_measurement_unit (gchar* name)
+sed_measurement_unit (const gchar* name)
 {
   gchar* unit = NULL;
 
