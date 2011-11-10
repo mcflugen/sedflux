@@ -100,7 +100,11 @@ init_sea_level( Sed_process p , Eh_symbol_table tab , GError** error )
 
      file = eh_symbol_table_value (tab, SEA_LEVEL_KEY_FILENAME);
 
-     data->filename = g_build_filename (prefix, file, NULL);
+     /* If file is an absolute path name, don't append the prefix */
+     if (file[0]=='/')
+       data->filename = g_strdup (file);
+     else
+       data->filename = g_build_filename (prefix, file, NULL);
      data->sea_level = sed_scan_sea_level_curve (data->filename, &len,
                                                  &tmp_err);
      data->len = len;

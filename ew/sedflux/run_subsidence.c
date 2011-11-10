@@ -170,7 +170,10 @@ init_subsidence( Sed_process p , Eh_symbol_table tab , GError** error )
 
      file = eh_symbol_table_value (tab , SUBSIDENCE_KEY_FILENAME);
 
-     data->filename = g_build_filename (prefix, file, NULL);
+     if (file[0]=='/')
+       data->filename = g_strdup (file);
+     else
+       data->filename = g_build_filename (prefix, file, NULL);
 
      eh_touch_file( data->filename , O_RDONLY , &tmp_err );
 

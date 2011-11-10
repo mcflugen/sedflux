@@ -76,15 +76,15 @@ run_river( Sed_process proc , Sed_cube prof )
              * sed_cell_size( sed_cube_to_add(prof) );
 
       sed_cell_resize   ( sed_cube_to_add(prof) , volume );
-eh_watch_dbl (dt);
-eh_watch_dbl (sed_cell_size (sed_cube_to_add (prof)));
+//eh_watch_dbl (dt);
+//eh_watch_dbl (sed_cell_size (sed_cube_to_add (prof)));
 
       sed_hydro_add_cell( river_data , sed_cube_to_add(prof) );
 
 //      sed_cell_resize (sed_cube_to_add (prof), volume/(sed_cube_x_res (prof)*sed_cube_y_res (prof)));
       sed_cell_clear (sed_cube_to_add(prof));
 
-      eh_watch_dbl (sed_hydro_total_load( river_data ));
+      //eh_watch_dbl (sed_hydro_total_load( river_data ));
       //---
       // Remove any sediment that was deposited within the river.
       //---
@@ -104,7 +104,7 @@ eh_watch_dbl (sed_cell_size (sed_cube_to_add (prof)));
 
       //sed_river_set_hydro( data->this_river , river_data );
       sed_cube_river_set_hydro (prof, data->this_river, river_data);
-
+/*
       printf ( "time         : %f\n" , sed_cube_age_in_years(prof) );
       printf ( "duration     : %f\n" , sed_cube_time_step_in_years(prof) );
       printf ( "velocity     : %f\n" , sed_hydro_velocity(river_data) );
@@ -119,7 +119,7 @@ eh_watch_dbl (sed_cell_size (sed_cube_to_add (prof)));
       printf ( "bedload mass (kg): %g\n"                  , bedload_mass );
       printf ( "total sediment added to basin (kg): %g\n" , data->total_mass );
       printf ( "total sediment added to river (kg): %g\n" , data->total_mass_from_river );
-
+*/
       eh_message( "time         : %f" , sed_cube_age_in_years(prof) );
       eh_message( "duration     : %f" , sed_cube_time_step_in_years(prof) );
       eh_message( "velocity     : %f" , sed_hydro_velocity(river_data) );
@@ -187,7 +187,10 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
      str = eh_symbol_table_lookup (tab, RIVER_KEY_FILE_TYPE);
      data->river_name = eh_symbol_table_value (tab, RIVER_KEY_RIVER_NAME);
 
-     data->filename = g_build_filename (prefix, file, NULL);
+     if (file[0]=='/')
+       data->filename = g_strdup (file);
+     else
+       data->filename = g_build_filename (prefix, file, NULL);
 
      g_free (file);
      g_free (prefix);
