@@ -1031,7 +1031,7 @@ Fail_column *fail_reinit_fail_column( Fail_column *f ,
    double gravity = sed_gravity();
    int n_bins;
    double hydro_static;
-   Sed_property friction_angle = sed_property_new( "friction angle" );
+   Sed_property friction_angle = sed_property_new( "friction_angle" );
    Sed_property cohesion       = sed_property_new( "cohesion" );
 
    eh_require( c!=NULL );
