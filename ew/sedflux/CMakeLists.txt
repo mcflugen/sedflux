@@ -19,6 +19,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME 
 
 set (sedflux-2.0_LIB_SRCS
   sedflux_api.c
+  sedflux_bmi.c
   sedflux_command_line.c 
   run_constants.c 
   run_squall.c 
