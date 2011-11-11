@@ -32,8 +32,9 @@
 
 Boundary boundary_from_string (const char * str);
 double * constrain_river_to_domain (Sed_cube p, const int hinge[2],
-    const double angle_limits[2], Boundary angle_boundary[2]);
-double * constrain_angle (Sed_cube p, const int hinge[2],
+    const double angle_limits[2], const Boundary angle_boundary[2],
+    double * limits);
+double constrain_angle (Sed_cube p, const int hinge[2],
     const Boundary boundary);
 
 gboolean init_avulsion_data( Sed_process p , Sed_cube prof );
@@ -61,11 +62,11 @@ run_avulsion( Sed_process p , Sed_cube prof )
 
       {
         const int hinge[2] = {data->hinge_i, data->hinge_j};
-        const int angle_limits[2] = {min_angle, max_angle};
+        const double angle_limits[2] = {min_angle, max_angle};
         const Boundary boundary[2] = {data->right_bound, data->left_bound};
-        const double limits[2];
+        double limits[2];
 
-        constrain_river_to_domain (p, hinge, angle_limits, boundary, limits);
+        constrain_river_to_domain (prof, hinge, angle_limits, boundary, limits);
 
         min_angle = limits[0];
         max_angle = limits[1];
@@ -296,46 +297,48 @@ destroy_avulsion( Sed_process p )
    return TRUE;
 }
 
-double *
-constrain_angle (Sed_cube p, const int hinge[2], const Boundary boundary, double * limits)
+double
+constrain_angle (Sed_cube p, const int hinge[2], const Boundary boundary)
 {
+  double angle;
+
   {
-    int shore_ind[2];
+    Eh_ind_2 * inds;
 
     switch (boundary)
     {
       case BOUNDARY_NORTH:
-        shore_ind[0] = 0;
-        shore_ind[1] = sed_cube_find_shore (p, shore_ind[0], VARY_COLS);
+        inds = sed_cube_find_shore (p, 0, VARY_COLS);
         break;
       case BOUNDARY_SOUTH:
-        shore_ind[0] = sed_cube_n_x(p)-1;
-        ind = sed_cube_find_shore (p, shore_ind[0], VARY_COLS);
+        inds = sed_cube_find_shore (p, sed_cube_n_x (p)-1, VARY_COLS);
         break;
       case BOUNDARY_EAST:
-        shore_ind[1] = 0;
-        ind = sed_cube_find_shore (p, shore_ind[1], VARY_ROWS);
+        inds = sed_cube_find_shore (p, 0, VARY_ROWS);
         break;
       case BOUNDARY_WEST:
-        shore_ind[1] = sed_cube_n_y(p)-1;
-        ind = sed_cube_find_shore (p, shore_ind[1], VARY_ROWS);
+        inds = sed_cube_find_shore (p, sed_cube_n_y (p)-1, VARY_ROWS);
         break;
     }
 
-    angle = sed_cube_get_angle (p, hinge, shore_ind);
+    {
+      const int shore_ind[2] = {inds->i, inds->j};
+      angle = sed_cube_get_angle (p, hinge, shore_ind);
+    }
+
+    g_free (inds);
   }
 
-  return limits;
+  return angle;
 }
 
 double *
-constrain_river_to_domain (Sed_cube p, const int hinge[2], const double angle_limits[2],
-    Boundary angle_boundary[2], double * limits);
+constrain_river_to_domain (Sed_cube p, const int hinge[2],
+  const double angle_limits[2], const Boundary angle_boundary[2],
+  double * limits)
 {
-  double limits[2] = {angle_limits[0], angle_limits[1]};
-
   eh_require (p);
-  eh_require (hinge[0]>0 && hinge[1]>0);
+  eh_require (hinge[0]>=0 && hinge[1]>=0);
 
   limits[0] = angle_limits[0];
   limits[1] = angle_limits[1];
@@ -366,13 +369,13 @@ boundary_from_string (const char * str)
 {
   if (str)
   {
-     if (g_ascii_strcasecmp (left_bound, "NORTH")==0)
+     if (g_ascii_strcasecmp (str, "NORTH")==0)
        return BOUNDARY_NORTH;
-     else if (g_ascii_strcasecmp (left_bound, "SOUTH")==0)
+     else if (g_ascii_strcasecmp (str, "SOUTH")==0)
        return BOUNDARY_SOUTH;
-     else if (g_ascii_strcasecmp (left_bound, "EAST")==0)
+     else if (g_ascii_strcasecmp (str, "EAST")==0)
        return BOUNDARY_EAST;
-     else if (g_ascii_strcasecmp (left_bound, "WEST")==0)
+     else if (g_ascii_strcasecmp (str, "WEST")==0)
        return BOUNDARY_WEST;
   }
 

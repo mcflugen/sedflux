@@ -51,6 +51,9 @@ typedef enum
 }
 Sed_cube_error;
 
+#define VARY_COLS (0)
+#define VARY_ROWS (1)
+
 #define SED_CUBE_SUSP_GRID sed_cube_susp_grid_quark()
 #define SED_CUBE_ERROR     sed_cube_error_quark()
 
