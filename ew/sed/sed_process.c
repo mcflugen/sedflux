@@ -577,6 +577,37 @@ sed_process_queue_run( Sed_process_queue q , Sed_cube p )
 }
 
 Sed_process_queue
+sed_process_queue_remove_expired (Sed_process_queue q, Sed_cube p)
+{
+   if ( q && p )
+   {
+      GList* link;
+      const double time = sed_cube_age (p);
+
+      // Loop through the process lists
+      for (link=q->l ; link ; link=link->next)
+      {
+        GList* p_link;
+        GList* next_link;
+
+        // Loop through the processes
+        for (p_link=SED_PROCESS_LINK(link->data)->obj_list; p_link; p_link=p_link->next)
+        {
+          if (sed_process_is_expired ((Sed_process)(p_link->data), time))
+          {
+            //sed_process_set_inactive ((Sed_process)(p_link->data));
+            sed_process_destroy ((Sed_process)(p_link->data));
+            p_link = g_list_remove_link (SED_PROCESS_LINK (link->data)->obj_list, p_link);
+            SED_PROCESS_LINK (link->data)->obj_list = p_link;
+          }
+        }
+      }
+   }
+
+   return q;
+}
+
+Sed_process_queue
 sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
 {
    eh_require( q );
@@ -593,6 +624,8 @@ sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
             && !sed_signal_is_pending( SED_SIG_NEXT ) ;
             t = sed_cube_age_in_years (p) )
       {
+         sed_process_queue_remove_expired (q, p);
+
          sed_process_queue_run( q , p );
 
          if ( sed_signal_is_pending( SED_SIG_DUMP ) )
@@ -787,7 +820,7 @@ sed_process_destroy (Sed_process p)
     eh_free (p->child);
     eh_free (p->parent);
     eh_free (p->info);
-    eh_free (p->log_files);
+    //eh_free (p->log_files);
     eh_free (p->name);
     eh_free (p->tag);
     eh_free (p->prefix);
@@ -819,6 +852,22 @@ sed_process_set_next_event( Sed_process p , double new_next_event )
 {
    g_array_index( p->next_event , double , p->next_event->len-1 ) = new_next_event ;
    return p;
+}
+
+gboolean
+sed_process_is_expired (Sed_process p, double time)
+{
+  gboolean is_expired = FALSE;
+
+  eh_return_val_if_fail( p , FALSE );
+
+  if ( p )
+  {
+    if (time>p->stop)
+      is_expired = TRUE;
+  }
+
+  return is_expired;
 }
 
 gboolean
@@ -865,6 +914,9 @@ gboolean
 sed_process_run( Sed_process a , Sed_cube p )
 {
    gboolean rtn_val = TRUE;
+
+   eh_return_val_if_fail (a, rtn_val);
+
    if ( sed_process_is_on( a , sed_cube_age(p) ) && sed_process_is_parent(a) )
       rtn_val = sed_process_run_now(a,p);
    return rtn_val;
@@ -889,6 +941,8 @@ sed_process_run_now( Sed_process a , Sed_cube p )
       const gchar* log_name;
       Sed_process_info info;
       gulong           u_secs = 0;
+
+      //eh_message ("*** %s: Running", sed_process_name (a));
 
       g_timer_start( a->info->timer );
 
@@ -930,7 +984,9 @@ sed_process_run_now( Sed_process a , Sed_cube p )
       }
       else
       {
+         //eh_message ("*** %s: Calling run", sed_process_name (a));
          info = a->f_run( a , p );
+         //eh_message ("*** %s: Called run", sed_process_name (a));
 
          a->info->mass_total_added += info.mass_added;
          a->info->mass_total_lost  += info.mass_lost;
@@ -942,6 +998,8 @@ sed_process_run_now( Sed_process a , Sed_cube p )
       a->info->u_secs += u_secs;
 
       a->run_count++;
+
+      //eh_message ("*** %s: Done", sed_process_name (a));
    }
 
    return rtn_val;
@@ -1441,6 +1499,14 @@ sed_process_is_active( Sed_process p )
    
    return is_active;
 }
+
+void
+sed_process_set_inactive (Sed_process p)
+{
+   if (p)
+      p->active = FALSE;
+}
+
 
 gssize
 sed_process_summary( FILE* fp , Sed_process p )

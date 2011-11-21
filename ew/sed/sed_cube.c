@@ -239,7 +239,7 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          gchar* full_name = NULL;
          Sed_sediment sediment_type = NULL;
 
-         if (prefix)
+         if (prefix && sediment_file[0]!='/')
            full_name = g_build_filename (prefix, sediment_file, NULL);
          else
            full_name = g_strdup (sediment_file);
@@ -261,7 +261,7 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          gchar* full_name = NULL;
          Eh_dbl_grid grid = NULL;
 
-         if (prefix)
+         if (prefix && bathy_file[0]!='/')
            full_name = g_build_filename (prefix, bathy_file, NULL);
          else
            full_name = g_strdup (bathy_file);
@@ -773,8 +773,8 @@ Eh_ind_2 sed_ind2sub( gssize ind , gssize n_y )
 {
    Eh_ind_2 sub;
 
-   sub.i = floor( ind / n_y );
-   sub.j = fmod ( ind , n_y );
+   sub.i = ind/n_y;
+   sub.j = ind - sub.i*n_y;
 
    return sub;
 }
@@ -1796,6 +1796,19 @@ sed_cube_add_trunk (Sed_cube s, Sed_riv new_trunk)
 }
 
 void
+sed_cube_remove_trunk (Sed_cube s, gpointer trunk_id)
+{
+  eh_require (s);
+  eh_require (trunk_id);
+
+  {
+    eh_watch_int (g_list_length (s->river));
+    s->river = g_list_remove (s->river, trunk_id);
+    eh_watch_int (g_list_length (s->river));
+  }
+}
+
+void
 sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
                              const gint start[2], double a)
 {
@@ -2227,9 +2240,6 @@ Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *river )
 }
 */
 
-#define VARY_COLS (0)
-#define VARY_ROWS (1)
-
 void sed_cube_set_shore( Sed_cube s )
 {
    int i;
@@ -2259,6 +2269,8 @@ void sed_cube_set_shore( Sed_cube s )
       else
          shore_list = sed_cube_find_shore_line( s , pos );
    }
+
+   g_free (pos);
 
    for ( list=shore_list ; list ; list=list->next )
    {
@@ -2842,15 +2854,15 @@ GList *sed_cube_find_cross_shore_columns( Sed_cube s , gssize i , gssize j )
 
 \return The indices to the land column that marks the transition.
 */
-Eh_ind_2 *sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
+Eh_ind_2 *
+sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
 {
    int i, j;
-   int row, col;
    Eh_ind_2 *pos=NULL;
 
    if ( vary_dim==VARY_COLS )
    {
-      row = n;
+      const int row = n;
       for ( j=0 ; j<s->n_y-1 && !pos ; j++ )
          if (   sed_column_is_below( s->col[row][j]   , s->sea_level )
               ^ sed_column_is_below( s->col[row][j+1] , s->sea_level ) )
@@ -2865,7 +2877,7 @@ Eh_ind_2 *sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
    }
    else
    {
-      col = n;
+      const int col = n;
       for ( i=0 ; i<s->n_x-1 && !pos ; i++ )
          if (   sed_column_is_below( s->col[i][col]   , s->sea_level )
               ^ sed_column_is_below( s->col[i+1][col] , s->sea_level ) )
@@ -2903,7 +2915,13 @@ sed_cube_find_river_mouth( Sed_cube c , Sed_riv this_river )
    hinge_pos     = sed_river_hinge( this_river );
    hinge_angle   = sed_river_angle( this_river );
 
+   //eh_watch_dbl (hinge_angle);
+   //eh_watch_int (hinge_pos.i);
+   //eh_watch_int (hinge_pos.j);
    new_pos       = sed_find_river_mouth( c , &hinge_pos , hinge_angle );
+   //eh_watch_ptr (new_pos);
+   //eh_watch_int (new_pos->i);
+   //eh_watch_int (new_pos->j);
 
    sed_river_set_mouth( this_river , new_pos->i , new_pos->j );
 
@@ -3450,7 +3468,9 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
          tab = eh_str_parse_key_value( data[i] , ":" , "\n" );
 
          if ( tab && eh_symbol_table_has_label( tab , S_KEY_SUBSIDENCE_TIME ) )
+         {
             t[i] = eh_symbol_table_dbl_value( tab , S_KEY_SUBSIDENCE_TIME );
+         }
          else
          {
             g_set_error( &err ,
@@ -3510,17 +3530,21 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
             z   = (all_records[i])[1];
 
             if ( !eh_dbl_array_is_monotonic_up(y,n_cols[i] ) )
+            {
                g_set_error( &err ,
                   SED_CUBE_ERROR ,
                   SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
                   "%s (record %d): Position data not monotonically increasing.\n" ,
                   file , i+1 );
+            }
             else if ( y[0]>y_i[0] || y[n_cols[i]-1]<y_i[n_yi-1] )
+            {
                g_set_error( &err ,
                   SED_CUBE_ERROR ,
                   SED_CUBE_ERROR_DATA_BAD_RANGE ,
                   "%s (record %d): Insufficient range in position data.\n" ,
                   file , i+1 );
+            }
             else
             {
                this_grid = eh_grid_new( double , 1 , n_yi );
@@ -3539,6 +3563,10 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
 
       for ( i=0 ; i<n_recs ; i++ )
          eh_free_2( all_records[i] );
+   }
+   else
+   {
+     exit (0);
    }
 
    if ( err!=NULL )
@@ -3894,7 +3922,7 @@ sed_bathy_grid_scan_1d_ascii( const char *file , double dx , double dy , GError*
          //---
          eh_debug( "Interpolate to a uniform grid" );
          {
-            gssize n_y = (y[n-1]-y[0]) / dy;
+            gssize n_y = (gssize) ((y[n-1]-y[0]) / dy);
             grid = eh_grid_new( double , 1 , n_y );
 
             eh_grid_set_y_lin( grid , y[0] , dy );
@@ -4604,5 +4632,30 @@ sed_cube_col_deposit_equal_amounts (Sed_cube c, gint id, double t)
   }
 
   return c;
+}
+
+/** Calculate the angle of the ray that joins two points of a Sed_cube.
+
+@param c      A Sed_cube
+@param start  i,j indices of the start of the ray
+@param end    i,j indices of the end of the ray
+
+@return The angle in degrees.
+*/
+double
+sed_cube_get_angle (const Sed_cube c, const int start[2], const int end[2])
+{
+  double angle;
+
+  eh_require (c);
+
+  {
+    const double dx = sed_cube_x_res (c);
+    const double dy = sed_cube_y_res (c);
+
+    angle = atan2 ((end[1]-start[1])*dy, (end[0]-start[0])*dx);
+  }
+
+  return angle;
 }
 

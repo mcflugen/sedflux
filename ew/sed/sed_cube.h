@@ -51,6 +51,9 @@ typedef enum
 }
 Sed_cube_error;
 
+#define VARY_COLS (0)
+#define VARY_ROWS (1)
+
 #define SED_CUBE_SUSP_GRID sed_cube_susp_grid_quark()
 #define SED_CUBE_ERROR     sed_cube_error_quark()
 
@@ -224,6 +227,7 @@ void          sed_river_attach_susp_grid( Sed_riv r , Sed_cell_grid g );
 Sed_cell_grid sed_river_get_susp_grid( Sed_riv r );
 void          sed_river_detach_susp_grid( Sed_riv r );
 gpointer      sed_cube_add_trunk( Sed_cube s , Sed_riv new_trunk );
+void sed_cube_remove_trunk (Sed_cube s, gpointer trunk_id);
 void          sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
                                            const gint start[2], double a);
 void          sed_cube_set_river_path_ends (Sed_riv r, const Sed_cube s,
@@ -423,6 +427,7 @@ Sed_cube sed_cube_deposit_cell (Sed_cube c,
                                 Sed_cell const add_cell);
 Sed_cube sed_cube_col_deposit_equal_amounts (Sed_cube c, gint id, double t);
 
+double sed_cube_get_angle (const Sed_cube c, const int start[2], const int end[2]);
 G_END_DECLS
 
 #endif

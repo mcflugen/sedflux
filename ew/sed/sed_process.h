@@ -130,6 +130,7 @@ Sed_process    sed_process_destroy        ( Sed_process p );
 void           sed_process_clean          ( Sed_process p );
 double         sed_process_next_event     ( Sed_process p );
 Sed_process    sed_process_set_next_event ( Sed_process p    , double new_next_event );
+gboolean       sed_process_is_expired (Sed_process, double);
 gboolean       sed_process_is_on          ( Sed_process p    , double time );
 gboolean       sed_process_array_run      ( GPtrArray *a     , Sed_cube );
 gboolean       sed_process_run            ( Sed_process      , Sed_cube );
@@ -166,6 +167,7 @@ gpointer       sed_process_user_data          ( Sed_process p );
 gpointer       sed_process_malloc_user_data   ( Sed_process p , gssize n_bytes );
 gboolean       sed_process_name_is_same       ( Sed_process a , Sed_process b );
 gboolean       sed_process_is_active          ( Sed_process p );
+void sed_process_set_inactive (Sed_process p);
 
 gssize         sed_process_fprint_info( FILE* fp , Sed_process p );
 gssize         sed_process_summary    ( FILE* fp , Sed_process p );
