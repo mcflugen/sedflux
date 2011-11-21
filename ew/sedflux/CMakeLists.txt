@@ -20,7 +20,6 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME 
 ########### next target ###############
 
 set (sedflux-2.0_LIB_SRCS
-  sedflux_cmi.c
   sedflux_api.c
   sedflux_bmi.c
   sedflux_command_line.c 
@@ -68,7 +67,7 @@ install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 ########### install files ###############
 
-install(FILES  sedflux.h sedflux_api.h sedflux_cmi.h DESTINATION include/ew-2.0 COMPONENT sedflux)
+install(FILES  sedflux.h sedflux_api.h DESTINATION include/ew-2.0 COMPONENT sedflux)
 #install(FILES  runsedflux sedflux-run-batch DESTINATION )
 
 
