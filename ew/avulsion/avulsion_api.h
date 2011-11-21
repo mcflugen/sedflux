@@ -38,9 +38,13 @@ Avulsion_state* avulsion_set_river_angle_limit (Avulsion_state* self,
 Avulsion_state* avulsion_set_total_river_mouths (Avulsion_state* self, int n_branches);
 Avulsion_state* avulsion_set_elevation_from_file (Avulsion_state* self,
                                                   gchar* file);
-Avulsion_state* avulsion_set_sed_flux (Avulsion_state* self, double val);
+Avulsion_state* avulsion_set_sed_flux (Avulsion_state* self, const double val);
+Avulsion_state* avulsion_set_discharge (Avulsion_state* self, const double q);
 Avulsion_state* avulsion_set_bed_load_exponent (Avulsion_state* self, double exponent);
+Avulsion_state* avulsion_set_discharge_exponent (Avulsion_state* self,
+                                                 double exponent);
 Avulsion_state* avulsion_set_elevation (Avulsion_state* self, double* val);
+Avulsion_state* avulsion_set_depth (Avulsion_state* self, double* val);
 
 double avulsion_get_variance (Avulsion_state*);
 double avulsion_get_current_time (Avulsion_state* self);
@@ -55,9 +59,9 @@ double avulsion_get_dy (Avulsion_state* self);
 double* avulsion_get_value_res (Avulsion_state* self, const gchar* val_s,
                                 double res[3]);
 double avulsion_get_angle (Avulsion_state* self);
-double* avulsion_get_value (Avulsion_state* self, const gchar* val_string,
+const double* avulsion_get_value (Avulsion_state* self, const gchar* val_string,
                             gint dimen[3]);
-double* avulsion_get_value_data (Avulsion_state* self, const gchar* val_string,
+const double* avulsion_get_value_data (Avulsion_state* self, const gchar* val_string,
                                  gint lower[3], gint upper[3], gint stride[3]);
 
 G_END_DECLS

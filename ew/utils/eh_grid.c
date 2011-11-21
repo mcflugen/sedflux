@@ -1023,8 +1023,8 @@ eh_dbl_grid_rotate( Eh_dbl_grid g , double angle , gssize i_0 , gssize j_0 , dou
                alpha     = atan2( d_j , d_i );
                new_angle = alpha + angle;
 
-               i_rotate = eh_round( r*cos( new_angle ) , 1 )+i_0;
-               j_rotate = eh_round( r*sin( new_angle ) , 1 )+j_0;
+               i_rotate = eh_round_to_int (r*cos (new_angle), 1)+i_0;
+               j_rotate = eh_round_to_int (r*sin (new_angle), 1)+j_0;
 
                if ( eh_grid_is_in_domain( temp , i_rotate , j_rotate ) )
                   temp_data[i_rotate][j_rotate] += data[i][j];
@@ -1540,8 +1540,8 @@ eh_dbl_grid_populate( Eh_dbl_grid g  , Populate_func f , gpointer user_data )
 
          if ( (*f)( x , y , user_data ) )
          {
-            i   = floor(x);
-            j   = floor(y);
+            i = (gint64)floor (x);
+            j = (gint64)floor (y);
             inc = eh_dbl_grid_val(g,i,j) + 1;
             eh_dbl_grid_set_val( g , i , j , inc );
          }

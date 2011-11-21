@@ -129,6 +129,7 @@ sed_river_impart_avulsion_data( Sed_riv r )
     {
       Avulsion_st* left_data = avulsion_dup (parent_data);
       left_data->std_dev  *=.5;
+      left_data->rand = g_rand_new_with_seed (g_rand_int (parent_data->rand));
       sed_river_set_avulsion_data (left, left_data);
     }
     else
@@ -141,6 +142,7 @@ sed_river_impart_avulsion_data( Sed_riv r )
     {
       Avulsion_st* right_data = avulsion_dup (parent_data);
       right_data->std_dev  *=.5;
+      right_data->rand = g_rand_new_with_seed (g_rand_int (parent_data->rand));
       sed_river_set_avulsion_data (right, right_data);
     }
   else

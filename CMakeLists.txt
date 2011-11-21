@@ -1,6 +1,22 @@
 cmake_minimum_required(VERSION 2.6)
 
-project( sedflux )
+project (sedflux)
+include (CTest)
+
+enable_testing ()
+
+add_test (Help ${CMAKE_CURRENT_BINARY_DIR}/ew/sedflux/run_sedflux --help)
+add_test (SedCell gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cell)
+add_test (SedColumn gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-column)
+add_test (SedCube gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cube)
+add_test (SedHydro gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-hydro)
+add_test (SedRiver gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-river)
+add_test (SedWave gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-wave)
+add_test (UtilsGrid gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-grid)
+add_test (UtilsIO gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-io)
+add_test (UtilsKeyFile gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-key-file)
+add_test (UtilsNum gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-num)
+add_test (UtilsSymbolTable gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-symbol-table)
 
 set (BUILD_SHARED_LIBS ON)
 

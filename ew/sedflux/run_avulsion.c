@@ -30,6 +30,13 @@
 
 #include "sedflux.h"
 
+Boundary boundary_from_string (const char * str);
+double * constrain_river_to_domain (Sed_cube p, const int hinge[2],
+    const double angle_limits[2], const Boundary angle_boundary[2],
+    double * limits);
+double constrain_angle (Sed_cube p, const int hinge[2],
+    const Boundary boundary);
+
 gboolean init_avulsion_data( Sed_process p , Sed_cube prof );
 
 Sed_process_info
@@ -38,6 +45,9 @@ run_avulsion( Sed_process p , Sed_cube prof )
    Avulsion_t*      data = (Avulsion_t*)sed_process_user_data(p);
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_riv          this_river;
+
+   if (!data)
+     return info;
 
    if ( sed_process_run_count(p)==0 )
       init_avulsion_data( p , prof );
@@ -52,6 +62,18 @@ run_avulsion( Sed_process p , Sed_cube prof )
       double min_angle  = eh_input_val_eval( data->min_angle , time    )*S_RADS_PER_DEGREE;
       double max_angle  = eh_input_val_eval( data->max_angle , time    )*S_RADS_PER_DEGREE;
       double f          = 10e6;
+
+      {
+        const int hinge[2] = {data->hinge_i, data->hinge_j};
+        const double angle_limits[2] = {min_angle, max_angle};
+        const Boundary boundary[2] = {data->right_bound, data->left_bound};
+        double limits[2];
+
+        constrain_river_to_domain (prof, hinge, angle_limits, boundary, limits);
+
+        min_angle = limits[0];
+        max_angle = limits[1];
+      }
 
       if ( data->branching_is_on )
       {
@@ -101,7 +123,7 @@ run_avulsion( Sed_process p , Sed_cube prof )
       printf ("no. branches : %d\n", sed_river_n_branches (this_river));
       fflush (stdout);
 */
-/*
+
       eh_message( "time         : %f" , sed_cube_age_in_years (prof)           );
       eh_message( "river name   : %s" , data->river_name                       );
       eh_message( "minimum angle: %f" , sed_river_min_angle   ( this_river )   );
@@ -111,7 +133,7 @@ run_avulsion( Sed_process p , Sed_cube prof )
       eh_message( "position (y) : %d" , sed_river_mouth       ( this_river ).j );
       eh_message( "fraction     : %f" , fraction                               );
       eh_message( "no. branches : %d" , sed_river_n_branches  ( this_river )   );
-*/
+
 /*
       eh_data   ( "%f, %f, %f, %f, %d" ,
                   sed_cube_age_in_years ( prof       ) ,
@@ -152,6 +174,9 @@ run_avulsion( Sed_process p , Sed_cube prof )
 #define AVULSION_KEY_SEED        "seed for random number generator"
 /* @} */
 
+#define AVULSION_MIN_BOUNDARY    "right boundary for delta plain"
+#define AVULSION_MAX_BOUNDARY    "left boundary for delta plain"
+
 static const gchar* avulsion_req_labels[] =
 {
    AVULSION_KEY_STDDEV      ,
@@ -180,6 +205,9 @@ init_avulsion( Sed_process p , Eh_symbol_table tab , GError** error )
 
    data->rand = NULL;
 
+   data->left_bound = boundary_from_string (eh_symbol_table_value (tab, AVULSION_MAX_BOUNDARY));
+   data->right_bound = boundary_from_string (eh_symbol_table_value (tab, AVULSION_MIN_BOUNDARY));
+   
    if ( eh_symbol_table_require_labels( tab , avulsion_req_labels , &tmp_err ) )
    {
       if ( !tmp_err ) data->std_dev   = eh_symbol_table_input_value( tab , AVULSION_KEY_STDDEV    , &tmp_err );
@@ -270,5 +298,90 @@ destroy_avulsion( Sed_process p )
    }
 
    return TRUE;
+}
+
+double
+constrain_angle (Sed_cube p, const int hinge[2], const Boundary boundary)
+{
+  double angle;
+
+  {
+    Eh_ind_2 * inds;
+
+    switch (boundary)
+    {
+      case BOUNDARY_NORTH:
+        inds = sed_cube_find_shore (p, 0, VARY_COLS);
+        break;
+      case BOUNDARY_SOUTH:
+        inds = sed_cube_find_shore (p, sed_cube_n_x (p)-1, VARY_COLS);
+        break;
+      case BOUNDARY_EAST:
+        inds = sed_cube_find_shore (p, 0, VARY_ROWS);
+        break;
+      case BOUNDARY_WEST:
+        inds = sed_cube_find_shore (p, sed_cube_n_y (p)-1, VARY_ROWS);
+        break;
+    }
+
+    {
+      const int shore_ind[2] = {inds->i, inds->j};
+      angle = sed_cube_get_angle (p, hinge, shore_ind);
+    }
+
+    g_free (inds);
+  }
+
+  return angle;
+}
+
+double *
+constrain_river_to_domain (Sed_cube p, const int hinge[2],
+  const double angle_limits[2], const Boundary angle_boundary[2],
+  double * limits)
+{
+  eh_require (p);
+  eh_require (hinge[0]>=0 && hinge[1]>=0);
+
+  limits[0] = angle_limits[0];
+  limits[1] = angle_limits[1];
+
+  {
+    double angle;
+
+    if (angle_boundary[0]!=BOUNDARY_NONE)
+    {
+      angle = constrain_angle (p, hinge, angle_boundary[0]);
+      if (angle>angle_limits[0])
+        limits[0] = angle;
+    }
+
+    if (angle_boundary[1]!=BOUNDARY_NONE)
+    {
+      angle = constrain_angle (p, hinge, angle_boundary[1]);
+      if (angle<angle_limits[1])
+        limits[1] = angle;
+    }
+  }
+
+  return limits;
+}
+
+Boundary
+boundary_from_string (const char * str)
+{
+  if (str)
+  {
+     if (g_ascii_strcasecmp (str, "NORTH")==0)
+       return BOUNDARY_NORTH;
+     else if (g_ascii_strcasecmp (str, "SOUTH")==0)
+       return BOUNDARY_SOUTH;
+     else if (g_ascii_strcasecmp (str, "EAST")==0)
+       return BOUNDARY_EAST;
+     else if (g_ascii_strcasecmp (str, "WEST")==0)
+       return BOUNDARY_WEST;
+  }
+
+  return BOUNDARY_NONE;
 }
 

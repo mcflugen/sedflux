@@ -43,6 +43,8 @@ run_bbl( Sed_process p , Sed_cube prof )
    Bbl_t*           data = (Bbl_t*)sed_process_user_data(p);
    Sed_process_info info = SED_EMPTY_INFO;
    gint             n_rivers;
+   //double mass_before;
+   //double mass_after;
 
    if ( sed_process_run_count(p)==0 )
       init_bbl_data( p , prof , NULL );
@@ -58,6 +60,8 @@ run_bbl( Sed_process p , Sed_cube prof )
    }
 
    n_rivers = sed_cube_n_rivers( prof );
+
+   //mass_before = sed_cube_mass (prof);
 
    info.mass_lost = 0.;
    if ( n_rivers>0 )
@@ -83,7 +87,11 @@ run_bbl( Sed_process p , Sed_cube prof )
       }
    }
 
+   //mass_after = sed_cube_mass (prof);
    eh_message( "time : %f" , sed_cube_age_in_years( prof ) );
+   //eh_message( "Mass before (kg) : %f" , mass_before);
+   //eh_message( "Mass after (kg) : %f" , mass_after);
+   //eh_message( "Mass added (kg) : %f" , mass_after - mass_before); 
 
    return info;
 }

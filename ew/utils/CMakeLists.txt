@@ -8,6 +8,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} )
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/utils.pc.cmake  ${CMAKE_CURRENT_SOURCE_DIR}/utils.pc )
 
+include (CheckFunctionExists)
+Check_Function_Exists (getline HAVE_GETLINE)
+
+if (HAVE_GETLINE)
+  add_definitions (-DHAVE_GETLINE)
+endif (HAVE_GETLINE)
+
 ########### next target ###############
 
 SET(utils_LIB_SRCS

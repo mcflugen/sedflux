@@ -227,6 +227,7 @@ Quake_t;
 
 typedef struct
 {
+   Sed_cube prof;
    Sed_hydro_file   fp_river;
    char*            filename;
    Sed_hydro_file_type type;
@@ -240,8 +241,20 @@ typedef struct
 }
 River_t;
 
+typedef enum
+{
+  BOUNDARY_NONE,
+  BOUNDARY_NORTH,
+  BOUNDARY_SOUTH,
+  BOUNDARY_EAST,
+  BOUNDARY_WEST,
+}
+Boundary;
+
 typedef struct
 {
+   Boundary     left_bound;
+   Boundary     right_bound;
    Eh_input_val std_dev;
    Eh_input_val min_angle;
    Eh_input_val max_angle;

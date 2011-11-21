@@ -335,7 +335,6 @@ sedflux_set_project_dirs (Sedflux_state* self, GError** error)
     sedflux_get_file_name_interactively (&(self->working_dir),
                                          &(self->init_file));
 
-   
   if (!self->working_dir)
     self->working_dir = g_strdup (".");
 
@@ -464,11 +463,13 @@ sedflux_initialize (const gint argc, const gchar* argv[])
       eh_free( p );
     }
 
+    eh_message ("Creating project directory...");
     { /* Create the project directory and check permissions */
       sedflux_set_project_dirs (state, &error);
       eh_exit_on_error (error, "Error setting up project directory");
     }
 
+    eh_message ("Printing info file...");
     { /* Print the info file */
       gchar* command_str = eh_render_command_str (argc, argv);
       sedflux_print_info_file (sedflux_init_file (state),
@@ -477,13 +478,16 @@ sedflux_initialize (const gint argc, const gchar* argv[])
                                sedflux_description (state));
     }
 
+    eh_message ("Scanning init file...");
     { /* Scan the init file. */
+      eh_message ("Creating sedflux cube...");
       state->p = sed_cube_new_from_file (sedflux_init_file (state),
                                          sedflux_input_dir (state),
                                          &error);
       eh_exit_on_error (error, "%s: Error reading initialization file",
                                sedflux_init_file (state));
 
+      eh_message ("Creating sedflux epoch queue...");
       state->q = sed_epoch_queue_new_full (sedflux_init_file (state),
                                            sedflux_input_dir (state),
                                            my_proc_defs, my_proc_family,
@@ -494,6 +498,7 @@ sedflux_initialize (const gint argc, const gchar* argv[])
 
     _sedflux_save_time_variables (state);
   }
+  eh_message ("Sedflux is set up.");
 
   return state;
 }
@@ -602,7 +607,7 @@ sedflux_get_exchange_items (Sedflux_state* state)
 }
 
 gchar*
-sedflux_get_exchange_item_unit (Sedflux_state* state, gchar* name)
+sedflux_get_exchange_item_unit (Sedflux_state* state, const gchar* name)
 {
   gchar* unit = NULL;
 
@@ -674,6 +679,63 @@ sedflux_get_value_data (Sedflux_state* state, const char* val_s, int dimen[3])
   }
   else
     return sedflux_get_value_cube (state, val_s, dimen);
+}
+
+double*
+sedflux_get_double (Sedflux_state* state, const char* val_s, int * n_dim,
+    int **dimen)
+{
+  *dimen = sedflux_get_value_shape (state, val_s, n_dim);
+  if (g_str_has_prefix (val_s, "SeaFloor"))
+  {
+    const gchar* value_name = val_s+strlen ("SeaFloor");
+    if (g_ascii_strcasecmp (value_name, "EROSION")==0)
+    { /* This is a time derivative */
+
+      int i;
+      const int len = sed_cube_size (state->p);
+      double *erosion = eh_new (double, len);
+      double* this_data;
+
+      eh_require (state->thickness);
+
+      this_data = sedflux_get_value (state, "Thickness", *dimen);
+      for (i=0; i<len; i++)
+        //if (is_land_cell_id (state->p, i))
+        if (sed_cube_elevation (state->p, 0, i)>.1)
+          erosion[i] = 0;
+        else
+          erosion[i] = this_data[i] - state->thickness[i];
+
+      {
+        double max = -1e32;
+        double min = 1e32;
+        for (i=0; i<len; i++)
+        {
+          if (this_data[i]>max)
+            max = erosion[i];
+          if (this_data[i]<min)
+            min = erosion[i];
+        }
+
+        fprintf (stderr, "Sedflux: Max erosion is %f\n", max);
+        fprintf (stderr, "Sedflux: Min erosion is %f\n", min);
+        fflush (stderr);
+      }
+
+      eh_free (this_data);
+
+      return erosion;
+
+      /* Erode/Deposit to this elevation
+      return sedflux_get_value (state, "Elevation", *dimen);
+      */
+    }
+    else
+      return sedflux_get_value (state, val_s+strlen ("SeaFloor"), *dimen);
+  }
+  else
+    return sedflux_get_value_cube (state, val_s, *dimen);
 }
 
 double*
@@ -766,6 +828,40 @@ sedflux_get_value_dimen (Sedflux_state* state, const char* val_s, int dimen[3])
   return dimen;
 }
 
+int*
+sedflux_get_value_shape (Sedflux_state* state, const char* val_s,
+    int *n_dim)
+{
+  int * dimen = NULL;
+  if (g_str_has_prefix (val_s, "SeaFloor"))
+  {
+    if (sed_cube_n_x (state->p)==1)
+      *n_dim = 1;
+    else
+      *n_dim = 2;
+
+    dimen = g_new (int,*n_dim);
+    dimen[0] = sed_cube_n_y (state->p);
+    if (sed_cube_n_x (state->p)>1)
+      dimen[1] = sed_cube_n_x (state->p);
+  }
+  else
+  {
+    if (sed_cube_n_x (state->p)==1)
+      *n_dim = 2;
+    else
+      *n_dim = 3;
+
+    dimen = g_new (int,*n_dim);
+    dimen[0] = -1;
+    dimen[1] = sed_cube_n_y (state->p);
+    if (sed_cube_n_x (state->p)>1)
+      dimen[2] = sed_cube_n_x (state->p);
+  }
+
+  return dimen;
+}
+
 double*
 sedflux_get_value_res (Sedflux_state* state, const char* val_s, double res[3])
 {
@@ -783,6 +879,40 @@ sedflux_get_value_res (Sedflux_state* state, const char* val_s, double res[3])
   }
 
   return res;
+}
+
+double*
+sedflux_get_value_spacing (Sedflux_state* state, const char* val_s,
+    int *n_dim)
+{
+  double * spacing = NULL;
+  if (g_str_has_prefix (val_s, "SeaFloor"))
+  {
+    if (sed_cube_n_x (state->p)==1)
+      *n_dim = 1;
+    else
+      *n_dim = 2;
+
+    spacing = g_new (double,*n_dim);
+    spacing[0] = sed_cube_y_res (state->p);
+    if (sed_cube_n_x (state->p)>1)
+      spacing[1] = sed_cube_x_res (state->p);
+  }
+  else
+  {
+    if (sed_cube_n_x (state->p)==1)
+      *n_dim = 2;
+    else
+      *n_dim = 3;
+
+    spacing = g_new (double,*n_dim);
+    spacing[0] = sed_cube_z_res (state->p);
+    spacing[1] = sed_cube_y_res (state->p);
+    if (sed_cube_n_x (state->p)>1)
+      spacing[2] = sed_cube_x_res (state->p);
+  }
+
+  return spacing;
 }
 
 void
