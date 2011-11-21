@@ -43,7 +43,6 @@ run_river( Sed_process proc , Sed_cube prof )
       init_river_data( proc , prof , NULL );
 
    river_data = sed_hydro_file_read_record( data->fp_river );
-
    if ( river_data )
    {
       gint i;
@@ -104,6 +103,7 @@ run_river( Sed_process proc , Sed_cube prof )
 
       //sed_river_set_hydro( data->this_river , river_data );
       sed_cube_river_set_hydro (prof, data->this_river, river_data);
+      //eh_message ("set river...");
 /*
       printf ( "time         : %f\n" , sed_cube_age_in_years(prof) );
       printf ( "duration     : %f\n" , sed_cube_time_step_in_years(prof) );
@@ -120,6 +120,7 @@ run_river( Sed_process proc , Sed_cube prof )
       printf ( "total sediment added to basin (kg): %g\n" , data->total_mass );
       printf ( "total sediment added to river (kg): %g\n" , data->total_mass_from_river );
 */
+
       eh_message( "time         : %f" , sed_cube_age_in_years(prof) );
       eh_message( "duration     : %f" , sed_cube_time_step_in_years(prof) );
       eh_message( "velocity     : %f" , sed_hydro_velocity(river_data) );
@@ -263,6 +264,8 @@ init_river_data( Sed_process proc , Sed_cube prof , GError** error )
       data->total_mass            = 0;
       data->total_mass_from_river = 0;
       data->fp_river              = sed_hydro_file_new( data->filename , data->type , data->buffer_is_on , TRUE , error );
+      data->prof = prof;
+
       //data->this_river            = sed_river_new     ( data->river_name );
 
       new_river = sed_river_new (data->river_name);
@@ -285,6 +288,8 @@ destroy_river( Sed_process p )
       
       if ( data )
       {
+         sed_cube_remove_trunk (data->prof, data->this_river);
+
          sed_hydro_file_destroy( data->fp_river );
 
          eh_free( data->filename   );

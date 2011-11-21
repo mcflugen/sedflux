@@ -1796,6 +1796,19 @@ sed_cube_add_trunk (Sed_cube s, Sed_riv new_trunk)
 }
 
 void
+sed_cube_remove_trunk (Sed_cube s, gpointer trunk_id)
+{
+  eh_require (s);
+  eh_require (trunk_id);
+
+  {
+    eh_watch_int (g_list_length (s->river));
+    s->river = g_list_remove (s->river, trunk_id);
+    eh_watch_int (g_list_length (s->river));
+  }
+}
+
+void
 sed_cube_set_river_path_ray (Sed_riv r, const Sed_cube s,
                              const gint start[2], double a)
 {
@@ -2902,7 +2915,13 @@ sed_cube_find_river_mouth( Sed_cube c , Sed_riv this_river )
    hinge_pos     = sed_river_hinge( this_river );
    hinge_angle   = sed_river_angle( this_river );
 
+   //eh_watch_dbl (hinge_angle);
+   //eh_watch_int (hinge_pos.i);
+   //eh_watch_int (hinge_pos.j);
    new_pos       = sed_find_river_mouth( c , &hinge_pos , hinge_angle );
+   //eh_watch_ptr (new_pos);
+   //eh_watch_int (new_pos->i);
+   //eh_watch_int (new_pos->j);
 
    sed_river_set_mouth( this_river , new_pos->i , new_pos->j );
 
@@ -3449,7 +3468,9 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
          tab = eh_str_parse_key_value( data[i] , ":" , "\n" );
 
          if ( tab && eh_symbol_table_has_label( tab , S_KEY_SUBSIDENCE_TIME ) )
+         {
             t[i] = eh_symbol_table_dbl_value( tab , S_KEY_SUBSIDENCE_TIME );
+         }
          else
          {
             g_set_error( &err ,
@@ -3509,17 +3530,21 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
             z   = (all_records[i])[1];
 
             if ( !eh_dbl_array_is_monotonic_up(y,n_cols[i] ) )
+            {
                g_set_error( &err ,
                   SED_CUBE_ERROR ,
                   SED_CUBE_ERROR_DATA_NOT_MONOTONIC ,
                   "%s (record %d): Position data not monotonically increasing.\n" ,
                   file , i+1 );
+            }
             else if ( y[0]>y_i[0] || y[n_cols[i]-1]<y_i[n_yi-1] )
+            {
                g_set_error( &err ,
                   SED_CUBE_ERROR ,
                   SED_CUBE_ERROR_DATA_BAD_RANGE ,
                   "%s (record %d): Insufficient range in position data.\n" ,
                   file , i+1 );
+            }
             else
             {
                this_grid = eh_grid_new( double , 1 , n_yi );
@@ -3538,6 +3563,10 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
 
       for ( i=0 ; i<n_recs ; i++ )
          eh_free_2( all_records[i] );
+   }
+   else
+   {
+     exit (0);
    }
 
    if ( err!=NULL )

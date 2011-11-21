@@ -320,7 +320,7 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
          final_mass = sed_cell_grid_mass( in_suspension )
                     * sed_cube_x_res( prof )
                     * sed_cube_y_res( prof );
-
+/*
          printf ("time                  : %f\n", sed_cube_age(prof) );
          printf ("sediment input (kg)   : %g\n", input_mass           );
          printf ("sediment added (kg)   : %g\n", final_mass-init_mass );
@@ -332,7 +332,7 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
          printf ("river depth (m)       : %f\n", sed_hydro_depth   ( hydro_data ) );
          for ( i=0 ; i<n_susp_grains ; i++ )
             printf ("river conc %d (kg/m^3): %f\n", i , sed_hydro_nth_concentration(hydro_data,i) );
-
+*/
          eh_message( "time                  : %f" , sed_cube_age(prof) );
          eh_message( "sediment input (kg)   : %g" , input_mass           );
          eh_message( "sediment added (kg)   : %g" , final_mass-init_mass );

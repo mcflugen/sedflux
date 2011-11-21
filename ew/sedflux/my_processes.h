@@ -227,6 +227,7 @@ Quake_t;
 
 typedef struct
 {
+   Sed_cube prof;
    Sed_hydro_file   fp_river;
    char*            filename;
    Sed_hydro_file_type type;

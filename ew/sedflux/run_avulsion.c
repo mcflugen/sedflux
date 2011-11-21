@@ -46,6 +46,9 @@ run_avulsion( Sed_process p , Sed_cube prof )
    Sed_process_info info = SED_EMPTY_INFO;
    Sed_riv          this_river;
 
+   if (!data)
+     return info;
+
    if ( sed_process_run_count(p)==0 )
       init_avulsion_data( p , prof );
 
