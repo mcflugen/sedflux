@@ -74,8 +74,10 @@ run_bedload( Sed_process p , Sed_cube prof )
       if ( river_mouth )
       {
 //         Sed_cell    bed_load_cell = sed_cell_new_env( );
-         gint        bed_load_n_x  = data->bed_load_dump_length / sed_cube_x_res( prof ) + 1;
-         gint        bed_load_n_y  = data->bed_load_dump_length / sed_cube_y_res( prof ) + 1;
+         gint bed_load_n_x  = (gint)(data->bed_load_dump_length /
+                                     sed_cube_x_res (prof) + 1);
+         gint bed_load_n_y  = (gint)(data->bed_load_dump_length /
+                                     sed_cube_y_res (prof) + 1);
          double      mass_ocean    = 0;
          double      mass_delta    = 0;
          Eh_dbl_grid fraction_grid;
@@ -87,7 +89,8 @@ run_bedload( Sed_process p , Sed_cube prof )
          // Create a grid to hold the bed load.  The river mouth will be at i=0,
          // j=0, and will point in the j-direction.
          //---
-         fraction_grid = eh_grid_new( double , 2.*bed_load_n_x , 2.*bed_load_n_y );
+         fraction_grid = eh_grid_new (double, 2*bed_load_n_x,
+                                      2*bed_load_n_y);
 
          if ( fraction_grid )
          { /* Determine what fraction of each cell is filled with sediment. */

@@ -128,10 +128,10 @@ eh_render_time_str( double sec )
    gchar* str = NULL;
 
    {
-      gint d = sec / (gint)EH_SECONDS_PER_DAY;
-      gint h = sec / (gint)EH_SECONDS_PER_HOUR;
-      gint m = sec / (gint)EH_SECONDS_PER_MINUTE;
-      gint s = fmod( sec , 60. );
+      gint d = (gint) (sec/(gint)EH_SECONDS_PER_DAY);
+      gint h = (gint) (sec/(gint)EH_SECONDS_PER_HOUR);
+      gint m = (gint) (sec/(gint)EH_SECONDS_PER_MINUTE);
+      gint s = (gint) fmod(sec, 60.);
 
       str = g_strdup_printf( "%02d:%02d:%02d:%02d" , d , h , m , s );
    }

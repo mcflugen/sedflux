@@ -952,6 +952,22 @@ double eh_round( double val , double rnd )
       return 0.;
 }
 
+/** Round-off a value to nearest integer
+
+@param val Value to round
+@param rnd Multiple to round to
+
+@return The value rounded to the nearest multiple
+*/
+int
+eh_round_to_int (double val, int rnd)
+{
+   if (!eh_compare_dbl (val, 0, 1e-12))
+      return lround (val/rnd)*rnd;
+   else
+      return 0;
+}
+
 /** Find the equivalent angle between -PI and PI
 
 \param angle An angle (in radians)
@@ -1477,7 +1493,7 @@ eh_dbl_array_rebin_len( double* s , gssize n , double bin_size )
    gint len = 0;
 
    if ( s )
-      len = ceil ( n / bin_size );
+      len = lround (ceil (n/bin_size));
 
    return len;
 }
@@ -1497,8 +1513,8 @@ eh_dbl_array_rebin_smaller( double* s , gssize n , double bin_size , gint* d_len
    }
    else if ( s )
    {
-      gint   len   = ceil ( n / bin_size );
-      gint   top_i = floor( n / bin_size );
+      gint   len   = lround (ceil (n/bin_size));
+      gint   top_i = (gint) floor (n/bin_size);
       gint   i, j;
       double x;
       double f;
@@ -1542,8 +1558,8 @@ eh_dbl_array_rebin_larger( double* s , gssize n , double bin_size , gint* d_len 
    }
    else if ( s )
    {
-      gint   len   = ceil ( n / bin_size );
-      gint   top_i = floor( n / bin_size );
+      gint   len   = lround (ceil (n/bin_size));
+      gint   top_i = (int )floor (n/bin_size);
       gint   i;
       double x;
 
@@ -2346,7 +2362,7 @@ eh_uniform_array( double x1 , double x2 , double dx , gint* n )
    eh_require( x2>x1 );
    eh_require( dx>0  );
 
-   *n = ( x2-x1 )/dx;
+   *n = (gint) ((x2-x1)/dx);
 
    if ( *n>0 )
    {

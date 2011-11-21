@@ -84,6 +84,7 @@ double eh_integrate_with_data( Eh_dbl_func_with_data func , double a , double b 
 
 gboolean eh_is_even( gssize n );
 double eh_round( double , double );
+int eh_round_to_int (double, int);
 double eh_reduce_angle( double angle );
 double *tridiag( double *l , double *d , double *u , double *b , double *x , int n );
 Complex *c_tridiag( Complex *l , Complex *d , Complex *u , Complex *b , Complex *x , int n );

@@ -28,7 +28,7 @@
 CLASS( Sed_epoch )
 {
    char*             name;        //< Name that identifies the epoch
-   double            number;      //< ID that identifies the epoch
+   int               number;      //< ID that identifies the epoch
 
    double            start;       //< Start time for the epoch
    double            duration;    //< Duration of the epoch

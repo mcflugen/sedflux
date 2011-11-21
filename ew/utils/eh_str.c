@@ -243,8 +243,8 @@ eh_str_to_int( const gchar* s , GError** error )
 {
    gint64 int_val;
 
-   eh_require( s );
-   eh_return_val_if_fail( error==NULL || *error==NULL , eh_nan() );
+   eh_require (s);
+   eh_return_val_if_fail (error==NULL || *error==NULL, G_MININT64);
 
    if ( s )
    {

@@ -9,7 +9,7 @@ CLASS( Eh_input_val )
    gchar*            file;    //< The name of a user-specified file, if necessary.  NULL, otherwise.
    double*           x;       //< Array of x-values for a time series or a user-defined CDF
    double*           y;       //< Array of y-values for a time series or a user-defined CDF
-   double            len;     //< Length of \a x and \a y
+   gint              len;     //< Length of \a x and \a y
    GRand*            rand;    //< A random number generator, if necessary.  NULL, otherwise.
    double            data[2]; //< Data used to calculate a new value
    double            val;     //< The current value of the Eh_input_val

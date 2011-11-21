@@ -942,7 +942,7 @@ eh_key_file_scan_from_template( const gchar* file       ,
                   *(double* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
                   break;
                case EH_ARG_INT:
-                  *(gint* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
+                  *(gint* )(t[i].arg_data) = eh_key_file_get_int_value( f , group_name , t[i].label );
                   break;
                case EH_ARG_DARRAY:
                   *(double**)(t[i].arg_data) = eh_key_file_get_dbl_array( f , group_name , t[i].label , &(len[i]) );
@@ -1033,7 +1033,7 @@ eh_key_file_scan_text_from_template (const gchar* buffer,
                   *(double* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
                   break;
                case EH_ARG_INT:
-                  *(gint* )(t[i].arg_data) = eh_key_file_get_dbl_value( f , group_name , t[i].label );
+                  *(gint* )(t[i].arg_data) = eh_key_file_get_int_value( f , group_name , t[i].label );
                   break;
                case EH_ARG_DARRAY:
                   *(double**)(t[i].arg_data) = eh_key_file_get_dbl_array( f , group_name , t[i].label , &(len[i]) );

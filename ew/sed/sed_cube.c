@@ -773,8 +773,8 @@ Eh_ind_2 sed_ind2sub( gssize ind , gssize n_y )
 {
    Eh_ind_2 sub;
 
-   sub.i = floor( ind / n_y );
-   sub.j = fmod ( ind , n_y );
+   sub.i = ind/n_y;
+   sub.j = ind - sub.i*n_y;
 
    return sub;
 }
@@ -2227,9 +2227,6 @@ Sed_cube sed_cube_add_river( Sed_cube s , Sed_river *river )
 }
 */
 
-#define VARY_COLS (0)
-#define VARY_ROWS (1)
-
 void sed_cube_set_shore( Sed_cube s )
 {
    int i;
@@ -2259,6 +2256,8 @@ void sed_cube_set_shore( Sed_cube s )
       else
          shore_list = sed_cube_find_shore_line( s , pos );
    }
+
+   g_free (pos);
 
    for ( list=shore_list ; list ; list=list->next )
    {
@@ -2842,15 +2841,15 @@ GList *sed_cube_find_cross_shore_columns( Sed_cube s , gssize i , gssize j )
 
 \return The indices to the land column that marks the transition.
 */
-Eh_ind_2 *sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
+Eh_ind_2 *
+sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
 {
    int i, j;
-   int row, col;
    Eh_ind_2 *pos=NULL;
 
    if ( vary_dim==VARY_COLS )
    {
-      row = n;
+      const int row = n;
       for ( j=0 ; j<s->n_y-1 && !pos ; j++ )
          if (   sed_column_is_below( s->col[row][j]   , s->sea_level )
               ^ sed_column_is_below( s->col[row][j+1] , s->sea_level ) )
@@ -2865,7 +2864,7 @@ Eh_ind_2 *sed_cube_find_shore( Sed_cube s , int n , int vary_dim )
    }
    else
    {
-      col = n;
+      const int col = n;
       for ( i=0 ; i<s->n_x-1 && !pos ; i++ )
          if (   sed_column_is_below( s->col[i][col]   , s->sea_level )
               ^ sed_column_is_below( s->col[i+1][col] , s->sea_level ) )
@@ -3894,7 +3893,7 @@ sed_bathy_grid_scan_1d_ascii( const char *file , double dx , double dy , GError*
          //---
          eh_debug( "Interpolate to a uniform grid" );
          {
-            gssize n_y = (y[n-1]-y[0]) / dy;
+            gssize n_y = (gssize) ((y[n-1]-y[0]) / dy);
             grid = eh_grid_new( double , 1 , n_y );
 
             eh_grid_set_y_lin( grid , y[0] , dy );
