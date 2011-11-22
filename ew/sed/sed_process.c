@@ -233,6 +233,26 @@ sed_process_link_destroy( __Sed_process_link* link )
    return NULL;
 }
 
+char*
+sed_process_queue_names (Sed_process_init_t p_list[])
+{
+  char* str = NULL;
+
+  eh_require (p_list);
+
+  if (p_list)
+  {
+    gchar ** str_array = NULL;
+    int i;
+
+    for (i=0; p_list[i].name; i++)
+      str_array = eh_strv_append (&str_array, g_strdup (p_list[i].name));
+    str = g_strjoinv (", ", str_array);
+    g_strfreev (str_array);
+  }
+  return str;
+}
+
 Sed_process_queue
 sed_process_queue_init (const gchar* file,
                         const gchar* prefix,

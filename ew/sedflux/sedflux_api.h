@@ -10,6 +10,8 @@ typedef struct Sedflux_state Sedflux_state;
 //gboolean sedflux (const gchar* init_file, const gchar* prefix, int dimen);
 gboolean sedflux (const int argc, const char* argv[]);
 
+gchar* sedflux_build_options (Sedflux_state* self);
+
 Sedflux_state* sedflux_initialize (const int argc, const char* argv[]);
 //Sedflux_state* sedflux_initialize (const gchar* file, const gchar* prefix,
 //                                   int dimen);

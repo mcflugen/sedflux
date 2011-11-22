@@ -55,15 +55,15 @@ static Sed_process_init_t my_proc_defs[] =
    { "sea level"         , init_sea_level     , run_sea_level   , destroy_sea_level } ,
    { "storms"            , init_storm         , run_storm       , destroy_storm     } ,
    { "river"             , init_river         , run_river       , destroy_river     } ,
-   { "erosion"           , init_erosion       , run_erosion     , destroy_erosion   } ,
    { "avulsion"          , init_avulsion      , run_avulsion    , destroy_avulsion  } ,
 
    /* A new process */
    { "new process"       , init_new_process   , run_new_process , destroy_new_process } ,
 
    /* The rest of the processes */
-   { "bedload dumping"   , init_bedload       , run_bedload     , destroy_bedload     } ,
    { "plume"             , init_plume         , run_plume       , destroy_plume       } ,
+   { "bedload dumping"   , init_bedload       , run_bedload     , destroy_bedload     } ,
+   { "erosion"           , init_erosion       , run_erosion     , destroy_erosion   } ,
    { "diffusion"         , init_diffusion     , run_diffusion   , destroy_diffusion   } ,
    { "xshore"            , init_xshore        , run_xshore      , destroy_xshore      } ,
    { "squall"            , init_squall        , run_squall      , destroy_squall      } ,
@@ -406,6 +406,20 @@ sedflux_description (Sedflux_state* self)
   eh_require (self);
 
   return self->description;
+}
+
+gchar*
+sedflux_build_options (Sedflux_state* self)
+{
+  gchar * str = NULL;
+
+  { // Process order
+    gchar *proc_list = sed_process_queue_names (my_proc_defs);
+    str = g_strconcat ("Process order: ", proc_list, NULL);
+    g_free (proc_list);
+  }
+
+  return str;
 }
 
 gboolean

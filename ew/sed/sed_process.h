@@ -183,6 +183,7 @@ Sed_process_queue sed_process_queue_new     ( void );
 Sed_process_queue sed_process_queue_dup     ( Sed_process_queue );
 Sed_process_queue sed_process_queue_copy    ( Sed_process_queue , Sed_process_queue );
 Sed_process_queue sed_process_queue_destroy ( Sed_process_queue );
+char* sed_process_queue_names (Sed_process_init_t p_list[]);
 Sed_process_queue sed_process_queue_init    ( const gchar* file,
                                               const gchar* prefix,
                                               Sed_process_init_t* p_list,
