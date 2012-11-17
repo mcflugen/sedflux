@@ -1,0 +1,94 @@
+#@model Avulsion
+#  @longname Avulsion
+#  @author Eric Hutton
+#  @version 0.1
+#  @email eric.hutton@colorado.edu
+#
+#  @group Run Parameters
+#    @param number_of_rows = 500
+#      @brief Number of grid rows
+#      @description Number of rows in the computational grid 
+#      @units -
+#      @range 30,inf
+#    @param number_of_columns = 200
+#      @brief Number of grid columns
+#      @description Number of columns in the computational grid 
+#      @units -
+#      @range 30,inf
+#    @param row_spacing = 100.
+#      @brief Row spacing
+#      @description Grid resolution in cross-shore (row) direction
+#      @units m
+#      @range 0, 10000
+#    @param column_spacing = 100.
+#      @brief Column spacing
+#      @description Grid resolution in along-shore (column) direction
+#      @units m
+#      @range 0, 10000
+#    @param row_location_of_inflow = 250
+#      @brief Row of inflow
+#      @description Row on inflow location
+#      @units -
+#      @range 0, 1000
+#    @param column_location_of_inflow = 0
+#      @brief Column of inflow
+#      @description Column on inflow location
+#      @units -
+#      @range 0, 1000
+#    @param minimum_angle_limit_of_river = 45.
+#      @brief Minimum river angle
+#      @description Minimum angle of river
+#      @units degree
+#      @range -180, 180
+#    @param maximum_angle_limit_of_river = 135.
+#      @brief Maximum river angle
+#      @description Maximum angle of river
+#      @units degree
+#      @range -180, 180
+#    @param random_walk_variance = 10.
+#      @brief Variance of avulsion angles
+#      @description Variance of avulsion angles
+#      @units degree
+#      @range 0., 100.
+#    @param bed_load_exponent = 1.67
+#      @brief Bed-load exponent
+#      @description Exponent used in dividing sediment among branches
+#      @units -
+#      @range 0., 10.
+#    @param water_discharge_exponent = 1.
+#      @brief Discharge exponent
+#      @description Exponent used in dividing water among branches
+#      @units -
+#      @range 0., 10.
+#    @param number_of_rivers = 1
+#      @brief Number of rivers
+#      @description Number of rivers
+#      @units -
+#      @range 0, 25
+#
+#  @group Scalars
+#    @param[out] avulsion_model__random_walk_variance_constant
+#    @param[out] avulsion_model__sediment_bed_load_exponent
+#    @param[out] avulsion_model__water_discharge_exponent
+#    @param[out] channel_inflow_end_water__discharge
+#    @param[out] channel_inflow_end_suspended_sediment__discharge
+#
+#  @group Vectors
+#    @param[out] channel_outflow_end_bed_load_sediment__mass_flow_rate
+#    @param[out] channel_outflow_end_water__discharge
+#    @param[out] channel_outflow_end__location_model_x_component
+#    @param[out] channel_outflow_end__location_model_y_component
+#    @param[out] channel_inflow_end_to_channel_outflow_end__angle
+#
+#  @group Grids
+#    @param[out] surface__elevation
+#    @param[out] channel_outflow_end_suspended_sediment__discharge
+${number_of_rows}, ${number_of_columns}
+${row_spacing}, ${column_spacing}
+${row_location_of_inflow}, ${column_location_of_inflow}
+${minimum_angle_limit_of_river}, ${maximum_angle_limit_of_river}
+${random_walk_variance}
+${bed_load_exponent}
+${water_discharge_exponent}
+${number_of_rivers}
+
