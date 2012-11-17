@@ -11,8 +11,7 @@
 % include avulsion_api.h
 #endif
 
-
-typedef struct
+struct _BMI_Model
 {
   double variance;
   double last_angle;
@@ -29,6 +28,7 @@ typedef struct
   double* mouth_x;
   double* mouth_y;
   double* mouth_qb;
+  double* mouth_angle;
 
   double* angles;
   int len;
@@ -44,63 +44,221 @@ typedef struct
 
   GRand* rand;
   guint seed;
+};
+
+BMI_Model* _avulsion_alloc (void);
+BMI_Model * _avulsion_free (BMI_Model * self);
+int _avulsion_initialize (BMI_Model* s);
+int _avulsion_run_until (BMI_Model* s, int until);
+int _avulsion_finalize (BMI_Model* s);
+
+void avulsion_init_state (BMI_Model* s);
+void avulsion_free_state (BMI_Model* s);
+
+#define BMI_FAILURE_BAD_ARGUMENT_ERROR (2)
+#define BMI_FAILURE_UNKNOWN_ERROR (3)
+#define BMI_FAILURE_UNABLE_TO_OPEN_ERROR (4)
+#define BMI_FAILURE_BAD_NAME_ERROR (5)
+
+int
+BMI_Initialize (const char *config_file, BMI_Model **handle)
+{
+  int rtn = BMI_FAILURE;
+
+  if (!g_thread_get_initialized ()) {
+    g_thread_init (NULL);
+    eh_init_glib ();
+    g_log_set_handler (NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
+  }
+
+  if (handle) {
+    BMI_Model *self = avulsion_init (NULL);
+
+    if (self) {
+      int shape[2] = {30, 40};
+      double spacing[2] = {1, 1};
+      int hinge_indices[2] = {0, 20};
+      double angle_limit[2] = {60., 120.};
+      double variance = 10.;
+      double bed_load_exponent = 1.;
+      double discharge_exponent = 1.;
+      int number_of_river_mouths = 9;
+
+      if (config_file) {
+        FILE *fp = fopen (config_file, "r");
+
+        if (fp) {
+          fscanf (fp, "%d, %d\n", &shape[1], &shape[0]);
+          fscanf (fp, "%lf, %lf\n", &spacing[1], &spacing[0]);
+          fscanf (fp, "%d, %d\n", &hinge_indices[1], &hinge_indices[0]);
+          fscanf (fp, "%lf, %lf\n", &angle_limit[0], &angle_limit[1]);
+          fscanf (fp, "%lf\n", &variance);
+          fscanf (fp, "%lf\n", &bed_load_exponent);
+          fscanf (fp, "%lf\n", &discharge_exponent);
+          fscanf (fp, "%d\n", &number_of_river_mouths);
+        }
+        else
+          return BMI_FAILURE_UNABLE_TO_OPEN_ERROR;
+      }
+      //else
+      //  return BMI_FAILURE;
+
+      angle_limit[0] *= 3.14/180.;
+      angle_limit[1] *= 3.14/180.;
+      variance *= 3.14/180.;
+
+      avulsion_set_grid (self, shape, spacing);
+      avulsion_set_river_hinge (self, hinge_indices);
+      avulsion_set_river_angle_limit (self, angle_limit);
+
+      avulsion_set_variance (self, variance);
+      avulsion_set_bed_load_exponent (self, bed_load_exponent);
+      avulsion_set_discharge_exponent (self, discharge_exponent);
+      avulsion_set_total_river_mouths (self, number_of_river_mouths);
+      avulsion_set_discharge (self, 1.);
+      avulsion_set_sed_flux (self, 1.);
+
+      *handle = self;
+
+      rtn = BMI_SUCCESS;
+    }
+    else
+      rtn = BMI_FAILURE_UNKNOWN_ERROR;
+  }
+  else
+    rtn = BMI_FAILURE_BAD_ARGUMENT_ERROR;
+
+  return rtn;
 }
-State;
 
-Avulsion_state* _avulsion_alloc (void);
-Avulsion_state * _avulsion_free (Avulsion_state * self);
-int _avulsion_initialize (State* s);
-int _avulsion_run_until (State* s, int until);
-int _avulsion_finalize (State* s);
+int
+BMI_Get_component_name (BMI_Model *self, char *name)
+{
+  if (name) {
+    strcpy (name, BMI_COMPONENT_NAME);
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
 
-void avulsion_init_state (State* s);
-void avulsion_free_state (State* s);
+int
+BMI_Get_start_time (BMI_Model *self, double *time)
+{
+  if (time) {
+    *time = avulsion_get_start_time (self);
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
 
+int
+BMI_Get_current_time (BMI_Model *self, double *time)
+{
+  if (time) {
+    *time = avulsion_get_current_time (self);
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
 
-Avulsion_state*
+int
+BMI_Get_end_time (BMI_Model *self, double *time)
+{
+  if (time) {
+    *time = avulsion_get_end_time (self);
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
+
+int
+BMI_Get_time_units (BMI_Model *self, char *units)
+{
+  eh_return_val_if_fail (self && units, BMI_FAILURE);
+
+  strcpy (units, "d");
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Update (BMI_Model *self)
+{
+  double now;
+  if (BMI_Get_current_time (self, &now) == BMI_SUCCESS &&
+      BMI_Update_until (self, now + self->time_step) == BMI_SUCCESS)
+    return BMI_SUCCESS;
+  else
+    return BMI_FAILURE;
+}
+
+int
+BMI_Update_until (BMI_Model *self, double time_in_days)
+{
+  int until_time_step = time_in_days / self->time_step;
+  _avulsion_run_until (self, until_time_step);
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Finalize (BMI_Model *self)
+{
+  if (self) {
+    _avulsion_finalize (self);
+    _avulsion_free (self);
+  }
+
+  return BMI_SUCCESS;
+}
+
+BMI_Model*
 _avulsion_alloc (void)
 {
-  State *s = (State*)malloc (sizeof (State));
+  //BMI_Model *s = (BMI_Model*)malloc (sizeof (BMI_Model));
+  BMI_Model *s = g_new (BMI_Model, 1);
 
   avulsion_init_state (s);
 
-  return (Avulsion_state *) s;
+  return (BMI_Model *) s;
 }
 
-Avulsion_state*
-_avulsion_free (Avulsion_state * self)
+BMI_Model*
+_avulsion_free (BMI_Model * self)
 {
   if (self)
   {
-    avulsion_free_state ((State *) self);
+    avulsion_free_state ((BMI_Model *) self);
     g_free (self);
   }
   return NULL;
 }
 
-Avulsion_state *
-avulsion_init (Avulsion_state * self)
+BMI_Model *
+avulsion_init (BMI_Model * self)
 {
   if (!self)
     self = _avulsion_alloc ();
 
-  _avulsion_initialize ((State *) self);
+  _avulsion_initialize ((BMI_Model *) self);
 
   return self;
 }
 
 int
-avulsion_run_until (Avulsion_state * self, double time_in_days)
+avulsion_run_until (BMI_Model * self, double time_in_days)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   int until_time_step = time_in_days / p->time_step;
   return _avulsion_run_until (p, until_time_step);
 }
 
-Avulsion_state *
-avulsion_finalize (Avulsion_state * self, int free)
+BMI_Model *
+avulsion_finalize (BMI_Model * self, int free)
 {
-  _avulsion_finalize ((State *) self);
+  _avulsion_finalize ((BMI_Model *) self);
 
   if (free)
     self = _avulsion_free (self);
@@ -108,10 +266,10 @@ avulsion_finalize (Avulsion_state * self, int free)
   return self;
 }
 
-Avulsion_state *
-avulsion_set_variance (Avulsion_state * self, double variance)
+BMI_Model *
+avulsion_set_variance (BMI_Model * self, double variance)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->variance = variance;
 
   {
@@ -128,26 +286,26 @@ avulsion_set_variance (Avulsion_state * self, double variance)
   return self;
 }
 
-Avulsion_state *
-avulsion_set_dx (Avulsion_state * self, double dx)
+BMI_Model *
+avulsion_set_dx (BMI_Model * self, double dx)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->dx = dx;
   return self;
 }
 
-Avulsion_state *
-avulsion_set_dy (Avulsion_state * self, double dy)
+BMI_Model *
+avulsion_set_dy (BMI_Model * self, double dy)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->dy = dy;
   return self;
 }
 
 void
-_avulsion_update_elevation (Avulsion_state* self)
+_avulsion_update_elevation (BMI_Model* self)
 {
-  State* s = (State*) self;
+  BMI_Model* s = (BMI_Model*) self;
 
   {
     int i;
@@ -161,12 +319,10 @@ _avulsion_update_elevation (Avulsion_state* self)
   return;
 }
 
-Avulsion_state*
-avulsion_set_grid (Avulsion_state* self, gint shape[2], double res[2])
+BMI_Model*
+avulsion_set_grid (BMI_Model* self, gint shape[2], double res[2])
 {
-  State* s = (State*)self;
-
-  if (!s->p)
+  if (!self->p)
   {
     Sed_riv r = sed_river_new ("AvulsionRiver1");
 
@@ -182,57 +338,90 @@ avulsion_set_grid (Avulsion_state* self, gint shape[2], double res[2])
       sed_sediment_set_env (s);
     }
 
-    s->p = sed_cube_new (shape[1], shape[0]);
-    sed_cube_set_z_res (s->p, 1.);
-    sed_cube_set_y_res (s->p, res[0]);
-    sed_cube_set_x_res (s->p, res[1]);
+    self->p = sed_cube_new (shape[1], shape[0]);
+    sed_cube_set_z_res (self->p, 1.);
+    sed_cube_set_y_res (self->p, res[0]);
+    sed_cube_set_x_res (self->p, res[1]);
 
-    sed_cube_add_trunk (s->p, r);
+    sed_cube_add_trunk (self->p, r);
 
-    s->dy = res[0];
-    s->dx = res[1];
-    s->nx = sed_cube_n_x (s->p);
-    s->ny = sed_cube_n_y (s->p);
-    s->elevation = g_new (double, sed_cube_size (s->p));
-    s->discharge = g_new (double, sed_cube_size (s->p));
+    self->dy = res[0];
+    self->dx = res[1];
+    self->nx = sed_cube_n_x (self->p);
+    self->ny = sed_cube_n_y (self->p);
+    self->elevation = g_new (double, sed_cube_size (self->p));
+    self->discharge = g_new (double, sed_cube_size (self->p));
 
     _avulsion_update_elevation (self);
   }
   return self;
 }
 
-Avulsion_state*
-avulsion_set_river_hinge (Avulsion_state* self, gint ind[2])
+BMI_Model*
+avulsion_set_river_hinge (BMI_Model* self, gint ind[2])
 {
-  State* s = (State*)self;
+  BMI_Model* s = (BMI_Model*)self;
   Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
   sed_river_set_hinge (r, ind[1], ind[0]);
+  //sed_river_set_hinge (r, ind[0], ind[1]);
   return self;
 }
 
-Avulsion_state*
-avulsion_set_river_angle_limit (Avulsion_state* self, double limit[2])
+BMI_Model*
+avulsion_set_river_angle_limit (BMI_Model* self, double limit[2])
 {
-  State* s = (State*)self;
+  BMI_Model* s = (BMI_Model*)self;
   Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
   sed_river_set_angle_limit (r, limit[0], limit[1]);
   sed_river_set_angle (r, .5*(limit[0]+limit[1]));
   return self;
 }
 
-Avulsion_state*
-avulsion_set_river_hydro (Avulsion_state* self, Sed_hydro hydro)
+BMI_Model*
+avulsion_set_river_hydro (BMI_Model* self, Sed_hydro hydro)
 {
-  State* s = (State*)self;
+  BMI_Model* s = (BMI_Model*)self;
   Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
   sed_river_set_hydro (r , hydro);
   return self;
 }
 
-Avulsion_state*
-avulsion_set_elevation_from_file (Avulsion_state* self, gchar* file)
+BMI_Model*
+avulsion_set_river_width (BMI_Model *self, const double width)
 {
-  State *p = (State *) self;
+  Sed_riv r = sed_cube_borrow_nth_river (self->p, 0);
+  sed_river_set_width (r , width);
+  return self;
+}
+
+BMI_Model*
+avulsion_set_river_depth (BMI_Model *self, const double depth)
+{
+  Sed_riv r = sed_cube_borrow_nth_river (self->p, 0);
+  sed_river_set_depth (r , depth);
+  return self;
+}
+
+BMI_Model*
+avulsion_set_river_velocity (BMI_Model *self, const double velocity)
+{
+  Sed_riv r = sed_cube_borrow_nth_river (self->p, 0);
+  sed_river_set_velocity (r , velocity);
+  return self;
+}
+
+BMI_Model*
+avulsion_set_river_bed_load_flux (BMI_Model *self, const double qb)
+{
+  Sed_riv r = sed_cube_borrow_nth_river (self->p, 0);
+  sed_river_set_bedload (r , qb);
+  return self;
+}
+
+BMI_Model*
+avulsion_set_elevation_from_file (BMI_Model* self, gchar* file)
+{
+  BMI_Model *p = (BMI_Model *) self;
 
   eh_require (p);
 
@@ -265,42 +454,42 @@ avulsion_set_elevation_from_file (Avulsion_state* self, gchar* file)
   return self;
 }
 
-Avulsion_state*
-avulsion_set_sed_flux (Avulsion_state* self, const double flux)
+BMI_Model*
+avulsion_set_sed_flux (BMI_Model* self, const double flux)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->sed_flux = flux;
   return self;
 }
 
-Avulsion_state*
-avulsion_set_discharge (Avulsion_state* self, const double q)
+BMI_Model*
+avulsion_set_discharge (BMI_Model* self, const double q)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->init_discharge = q;
   return self;
 }
 
-Avulsion_state*
-avulsion_set_bed_load_exponent (Avulsion_state* self, double exponent)
+BMI_Model*
+avulsion_set_bed_load_exponent (BMI_Model* self, double exponent)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->bed_load_exponent = exponent;
   return self;
 }
 
-Avulsion_state*
-avulsion_set_discharge_exponent (Avulsion_state* self, double exponent)
+BMI_Model*
+avulsion_set_discharge_exponent (BMI_Model* self, double exponent)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   p->discharge_exponent = exponent;
   return self;
 }
 
-Avulsion_state*
-avulsion_set_total_river_mouths (Avulsion_state* self, int n_branches)
+BMI_Model*
+avulsion_set_total_river_mouths (BMI_Model* self, int n_branches)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   if (p->total_river_mouths != n_branches)
   {
     int i;
@@ -311,6 +500,7 @@ avulsion_set_total_river_mouths (Avulsion_state* self, int n_branches)
     p->mouth_x = g_renew (double, p->mouth_x, n_branches);
     p->mouth_y = g_renew (double, p->mouth_y, n_branches);
     p->mouth_qb = g_renew (double, p->mouth_qb, n_branches);
+    p->mouth_angle = g_renew (double, p->mouth_angle, n_branches);
 
     for (i=0; i<n_branches; i++)
     {
@@ -319,15 +509,31 @@ avulsion_set_total_river_mouths (Avulsion_state* self, int n_branches)
       p->mouth_x[i] = 0.;
       p->mouth_y[i] = 0.;
       p->mouth_qb[i] = 0.;
+      p->mouth_angle[i] = 0.;
     }
+
+    { /* Split rivers to get the right number of branches */
+      const Sed_riv r = sed_cube_borrow_nth_river (self->p, 0);
+      //gint n_mouths = sed_cube_n_leaves (self->p);
+
+      //while ((n_branches+1)/2<self->total_river_mouths)
+      while (sed_cube_n_leaves (self->p) < self->total_river_mouths)
+      {
+        sed_cube_split_river (self->p, sed_river_name_loc(r));
+        sed_river_impart_avulsion_data(r);
+
+        //n_mouths += 2;
+      }
+    }
+
   }
   return self;
 }
 
-Avulsion_state*
-avulsion_set_elevation (Avulsion_state* self, double* val)
+BMI_Model*
+avulsion_set_elevation (BMI_Model* self, double* val)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
 
   eh_require (p);
   eh_require (val);
@@ -361,10 +567,10 @@ avulsion_set_elevation (Avulsion_state* self, double* val)
   return self;
 }
 
-Avulsion_state*
-avulsion_set_depth (Avulsion_state* self, double* val)
+BMI_Model*
+avulsion_set_depth (BMI_Model* self, double* val)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
 
   {
     const int size = sed_cube_size (p->p);
@@ -378,11 +584,11 @@ avulsion_set_depth (Avulsion_state* self, double* val)
   return self;
 }
 
-Avulsion_state*
-avulsion_set_value (Avulsion_state* self, const gchar* val_s, double* data,
+BMI_Model*
+avulsion_set_value (BMI_Model* self, const gchar* val_s, double* data,
                     gint lower[3], gint upper[3], gint stride[3])
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
 
   {
     const int size = sed_cube_size (p->p);
@@ -415,56 +621,56 @@ avulsion_set_value (Avulsion_state* self, const gchar* val_s, double* data,
 }
 
 double
-avulsion_get_variance (Avulsion_state * self)
+avulsion_get_variance (BMI_Model * self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->variance;
 }
 
 double
-avulsion_get_current_time (Avulsion_state* self)
+avulsion_get_current_time (BMI_Model* self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->now;
 }
 
 double
-avulsion_get_end_time (Avulsion_state* self)
+avulsion_get_end_time (BMI_Model* self)
 {
   return G_MAXDOUBLE;
 }
 
 double
-avulsion_get_start_time (Avulsion_state* self)
+avulsion_get_start_time (BMI_Model* self)
 {
   return 0.;
 }
 
 int
-avulsion_get_nx (Avulsion_state* self)
+avulsion_get_nx (BMI_Model* self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->nx;
 }
 
 int
-avulsion_get_ny (Avulsion_state* self)
+avulsion_get_ny (BMI_Model* self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->ny;
 }
 
 int*
-avulsion_get_value_dimen (Avulsion_state* self, const gchar* val_s, int shape[3])
+avulsion_get_value_dimen (BMI_Model* self, const gchar* val_s, int shape[3])
 {
   if (g_ascii_strcasecmp (val_s,
-        "mean_bed_load_flux_from_river")==0 ||
+        "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
       g_ascii_strcasecmp (val_s,
-        "mean_water_discharge_from_river")==0 ||
-      g_ascii_strcasecmp (val_s, "river_mouth_x_position")==0 ||
-      g_ascii_strcasecmp (val_s, "river_mouth_y_position")==0)
+        "channel_outflow_end_water__discharge")==0 ||
+      g_ascii_strcasecmp (val_s, "channel_outflow_end__location_model_x_component")==0 ||
+      g_ascii_strcasecmp (val_s, "channel_outflow_end__location_model_y_component")==0)
   {
-    State *p = (State *) self;
+    BMI_Model *p = (BMI_Model *) self;
     const int len = p->total_river_mouths;
 
     shape[0] = len;
@@ -482,21 +688,21 @@ avulsion_get_value_dimen (Avulsion_state* self, const gchar* val_s, int shape[3]
 }
 
 double
-avulsion_get_dx (Avulsion_state* self)
+avulsion_get_dx (BMI_Model* self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->dx;
 }
 
 double
-avulsion_get_dy (Avulsion_state* self)
+avulsion_get_dy (BMI_Model* self)
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   return p->dy;
 }
 
 double*
-avulsion_get_value_res (Avulsion_state* self, const gchar* val_s, double res[3])
+avulsion_get_value_res (BMI_Model* self, const gchar* val_s, double res[3])
 {
   res[0] = avulsion_get_dy (self);
   res[1] = avulsion_get_dx (self);
@@ -506,47 +712,388 @@ avulsion_get_value_res (Avulsion_state* self, const gchar* val_s, double res[3])
 }
 
 double
-avulsion_get_angle (Avulsion_state* self)
+avulsion_get_angle (BMI_Model* self)
 {
-  State *s = (State *) self;
+  BMI_Model *s = (BMI_Model *) self;
   return s->angles[s->len-1];
 }
 
+#define BMI_OUTPUT_VAR_NAME_COUNT (12)
+const char *output_var_names[BMI_OUTPUT_VAR_NAME_COUNT] = {
+  "avulsion_model__random_walk_variance_constant",
+  "avulsion_model__sediment_bed_load_exponent",
+  "avulsion_model__water_discharge_exponent",
+  "channel_inflow_end_water__discharge",
+  "channel_inflow_end_bed_load_sediment__mass_flow_rate",
+  "channel_outflow_end_bed_load_sediment__mass_flow_rate",
+  "channel_outflow_end_water__discharge",
+  "channel_outflow_end__location_model_x_component",
+  "channel_outflow_end__location_model_y_component",
+  "channel_inflow_end_to_channel_outflow_end__angle",
+  "surface__elevation",
+  //"channel_outflow_end_suspended_sediment__discharge",
+  "surface_water__discharge",
+};
+
+int
+BMI_Get_output_var_names (BMI_Model *self, char **names)
+{
+  int i;
+  for (i=0; i<BMI_OUTPUT_VAR_NAME_COUNT; i++)
+    strncpy (names[i], output_var_names[i], BMI_VAR_NAME_MAX);
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_output_var_name_count (BMI_Model *self, int *number_of_output_vars)
+{
+  if (number_of_output_vars) {
+    *number_of_output_vars = BMI_OUTPUT_VAR_NAME_COUNT;
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
+
+#define BMI_INPUT_VAR_NAME_COUNT (12)
+const char *input_var_names[BMI_INPUT_VAR_NAME_COUNT] = {
+  "channel_outflow_end_bed_load_sediment__mass_flow_rate",
+  "channel_outflow_end_water__discharge",
+  "surface__elevation",
+  "channel_outflow_end_suspended_sediment__discharge",
+  "channel_outflow_end_suspended_sediment__discharge",
+  "channel_outflow_end__location_model_x_component",
+  "channel_outflow_end__location_model_y_component",
+  "avulsion_model__random_walk_variance_constant",
+  "avulsion_model__sediment_bed_load_exponent",
+  "avulsion_model__water_discharge_exponent",
+  "channel_inflow_end_water__discharge",
+  "channel_inflow_end_bed_load_sediment__mass_flow_rate",
+};
+
+int
+BMI_Get_input_var_names (BMI_Model *self, char **names)
+{
+  int i;
+  for (i=0; i<BMI_INPUT_VAR_NAME_COUNT; i++)
+    strncpy (names[i], input_var_names[i], BMI_VAR_NAME_MAX);
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_input_var_name_count (BMI_Model *self, int *number_of_input_vars)
+{
+  if (number_of_input_vars) {
+    *number_of_input_vars = BMI_INPUT_VAR_NAME_COUNT;
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
+
+int
+BMI_Get_var_rank (BMI_Model *self, const char * name, int *rank)
+{
+  if (rank) {
+    if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0 ||
+        strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0 ||
+        strcmp (name, "avulsion_model__water_discharge_exponent")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
+      *rank = 0;
+    else if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0)
+      *rank = 1;
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_water__discharge")==0 ||
+             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
+      *rank = 2;
+    else
+      return BMI_FAILURE;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_var_type (BMI_Model *self, const char * name, BMI_Var_type *type)
+{
+  if (type) {
+    *type = BMI_VAR_TYPE_DOUBLE;
+    return BMI_SUCCESS;
+  }
+  else
+    return BMI_FAILURE;
+}
+
+int
+BMI_Get_var_point_count (BMI_Model *self, const char * name, int *count)
+{
+  if (count) {
+    if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0 ||
+        strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0 ||
+        strcmp (name, "avulsion_model__water_discharge_exponent")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
+      *count = 1;
+    else if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0) {
+      *count = self->total_river_mouths;
+    }
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_water__discharge")==0 ||
+             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
+      *count = avulsion_get_nx (self) * avulsion_get_ny (self);
+    }
+    else {
+      *count = 0;
+      return BMI_FAILURE;
+    }
+
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_grid_type (BMI_Model *self, const char * name, BMI_Grid_type *type)
+{
+  if (*type) {
+    *type = BMI_GRID_TYPE_UNIFORM;
+    return BMI_SUCCESS;
+  }
+  return BMI_FAILURE_BAD_ARGUMENT_ERROR;
+}
+
+int
+BMI_Get_grid_shape (BMI_Model *self, const char * name, int *shape)
+{
+  if (shape) {
+    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
+      shape[0] = self->total_river_mouths;
+    }
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_water__discharge")==0 ||
+             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
+      shape[0] = avulsion_get_nx (self);
+      shape[1] = avulsion_get_ny (self);
+    }
+    else
+      shape[0] = 1;
+      //return BMI_FAILURE;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_grid_spacing (BMI_Model *self, const char * name, double *spacing)
+{
+  if (spacing) {
+    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
+      spacing[0] = 0.;
+    }
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_water__discharge")==0 ||
+             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
+      spacing[0] = avulsion_get_dx (self);
+      spacing[1] = avulsion_get_dy (self);
+    }
+    else
+      spacing[0] = 0.;
+      //return BMI_FAILURE;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_grid_origin (BMI_Model *self, const char * name, double *origin)
+{
+  if (origin) {
+    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
+      origin[0] = 0.;
+    }
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_water__discharge")==0 ||
+             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
+      origin[0] = 0.;
+      origin[1] = 0.;
+    }
+    else
+      origin[0] = 0.;
+      //return BMI_FAILURE;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_double_ptr (BMI_Model *self, const char *name, double **dest)
+{
+  int rtn = BMI_FAILURE;
+  if (dest) {
+    double *src = NULL;
+    int error = BMI_SUCCESS;
+
+    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
+      src = self->mouth_qb;
+    else if (strcmp (name, "channel_outflow_end_water__discharge")==0)
+      src = self->q;
+    else if (strcmp (name, "surface__elevation")==0)
+      src = self->elevation;
+    else if (strcmp (name, "surface_water__discharge")==0)
+      src = self->discharge;
+    else if (strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
+      src = self->discharge;
+    else if (strcmp (name, "channel_outflow_end__location_model_x_component")==0)
+      src = self->mouth_x;
+    else if (strcmp (name, "channel_outflow_end__location_model_y_component")==0)
+      src = self->mouth_y;
+    else if (strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0)
+      src = self->mouth_angle;
+    else if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0)
+      src = &self->variance;
+    else if (strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0)
+      src = &self->bed_load_exponent;
+    else if (strcmp (name, "avulsion_model__water_discharge_exponent")==0)
+      src = &self->discharge_exponent;
+    else if (strcmp (name, "channel_inflow_end_water__discharge")==0)
+      src = &self->init_discharge;
+    else if (strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
+      src = &self->sed_flux;
+    else
+      error = BMI_FAILURE_BAD_NAME_ERROR;
+
+    if (!error) {
+      rtn = BMI_SUCCESS;
+      *dest = src;
+    }
+  }
+  else
+    rtn = BMI_FAILURE_BAD_ARGUMENT_ERROR;
+
+  return rtn;
+}
+
+int
+BMI_Get_double (BMI_Model *self, const char *name, double *dest)
+{
+  int rtn = BMI_FAILURE;
+  if (dest) {
+    double *src = NULL;
+    int err = BMI_Get_double_ptr (self, name, &src);
+
+    if (!err) { /* Copy the data */
+      int len;
+
+      if (src) {
+        BMI_Get_var_point_count (self, name, &len);
+        memcpy (dest, src, sizeof (double) * len);
+      }
+
+      rtn = BMI_SUCCESS;
+    }
+    else
+      rtn = err;
+  }
+  else
+    rtn = BMI_FAILURE_BAD_ARGUMENT_ERROR;
+  return rtn;
+}
+
+int
+BMI_Set_double (BMI_Model *self, const char *name, double *src)
+{
+  int rtn = BMI_FAILURE;
+  if (src) {
+    double *dest = NULL;
+    int err = BMI_Get_double_ptr (self, name, &dest);
+
+    if (!err) { /* Copy the data */
+      int len;
+      BMI_Get_var_point_count (self, name, &len);
+      memcpy (dest, src, sizeof (double) * len);
+
+      rtn = BMI_SUCCESS;
+    }
+    else
+      rtn = err;
+  }
+  return rtn;
+}
+
 const double*
-avulsion_get_value (Avulsion_state* self, const gchar* val_string,
+avulsion_get_value (BMI_Model* self, const gchar* val_string,
                     gint dimen[3])
 {
-  State *p = (State *) self;
+  BMI_Model *p = (BMI_Model *) self;
   double* vals = NULL;
   
   {
     double* src = NULL;
 
     if (g_ascii_strcasecmp (val_string,
-                            "mean_bed_load_flux_from_river")==0)
+                            "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
       src = p->mouth_qb;
     else if (g_ascii_strcasecmp (val_string,
-                                "mean_water_discharge_from_river")==0)
+                                "channel_outflow_end_water__discharge")==0)
       src = p->q;
-    else if (g_ascii_strcasecmp (val_string, "elevation")==0)
+    else if (g_ascii_strcasecmp (val_string, "surface__elevation")==0)
       src = p->elevation;
-    else if (g_ascii_strcasecmp (val_string, "discharge")==0 ||
-             g_ascii_strcasecmp (val_string, "SedimentFlux")==0)
+    else if (g_ascii_strcasecmp (val_string, "surface_water__discharge")==0 ||
+             g_ascii_strcasecmp (val_string, "channel_outflow_end_suspended_sediment__discharge")==0)
       src = p->discharge;
-    else if (g_ascii_strcasecmp (val_string, "river_mouth_x_position")==0)
+    else if (g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_x_component")==0)
       src = p->mouth_x;
-    else if (g_ascii_strcasecmp (val_string, "river_mouth_y_position")==0)
+    else if (g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_y_component")==0)
       src = p->mouth_y;
+    else if (g_ascii_strcasecmp (val_string, "channel_inflow_end_to_channel_outflow_end__angle")==0)
+      src = p->mouth_angle;
 
     if (src)
     {
       dimen[0] = 1;
       if (g_ascii_strcasecmp (val_string,
-                              "mean_bed_load_flux_from_river")==0 ||
+                              "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
           g_ascii_strcasecmp (val_string,
-                              "mean_water_discharge_from_river")==0 ||
-          g_ascii_strcasecmp (val_string, "river_mouth_x_position")==0 ||
-          g_ascii_strcasecmp (val_string, "river_mouth_y_position")==0)
+                              "channel_outflow_end_water__discharge")==0 ||
+          g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_x_component")==0 ||
+          g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_y_component")==0)
       {
         //const int len = avulsion_get_nx (self)*avulsion_get_ny (self);
         const int len = p->total_river_mouths;
@@ -579,21 +1126,21 @@ avulsion_get_value (Avulsion_state* self, const gchar* val_string,
 }
 
 const double*
-avulsion_get_value_data (Avulsion_state* self, const gchar* val_string,
+avulsion_get_value_data (BMI_Model* self, const gchar* val_string,
                          gint lower[3], gint upper[3], gint stride[3])
 {
-  State* s = (State*)self;
+  BMI_Model* s = (BMI_Model*)self;
   double* val = NULL;
   gint dimen[3];
 
   val = (double*)avulsion_get_value (self, val_string, dimen);
 
   if (g_ascii_strcasecmp (val_string,
-                          "mean_bed_load_flux_from_river")==0 ||
+                          "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
       g_ascii_strcasecmp (val_string,
-                          "mean_water_discharge_from_river")==0 ||
-      g_ascii_strcasecmp (val_string, "river_mouth_x_position")==0 ||
-      g_ascii_strcasecmp (val_string, "river_mouth_y_position")==0)
+                          "channel_outflow_end_water__discharge")==0 ||
+      g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_x_component")==0 ||
+      g_ascii_strcasecmp (val_string, "channel_outflow_end__location_model_y_component")==0)
   {
     lower[0] = 0;
     upper[0] = s->total_river_mouths-1;
@@ -617,7 +1164,7 @@ avulsion_get_value_data (Avulsion_state* self, const gchar* val_string,
 }
 
 int
-_avulsion_initialize (State* s)
+_avulsion_initialize (BMI_Model* s)
 {
   if (s)
     return TRUE;
@@ -643,9 +1190,15 @@ _split_discharge (double* slope, const int len, const double n,
     for (i=0, normalize=0.; i<len; i++)
       normalize += pow (slope[i], n);
     normalize = q_total / normalize;
-
+/*
+fprintf (stderr, "** q[0] = %f\n", q[0]);
+fprintf (stderr, "** slope[0] = %f\n", slope[0]);
+fprintf (stderr, "** n = %f\n", n);
+fprintf (stderr, "** q_total = %f\n", q_total);
+*/
     for (i=0; i<len; i++)
       q[i] = pow (slope[i], n) * normalize;
+//fprintf (stderr, "** q[0] = %f\n", q[0]);
   }
 
   return q;
@@ -665,9 +1218,12 @@ _split_bed_load (double* slope, double* q, const int len, const double m,
       qb = mem;
     else
       qb = g_new (double, len);
-//fprintf (stderr, "Split bed load\n");
-//fprintf (stderr, "len=%d\n", len);
-//fprintf (stderr, "q=%f\n", q[0]);
+    /*
+fprintf (stderr, "Split bed load\n");
+fprintf (stderr, "len=%d\n", len);
+fprintf (stderr, "q=%f\n", q[0]);
+fprintf (stderr, "qb=%f\n", qb[0]);
+*/
     for (i=0; i<len; i++)
       qb[i] = pow (q[i]*slope[i], m);
 //fprintf (stderr, "qb=%f\n", qb[0]);
@@ -676,9 +1232,11 @@ _split_bed_load (double* slope, double* q, const int len, const double m,
       total += qb[i];
 //fprintf (stderr, "total=%f\n", total);
 
-    total = qb_total / total;
-    for (i=0; i<len; i++)
-      qb[i] *= total;
+    if (total > 0.) {
+      total = qb_total / total;
+      for (i=0; i<len; i++)
+        qb[i] *= total;
+    }
 //fprintf (stderr, "qb=%f\n", qb[0]);
   }
 
@@ -686,7 +1244,7 @@ _split_bed_load (double* slope, double* q, const int len, const double m,
 }
 
 double*
-_avulsion_branch_length (State* s, int* len)
+_avulsion_branch_length (BMI_Model* s, int* len)
 {
   double* l = NULL;
 
@@ -714,6 +1272,9 @@ _avulsion_branch_length (State* s, int* len)
       dj = (hinge.j - mouth.j)*dx;
 
       l[n] = sqrt (di*di + dj*dj);
+
+      //fprintf (stderr, "hinge = %d, %d\n", hinge.i, hinge.j);
+      //fprintf (stderr, "mouth = %d, %d\n", mouth.i, mouth.j);
     }
 
     *len = n_leaves;
@@ -727,7 +1288,7 @@ _avulsion_branch_length (State* s, int* len)
 /** The discharge to each branch
 */
 double*
-_avulsion_branch_discharge (State* s, int* len)
+_avulsion_branch_discharge (BMI_Model* s, int* len)
 {
   double* q = NULL;
 
@@ -770,7 +1331,7 @@ _avulsion_branch_discharge (State* s, int* len)
 /** The bed load flux to each branch
 */
 double*
-_avulsion_branch_bed_load (State* s, int* len)
+_avulsion_branch_bed_load (BMI_Model* s, int* len)
 {
   double* qb = NULL;
 
@@ -832,7 +1393,7 @@ _avulsion_branch_bed_load (State* s, int* len)
 
 #if 0
 double*
-avulsion_branch_load_fraction (State* s, Sed_riv* leaves, int* len)
+avulsion_branch_load_fraction (BMI_Model* s, Sed_riv* leaves, int* len)
 {
   double* f = NULL;
   
@@ -892,9 +1453,9 @@ avulsion_branch_load_fraction (State* s, Sed_riv* leaves, int* len)
 #endif
 
 void
-_avulsion_reset_discharge (State* s)
+_avulsion_reset_discharge (BMI_Model* s)
 {
-  State* p = (State*)s;
+  BMI_Model* p = (BMI_Model*)s;
 
   {
     int i;
@@ -916,9 +1477,9 @@ _avulsion_reset_discharge (State* s)
 }
 
 void
-_avulsion_update_discharge (State* s, const double f)
+_avulsion_update_discharge (BMI_Model* s, const double f)
 {
-  State* p = (State*)s;
+  BMI_Model* p = (BMI_Model*)s;
   const Sed_riv r = sed_cube_borrow_nth_river (s->p, 0);
   gint* path;
   gint* id;
@@ -964,11 +1525,14 @@ _avulsion_update_discharge (State* s, const double f)
     s->mouth_x[n] = mouth_ind.i*dx;
     s->mouth_y[n] = mouth_ind.j*dy;
     s->mouth_qb[n] += s->qb[n]*f;
+    s->mouth_angle[n] = sed_river_angle (leaves[n]);
 
-    angle = sed_river_angle (leaves[n]);
+    //angle = sed_river_angle (leaves[n]);
+/*
     fprintf (stderr, "Avulsion: %d: %f: %f: %f: %f: %f: %f\n",
-                     n, s->q[n], s->qb[n], angle,
+                     n, s->q[n], s->qb[n], s->mouth_angle[n]*180./M_PI,
                      s->mouth_x[n], s->mouth_y[n], s->mouth_qb[n]);
+*/
 
   }
 
@@ -984,7 +1548,7 @@ _avulsion_update_discharge (State* s, const double f)
 }
 
 int
-_avulsion_run_until (State* s, int until)
+_avulsion_run_until (BMI_Model* s, int until)
 {
   int status = FALSE;
 
@@ -1052,7 +1616,7 @@ _avulsion_run_until (State* s, int until)
 }
 
 int
-_avulsion_finalize (State* s)
+_avulsion_finalize (BMI_Model* s)
 {
   return TRUE;
 }
@@ -1062,7 +1626,7 @@ _avulsion_finalize (State* s)
 #define DEFAULT_SEED (1945)
 
 void
-avulsion_init_state (State* s)
+avulsion_init_state (BMI_Model* s)
 {
   g_assert (s);
 
@@ -1079,6 +1643,7 @@ avulsion_init_state (State* s)
     s->mouth_x = g_new (double, s->total_river_mouths);
     s->mouth_y = g_new (double, s->total_river_mouths);
     s->mouth_qb = g_new (double, s->total_river_mouths);
+    s->mouth_angle = g_new (double, s->total_river_mouths);
 
     s->now = 0;
     s->time_step = 1.;
@@ -1103,7 +1668,7 @@ avulsion_init_state (State* s)
 }
 
 void
-avulsion_free_state (State* s)
+avulsion_free_state (BMI_Model* s)
 {
   if (s)
   {
@@ -1141,6 +1706,9 @@ avulsion_free_state (State* s)
 
     g_free (s->mouth_qb);
     s->mouth_qb = NULL;
+
+    g_free (s->mouth_angle);
+    s->mouth_angle = NULL;
 
     s->total_river_mouths = 0;
   }

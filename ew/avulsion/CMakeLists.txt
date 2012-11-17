@@ -1,5 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/ew )
 
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/avulsion.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/avulsion.pc )
 
 ########### next target ###############
 
@@ -31,23 +32,10 @@ install (FILES avulsion.h avulsion_api.h
          DESTINATION include/ew-2.0
          COMPONENT sedflux)
 
+install (FILES avulsion_api.h
+         RENAME bmi_avulsion.h
+         DESTINATION include
+         COMPONENT sedflux)
 
+install (FILES avulsion.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
-#original Makefile.am contents follow:
-
-#INCLUDES                 = -I$(top_srcdir)/ew
-#
-#AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
-#                           $(top_builddir)/ew/sed/libsedflux.la
-#
-#bin_PROGRAMS             = avulsion
-#avulsion_SOURCES         = avulsion_main.c
-#avulsion_DEPENDENCIES    = libavulsion.la
-#avulsioninclude_HEADERS  = avulsion.h
-#avulsionincludedir       = $(includedir)/ew-2.0
-#
-#lib_LTLIBRARIES          = libavulsion.la
-#libavulsion_la_SOURCES   = avulsion.c
-#
-#avulsion_LDADD           = -lavulsion -lglib-2.0
-#

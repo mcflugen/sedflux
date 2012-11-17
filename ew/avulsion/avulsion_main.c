@@ -40,8 +40,8 @@ static gboolean lite       = FALSE;
 
 static double   eps        = 5.;
 static double   alpha      = 45.;
-static gint     n_i        = 100;
-static gint     n_j        = 100;
+static gint     n_i        = 40;
+static gint     n_j        = 30;
 static gint     n_rivers   = 1;
 static gchar*   in_file    = NULL;
 static gchar*   out_type_s = NULL;
@@ -83,7 +83,7 @@ Avulsion_out_type;
 
 Avulsion_out_type output_type;
 
-int main( int argc , char *argv[] )
+int main ( int argc , char *argv[] )
 {
    g_thread_init (NULL);
    eh_init_glib ();
@@ -341,7 +341,7 @@ int avulsion_full( )
 int
 main_new ()
 {
-  Avulsion_state* s = avulsion_init (NULL);
+  BMI_Model *model = NULL;
 
   eh_message ("Read sediment file");
   {
@@ -358,76 +358,191 @@ main_new ()
     sed_sediment_destroy( sediment_type );
   }
 
-  eh_message ("Set the grid");
-  { /* Set the grid */
-    Eh_dbl_grid bathy_grid = sed_get_floor_3_default (3, n_i, n_j);
-    gint shape[2] = {n_j, n_i};
-    double res[2] = {1., 1.};
-
-    avulsion_set_grid (s, shape, res);
-    avulsion_set_elevation (s, eh_dbl_grid_data_start (bathy_grid));
-
-    eh_grid_destroy (bathy_grid, TRUE);
-  }
-
   eh_message ("Set avulsion data");
   {
-    gchar* buffer = sed_hydro_default_text ();
-    Sed_hydro* hydro_data = sed_hydro_scan_text (buffer, NULL);
+    int err = BMI_FAILURE;
 
-    eh_message ("Set angle limits");
-    {
-      double limit[2];
-      limit[0] = min_angle;
-      limit[1] = max_angle;
+    { /* Create an input file */
+      FILE *fp = fopen ("avulsion_input.txt", "w");
+      double bed_load_exponent = 1.;
+      double discharge_exponent = 1.;
 
-      avulsion_set_river_angle_limit (s, limit);
+      if (fp) {
+        fprintf (fp, "%d, %d\n", n_i, n_j);
+        fprintf (fp, "%lf, %lf\n", 1., 1.);
+        fprintf (fp, "%d, %d\n", n_i/2, 0);
+        //fprintf (fp, "%lf, %lf\n", min_angle, max_angle);
+        //fprintf (fp, "%lf, %lf\n", -180+45., 0.-45);
+        fprintf (fp, "%lf, %lf\n", 60., 120.);
+        //fprintf (fp, "%lf\n", std_dev);
+        fprintf (fp, "%lf\n", 10.);
+        fprintf (fp, "%lf\n", bed_load_exponent);
+        fprintf (fp, "%lf\n", discharge_exponent);
+        fprintf (fp, "%d\n", 9);
+
+        fclose (fp);
+      }
     }
 
-    eh_message ("Set variance");
-    {
-      double variance = std_dev;
+    err = BMI_Initialize ("avulsion_input.txt", &model);
+    if (err)
+      return EXIT_FAILURE;
 
-      avulsion_set_variance (s, variance);
+    {
+      double mean_qb = 250.;
+      double mean_q = 500.;
+      GError* error = NULL;
+      //Sed_hydro* hydro_data = sed_hydro_scan_n_records (NULL, 1, &error);
+      Sed_hydro* hydro_data = sed_hydro_scan_text (sed_hydro_default_text (), &error);
+
+      //avulsion_set_river_hydro (model, *hydro_data);
+      BMI_Set_double (model, "channel_inflow_end_bed_load_sediment__mass_flow_rate", &mean_qb);
+      BMI_Set_double (model, "channel_inflow_end_water__discharge", &mean_q);
+
+/*
+      avulsion_set_river_width (model, 200.);
+      avulsion_set_river_depth (model, 5.);
+      avulsion_set_river_velocity (model, 2.);
+      avulsion_set_river_bed_load_flux (model, 80.);
+*/
     }
 
-    eh_message ("Set hinge");
-    {
-      gint hinge[2];
-      hinge[0] = 0;
-      hinge[1] = n_i/2;
+    //avulsion_set_sed_flux (model, 100.);
+    //avulsion_set_discharge (model, 200.);
 
-      avulsion_set_river_hinge (s, hinge);
+    eh_message ("Set the grid");
+    { /* Set the grid */
+      Eh_dbl_grid bathy_grid = sed_get_floor_3_default (3, n_i, n_j);
+
+      BMI_Set_double (model, "surface__elevation", eh_dbl_grid_data_start (bathy_grid));
+/*
+      {
+        int i, j;
+        double *z = g_new (double, n_i*n_j);
+        double *row;
+
+        row = z;
+        for (i=0; i<n_i/2; i++) {
+          for (j=0; j<n_j; j++)
+            row[j] = 1.;
+          row += n_j;
+        }
+        for (i=n_i/2; i<n_i; i++) {
+          for (j=0; j<n_j; j++)
+            row[j] = -1.;
+          row += n_j;
+        }
+
+        for (row=z; row < z + n_i*n_j; row += n_j) {
+          for (j=0; j<n_j; j++)
+            row[j] = -1;
+        }
+
+        BMI_Set_double (model, "elevation", z);
+
+        g_free (z);
+      }
+      */
+      eh_grid_destroy (bathy_grid, TRUE);
     }
-
-    eh_message ("Set hydro");
-    //avulsion_set_river_hydro (s, hydro_data[0]);
 
     eh_message ("Run the model");
     {
-      int i;
-      for (i=1; i<=n_times; i++)
-      {
-        avulsion_run_until (s, i);
-        fprintf (stderr, "%f\n", avulsion_get_angle (s));
+      int i, n;
+      int size = 0;
+      double *q = NULL;
+      double * river_angles = NULL;
+      double * river_mouth_x = NULL;
+      double * river_mouth_y = NULL;
+      double * river_mouth_q = NULL;
+      double * river_mouth_qb = NULL;
+      int error;
+
+      error = BMI_Get_var_point_count (model, "surface_water__discharge", &size);
+      if (error) {
+        fprintf (stderr, "Unable to get size for surface_water__discharge\n");
+        exit (1);
       }
+      q = g_new (double, size);
 
       {
-        gint lower[3], upper[3], stride[3];
-        double* data = avulsion_get_value_data (s, "discharge", lower, upper,
-                                                stride);
-        const int len = n_i*n_j;
-        for (i=0; i<len; i++)
-          fprintf (stdout,"%f\n", data[i]);
+        int i, j;
+        double *z = g_new (double, size);
+        double *row;
+
+        BMI_Get_double (model, "surface__elevation", z);
+
+        row = z;
+        for (i=0; i<n_i; i++) {
+          for (j=0; j<n_j; j++)
+            fprintf (stdout,"%5.1f", row[j]);
+          fprintf (stdout, "\n");
+          row += n_j;
+        }
+
+        //g_free (z);
       }
+
+      BMI_Get_var_point_count (model, "channel_inflow_end_to_channel_outflow_end__angle", &size);
+      river_angles = g_new (double, size);
+      river_mouth_x = g_new (double, size);
+      river_mouth_y = g_new (double, size);
+      river_mouth_q = g_new (double, size);
+      river_mouth_qb = g_new (double, size);
+
+      n_times = 3;
+      for (i=1; i<=n_times; i++)
+      {
+        BMI_Update (model);
+        BMI_Get_double (model, "channel_inflow_end_to_channel_outflow_end__angle", river_angles);
+        BMI_Get_double (model, "channel_outflow_end__location_model_x_component", river_mouth_x);
+        BMI_Get_double (model, "channel_outflow_end__location_model_y_component", river_mouth_y);
+        BMI_Get_double (model, "channel_outflow_end_water__discharge", river_mouth_q);
+        BMI_Get_double (model, "channel_outflow_end_bed_load_sediment__mass_flow_rate", river_mouth_qb);
+
+        fprintf (stderr, "River angles: ");
+        for (n=0; n<size; n++)
+          fprintf (stderr, "%f ", river_angles[n] * 180. / M_PI);
+        fprintf (stderr, "\n");
+
+        fprintf (stderr, "River positions: ");
+        for (n=0; n<size; n++)
+          fprintf (stderr, "(%f, %f) ", river_mouth_x[n], river_mouth_y[n]);
+        fprintf (stderr, "\n");
+
+        fprintf (stderr, "River discharge: ");
+        for (n=0; n<size; n++)
+          fprintf (stderr, "%f ", river_mouth_q[n]);
+        fprintf (stderr, "\n");
+
+        fprintf (stderr, "River bed load flux: ");
+        for (n=0; n<size; n++)
+          fprintf (stderr, "%f ", river_mouth_qb[n]);
+        fprintf (stderr, "\n");
+      }
+
+      /*
+      {
+        int i;
+        BMI_Get_double (model, "discharge", q);
+        for (i=0; i<size; i++)
+          fprintf (stdout,"%f\n", q[i]);
+      }
+      */
+
+      g_free (river_mouth_q);
+      g_free (river_mouth_qb);
+      g_free (river_mouth_y);
+      g_free (river_mouth_x);
+      g_free (river_angles);
+      g_free (q);
     }
 
     eh_message ("Clean up the model");
-    avulsion_finalize (s, FALSE);
-
+    BMI_Finalize (model);
     eh_message ("Done");
-    sed_sediment_unset_env();
 
+    sed_sediment_unset_env();
   }
 
   return 0;
