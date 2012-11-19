@@ -265,6 +265,16 @@ sed_river_adjust_mass( Sed_riv s , double f )
    return s;
 }
 
+Sed_riv
+sed_river_add_cell (Sed_riv s, Sed_cell a)
+{
+  eh_return_val_if_fail (s, NULL);
+  if (a) {
+    sed_hydro_add_cell (s->data, a);
+  }
+  return s;
+}
+
 double
 sed_river_water_flux( Sed_riv s )
 {
@@ -314,6 +324,31 @@ sed_river_concentration( Sed_riv s )
 {
    eh_require( s );
    return sed_hydro_flow_density( s->data , sed_rho_fresh_water() );
+}
+
+gint*
+sed_river_n_leaves_helper (Sed_riv s, gint* n)
+{
+   if (!sed_river_has_children(s)) {
+      (*n) += 1;
+   }
+   else {
+      sed_river_n_leaves_helper (s->l, n);
+      sed_river_n_leaves_helper (s->r, n);
+   }
+
+   return n;
+}
+
+gint
+sed_river_n_leaves( Sed_riv s )
+{
+   gint n = 0;
+
+   if ( s )
+      sed_river_n_leaves_helper( s , &n );
+
+   return n;
 }
 
 gint*

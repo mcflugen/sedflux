@@ -1052,6 +1052,20 @@ sed_cube_n_branches( Sed_cube s )
 }
 
 gint
+sed_cube_n_leaves (Sed_cube s)
+{
+   gint n = 0;
+   eh_return_val_if_fail (s!=NULL, 0);
+   if (s) {
+      gint i;
+      gint n_rivers = sed_cube_n_rivers(s);
+      for ( i=0 ; i<n_rivers ; i++ )
+         n += sed_river_n_leaves ((Sed_riv)g_list_nth_data (s->river, i));
+   }
+   return n;
+}
+
+gint
 sed_cube_n_rivers( Sed_cube s )
 {
    eh_return_val_if_fail( s!=NULL , 0 );
@@ -1802,9 +1816,7 @@ sed_cube_remove_trunk (Sed_cube s, gpointer trunk_id)
   eh_require (trunk_id);
 
   {
-    eh_watch_int (g_list_length (s->river));
     s->river = g_list_remove (s->river, trunk_id);
-    eh_watch_int (g_list_length (s->river));
   }
 }
 

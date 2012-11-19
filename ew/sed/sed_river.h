@@ -25,6 +25,7 @@ Sed_riv sed_river_set_hinge( Sed_riv r , gint i , gint j );
 Sed_riv sed_river_set_mouth( Sed_riv r , gint i , gint j );
 
 Sed_riv sed_river_adjust_mass( Sed_riv s , double f );
+Sed_riv sed_river_add_cell (Sed_riv s, Sed_cell a);
 
 double    sed_river_water_flux( Sed_riv s );
 double    sed_river_sediment_load    ( Sed_riv s );
@@ -33,6 +34,7 @@ Sed_hydro sed_river_hydro            ( Sed_riv s );
 gboolean  sed_river_is_hyperpycnal   ( Sed_riv s );
 double    sed_river_concentration    ( Sed_riv s );
 gint      sed_river_n_branches       ( Sed_riv s );
+gint      sed_river_n_leaves         ( Sed_riv s );
 double    sed_river_width            ( Sed_riv s );
 double    sed_river_depth            ( Sed_riv s );
 double    sed_river_velocity         ( Sed_riv s );

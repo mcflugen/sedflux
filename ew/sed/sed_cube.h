@@ -278,6 +278,7 @@ Sed_riv* sed_cube_all_rivers  ( Sed_cube s );
 
 gssize     sed_cube_number_of_rivers( Sed_cube s ) G_GNUC_DEPRECATED;
 gint       sed_cube_n_branches      ( Sed_cube s );
+gint       sed_cube_n_leaves        ( Sed_cube s );
 gint       sed_cube_n_rivers        ( Sed_cube s );
 
 Sed_cube sed_load_cube( FILE *fp );
