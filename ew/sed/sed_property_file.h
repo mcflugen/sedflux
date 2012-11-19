@@ -39,6 +39,8 @@ Eh_ndgrid sed_cube_property_subgrid( Sed_cube p            ,
                                      double upper_right[3] ,
                                      double resolution[3] );
 
+gssize sed_cube_n_rows (Sed_cube p);
+
 G_END_DECLS
 
 #endif

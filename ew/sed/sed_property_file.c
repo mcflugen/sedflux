@@ -628,3 +628,34 @@ sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double upper , 
    return n_rows;
 }
 
+gssize
+sed_cube_n_rows (Sed_cube p)
+{
+   gssize n_rows = 0;
+
+   eh_require( p )
+   {
+      gssize id;
+      gssize row_0, row_1;
+      gssize bottom_row = G_MAXINT32;
+      gssize top_row = G_MININT32;
+      const double dz = sed_cube_z_res (p);
+      const int len = sed_cube_size (p);
+
+      for (id=0; id<len; id++) {
+         row_0 = (long)(sed_cube_base_height (p, 0, id) / dz);
+         row_1 = row_0 + sed_column_len (sed_cube_col (p, id)) + 1;
+
+         eh_set_min (bottom_row, row_0);
+         eh_set_max (top_row, row_1);
+      }
+
+      //eh_lower_bound( bottom_row , lower/dz );
+      //eh_upper_bound( top_row    , upper/dz );
+
+      n_rows = top_row - bottom_row;
+   }
+
+   return n_rows;
+}
+
