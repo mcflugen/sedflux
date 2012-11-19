@@ -41,10 +41,10 @@ START_TEST ( test_getline_no_new_line )
    n = getline( &line_str , &len , fp );
    fclose(fp);
 
-   fail_unless( line_str!=NULL );
-   fail_unless( n==-1 );
-   fail_unless( strlen(line_str)==strlen(line_1) );
-   fail_unless( strcmp(line_str,line_1)==0 );
+   fail_unless (line_str != NULL);
+   fail_unless (n != -1);
+   fail_unless (strlen (line_str) == strlen (line_1));
+   fail_unless (strcmp (line_str, line_1) == 0);
 }
 END_TEST
 

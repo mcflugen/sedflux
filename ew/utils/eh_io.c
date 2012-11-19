@@ -175,6 +175,8 @@ gsize eh_fwrite_int64_to_le( const void *ptr , gsize size , gsize nitems , FILE*
 
 #endif
 
+#undef HAVE_GETLINE
+
 #ifndef HAVE_GETLINE
 # ifdef HAVE_FGETLN
 
@@ -201,6 +203,10 @@ getline( gchar** lineptr , gsize *n , FILE* stream )
       else
          result   = -1;
    }
+   else {
+     *n = 0;
+     *lineptr = NULL;
+   }
 
    return result;
 }
@@ -208,49 +214,92 @@ getline( gchar** lineptr , gsize *n , FILE* stream )
 gssize
 getline( gchar** lineptr , gsize *n , FILE* stream )
 {
+   const int block_size = 256;
    gssize result = -1;
 
    if ( *lineptr==NULL || *n==0 )
    {
-      *n       = 120;
-      *lineptr = eh_new( gchar , *n );
+      *n = block_size;
+      *lineptr = eh_new (gchar, *n);
    }
 
    if ( *lineptr )
    {
       gchar* p;
-      gchar* t     = NULL;
-      gint   start = ftell( stream );
+      gchar* found_eol = NULL;
+      const gint start = ftell (stream);
+      int bytes_read = 0;
 
-      p = fgets( *lineptr , *n-1 , stream ); /* Read in a block of characters */
-      if ( p )
-         t = (gchar*)memchr( p , '\n' , *n-1 ); /* Look for the delimiter */
+      p = fgets (*lineptr, *n-1, stream); /* Read in a block of characters */
+      if (p) {
+        bytes_read = strlen (p);
+        found_eol = (gchar*)memchr (p ,'\n', bytes_read); /* Look for the delimiter */
+      }
+      else {
+        bytes_read = 0;
+        found_eol = NULL;
+      }
 
-      if ( !feof(stream) && !t ) /* Delimeter not found */
+      if (bytes_read > 0 && !found_eol && !feof (stream)) {
+        int len = *n;
+
+        // Scan until a new line is found
+        for (p += len; p && !found_eol; p += block_size, len += block_size) {
+          *lineptr = eh_renew (gchar, *lineptr, len + block_size);
+          *n = len + block_size;
+          p = fgets (p, block_size-1, stream);
+
+          if (p) {
+            bytes_read += strlen (p);
+            found_eol = (gchar*) memchr (p, '\n', block_size);
+          }
+        }
+      }
+
+      if (ferror (stream))
+        result = -1;
+      else {
+        if (feof (stream) && bytes_read == 0)
+          result = -1;
+        else {
+          result = strlen (*lineptr);
+
+          // Move the file pointer to after the delimeter
+          fseek (stream, start + result, SEEK_SET);
+        }
+      }
+
+#if 0
+      if (!feof (stream) && !t) /* Delimeter not found */
       {
          gint len = *n;
 
-         for ( p+=len ; p && !t ; p+=120,len+=120 )
+         for ( p+=len ; p && !t ; p+=2048,len+=2048 )
          {
-            *lineptr  = eh_renew( gchar , *lineptr , len+120 ); /* Extend the length of the string */
-            *n        = len+120;
-            p         = fgets( p , 120 , stream ); /* Read the next block of bytes */
+            *lineptr  = eh_renew( gchar , *lineptr , len+2048 ); /* Extend the length of the string */
+            *n        = len + 2048;
+            p         = fgets( p , 2048 , stream ); /* Read the next block of bytes */
 
             if ( p )
-               t = (gchar*)memchr( p , '\n' , 120 ); /* Look for the delimiter */
+               t = (gchar*)memchr( p , '\n' , 2048 ); /* Look for the delimiter */
          }
       }
 
-      if ( ferror(stream) || feof(stream) )
+      if (ferror (stream))
          result = -1;
       else
       {
-         // Careful! Assignment of unsigned int to signed int
-         result = strlen( *lineptr );
+         if (feof (stream))
+           result = -1
+         else {
+           // Careful! Assignment of unsigned int to signed int
+           result = strlen( *lineptr );
 
-         // Move the file pointer to after the delimeter
-         fseek( stream , start+result , SEEK_SET );
+           // Move the file pointer to after the delimeter
+           fseek( stream , start+result , SEEK_SET );
+         }
       }
+#endif
    }
 
    return result;
