@@ -34,6 +34,38 @@ static Eh_key_file_entry tmpl[] =
  { NULL }
 };
 
+
+void
+set_default_params ()
+{
+  _p.n_grains = 4;
+  _p.bulk_density = (double*) malloc (sizeof (double) * _p.n_grains);
+  _p.lambda = (double*) malloc (sizeof (double) * _p.n_grains);
+
+  _p.bulk_density[0] = 1800.;
+  _p.bulk_density[1] = 1600.;
+  _p.bulk_density[2] = 1500.;
+  _p.bulk_density[3] = 1400.;
+  _p.lambda[0] = 16.;
+  _p.lambda[1] = 8.;
+  _p.lambda[2] = 4.;
+  _p.lambda[3] = 2.;
+  _p.r_dir = 90.;
+  _p.r_angle = 0.;
+  _p.latitude = 45.5;
+  _p.ocean_conc = 0.;
+  _p.coastal_current_width = 1.;
+  _p.coastal_current = 0.;
+  _p.river_mouth_nodes = 9;
+  _p.aspect_ratio = 2;
+  _p.basin_width = 2000.;
+  _p.basin_len = 30000.;
+  _p.dx = 100.;
+  _p.dy = 100.;
+
+  return;
+}
+
 Plume_param_st*
 plume_scan_parameter_file( const gchar* file , GError** error )
 {
@@ -42,17 +74,16 @@ plume_scan_parameter_file( const gchar* file , GError** error )
 
    eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
 
-   eh_require( file );
+   if (file) {
+     eh_key_file_scan_from_template( file , "PLUME" , tmpl, &tmp_error );
+   }
+   else
+     set_default_params ();
 
-   eh_key_file_scan_from_template( file , "PLUME" , tmpl, &tmp_error );
-
-   if ( !tmp_error )
-   {
-      p_new = eh_new( Plume_param_st , 1 );
-
-      *p_new = _p;
-
-      plume_check_params( p_new , &tmp_error );
+   if (!tmp_error) {
+     p_new = eh_new( Plume_param_st , 1 );
+     *p_new = _p;
+     plume_check_params( p_new , &tmp_error );
    }
 
    if ( tmp_error )

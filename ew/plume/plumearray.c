@@ -248,7 +248,7 @@ int plumearray( Plume_grid *grid , Plume_enviro *env , Plume_options *opt )
       } // end 3)
    } // end of Upwelling Conditons
 
-   eh_debug( "Increased grid size!" );
+   eh_info ("Increased grid size!");
    if ( fabs(grid->ymin) > grid->ymax ) grid->ymax =  fabs(grid->ymin);
    if ( fabs(grid->ymin) < grid->ymax ) grid->ymin = -fabs(grid->ymax);
 

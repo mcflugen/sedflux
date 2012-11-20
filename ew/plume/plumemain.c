@@ -1,6 +1,7 @@
 #include "plumevars.h"
 #include "plumeinput.h"
 #include "plume_local.h"
+#include "plume_bmi.h"
 
 #include "glib.h"
 #include <utils/utils.h>
@@ -35,6 +36,8 @@ main(int argc, char *argv[])
 
    eh_init_glib();
 
+   eh_set_verbosity_level (0);
+
    { /* Parse command line options */
       GOptionContext* context = g_option_context_new( "Run hypopycnal flow model." );
    
@@ -49,6 +52,76 @@ main(int argc, char *argv[])
       eh_fprint_version_info( stdout , "plume" , PLUME_MAJOR_VERSION , PLUME_MINOR_VERSION , PLUME_MICRO_VERSION );
       eh_exit( 0 );
    }
+
+   {
+     FILE * fp = fopen ("plume_config.txt", "w");
+     if (fp) {
+       fprintf (fp, "%s %s", _in_file, _flood_file);
+       fclose (fp);
+     }
+   }
+
+   if (!error) {
+     BMI_Model * model = NULL;
+     int err;
+
+     fprintf (stderr, "Initializing... ");
+     err = BMI_Initialize ("plume_config.txt", &model);
+     if (err) {
+       fprintf (stderr, "FAIL\n");
+       fprintf (stderr, "Error: %d: Unable to initialize\n", err);
+       return EXIT_FAILURE;
+     }
+     fprintf (stderr, "PASS\n");
+
+     fprintf (stderr, "Updating... ");
+     err = BMI_Update (model);
+     if (err) {
+       fprintf (stderr, "FAIL\n");
+       fprintf (stderr, "Error: %d: Unable to update\n", err);
+       return EXIT_FAILURE;
+     }
+     fprintf (stderr, "PASS\n");
+
+     fprintf (stderr, "Getting deposit... ");
+     {
+       double *z;
+       double *row;
+       int size;
+       int i, j, n;
+       int shape[2];
+       int n_grains;
+       char * var_name = NULL;
+
+       BMI_Get_value (model, "grain_class__count", &n_grains);
+
+       for (n=0; n<n_grains; n++) {
+         var_name = g_strdup_printf ("grain_class_%d__deposition_rate", n);
+
+         BMI_Get_var_size (model, var_name, &size);
+         z = g_new (double, size);
+
+         BMI_Get_double (model, var_name, z);
+
+         BMI_Get_grid_shape (model, var_name, shape);
+
+         row = z;
+         for (i=0; i<shape[0]; i++) {
+           for (j=0; j<shape[1]; j++)
+             fprintf (stdout,"%g ", row[j]);
+           fprintf (stdout, "\n");
+           row += shape[1];
+         }
+
+         g_free (z);
+         g_free (var_name);
+       }
+     }
+
+     BMI_Finalize (model);
+   }
+
+   return EXIT_SUCCESS;
 
    if ( !error )
    { /* Run the model */
