@@ -20,6 +20,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
