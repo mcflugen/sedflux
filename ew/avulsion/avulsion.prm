@@ -71,7 +71,7 @@
 #    @param[out] avulsion_model__sediment_bed_load_exponent
 #    @param[out] avulsion_model__water_discharge_exponent
 #    @param[out] channel_inflow_end_water__discharge
-#    @param[out] channel_inflow_end_suspended_sediment__discharge
+#    @param[out] channel_inflow_end_bed_load_sediment__mass_flow_rate
 #
 #  @group Vectors
 #    @param[out] channel_outflow_end_bed_load_sediment__mass_flow_rate
@@ -82,7 +82,7 @@
 #
 #  @group Grids
 #    @param[out] surface__elevation
-#    @param[out] channel_outflow_end_suspended_sediment__discharge
+#    @param[out] surface_bed_load_sediment__mass_flow_rate
 ${number_of_rows}, ${number_of_columns}
 ${row_spacing}, ${column_spacing}
 ${row_location_of_inflow}, ${column_location_of_inflow}

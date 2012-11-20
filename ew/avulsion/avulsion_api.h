@@ -77,6 +77,7 @@ int BMI_Get_input_var_name_count (BMI_Model *self, int *number_of_input_vars);
 int BMI_Get_var_rank (BMI_Model *self, const char * name, int *rank);
 int BMI_Get_var_type (BMI_Model *self, const char * name, BMI_Var_type *type);
 int BMI_Get_var_point_count (BMI_Model *self, const char * name, int *count);
+int BMI_Get_var_stride (BMI_Model *self, const char * name, int *stride);
 
 int BMI_Get_grid_type (BMI_Model *self, const char * name, BMI_Grid_type *type);
 int BMI_Get_grid_shape (BMI_Model *self, const char * name, int *shape);

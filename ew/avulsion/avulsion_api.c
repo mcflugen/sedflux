@@ -13,6 +13,11 @@
 
 struct _BMI_Model
 {
+  int input_var_name_count;
+  int output_var_name_count;
+  const char **input_var_names;
+  const char **output_var_names;
+
   double variance;
   double last_angle;
   double now;
@@ -59,6 +64,156 @@ void avulsion_free_state (BMI_Model* s);
 #define BMI_FAILURE_UNKNOWN_ERROR (3)
 #define BMI_FAILURE_UNABLE_TO_OPEN_ERROR (4)
 #define BMI_FAILURE_BAD_NAME_ERROR (5)
+
+int
+count_null_terminated_list (const char **names) {
+  int count = 0;
+
+  if (names) { /* Count number of names */
+    const char **name;
+    for (name=names, count=0; *name; ++name, ++count);
+  }
+
+  return count;
+}
+
+const char **
+dup_null_terminated_list (const char **names, int *len) {
+  const char **new_list = NULL;
+  const int count = count_null_terminated_list (names);
+
+  if (count > 0) {
+    int i;
+
+    new_list = (const char **) malloc (sizeof (char*) * count);
+    for (i=0; i<count; i++) {
+      new_list[i] = strdup (names[i]);
+    }
+  }
+
+  *len = count;
+
+  return new_list;
+}
+
+void
+set_input_var_names (BMI_Model *self) {
+  const char *input_var_names[] = {
+    // Scalars
+    "avulsion_model__random_walk_variance_constant",
+    "avulsion_model__sediment_bed_load_exponent",
+    "avulsion_model__water_discharge_exponent",
+    "channel_inflow_end_water__discharge",
+    "channel_inflow_end_bed_load_sediment__mass_flow_rate",
+
+    // Vectors
+    "channel_outflow_end_bed_load_sediment__mass_flow_rate",
+    "channel_outflow_end_water__discharge",
+    "channel_outflow_end__location_model_x_component",
+    "channel_outflow_end__location_model_y_component",
+
+    // Grids
+    "surface__elevation",
+    NULL
+  };
+ 
+  {
+    int count;
+    const char **names = dup_null_terminated_list (input_var_names, &count);
+
+    self->input_var_name_count = count;
+    self->input_var_names = names;
+  }
+
+  return;
+}
+
+void
+set_output_var_names (BMI_Model *self) {
+  int count;
+  const char *output_var_names[] = {
+    // Scalars
+    "avulsion_model__random_walk_variance_constant",
+    "avulsion_model__sediment_bed_load_exponent",
+    "avulsion_model__water_discharge_exponent",
+    "channel_inflow_end_water__discharge",
+    "channel_inflow_end_bed_load_sediment__mass_flow_rate",
+
+    // Vectors
+    "channel_outflow_end_bed_load_sediment__mass_flow_rate",
+    "channel_outflow_end_water__discharge",
+    "channel_outflow_end__location_model_x_component",
+    "channel_outflow_end__location_model_y_component",
+    "channel_inflow_end_to_channel_outflow_end__angle",
+
+    // Grids
+    "surface__elevation",
+    "surface_bed_load_sediment__mass_flow_rate",
+    NULL
+  };
+
+  {
+    int count;
+    const char **names = dup_null_terminated_list (output_var_names, &count);
+
+    self->output_var_name_count = count;
+    self->output_var_names = names;
+  }
+
+  return;
+}
+
+int
+has_input_var (BMI_Model *self, const char *name) {
+  const char **names = self->input_var_names;
+  const int count = self->input_var_name_count;
+  int i;
+
+  for (i=0; i<count; ++i)
+    if (strcmp (names[i], name) == 0)
+      return TRUE;
+  return FALSE;
+}
+
+int
+has_output_var (BMI_Model *self, const char *name) {
+  const char **names = self->output_var_names;
+  const int count = self->output_var_name_count;
+  int i;
+
+  for (i=0; i<count; ++i)
+    if (strcmp (names[i], name) == 0)
+      return TRUE;
+  return FALSE;
+}
+
+int
+BMI_Get_var_rank (BMI_Model *self, const char * name, int *rank)
+{
+  if (rank) {
+    if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0 ||
+        strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0 ||
+        strcmp (name, "avulsion_model__water_discharge_exponent")==0 ||
+        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
+      *rank = 0;
+    else if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
+        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
+        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
+        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0)
+      *rank = 1;
+    else if (strcmp (name, "surface__elevation")==0 ||
+             strcmp (name, "surface_bed_load_sediment__mass_flow_rate")==0)
+      *rank = 2;
+    else
+      return BMI_FAILURE;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
 
 int
 BMI_Initialize (const char *config_file, BMI_Model **handle)
@@ -117,6 +272,9 @@ BMI_Initialize (const char *config_file, BMI_Model **handle)
       avulsion_set_total_river_mouths (self, number_of_river_mouths);
       avulsion_set_discharge (self, 1.);
       avulsion_set_sed_flux (self, 1.);
+
+      set_input_var_names (self);
+      set_output_var_names (self);
 
       *handle = self;
 
@@ -718,29 +876,12 @@ avulsion_get_angle (BMI_Model* self)
   return s->angles[s->len-1];
 }
 
-#define BMI_OUTPUT_VAR_NAME_COUNT (12)
-const char *output_var_names[BMI_OUTPUT_VAR_NAME_COUNT] = {
-  "avulsion_model__random_walk_variance_constant",
-  "avulsion_model__sediment_bed_load_exponent",
-  "avulsion_model__water_discharge_exponent",
-  "channel_inflow_end_water__discharge",
-  "channel_inflow_end_bed_load_sediment__mass_flow_rate",
-  "channel_outflow_end_bed_load_sediment__mass_flow_rate",
-  "channel_outflow_end_water__discharge",
-  "channel_outflow_end__location_model_x_component",
-  "channel_outflow_end__location_model_y_component",
-  "channel_inflow_end_to_channel_outflow_end__angle",
-  "surface__elevation",
-  //"channel_outflow_end_suspended_sediment__discharge",
-  "surface_water__discharge",
-};
-
 int
 BMI_Get_output_var_names (BMI_Model *self, char **names)
 {
   int i;
-  for (i=0; i<BMI_OUTPUT_VAR_NAME_COUNT; i++)
-    strncpy (names[i], output_var_names[i], BMI_VAR_NAME_MAX);
+  for (i=0; i<self->output_var_name_count; i++)
+    strncpy (names[i], self->output_var_names[i], BMI_VAR_NAME_MAX);
   return BMI_SUCCESS;
 }
 
@@ -748,35 +889,19 @@ int
 BMI_Get_output_var_name_count (BMI_Model *self, int *number_of_output_vars)
 {
   if (number_of_output_vars) {
-    *number_of_output_vars = BMI_OUTPUT_VAR_NAME_COUNT;
+    *number_of_output_vars = self->output_var_name_count;
     return BMI_SUCCESS;
   }
   else
     return BMI_FAILURE;
 }
 
-#define BMI_INPUT_VAR_NAME_COUNT (12)
-const char *input_var_names[BMI_INPUT_VAR_NAME_COUNT] = {
-  "channel_outflow_end_bed_load_sediment__mass_flow_rate",
-  "channel_outflow_end_water__discharge",
-  "surface__elevation",
-  "channel_outflow_end_suspended_sediment__discharge",
-  "channel_outflow_end_suspended_sediment__discharge",
-  "channel_outflow_end__location_model_x_component",
-  "channel_outflow_end__location_model_y_component",
-  "avulsion_model__random_walk_variance_constant",
-  "avulsion_model__sediment_bed_load_exponent",
-  "avulsion_model__water_discharge_exponent",
-  "channel_inflow_end_water__discharge",
-  "channel_inflow_end_bed_load_sediment__mass_flow_rate",
-};
-
 int
 BMI_Get_input_var_names (BMI_Model *self, char **names)
 {
   int i;
-  for (i=0; i<BMI_INPUT_VAR_NAME_COUNT; i++)
-    strncpy (names[i], input_var_names[i], BMI_VAR_NAME_MAX);
+  for (i=0; i<self->input_var_name_count; i++)
+    strncpy (names[i], self->input_var_names[i], BMI_VAR_NAME_MAX);
   return BMI_SUCCESS;
 }
 
@@ -784,40 +909,11 @@ int
 BMI_Get_input_var_name_count (BMI_Model *self, int *number_of_input_vars)
 {
   if (number_of_input_vars) {
-    *number_of_input_vars = BMI_INPUT_VAR_NAME_COUNT;
+    *number_of_input_vars = self->input_var_name_count;
     return BMI_SUCCESS;
   }
   else
     return BMI_FAILURE;
-}
-
-int
-BMI_Get_var_rank (BMI_Model *self, const char * name, int *rank)
-{
-  if (rank) {
-    if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0 ||
-        strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0 ||
-        strcmp (name, "avulsion_model__water_discharge_exponent")==0 ||
-        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
-      *rank = 0;
-    else if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
-        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
-        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0)
-      *rank = 1;
-    else if (strcmp (name, "surface__elevation")==0 ||
-             strcmp (name, "surface_water__discharge")==0 ||
-             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
-      *rank = 2;
-    else
-      return BMI_FAILURE;
-  }
-  else
-    return BMI_FAILURE;
-
-  return BMI_SUCCESS;
 }
 
 int
@@ -835,29 +931,43 @@ int
 BMI_Get_var_point_count (BMI_Model *self, const char * name, int *count)
 {
   if (count) {
-    if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0 ||
-        strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0 ||
-        strcmp (name, "avulsion_model__water_discharge_exponent")==0 ||
-        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
-      *count = 1;
-    else if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
-        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
-        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0) {
-      *count = self->total_river_mouths;
-    }
-    else if (strcmp (name, "surface__elevation")==0 ||
-             strcmp (name, "surface_water__discharge")==0 ||
-             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
-      *count = avulsion_get_nx (self) * avulsion_get_ny (self);
-    }
-    else {
-      *count = 0;
-      return BMI_FAILURE;
-    }
+    int rank;
+    int error = BMI_Get_var_rank (self, name, &rank);
 
+    if (!error) {
+      if (rank == 0)
+        *count = 1;
+      else if (rank == 1)
+        *count = self->total_river_mouths;
+      else if (rank == 2)
+        *count = avulsion_get_nx (self) * avulsion_get_ny (self);
+    }
+    else
+      return error;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_Get_var_stride (BMI_Model *self, const char * name, int *stride)
+{
+  if (stride) {
+    int rank;
+    int error = BMI_Get_var_rank (self, name, &rank);
+
+    if (!error) {
+      if (rank == 0 || rank == 1)
+        stride[0] = 1;
+      else if (rank == 2) {
+        stride[0] = avulsion_get_ny (self);
+        stride[1] = 1;
+      }
+    }
+    else
+      return error;
   }
   else
     return BMI_FAILURE;
@@ -879,24 +989,21 @@ int
 BMI_Get_grid_shape (BMI_Model *self, const char * name, int *shape)
 {
   if (shape) {
-    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
-        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
-        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
-        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
-      shape[0] = self->total_river_mouths;
-    }
-    else if (strcmp (name, "surface__elevation")==0 ||
-             strcmp (name, "surface_water__discharge")==0 ||
-             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
-      shape[0] = avulsion_get_nx (self);
-      shape[1] = avulsion_get_ny (self);
+    int rank;
+    int error = BMI_Get_var_rank (self, name, &rank);
+
+    if (!error) {
+      if (rank == 0)
+        shape[0] = 1;
+      else if (rank == 1)
+        shape[0] = self->total_river_mouths;
+      else if (rank == 2) {
+        shape[0] = avulsion_get_nx (self);
+        shape[1] = avulsion_get_ny (self);
+      }
     }
     else
-      shape[0] = 1;
-      //return BMI_FAILURE;
+      return error;
   }
   else
     return BMI_FAILURE;
@@ -908,24 +1015,19 @@ int
 BMI_Get_grid_spacing (BMI_Model *self, const char * name, double *spacing)
 {
   if (spacing) {
-    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
-        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
-        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
-        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
-      spacing[0] = 0.;
-    }
-    else if (strcmp (name, "surface__elevation")==0 ||
-             strcmp (name, "surface_water__discharge")==0 ||
-             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
-      spacing[0] = avulsion_get_dx (self);
-      spacing[1] = avulsion_get_dy (self);
+    int rank;
+    int error = BMI_Get_var_rank (self, name, &rank);
+
+    if (!error) {
+      if (rank == 0 || rank == 1)
+        spacing[0] = 0.;
+      else if (rank == 2) {
+        spacing[0] = avulsion_get_dx (self);
+        spacing[1] = avulsion_get_dy (self);
+      }
     }
     else
-      spacing[0] = 0.;
-      //return BMI_FAILURE;
+      return error;
   }
   else
     return BMI_FAILURE;
@@ -937,24 +1039,19 @@ int
 BMI_Get_grid_origin (BMI_Model *self, const char * name, double *origin)
 {
   if (origin) {
-    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0 ||
-        strcmp (name, "channel_outflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_x_component")==0 ||
-        strcmp (name, "channel_outflow_end__location_model_y_component")==0 ||
-        strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0 ||
-        strcmp (name, "channel_inflow_end_water__discharge")==0 ||
-        strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0) {
-      origin[0] = 0.;
-    }
-    else if (strcmp (name, "surface__elevation")==0 ||
-             strcmp (name, "surface_water__discharge")==0 ||
-             strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0) {
-      origin[0] = 0.;
-      origin[1] = 0.;
+    int rank;
+    int error = BMI_Get_var_rank (self, name, &rank);
+
+    if (!error) {
+      if (rank == 0 || rank == 1)
+        origin[0] = 0.;
+      else if (rank == 2) {
+        origin[0] = 0.;
+        origin[1] = 0.;
+      }
     }
     else
-      origin[0] = 0.;
-      //return BMI_FAILURE;
+      return error;
   }
   else
     return BMI_FAILURE;
@@ -970,16 +1067,19 @@ BMI_Get_double_ptr (BMI_Model *self, const char *name, double **dest)
     double *src = NULL;
     int error = BMI_SUCCESS;
 
+    if (!has_output_var (self, name))
+      return BMI_FAILURE_BAD_NAME_ERROR;
+
     if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
       src = self->mouth_qb;
     else if (strcmp (name, "channel_outflow_end_water__discharge")==0)
       src = self->q;
     else if (strcmp (name, "surface__elevation")==0)
       src = self->elevation;
-    else if (strcmp (name, "surface_water__discharge")==0)
+    else if (strcmp (name, "surface_bed_load_sediment__mass_flow_rate")==0)
       src = self->discharge;
-    else if (strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
-      src = self->discharge;
+//    else if (strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
+//      src = self->discharge;
     else if (strcmp (name, "channel_outflow_end__location_model_x_component")==0)
       src = self->mouth_x;
     else if (strcmp (name, "channel_outflow_end__location_model_y_component")==0)
@@ -1042,7 +1142,12 @@ BMI_Set_double (BMI_Model *self, const char *name, double *src)
   int rtn = BMI_FAILURE;
   if (src) {
     double *dest = NULL;
-    int err = BMI_Get_double_ptr (self, name, &dest);
+    int err;
+
+    if (!has_input_var (self, name))
+      return BMI_FAILURE_BAD_NAME_ERROR;
+
+    err = BMI_Get_double_ptr (self, name, &dest);
 
     if (!err) { /* Copy the data */
       int len;
