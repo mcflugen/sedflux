@@ -7,7 +7,7 @@
 Sed_cube
 new_test_cube ()
 {
-  const gint mult = g_test_quick ()?1:10;
+  const gint mult = g_test_quick ()?1:3;
   Sed_cube p = NULL;
 
   {
