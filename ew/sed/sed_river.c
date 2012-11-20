@@ -109,7 +109,7 @@ sed_river_copy( Sed_riv d , Sed_riv s )
       sed_river_copy      ( d->l     , s->l     );
       sed_river_copy      ( d->r     , s->r     );
 
-      eh_free( d->name );
+      g_free( d->name );
       d->name = g_strdup( s->name );
    }
 
@@ -603,7 +603,7 @@ sed_river_destroy( Sed_riv s )
 {
    if ( s )
    {
-      eh_free( s->name );
+      g_free( s->name );
 
       sed_river_hinge_destroy( s->hinge     );
       sed_hydro_destroy      ( s->data      );

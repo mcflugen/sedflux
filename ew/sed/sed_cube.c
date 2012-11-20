@@ -342,8 +342,9 @@ sed_cube_free( Sed_cube s , gboolean free_data )
 
       g_list_free( s->shore );
 
-      eh_free( s->name );
+      g_free( s->name );
       eh_free( s );
+
    }
 
    return NULL;
@@ -3584,10 +3585,15 @@ Eh_sequence *sed_get_floor_sequence_2( const char *file ,
    if ( err!=NULL )
       g_propagate_error( error , err );
 
-   g_strfreev( data );
-   eh_free( n_rows      );
-   eh_free( n_cols      );
-   eh_free( all_records );
+   {
+     gchar **p;
+     for (p=data; *p; p++)
+       eh_free (*p);
+     eh_free (data);
+   }
+   eh_free (n_rows);
+   eh_free (n_cols);
+   eh_free (all_records);
 
    return grid_seq;
 }

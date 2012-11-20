@@ -138,8 +138,9 @@ test_sequence_2 (void)
   g_assert (s!=NULL);
   g_assert_cmpint (s->len, ==, 2);
 
-  eh_free (name_used);
-  eh_free (tmpdir);
+  g_free (name_used);
+  g_free (tmpdir);
+
   //close (fd);
 }
 
@@ -1115,6 +1116,7 @@ main (int argc, char* argv[])
 
   g_test_add_func ("/libsed/sed_cube/new",&test_sed_cube_new);
   g_test_add_func ("/libsed/sed_cube/destroy",&test_sed_cube_destroy);
+
   g_test_add_func ("/libsed/sed_cube/sequence_2",&test_sequence_2);
   g_test_add_func ("/libsed/sed_cube/to_cell",&test_cube_to_cell);
   g_test_add_func ("/libsed/sed_cube/get_size",&test_cube_get_size);
@@ -1129,6 +1131,7 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_cube/river_north",&test_cube_river_north);
   g_test_add_func ("/libsed/sed_cube/is_land_ocean_cell",
                    &test_is_land_ocean_cell);
+
   g_test_add_func ("/libsed/sed_cube/is_boundary_cell",
                    &test_is_boundary_cell);
   g_test_add_func ("/libsed/sed_cube/shore_mask",&test_shore_mask);
@@ -1142,6 +1145,7 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_river/new",&test_river_new);
   g_test_add_func ("/libsed/sed_river/dup",&test_river_dup);
   g_test_add_func ("/libsed/sed_river/angle",&test_river_angle);
+
   g_test_add_func ("/libsed/sed_river/name",&test_river_name);
   g_test_add_func ("/libsed/sed_river/hinge",&test_river_hinge);
 
