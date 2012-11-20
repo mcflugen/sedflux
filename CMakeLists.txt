@@ -20,6 +20,13 @@ add_test (UtilsSymbolTable gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-te
 
 set (BUILD_SHARED_LIBS ON)
 
+if (APPLE)
+  include_directories (/Developer/Headers/FlatCarbon)
+  find_library (CARBON_LIBRARY Carbon)
+  mark_as_advanced (CARBON_LIBRARY)
+  set (EXTRA_LIBS ${CARBON_LIBRARY})
+endif (APPLE)
+
 ########### Look for glib-2.0 ###############
 
 if (DEFINED CMAKE_GLIB_DIR)
