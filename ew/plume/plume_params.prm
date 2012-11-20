@@ -1,0 +1,93 @@
+#@model Plume
+#  @longname Plume
+#  @author Eric Hutton
+#  @version 0.1
+#  @email eric.hutton@colorado.edu
+#
+#  @group Run Parameters
+#    @param bulk_density = 1800.
+#      @brief Bulk density
+#      @description Bulk density of bottom sediment
+#      @units kg/m3
+#      @range 1000., 2650.
+#    @param removal_rate = 16.8
+#      @brief Removal rate
+#      @description Removal rate of suspended sediment
+#      @units day-1
+#      @range 1., 100.
+#    @param coast_normal = 90.
+#      @brief Angle of coast normal
+#      @description Angle of the coast normal as measured clockwise from north
+#      @units degrees
+#      @range 0., 360.
+#    @param river_mouth_angle = 0.
+#      @brief River mouth angle
+#      @description Angle of the river mouth measured with respect to the coast normal
+#      @units degrees
+#      @range -180., 180.
+#    @param river_mouth_latitude = 45.
+#      @brief Latitude
+#      @description Latitude of the river mouth
+#      @units arc_degrees
+#      @range -90., 90.
+#    @param background_ocean_concentration = 0.
+#      @brief Ocean sediment concentration
+#      @description Background sediment volume concentration of the ocean
+#      @units -
+#      @range 0., 1.
+#    @param normalized_current_width = 1.
+#      @brief Normalized current width
+#      @description Normalized width of along-shore current
+#      @units -
+#      @range 0.1, 1.
+#    @param coastal_current_velocity = 0.
+#      @brief Current velocity
+#      @description Along-shore velocity of coastal current
+#      @units m/s
+#      @range -5., 5.
+#    @param grid_nodes_in_river_mouth = 3
+#      @brief Number of grid nodes in river
+#      @description Number of grid nodes contained within the river mouth
+#      @units -
+#      @range 3, 21
+#    @param ratio_of_cross_shore_to_along_shore_spacing = 2
+#      @brief Grid spacing ratio
+#      @description Ratio of spacing in the along-shore to cross-shore spacing
+#      @units -
+#      @range 1, 20
+#    @param basin_width = 2000.
+#      @brief Basin width
+#      @description Width of the basin
+#      @units m
+#      @range 100., 200000.
+#    @param basin_length = 30000.
+#      @brief Basin length
+#      @description Length of the basin
+#      @units m
+#      @range 1000., 200000.
+#    @param cross_shore_resolution = 100.
+#      @brief Cross-shore resolution
+#      @description Resolution of the deposit in the cross-shore direction
+#      @units m
+#      @range 100., 1000.
+#    @param along_shore_resolution = 100.
+#      @brief Along-shore resolution
+#      @description Resolution of the deposit in the along-shore direction
+#      @units m
+#      @range 100., 1000.
+[ PLUME ]
+Bulk density: ${bulk_density}
+Removal rate constant: ${removal_rate}
+Coast normal: ${coast_normal}
+River angle wrt coast normal: ${river_mouth_angle}
+Latitude: ${river_mouth_latitude}
+Ocean sediment concentration: ${background_ocean_concentration}
+Normalized width of coastal current: ${normalized_current_width}
+Velocity of coastal current: ${coastal_current_velocity}
+Number of grid nodes within river mouth: ${grid_nodes_in_river_mouth}
+Ratio of cross- to along-shore grid spacing: ${ratio_of_cross_shore_to_along_shore_spacing}
+Basin width: ${basin_width}                                                                                                                                                                                                              
+Basin length: ${basin_length}
+Cross-shore output resolution: ${cross_shore_resolution}
+Along-shore output resolution: ${along_shore_resolution}
+

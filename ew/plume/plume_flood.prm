@@ -1,0 +1,41 @@
+#@model Plume
+#  @longname Plume
+#  @author Eric Hutton
+#  @version 0.1
+#  @email eric.hutton@colorado.edu
+#  @group Flood
+#    @param flood_duration = 1
+#      @brief Flood duration
+#      @description Duration of the flood
+#      @units day
+#      @range 0, inf
+#    @param river_mouth_velocity = 2.
+#      @brief River velocity
+#      @description Velocity of the river mouth
+#      @units m/s
+#      @range 0., 10.
+#    @param river_mouth_width = 100.
+#      @brief River width
+#      @description Width of the river mouth
+#      @units m
+#      @range 10., 5000.
+#    @param river_mouth_depth = 10.
+#      @brief River depth
+#      @description Depth of the river mouth
+#      @units m
+#      @range 1., 1000.
+#    @param sediment_mass_concentration = 10.
+#      @brief Suspended sediment concentration
+#      @description Mass concentration of suspended sediment
+#      @units kg/m3
+#      @range .01, 10.
+#
+#    @param[out] grain_class_0__deposition_rate
+[ 'Season 1' ]
+Duration (y): ${flood_duration}d                                                                                                                                                                                                         
+Bedload (kg/s): 100.0
+Suspended load concentration (kg/m^3): ${sediment_mass_concentration}
+Velocity (m/s): ${river_mouth_velocity}
+Width (m): ${river_mouth_width}
+Depth (m): ${river_mouth_depth}
+
