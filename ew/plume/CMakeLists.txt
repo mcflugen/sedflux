@@ -67,7 +67,7 @@ set (plume_bmi_LIB_SRCS
 set_source_files_properties (${plume_bmi_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 
 add_library(plume_bmi ${plume_bmi_LIB_SRCS})
-target_link_libraries(plume_bmi sedflux)
+target_link_libraries(plume_bmi sedflux plume)
 install(TARGETS plume_bmi DESTINATION lib)
 
 ########### install files ###############
