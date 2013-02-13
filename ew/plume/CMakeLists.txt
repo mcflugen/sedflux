@@ -11,7 +11,7 @@ SET(plume_SRCS
 add_executable(run_plume ${plume_SRCS})
 
 #target_link_libraries(run_plume plume plume_bmi)
-target_link_libraries(run_plume plume)
+target_link_libraries(run_plume bmiplume)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_plume DESTINATION bin RENAME plume COMPONENT sedflux)
 
@@ -32,7 +32,7 @@ install(TARGETS plume_run_file DESTINATION bin COMPONENT sedflux)
 ########### next target ###############
 
 SET(plume_LIB_SRCS
-   plume_bmi.c
+  #plume_bmi.c
    plume_scan.c
    plume_approx.c
    plumeout1.c
@@ -62,7 +62,8 @@ target_link_libraries(plume sedflux)
 install(TARGETS plume DESTINATION lib COMPONENT sedflux)
 
 set (plume_bmi_LIB_SRCS
-  plume_bmi.c)
+  plume_bmi.c
+  ${plume_LIB_SRCS})
 
 set_source_files_properties (${plume_bmi_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 
