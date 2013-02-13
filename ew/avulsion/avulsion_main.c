@@ -384,7 +384,7 @@ main_new ()
       }
     }
 
-    err = BMI_Initialize ("avulsion_input.txt", &model);
+    err = BMI_AVULSION_Initialize ("avulsion_input.txt", &model);
     if (err)
       return EXIT_FAILURE;
 
@@ -396,8 +396,8 @@ main_new ()
       Sed_hydro* hydro_data = sed_hydro_scan_text (sed_hydro_default_text (), &error);
 
       //avulsion_set_river_hydro (model, *hydro_data);
-      BMI_Set_double (model, "channel_inflow_end_bed_load_sediment__mass_flow_rate", &mean_qb);
-      BMI_Set_double (model, "channel_inflow_end_water__discharge", &mean_q);
+      BMI_AVULSION_Set_double (model, "channel_inflow_end_bed_load_sediment__mass_flow_rate", &mean_qb);
+      BMI_AVULSION_Set_double (model, "channel_inflow_end_water__discharge", &mean_q);
 
 /*
       avulsion_set_river_width (model, 200.);
@@ -414,7 +414,7 @@ main_new ()
     { /* Set the grid */
       Eh_dbl_grid bathy_grid = sed_get_floor_3_default (3, n_i, n_j);
 
-      BMI_Set_double (model, "surface__elevation", eh_dbl_grid_data_start (bathy_grid));
+      BMI_AVULSION_Set_double (model, "surface__elevation", eh_dbl_grid_data_start (bathy_grid));
 /*
       {
         int i, j;
@@ -458,7 +458,7 @@ main_new ()
       double * river_mouth_qb = NULL;
       int error;
 
-      error = BMI_Get_var_point_count (model, "surface_water__discharge", &size);
+      error = BMI_AVULSION_Get_var_point_count (model, "surface_water__discharge", &size);
       if (error) {
         fprintf (stderr, "Unable to get size for surface_water__discharge\n");
         exit (1);
@@ -470,7 +470,7 @@ main_new ()
         double *z = g_new (double, size);
         double *row;
 
-        BMI_Get_double (model, "surface__elevation", z);
+        BMI_AVULSION_Get_double (model, "surface__elevation", z);
 
         row = z;
         for (i=0; i<n_i; i++) {
@@ -483,7 +483,7 @@ main_new ()
         //g_free (z);
       }
 
-      BMI_Get_var_point_count (model, "channel_inflow_end_to_channel_outflow_end__angle", &size);
+      BMI_AVULSION_Get_var_point_count (model, "channel_inflow_end_to_channel_outflow_end__angle", &size);
       river_angles = g_new (double, size);
       river_mouth_x = g_new (double, size);
       river_mouth_y = g_new (double, size);
@@ -493,12 +493,12 @@ main_new ()
       n_times = 3;
       for (i=1; i<=n_times; i++)
       {
-        BMI_Update (model);
-        BMI_Get_double (model, "channel_inflow_end_to_channel_outflow_end__angle", river_angles);
-        BMI_Get_double (model, "channel_outflow_end__location_model_x_component", river_mouth_x);
-        BMI_Get_double (model, "channel_outflow_end__location_model_y_component", river_mouth_y);
-        BMI_Get_double (model, "channel_outflow_end_water__discharge", river_mouth_q);
-        BMI_Get_double (model, "channel_outflow_end_bed_load_sediment__mass_flow_rate", river_mouth_qb);
+        BMI_AVULSION_Update (model);
+        BMI_AVULSION_Get_double (model, "channel_inflow_end_to_channel_outflow_end__angle", river_angles);
+        BMI_AVULSION_Get_double (model, "channel_outflow_end__location_model_x_component", river_mouth_x);
+        BMI_AVULSION_Get_double (model, "channel_outflow_end__location_model_y_component", river_mouth_y);
+        BMI_AVULSION_Get_double (model, "channel_outflow_end_water__discharge", river_mouth_q);
+        BMI_AVULSION_Get_double (model, "channel_outflow_end_bed_load_sediment__mass_flow_rate", river_mouth_qb);
 
         fprintf (stderr, "River angles: ");
         for (n=0; n<size; n++)
@@ -539,7 +539,7 @@ main_new ()
     }
 
     eh_message ("Clean up the model");
-    BMI_Finalize (model);
+    BMI_AVULSION_Finalize (model);
     eh_message ("Done");
 
     sed_sediment_unset_env();

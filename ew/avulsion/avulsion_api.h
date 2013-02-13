@@ -51,48 +51,49 @@ typedef enum {
 }
 BMI_Grid_type;
 
-const int BMI_COMPONENT_NAME_MAX = 2048;
-const int BMI_VAR_NAME_MAX = 2048;
-const int BMI_UNITS_NAME_MAX = 2048;
+const int BMI_AVULSION_COMPONENT_NAME_MAX = 2048;
+const int BMI_AVULSION_VAR_NAME_MAX = 2048;
+const int BMI_AVULSION_UNITS_NAME_MAX = 2048;
 
-#define BMI_COMPONENT_NAME "Avulsion"
+#define BMI_AVULSION_COMPONENT_NAME "Avulsion"
 
-int BMI_Initialize (const char *config_file, BMI_Model **handle);
+int BMI_AVULSION_Initialize (const char *config_file, BMI_Model **handle);
 
-int BMI_Get_component_name (BMI_Model *self, char *name);
-int BMI_Get_start_time (BMI_Model *self, double *time);
-int BMI_Get_current_time (BMI_Model *self, double *time);
-int BMI_Get_end_time (BMI_Model *self, double *time);
-int BMI_Get_time_units (BMI_Model *self, char *units);
+int BMI_AVULSION_Get_component_name (BMI_Model *self, char *name);
+int BMI_AVULSION_Get_start_time (BMI_Model *self, double *time);
+int BMI_AVULSION_Get_current_time (BMI_Model *self, double *time);
+int BMI_AVULSION_Get_end_time (BMI_Model *self, double *time);
+int BMI_AVULSION_Get_time_units (BMI_Model *self, char *units);
 
-int BMI_Update (BMI_Model *self);
-int BMI_Update_until (BMI_Model *self, double time_in_days);
-int BMI_Finalize (BMI_Model *self);
+int BMI_AVULSION_Update (BMI_Model *self);
+int BMI_AVULSION_Update_until (BMI_Model *self, double time_in_days);
+int BMI_AVULSION_Finalize (BMI_Model *self);
 
-int BMI_Get_output_var_names (BMI_Model *self, char **names);
-int BMI_Get_output_var_name_count (BMI_Model *self, int *number_of_output_vars);
-int BMI_Get_input_var_names (BMI_Model *self, char **names);
-int BMI_Get_input_var_name_count (BMI_Model *self, int *number_of_input_vars);
+int BMI_AVULSION_Get_output_var_names (BMI_Model *self, char **names);
+int BMI_AVULSION_Get_output_var_name_count (BMI_Model *self, int *number_of_output_vars);
+int BMI_AVULSION_Get_input_var_names (BMI_Model *self, char **names);
+int BMI_AVULSION_Get_input_var_name_count (BMI_Model *self, int *number_of_input_vars);
 
-int BMI_Get_var_rank (BMI_Model *self, const char * name, int *rank);
-int BMI_Get_var_type (BMI_Model *self, const char * name, BMI_Var_type *type);
-int BMI_Get_var_point_count (BMI_Model *self, const char * name, int *count);
-int BMI_Get_var_stride (BMI_Model *self, const char * name, int *stride);
+int BMI_AVULSION_Get_var_rank (BMI_Model *self, const char * name, int *rank);
+int BMI_AVULSION_Get_var_stride (BMI_Model *self, const char *name, int *stride);
+int BMI_AVULSION_Get_var_type (BMI_Model *self, const char * name, BMI_Var_type *type);
+int BMI_AVULSION_Get_var_point_count (BMI_Model *self, const char * name, int *count);
+int BMI_AVULSION_Get_var_stride (BMI_Model *self, const char * name, int *stride);
 
-int BMI_Get_grid_type (BMI_Model *self, const char * name, BMI_Grid_type *type);
-int BMI_Get_grid_shape (BMI_Model *self, const char * name, int *shape);
-int BMI_Get_grid_spacing (BMI_Model *self, const char * name, double *spacing);
-int BMI_Get_grid_origin (BMI_Model *self, const char * name, double *origin);
+int BMI_AVULSION_Get_grid_type (BMI_Model *self, const char * name, BMI_Grid_type *type);
+int BMI_AVULSION_Get_grid_shape (BMI_Model *self, const char * name, int *shape);
+int BMI_AVULSION_Get_grid_spacing (BMI_Model *self, const char * name, double *spacing);
+int BMI_AVULSION_Get_grid_origin (BMI_Model *self, const char * name, double *origin);
 
-int BMI_Get_double_ptr (BMI_Model *self, const char *name, double **dest);
-int BMI_Get_double (BMI_Model *self, const char *name, double *dest);
-int BMI_Set_double (BMI_Model *self, const char *name, double *src);
+int BMI_AVULSION_Get_double_ptr (BMI_Model *self, const char *name, double **dest);
+int BMI_AVULSION_Get_double (BMI_Model *self, const char *name, double *dest);
+int BMI_AVULSION_Set_double (BMI_Model *self, const char *name, double *src);
 
-#define NO_BMI_GET_GRID_CONNECTIVITY
-#define NO_BMI_GET_GRID_OFFSET
-#define NO_BMI_GET_GRID_X
-#define NO_BMI_GET_GRID_Y
-#define NO_BMI_GET_GRID_Z
+#define NO_BMI_AVULSION_GET_GRID_CONNECTIVITY
+#define NO_BMI_AVULSION_GET_GRID_OFFSET
+#define NO_BMI_AVULSION_GET_GRID_X
+#define NO_BMI_AVULSION_GET_GRID_Y
+#define NO_BMI_AVULSION_GET_GRID_Z
 
 BMI_Model* avulsion_init     (BMI_Model*);
 int avulsion_run_until(BMI_Model*, double);
