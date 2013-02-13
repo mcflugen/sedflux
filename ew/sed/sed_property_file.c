@@ -488,6 +488,8 @@ double sed_cube_min_height( Sed_cube p , gssize **col_id )
       }
    }
 
+   z = eh_round (z - 25., 25.);
+
    return z;
 }
 
@@ -517,6 +519,8 @@ double sed_cube_max_height( Sed_cube p , gssize **col_id )
          (*col_id)[n-1] = -1;
       }
    }
+
+   z = eh_round (z + 25., 25.);
 
    return z;
 }
@@ -619,10 +623,18 @@ sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double upper , 
          eh_set_max( top_row    , row_1 );
       }
 
-      eh_lower_bound( bottom_row , lower/dz );
-      eh_upper_bound( top_row    , upper/dz );
+      //eh_lower_bound( bottom_row , lower/dz );
+      //eh_upper_bound( top_row    , upper/dz );
+
+      if (lower/dz < bottom_row)
+        bottom_row = lower/dz;
+      if (upper/dz > top_row)
+        top_row = upper/dz;
 
       n_rows = top_row-bottom_row;
+      fprintf (stderr, "NUMBER of rows is %d\n", n_rows);
+      fprintf (stderr, "lower row %f\n", lower);
+      fprintf (stderr, "upper row %f\n", upper);
    }
 
    return n_rows;
@@ -641,6 +653,8 @@ sed_cube_n_rows (Sed_cube p)
       gssize top_row = G_MININT32;
       const double dz = sed_cube_z_res (p);
       const int len = sed_cube_size (p);
+      const double lower = sed_cube_min_height (p, NULL);
+      const double upper = sed_cube_max_height (p, NULL);
 
       for (id=0; id<len; id++) {
          row_0 = (long)(sed_cube_base_height (p, 0, id) / dz);
@@ -650,10 +664,19 @@ sed_cube_n_rows (Sed_cube p)
          eh_set_max (top_row, row_1);
       }
 
-      //eh_lower_bound( bottom_row , lower/dz );
-      //eh_upper_bound( top_row    , upper/dz );
+      //eh_lower_bound (bottom_row, lower/dz);
+      //eh_upper_bound (top_row, upper/dz);
+
+      if (lower/dz < bottom_row)
+        bottom_row = lower/dz;
+      if (upper/dz > top_row)
+        top_row = upper/dz;
 
       n_rows = top_row - bottom_row;
+
+      fprintf (stderr, "Number of rows is %d\n", n_rows);
+      fprintf (stderr, "lower row %f\n", lower);
+      fprintf (stderr, "upper row %f\n", upper);
    }
 
    return n_rows;
