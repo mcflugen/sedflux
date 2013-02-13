@@ -30,7 +30,7 @@
 #      @units kg/m3
 #      @range .01, 10.
 #
-#    @param[out] grain_class_0__deposition_rate
+#  @param[out] model_grain_class_0__deposition_rate
 [ 'Season 1' ]
 Duration (y): ${flood_duration}d                                                                                                                                                                                                         
 Bedload (kg/s): 100.0

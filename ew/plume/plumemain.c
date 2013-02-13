@@ -66,7 +66,7 @@ main(int argc, char *argv[])
      int err;
 
      fprintf (stderr, "Initializing... ");
-     err = BMI_Initialize ("plume_config.txt", &model);
+     err = BMI_PLUME_Initialize ("plume_config.txt", &model);
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to initialize\n", err);
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
      fprintf (stderr, "PASS\n");
 
      fprintf (stderr, "Updating... ");
-     err = BMI_Update (model);
+     err = BMI_PLUME_Update (model);
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to update\n", err);
@@ -93,17 +93,17 @@ main(int argc, char *argv[])
        int n_grains;
        char * var_name = NULL;
 
-       BMI_Get_value (model, "grain_class__count", &n_grains);
+       BMI_PLUME_Get_value (model, "grain_class__count", &n_grains);
 
        for (n=0; n<n_grains; n++) {
          var_name = g_strdup_printf ("grain_class_%d__deposition_rate", n);
 
-         BMI_Get_var_size (model, var_name, &size);
+         BMI_PLUME_Get_var_point_count (model, var_name, &size);
          z = g_new (double, size);
 
-         BMI_Get_double (model, var_name, z);
+         BMI_PLUME_Get_double (model, var_name, z);
 
-         BMI_Get_grid_shape (model, var_name, shape);
+         BMI_PLUME_Get_grid_shape (model, var_name, shape);
 
          row = z;
          for (i=0; i<shape[0]; i++) {
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
        }
      }
 
-     BMI_Finalize (model);
+     BMI_PLUME_Finalize (model);
    }
 
    return EXIT_SUCCESS;
