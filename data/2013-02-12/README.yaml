@@ -1,11 +1,14 @@
 date: Tue Feb 12 13:49:43 MST 2013
-sedflux version:
+sedflux version: 248
+run by: beach                         # uname -n
+operating system: Linux 2.6.18-92.el5 # uname -sr
+hardware: x86_64                      # uname -p
 URL of data files: http://csdms.colorado.edu/pub/users/huttone/sedflux/data/2013-02-12/
 fetch command: wget -e robots=off -r --no-parent -nH --cut-dirs=6 http://csdms.colorado.edu/pub/users/huttone/sedflux/data/2013-02-12/
 run command: sedflux -i ohau.init -2 -V 6
 comments:
    Input files provided by Phaedra Upton. She reported that sediment was not
-   being deposited in the basin. It looks as though the avulsin process was
+   being deposited in the basin. It looks as though the avulsion process was
    disabled. This prevents sediment from being routed over the delta, and so
    the sediment never reached the river mouth.
 
