@@ -36,6 +36,8 @@ gchar** sed_measurement_all_units (void);
 gchar* sed_measurement_unit (const gchar* name);
 
 double          sed_measurement_make           ( Sed_measurement m , Sed_cube p , gssize i , gssize j );
+double          sed_measure_cube_y_slope       ( Sed_cube p , gssize i , gssize j );
+double          sed_measure_cube_x_slope       ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_slope         ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_water_depth   ( Sed_cube p , gssize i , gssize j );
 double          sed_measure_cube_elevation     ( Sed_cube p , gssize i , gssize j );

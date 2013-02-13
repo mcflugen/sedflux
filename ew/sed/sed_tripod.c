@@ -51,7 +51,7 @@ CLASS ( Sed_tripod )
    Sed_tripod_attr attr;
 };
 
-static Sed_measurement_static all_measurements[17] = {
+static Sed_measurement_static all_measurements[] = {
    {"SLOPE", "meter/meter", &sed_measure_cube_slope},
    {"DEPTH", "meter", &sed_measure_cube_water_depth},
    {"ELEVATION", "meter", &sed_measure_cube_elevation},
@@ -68,6 +68,8 @@ static Sed_measurement_static all_measurements[17] = {
    {"PERMEABILITY", "meter^2", &sed_measure_cube_permeability},
    {"BASEMENT", "meter", &sed_measure_cube_basement},
    {"RIVER_MOUTH", "meter", &sed_measure_cube_river_mouth},
+   {"YSLOPE", "meter/meter", &sed_measure_cube_y_slope},
+   {"XSLOPE", "meter/meter", &sed_measure_cube_x_slope},
    {NULL, NULL, NULL}
 };
 
@@ -350,6 +352,24 @@ sed_measurement_make( Sed_measurement m , Sed_cube p , gssize i , gssize j )
       return (m->f)( p , i , j );
    else
       return eh_nan();
+}
+
+double
+sed_measure_cube_y_slope (Sed_cube p, gssize i, gssize j)
+{
+   if (sed_cube_is_in_domain (p, i, j))
+      return sed_cube_y_slope (p, i, j);
+   else
+      return eh_nan ();
+}
+
+double
+sed_measure_cube_x_slope (Sed_cube p, gssize i, gssize j)
+{
+   if (sed_cube_is_in_domain (p, i, j))
+      return sed_cube_y_slope (p, i, j);
+   else
+      return eh_nan ();
 }
 
 double sed_measure_cube_slope( Sed_cube p , gssize i , gssize j )
