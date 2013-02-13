@@ -10,7 +10,6 @@
 #include <bio.h>
 
 #include "sedflux.h"
-#include "sedflux_api.h"
 
 G_BEGIN_DECLS
 Eh_project fill_sedflux_info_file             ( Eh_project p         ,
@@ -104,7 +103,6 @@ sedflux_parse_command_line (const int argc, const char *argv[], GError** error)
     if (version)
     {
       gchar* prog_name = NULL;
-      gchar* opts = NULL;
 
       if (sizeof(void*)==8)
         prog_name = g_strconcat (PROGRAM_NAME, " (64-bit)", NULL);
@@ -117,10 +115,6 @@ sedflux_parse_command_line (const int argc, const char *argv[], GError** error)
                                 S_MINOR_VERSION ,
                                 S_MICRO_VERSION );
 
-      opts = sedflux_build_options (NULL);
-      fprintf (stdout, "%s\n", opts);
-
-      eh_free (opts);
       eh_free (prog_name);
       //for (i=0; i<argc_copy; i++)
       //  g_free (argv_copy[i]);
