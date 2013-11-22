@@ -9,7 +9,7 @@ SET(bio_SRCS
 
 add_executable(run_bio ${bio_SRCS})
 
-target_link_libraries(run_bio bio)
+target_link_libraries(run_bio bio-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bio DESTINATION bin RENAME bio COMPONENT sedflux)
 
@@ -18,8 +18,10 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bio DESTINATION bin RENAME bio 
 
 set(bio_LIB_SRCS bio.c bio_sed_interface.c)
 
-set_source_files_properties (${bio_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(bio ${bio_LIB_SRCS})
+set_source_files_properties(${bio_LIB_SRCS} get_config_text.c
+  PROPERTIES LANGUAGE CXX)
+add_library(bio ${bio_LIB_SRCS} get_config_text.c)
+add_library(bio-static STATIC ${bio_LIB_SRCS})
 
 target_link_libraries(bio sedflux)
 

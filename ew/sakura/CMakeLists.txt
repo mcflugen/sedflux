@@ -7,7 +7,7 @@ SET(sakura_SRCS sakura_main.c)
 
 add_executable(run_sakura ${sakura_SRCS})
 
-target_link_libraries(run_sakura sakura)
+target_link_libraries(run_sakura sakura-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sakura DESTINATION bin RENAME sakura COMPONENT sedflux)
 
@@ -21,8 +21,10 @@ SET(sakura_LIB_SRCS
    sakura_utils.c
 )
 
-set_source_files_properties (${sakura_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(sakura ${sakura_LIB_SRCS})
+set_source_files_properties(${sakura_LIB_SRCS} get_config_text.c
+  PROPERTIES LANGUAGE CXX)
+add_library(sakura ${sakura_LIB_SRCS} get_config_text.c)
+add_library(sakura-static STATIC ${sakura_LIB_SRCS})
 
 target_link_libraries(sakura sedflux)
 

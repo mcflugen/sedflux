@@ -55,9 +55,13 @@ SET(sedflux_LIB_SRCS
 
 set_source_files_properties (${sedflux_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 
-add_library(sedflux ${sedflux_LIB_SRCS})
+add_library(sedflux SHARED ${sedflux_LIB_SRCS})
+add_library(sedflux-static STATIC ${sedflux_LIB_SRCS})
 
 target_link_libraries(sedflux m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} utils)
+#target_link_libraries(sedflux-static m utils-static)
+target_link_libraries(sedflux-static m utils-static
+  ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES})
 
 install(TARGETS sedflux DESTINATION lib COMPONENT sedflux)
 
@@ -70,7 +74,7 @@ SET(write_test_file_SRCS
 
 add_executable(write_test_file ${write_test_file_SRCS})
 
-target_link_libraries(write_test_file sedflux gthread-2.0 glib-2.0)
+target_link_libraries(write_test_file sedflux-static gthread-2.0 glib-2.0)
 
 install(TARGETS write_test_file DESTINATION bin COMPONENT sedflux)
 
@@ -88,41 +92,41 @@ if (WITH_CHECK)
          sed_hydro_unit_test.c)
 
   add_executable( libsed_unit_test ${libsed_unit_test_SRCS} )
-  target_link_libraries( libsed_unit_test sedflux check )
+  target_link_libraries( libsed_unit_test sedflux-static check )
 endif (WITH_CHECK)
 
 set (cell_tests_SRCS test_cell.c test_sed.c)
 add_executable (sed-test-cell ${cell_tests_SRCS})
-target_link_libraries (sed-test-cell sedflux)
+target_link_libraries (sed-test-cell sedflux-static)
 
 set (column_tests_SRCS test_column.c test_sed.c)
 add_executable (sed-test-column ${column_tests_SRCS})
-target_link_libraries (sed-test-column sedflux)
+target_link_libraries (sed-test-column sedflux-static)
 
 set (cube_tests_SRCS test_cube.c test_sed.c)
 add_executable (sed-test-cube ${cube_tests_SRCS})
-target_link_libraries (sed-test-cube sedflux)
+target_link_libraries (sed-test-cube sedflux-static)
 
 set (hydro_tests_SRCS test_hydro.c test_sed.c)
 add_executable (sed-test-hydro ${hydro_tests_SRCS})
-target_link_libraries (sed-test-hydro sedflux)
+target_link_libraries (sed-test-hydro sedflux-static)
 
 set (river_tests_SRCS test_river.c test_sed.c)
 add_executable (sed-test-river ${river_tests_SRCS})
-target_link_libraries (sed-test-river sedflux)
+target_link_libraries (sed-test-river sedflux-static)
 
 set (sediment_tests_SRCS test_sediment.c test_sed.c)
 add_executable (sed-test-sediment ${sediment_tests_SRCS})
-target_link_libraries (sed-test-sediment sedflux)
+target_link_libraries (sed-test-sediment sedflux-static)
 
 set (wave_tests_SRCS test_wave.c test_sed.c)
 add_executable (sed-test-wave ${wave_tests_SRCS})
-target_link_libraries (sed-test-wave sedflux)
+target_link_libraries (sed-test-wave sedflux-static)
 
 ########### utility programs ###############
 set (print_input_file_SRCS print_input.c sed_input_files.c)
 add_executable (sed-print-input ${print_input_file_SRCS})
-target_link_libraries (sed-print-input sedflux gmodule-2.0)
+target_link_libraries (sed-print-input sedflux-static gmodule-2.0)
 install(TARGETS sed-print-input DESTINATION bin COMPONENT sedflux)
 
 ########### install files ###############

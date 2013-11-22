@@ -141,6 +141,7 @@ const char* _default_process_file[] = {
 NULL
 };
 
+/*
 gchar*
 get_config_text (const gchar* file)
 {
@@ -159,4 +160,4 @@ get_config_text (const gchar* file)
   else
     return NULL;
 }
-
+*/

@@ -51,10 +51,13 @@ set_source_files_properties (${utils_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 
 
 add_library(utils ${utils_LIB_SRCS})
+add_library(utils-static STATIC ${utils_LIB_SRCS})
 
 target_link_libraries(utils m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${EXTRA_LIBS})
+#target_link_libraries(utils_STATIC m ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${EXTRA_LIBS})
 
 install(TARGETS utils DESTINATION lib COMPONENT sedflux)
+#install(TARGETS utils_STATIC DESTINATION lib COMPONENT sedflux)
 
 
 ########### next target ###############

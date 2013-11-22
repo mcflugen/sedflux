@@ -9,7 +9,7 @@ SET(inflow_SRCS
 
 add_executable(run_inflow ${inflow_SRCS})
 
-target_link_libraries(run_inflow inflow)
+target_link_libraries(run_inflow inflow-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_inflow DESTINATION bin RENAME inflow COMPONENT sedflux)
 
@@ -20,7 +20,7 @@ set (pseudoplume_SRCS pseudoplume.c)
 
 add_executable(pseudoplume ${pseudoplume_SRCS})
 
-target_link_libraries(pseudoplume inflow)
+target_link_libraries(pseudoplume inflow-static sedflux-static)
 
 install(TARGETS pseudoplume DESTINATION bin COMPONENT sedflux)
 
@@ -31,6 +31,7 @@ set (inflow_LIB_SRCS inflow.c inflow_io.c inflow_sedflux_interface.c)
 
 set_source_files_properties (${inflow_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(inflow ${inflow_LIB_SRCS})
+add_library(inflow-static STATIC ${inflow_LIB_SRCS})
 
 target_link_libraries(inflow sedflux)
 

@@ -7,6 +7,7 @@ set (xshore_LIB_SRCS xshore.c)
 
 set_source_files_properties (${xshore_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(xshore ${xshore_LIB_SRCS})
+add_library(xshore-static STATIC ${xshore_LIB_SRCS})
 
 target_link_libraries(xshore sedflux)
 

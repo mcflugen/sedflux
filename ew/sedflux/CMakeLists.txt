@@ -5,7 +5,14 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc.cmake ${CMAKE_CURRENT_S
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc )
 
 set( sedflux_LIBS
-  utils sedflux sakura avulsion bio diffusion subside xshore squall flow muds bing failure quake compact inflow plume )
+  utils sedflux sakura avulsion bio diffusion subside xshore squall flow muds
+  bing failure quake compact inflow plume)
+
+set(sedflux_STATIC_LIBS
+  utils-static sedflux-static sakura-static avulsion-static bio-static
+  diffusion-static subside-static xshore-static squall-static flow-static
+  muds-static bing-static failure-static quake-static compact-static
+  inflow-static plume-static)
 
 ########### next target ###############
 
@@ -15,7 +22,8 @@ set(sedflux_SRCS
 
 add_executable(run_sedflux ${sedflux_SRCS})
 
-target_link_libraries(run_sedflux sedflux-2.0)
+target_link_libraries(run_sedflux sedflux-2.0-static ${sedflux_STATIC_LIBS}
+  sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME sedflux COMPONENT sedflux)
 
@@ -61,15 +69,18 @@ set (sedflux-2.0_LIB_SRCS
 
 set_source_files_properties (${sedflux-2.0_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(sedflux-2.0 ${sedflux-2.0_LIB_SRCS})
+add_library(sedflux-2.0-static STATIC ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(sedflux-2.0 ${sedflux_LIBS})
 
 set_source_files_properties (sedflux3d_bmi.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties (sedflux_bmi.c PROPERTIES LANGUAGE CXX)
 
 add_library(bmisedflux2d ${sedflux-2.0_LIB_SRCS} sedflux_bmi.c)
+add_library(bmisedflux2d-static STATIC ${sedflux-2.0_LIB_SRCS} sedflux_bmi.c)
 target_link_libraries(bmisedflux2d sedflux ${sedflux_LIBS})
 
 add_library(bmisedflux3d ${sedflux-2.0_LIB_SRCS} sedflux3d_bmi.c)
+add_library(bmisedflux3d-static STATIC ${sedflux-2.0_LIB_SRCS} sedflux3d_bmi.c)
 target_link_libraries(bmisedflux3d sedflux ${sedflux_LIBS})
 
 install(TARGETS sedflux-2.0 DESTINATION lib COMPONENT sedflux)

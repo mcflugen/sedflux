@@ -7,7 +7,7 @@ set (earthquake_SRCS earthquake_main.c)
 
 add_executable(run_earthquake ${earthquake_SRCS})
 
-target_link_libraries(run_earthquake quake)
+target_link_libraries(run_earthquake quake-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_earthquake DESTINATION bin RENAME earthquake COMPONENT sedflux)
 
@@ -18,6 +18,7 @@ set (quake_LIB_SRCS earthquake.c)
 
 set_source_files_properties (${quake_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(quake ${quake_LIB_SRCS})
+add_library(quake-static STATIC ${quake_LIB_SRCS})
 
 target_link_libraries(quake utils)
 

@@ -9,7 +9,7 @@ SET(diffusion_SRCS
 
 add_executable(run_diffusion ${diffusion_SRCS})
 
-target_link_libraries(run_diffusion diffusion)
+target_link_libraries(run_diffusion diffusion-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_diffusion DESTINATION bin RENAME diffusion COMPONENT sedflux)
 
@@ -18,8 +18,10 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_diffusion DESTINATION bin RENAM
 
 set (diffusion_LIB_SRCS diffusion.c)
 
-set_source_files_properties (${diffusion_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(diffusion ${diffusion_LIB_SRCS})
+set_source_files_properties (${diffusion_LIB_SRCS} get_config_text.c
+  PROPERTIES LANGUAGE CXX)
+add_library(diffusion ${diffusion_LIB_SRCS} get_config_text.c)
+add_library(diffusion-static STATIC ${diffusion_LIB_SRCS})
 
 target_link_libraries(diffusion sedflux)
 

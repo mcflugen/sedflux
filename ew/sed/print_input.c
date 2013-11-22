@@ -154,3 +154,21 @@ get_input_file_contents (const gchar* mod_name, const gchar* file,
   return text;
 }
 
+gchar*
+get_config_text (const gchar* file)
+{
+  if (g_ascii_strcasecmp (file, "config")==0)
+    return g_strjoinv ("\n", (gchar**)_default_init_file);
+  if (g_ascii_strcasecmp (file, "bathy-1d")==0)
+    return g_strjoinv ("\n", (gchar**)_default_1d_bathy_file);
+  if (g_ascii_strcasecmp (file, "bathy-2d")==0)
+    return g_strjoinv ("\n", (gchar**)_default_2d_bathy_file);
+  if (g_ascii_strcasecmp (file, "hydro")==0)
+    return g_strjoinv ("\n", (gchar**)_default_hydro_inline_file);
+  if (g_ascii_strcasecmp (file, "sediment")==0)
+    return g_strjoinv ("\n", (gchar**)_default_sediment_file);
+  if (g_ascii_strcasecmp (file, "process")==0)
+    return g_strjoinv ("\n", (gchar**)_default_sediment_file);
+  else
+    return NULL;
+}

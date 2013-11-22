@@ -260,27 +260,3 @@ sed_cube_avulse_all_rivers( Sed_cube c )
    return sed_cube_foreach_river( c , (GFunc)&sed_cube_avulse_river_helper , c );
 }
 
-const gchar* _default_avulsion_config [] = {
-"standard deviation: 0.75",
-"minimum angle (degrees): 0",
-"maximum angle (degrees): 180",
-"river name: Blackfoot",
-"hinge point: 50, 0",
-"fraction of sediment remaining in plane: 1",
-"river can branch? (yes or no): no",
-"seed for random number generator: 1945",
-NULL
-};
-
-gchar*
-get_config_text (const gchar* file)
-{
-  if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", (gchar**)_default_avulsion_config);
-  else
-    return NULL;
-}
-
-
-
-

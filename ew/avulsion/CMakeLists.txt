@@ -8,7 +8,7 @@ set (avulsion_SRCS avulsion_main.c)
 
 add_executable (run_avulsion ${avulsion_SRCS})
 
-target_link_libraries (run_avulsion avulsion sedflux)
+target_link_libraries (run_avulsion avulsion-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_avulsion
        DESTINATION bin RENAME avulsion COMPONENT sedflux)
@@ -18,8 +18,9 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_avulsion
 
 set (avulsion_LIB_SRCS avulsion.c avulsion_api.c)
 
-set_source_files_properties (${avulsion_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(avulsion ${avulsion_LIB_SRCS})
+set_source_files_properties(${avulsion_LIB_SRCS} get_config_text.c PROPERTIES LANGUAGE CXX)
+add_library(avulsion SHARED ${avulsion_LIB_SRCS} get_config_text.c)
+add_library(avulsion-static STATIC ${avulsion_LIB_SRCS})
 
 target_link_libraries(avulsion sedflux)
 

@@ -9,7 +9,7 @@ SET(subside_SRCS
 
 add_executable(run_subside ${subside_SRCS})
 
-target_link_libraries(run_subside subside)
+target_link_libraries(run_subside subside-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME subside COMPONENT sedflux)
 
@@ -18,8 +18,10 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME 
 
 set (subside_LIB_SRCS subside.c subside_api.c)
 
-set_source_files_properties (${subside_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(subside ${subside_LIB_SRCS})
+set_source_files_properties(${subside_LIB_SRCS} get_config_text.c
+  PROPERTIES LANGUAGE CXX)
+add_library(subside ${subside_LIB_SRCS} get_config_text.c)
+add_library(subside-static STATIC ${subside_LIB_SRCS})
 
 target_link_libraries(subside sedflux)
 

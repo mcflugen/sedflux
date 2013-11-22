@@ -11,7 +11,7 @@ SET(plume_SRCS
 add_executable(run_plume ${plume_SRCS})
 
 #target_link_libraries(run_plume plume plume_bmi)
-target_link_libraries(run_plume bmiplume)
+target_link_libraries(run_plume bmiplume-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_plume DESTINATION bin RENAME plume COMPONENT sedflux)
 
@@ -24,7 +24,7 @@ SET(plume_run_file_SRCS
 
 add_executable(plume_run_file ${plume_run_file_SRCS})
 
-target_link_libraries(plume_run_file plume)
+target_link_libraries(plume_run_file plume-static sedflux-static)
 
 install(TARGETS plume_run_file DESTINATION bin COMPONENT sedflux)
 
@@ -54,8 +54,10 @@ SET(plume_LIB_SRCS
    plumeset.c
 )
 
-set_source_files_properties (${plume_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-add_library(plume ${plume_LIB_SRCS})
+set_source_files_properties(${plume_LIB_SRCS} get_config_text.c
+  PROPERTIES LANGUAGE CXX)
+add_library(plume ${plume_LIB_SRCS} get_config_text.c)
+add_library(plume-static STATIC ${plume_LIB_SRCS})
 
 target_link_libraries(plume sedflux)
 
@@ -68,6 +70,7 @@ set (plume_bmi_LIB_SRCS
 set_source_files_properties (${plume_bmi_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 
 add_library(bmiplume ${plume_bmi_LIB_SRCS})
+add_library(bmiplume-static STATIC ${plume_bmi_LIB_SRCS})
 target_link_libraries(bmiplume sedflux)
 install(TARGETS bmiplume DESTINATION lib)
 

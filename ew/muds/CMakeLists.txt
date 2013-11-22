@@ -9,7 +9,7 @@ SET(muds_SRCS
 
 add_executable(run_muds ${muds_SRCS})
 
-target_link_libraries(run_muds muds)
+target_link_libraries(run_muds muds-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_muds DESTINATION bin RENAME muds COMPONENT sedflux)
 
@@ -20,6 +20,7 @@ set (muds_LIB_SRCS muds.c)
 
 set_source_files_properties (${muds_LIB_SRCS} PROPERTIES LANGUAGE CXX)
 add_library(muds ${muds_LIB_SRCS})
+add_library(muds-static STATIC ${muds_LIB_SRCS})
 
 target_link_libraries(muds sedflux)
 
