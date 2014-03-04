@@ -34,7 +34,7 @@ main(int argc, char *argv[])
 {
    GError* error = NULL;
 
-   eh_init_glib();
+   //eh_init_glib();
 
    eh_set_verbosity_level (0);
 
@@ -93,10 +93,10 @@ main(int argc, char *argv[])
        int n_grains;
        char * var_name = NULL;
 
-       BMI_PLUME_Get_value (model, "grain_class__count", &n_grains);
+       BMI_PLUME_Get_value (model, "model_grain_class__count", &n_grains);
 
        for (n=0; n<n_grains; n++) {
-         var_name = g_strdup_printf ("grain_class_%d__deposition_rate", n);
+         var_name = g_strdup_printf ("model_grain_class_%d__deposition_rate", n);
 
          BMI_PLUME_Get_var_point_count (model, var_name, &size);
          z = g_new (double, size);
