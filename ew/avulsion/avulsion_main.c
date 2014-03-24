@@ -458,12 +458,11 @@ main_new ()
       double * river_mouth_qb = NULL;
       int error;
 
-      error = BMI_AVULSION_Get_var_point_count (model, "surface_water__discharge", &size);
+      error = BMI_AVULSION_Get_var_point_count (model, "surface__elevation", &size);
       if (error) {
-        fprintf (stderr, "Unable to get size for surface_water__discharge\n");
+        fprintf (stderr, "Unable to get size for surface__elevation\n");
         exit (1);
       }
-      q = g_new (double, size);
 
       {
         int i, j;
@@ -479,8 +478,6 @@ main_new ()
           fprintf (stdout, "\n");
           row += n_j;
         }
-
-        //g_free (z);
       }
 
       BMI_AVULSION_Get_var_point_count (model, "channel_inflow_end_to_channel_outflow_end__angle", &size);
@@ -521,21 +518,11 @@ main_new ()
         fprintf (stderr, "\n");
       }
 
-      /*
-      {
-        int i;
-        BMI_Get_double (model, "discharge", q);
-        for (i=0; i<size; i++)
-          fprintf (stdout,"%f\n", q[i]);
-      }
-      */
-
       g_free (river_mouth_q);
       g_free (river_mouth_qb);
       g_free (river_mouth_y);
       g_free (river_mouth_x);
       g_free (river_angles);
-      g_free (q);
     }
 
     eh_message ("Clean up the model");
