@@ -22,7 +22,7 @@ extern "C" {
            "%s = %d (%s, line %d)\n",       \
            #val,                            \
            val,                             \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);               } G_STMT_END
 
@@ -31,7 +31,7 @@ extern "C" {
            "%s = %ld (%s, line %d)\n",      \
            #val,                            \
            val,                             \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);          } G_STMT_END
 
@@ -40,7 +40,7 @@ extern "C" {
            "%s = %p (%s, line %d)\n",       \
            #val,                            \
            val,                             \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);          } G_STMT_END
 
@@ -50,7 +50,7 @@ extern "C" {
               "%s = %f (%s, line %d)\n",    \
               #val,                         \
               val,                          \
-              g_basename(__FILE__),         \
+              g_path_get_basename(__FILE__),         \
               __LINE__),                    \
       fflush(stderr);                       \
    else                                     \
@@ -61,7 +61,7 @@ extern "C" {
            "%s = %g (%s, line %d)\n",       \
            #val,                            \
            val,                             \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);               } G_STMT_END
 
@@ -70,7 +70,7 @@ extern "C" {
            "%s = %s (%s, line %d)\n",       \
            #val,                            \
            (val)?(val):"(null)" ,           \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);               } G_STMT_END
 
@@ -79,7 +79,7 @@ extern "C" {
            "%s = %f (%s, line %d)\n",       \
            #val,                            \
            val,                             \
-           g_basename(__FILE__),            \
+           g_path_get_basename(__FILE__),            \
            __LINE__),                       \
    fflush(stderr);               } G_STMT_END
 
@@ -91,7 +91,7 @@ extern "C" {
               #val,                                    \
               i,                                       \
               val[i],                                  \
-              g_basename(__FILE__),                    \
+              g_path_get_basename(__FILE__),                    \
               __LINE__),                               \
       fflush(stderr);       }               } G_STMT_END
 
@@ -114,7 +114,7 @@ extern "C" {
    if ( !(expr) ) {                                                   \
       fprintf( stderr ,                                               \
                "%s : line %d : requirement failed : (%s)\n" ,         \
-               g_basename(__FILE__),                                  \
+               g_path_get_basename(__FILE__),                                  \
                __LINE__,                                              \
                #expr ),                                               \
       fflush( stderr ); } else
@@ -123,7 +123,7 @@ extern "C" {
    if ( !(expr) ) {                                                   \
       fprintf( stderr ,                                               \
                "%s : line %d : requirement (%s) failed : (%s)\n" ,    \
-               g_basename(__FILE__),                                  \
+               g_path_get_basename(__FILE__),                                  \
                __LINE__,                                              \
                (msg)?(msg):"NULL" ,                                   \
                #expr ),                                               \
@@ -133,7 +133,7 @@ extern "C" {
    if ( expr ) { } else {                                             \
       fprintf( stderr ,                                               \
                "%s : line %d : check failed : (%s)\n" ,               \
-               g_basename(__FILE__),                                  \
+               g_path_get_basename(__FILE__),                                  \
                __LINE__,                                              \
                #expr ),                                               \
       fflush( stderr ); }  }
@@ -148,7 +148,7 @@ extern "C" {
 #define eh_require_not_reached( ) {                                   \
    fprintf( stderr ,                                                  \
             "%s : line %d : should not be reached\n" ,                \
-            g_basename(__FILE__) ,                                    \
+            g_path_get_basename(__FILE__) ,                                    \
             __LINE__ ),                                               \
    fflush( stderr ); }
 
@@ -156,7 +156,7 @@ extern "C" {
    (expr),                                                            \
    fprintf( stderr ,                                                  \
             "%s : line %d : %s\n" ,                                   \
-            g_basename(__FILE__) ,                                    \
+            g_path_get_basename(__FILE__) ,                                    \
             __LINE__ ,                                                \
             #expr ),                                                  \
    fflush( stderr ); }
