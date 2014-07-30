@@ -5,9 +5,6 @@
 extern "C" {
 #endif
 
-#include "sedflux_api.h"
-#include "bmi.h"
-/*
 typedef enum {
   BMI_VAR_TYPE_UNKNOWN = 0,
   BMI_VAR_TYPE_CHAR,
@@ -39,12 +36,12 @@ const int BMI_FAILURE_UNKNOWN_ERROR = 1;
 const int BMI_FAILURE_SCAN_ERROR = 2;
 const int BMI_FAILURE_BAD_FILE = 3;
 const int BMI_FAILURE_BAD_ARGUMENT_ERROR = 4;
-*/
+
 const int BMI_SEDFLUX3D_COMPONENT_NAME_MAX = 2048;
 const int BMI_SEDFLUX3D_VAR_NAME_MAX = 2048;
 const int BMI_SEDFLUX3D_UNITS_NAME_MAX = 2048;
 
-//typedef Sedflux_state BMI_Model;
+typedef struct _BMI_Model BMI_Model;
 
 int BMI_SEDFLUX3D_Initialize (const char *, BMI_Model **);
 int BMI_SEDFLUX3D_Update (BMI_Model *);
