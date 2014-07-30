@@ -5,7 +5,7 @@
 //#include <utils/eh_messages.h>
 #include "utils/utils.h"
 
-#include "bmi.h"
+#include "bmi_sedflux2d.h"
 #include "sedflux_api.h"
 #include <sed/sed_sedflux.h>
 
