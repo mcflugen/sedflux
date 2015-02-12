@@ -1,0 +1,13 @@
+name: sedflux2d
+language: c
+prefix: BMI_SEDFLUX2D
+build:
+  brew:
+    formula: csdms/models/sedflux
+    options: "--HEAD"
+include:
+  - "#include <bmi_sedflux2d.h>"
+cflags:
+  pkgconfig: sedflux2d
+libs:
+  pkgconfig: sedflux2d
