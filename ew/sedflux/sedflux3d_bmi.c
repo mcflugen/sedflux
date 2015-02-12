@@ -6,8 +6,8 @@
 #include "utils/utils.h"
 
 //#include "bmi_sedflux3d.h"
-#include "bmi.h"
 #include "bmi_sedflux3d.h"
+#include "bmi_sedflux2d.h"
 #include "sedflux_api.h"
 
 void set_input_var_names (BMI_Model *self, const char **input_var_names);

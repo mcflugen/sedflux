@@ -5,46 +5,11 @@
 extern "C" {
 #endif
 
-#include "sedflux_api.h"
-#include "bmi.h"
-/*
-typedef enum {
-  BMI_VAR_TYPE_UNKNOWN = 0,
-  BMI_VAR_TYPE_CHAR,
-  BMI_VAR_TYPE_UNSIGNED_CHAR,
-  BMI_VAR_TYPE_INT,
-  BMI_VAR_TYPE_LONG,
-  BMI_VAR_TYPE_UNSIGNED_INT,
-  BMI_VAR_TYPE_UNSIGNED_LONG,
-  BMI_VAR_TYPE_FLOAT,
-  BMI_VAR_TYPE_DOUBLE,
-  BMI_VAR_TYPE_NUMBER
-}
-BMI_Var_type;
+#include "bmi_sedflux.h"
 
-typedef enum {
-  BMI_GRID_TYPE_UNKNOWN = 0,
-  BMI_GRID_TYPE_UNIFORM,
-  BMI_GRID_TYPE_RECTILINEAR,
-  BMI_GRID_TYPE_STRUCTURED,
-  BMI_GRID_TYPE_UNSTRUCTURED,
-  BMI_GRID_TYPE_NUMBER
-}
-BMI_Grid_type;
-
-const int BMI_SUCCESS = 0;
-const int BMI_FAILURE = 1;
-
-const int BMI_FAILURE_UNKNOWN_ERROR = 1;
-const int BMI_FAILURE_SCAN_ERROR = 2;
-const int BMI_FAILURE_BAD_FILE = 3;
-const int BMI_FAILURE_BAD_ARGUMENT_ERROR = 4;
-*/
 const int BMI_SEDFLUX3D_COMPONENT_NAME_MAX = 2048;
 const int BMI_SEDFLUX3D_VAR_NAME_MAX = 2048;
 const int BMI_SEDFLUX3D_UNITS_NAME_MAX = 2048;
-
-//typedef Sedflux_state BMI_Model;
 
 int BMI_SEDFLUX3D_Initialize (const char *, BMI_Model **);
 int BMI_SEDFLUX3D_Update (BMI_Model *);

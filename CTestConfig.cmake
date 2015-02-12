@@ -12,5 +12,5 @@ set(CTEST_DROP_SITE "csdms.colorado.edu")
 set(CTEST_DROP_LOCATION "/cdash/submit.php?project=sedflux")
 set(CTEST_DROP_SITE_CDASH TRUE)
 
-set (CTEST_USE_LAUNCHERS 1)
+set (CTEST_USE_LAUNCHERS 0)
 

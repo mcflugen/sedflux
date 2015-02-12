@@ -93,8 +93,8 @@ install(FILES  sedflux3d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 ########### install files ###############
 
 install(FILES  sedflux.h sedflux_api.h DESTINATION include/ew-2.0 COMPONENT sedflux)
-install(FILES  bmi.h RENAME bmi_sedflux2d.h DESTINATION include COMPONENT sedflux)
-install(FILES  bmi_sedflux3d.h DESTINATION include COMPONENT sedflux)
+#install(FILES  bmi.h RENAME bmi_sedflux2d.h DESTINATION include COMPONENT sedflux)
+install(FILES  bmi_sedflux2d.h bmi_sedflux3d.h bmi_sedflux.h DESTINATION include COMPONENT sedflux)
 #install(FILES  runsedflux sedflux-run-batch DESTINATION )
 
 

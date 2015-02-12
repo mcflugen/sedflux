@@ -1,22 +1,24 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
-project (sedflux)
-include (CTest)
+project(sedflux)
+include(CTest)
 
-enable_testing ()
+#enable_testing()
 
-add_test (Help ${CMAKE_CURRENT_BINARY_DIR}/ew/sedflux/run_sedflux --help)
-add_test (SedCell gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cell)
-add_test (SedColumn gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-column)
-add_test (SedCube gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cube)
-add_test (SedHydro gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-hydro)
-add_test (SedRiver gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-river)
-add_test (SedWave gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-wave)
-add_test (UtilsGrid gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-grid)
-add_test (UtilsIO gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-io)
-add_test (UtilsKeyFile gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-key-file)
-add_test (UtilsNum gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-num)
-add_test (UtilsSymbolTable gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-symbol-table)
+if (BUILD_TESTING)
+  add_test (Help ${CMAKE_CURRENT_BINARY_DIR}/ew/sedflux/run_sedflux --help)
+  add_test (SedCell gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cell)
+  add_test (SedColumn gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-column)
+  add_test (SedCube gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-cube)
+  add_test (SedHydro gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-hydro)
+  add_test (SedRiver gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-river)
+  add_test (SedWave gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/sed/sed-test-wave)
+  add_test (UtilsGrid gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-grid)
+  add_test (UtilsIO gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-io)
+  add_test (UtilsKeyFile gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-key-file)
+  add_test (UtilsNum gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-num)
+  add_test (UtilsSymbolTable gtester ${CMAKE_CURRENT_BINARY_DIR}/ew/utils/utils-test-symbol-table)
+endif()
 
 set (BUILD_SHARED_LIBS ON)
 
@@ -80,27 +82,27 @@ message(STATUS "Looking for libintl... - found ${LIBINTL_DIR}")
 link_directories( ${LIBINTL_DIR} )
 
 ########### Version number ###############
-set (TARBALL_VERSION ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
-set (PACKAGE_VERSION ${CMAKE_SOURCE_DIR}/build-aux/package-version)
-set (VERSION_GEN ${CMAKE_SOURCE_DIR}/build-aux/version-gen)
-execute_process (
-  COMMAND ${VERSION_GEN} ${TARBALL_VERSION} ${PACKAGE_VERSION}
-  OUTPUT_FILE ${CMAKE_SOURCE_DIR}/.version
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+#set (TARBALL_VERSION ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
+#set (PACKAGE_VERSION ${CMAKE_SOURCE_DIR}/build-aux/package-version)
+#set (VERSION_GEN ${CMAKE_SOURCE_DIR}/build-aux/version-gen)
+#execute_process (
+#  COMMAND ${VERSION_GEN} ${TARBALL_VERSION} ${PACKAGE_VERSION}
+#  OUTPUT_FILE ${CMAKE_SOURCE_DIR}/.version
+#  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-file (STRINGS .version version LIMIT_COUNT 1)
-string (REPLACE "." ";" v "${version}")
-list (GET v 0 MAJOR_VERSION)
-list (GET v 1 MINOR_VERSION)
-list (LENGTH v len)
-if (len GREATER 2)
-  list (GET v 2 PATCH_VERSION)
-else ()
-  set (PATCH_VERSION 0)
-endif ()
-string (REGEX MATCH "([0-9]+)" RELEASE_VERSION ${PATCH_VERSION})
+#file (STRINGS .version version LIMIT_COUNT 1)
+#string (REPLACE "." ";" v "${version}")
+#list (GET v 0 MAJOR_VERSION)
+#list (GET v 1 MINOR_VERSION)
+#list (LENGTH v len)
+#if (len GREATER 2)
+#  list (GET v 2 PATCH_VERSION)
+#else ()
+#  set (PATCH_VERSION 0)
+#endif ()
+#string (REGEX MATCH "([0-9]+)" RELEASE_VERSION ${PATCH_VERSION})
 
-set (SEDFLUX_VERSION ${MAJOR_VERSION}.${MINOR_VERSION})
+#set (SEDFLUX_VERSION ${MAJOR_VERSION}.${MINOR_VERSION})
 
 ########### Create a distribution ###############
 set (CPACK_PACKAGE_NAME sedflux)
