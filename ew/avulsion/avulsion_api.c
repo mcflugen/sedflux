@@ -295,6 +295,15 @@ BMI_AVULSION_Get_end_time (void *self, double *time)
 }
 
 int
+BMI_AVULSION_Get_time_step (void *self, double *dt)
+{
+  eh_return_val_if_fail (self && dt, BMI_FAILURE);
+
+  *dt = ((AvulsionModel*)self)->time_step;
+  return BMI_SUCCESS;
+}
+
+int
 BMI_AVULSION_Get_time_units (void *self, char *units)
 {
   eh_return_val_if_fail (self && units, BMI_FAILURE);
@@ -870,7 +879,7 @@ BMI_AVULSION_Get_var_units (void *self, const char *name, char * units)
   if (units) {
     int error = BMI_SUCCESS;
 
-    if (strncmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
+    if (strcmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
       strncpy(units, "kg / s", 2048);
     else if (strcmp (name, "channel_outflow_end_water__discharge")==0)
       strncpy(units, "m^3 / s", 2048);
