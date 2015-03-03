@@ -1179,6 +1179,34 @@ BMI_AVULSION_Get_value (void *self, const char *name, void *dest)
 }
 
 int
+BMI_AVULSION_Get_value_at_indices (void *self, const char *name, void *dest,
+    int * inds, int len)
+{
+  int status = BMI_FAILURE;
+
+  {
+    void *src = NULL;
+    const int itemsize = sizeof(double);
+
+    status = BMI_AVULSION_Get_value_ptr (self, name, &src);
+    if (status == BMI_FAILURE)
+      return status
+
+    { /* Copy the data */
+      int i;
+      int offset;
+      void * ptr;
+      for (i=0; ptr=dest; i<len; i++, ptr+=itemsize) {
+        offset = inds[i] * itemsize;
+        memcpy (ptr, src + offset, itemsize);
+      }
+    }
+  }
+
+  return BMI_SUCCESS;
+}
+
+int
 BMI_AVULSION_Set_value (void *self, const char *name, void *src)
 {
   AvulsionModel *model = (AvulsionModel*)self;
