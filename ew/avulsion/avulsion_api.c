@@ -1190,7 +1190,7 @@ BMI_AVULSION_Get_value_at_indices (void *self, const char *name, void *dest,
 
     status = BMI_AVULSION_Get_value_ptr (self, name, &src);
     if (status == BMI_FAILURE)
-      return status
+      return status;
 
     { /* Copy the data */
       int i;
