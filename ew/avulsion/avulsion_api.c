@@ -863,6 +863,54 @@ BMI_AVULSION_Get_var_type (void *self, const char * name, char *type)
 }
 
 int
+BMI_AVULSION_Get_var_units (void *self, const char *name, char * units)
+{
+  int rtn = BMI_FAILURE;
+
+  if (units) {
+    int error = BMI_SUCCESS;
+
+    if (strncmp (name, "channel_outflow_end_bed_load_sediment__mass_flow_rate")==0)
+      strncpy(units, "kg / s", 2048);
+    else if (strcmp (name, "channel_outflow_end_water__discharge")==0)
+      strncpy(units, "m^3 / s", 2048);
+    else if (strcmp (name, "surface__elevation")==0)
+      strncpy(units, "m", 2048);
+    else if (strcmp (name, "surface_bed_load_sediment__mass_flow_rate")==0)
+      strncpy(units, "kg / s", 2048);
+//    else if (strcmp (name, "channel_outflow_end_suspended_sediment__discharge")==0)
+//      src = model->discharge;
+    else if (strcmp (name, "channel_outflow_end__location_model_x_component")==0)
+      strncpy(units, "m", 2048);
+    else if (strcmp (name, "channel_outflow_end__location_model_y_component")==0)
+      strncpy(units, "m", 2048);
+    else if (strcmp (name, "channel_inflow_end_to_channel_outflow_end__angle")==0)
+      strncpy(units, "radian", 2048);
+    else if (strcmp (name, "avulsion_model__random_walk_variance_constant")==0)
+      strncpy(units, "radian", 2048);
+    else if (strcmp (name, "avulsion_model__sediment_bed_load_exponent")==0)
+      strncpy(units, "-", 2048);
+    else if (strcmp (name, "avulsion_model__water_discharge_exponent")==0)
+      strncpy(units, "-", 2048);
+    else if (strcmp (name, "channel_inflow_end_water__discharge")==0)
+      strncpy(units, "m^3 / s", 2048);
+    else if (strcmp (name, "channel_inflow_end_bed_load_sediment__mass_flow_rate")==0)
+      strncpy(units, "kg / s", 2048);
+    else {
+      units[0] = '\0';
+      error = BMI_FAILURE_BAD_NAME_ERROR;
+    }
+
+    if (!error)
+      rtn = BMI_SUCCESS;
+  }
+  else
+    rtn = BMI_FAILURE_BAD_ARGUMENT_ERROR;
+
+  return rtn;
+}
+
+int
 BMI_AVULSION_Get_var_point_count (void *self, const char * name, int *count)
 {
   AvulsionModel * model = (AvulsionModel*)self;
@@ -912,7 +960,50 @@ BMI_AVULSION_Get_var_stride (void *self, const char * name, int *stride)
 }
 
 int
-BMI_AVULSION_Get_grid_type (void *self, const char * name, BMI_Grid_type *type)
+BMI_AVULSION_Get_var_size (void *self, const char * name, int *size)
+{
+  AvulsionModel * model = (AvulsionModel*)self;
+
+  if (size) {
+    int rank;
+    int error = BMI_AVULSION_Get_var_rank (self, name, &rank);
+
+    if (!error) {
+      if (rank == 0)
+        *size = 1;
+      else if (rank == 1)
+        *size = model->total_river_mouths;
+      else if (rank == 2)
+        *size = avulsion_get_nx (model) * avulsion_get_ny (model);
+    }
+    else
+      return error;
+  }
+  else
+    return BMI_FAILURE;
+
+  return BMI_SUCCESS;
+}
+
+int
+BMI_AVULSION_Get_var_nbytes (void *self, const char * name, int *nbytes)
+{
+  int status = BMI_FAILURE;
+
+  {
+    int size = 0;
+    BMI_AVULSION_Get_var_size (self, name, &size);
+    if (status == BMI_FAILURE)
+      return status;
+    *nbytes = sizeof(double) * size;
+    status = BMI_SUCCESS;
+  }
+
+  return status;
+}
+
+int
+BMI_AVULSION_Get_grid_type (void *self, const char * name, char *type)
 {
   if (*type) {
     strncpy(type, "uniform_rectilinear", 2048);
@@ -1002,7 +1093,7 @@ BMI_AVULSION_Get_grid_origin (void *self, const char * name, double *origin)
 }
 
 int
-BMI_AVULSION_Get_double_ptr (void *self, const char *name, double **dest)
+BMI_AVULSION_Get_value_ptr (void *self, const char *name, void **dest)
 {
   AvulsionModel *model = (AvulsionModel*)self;
   int rtn = BMI_FAILURE;
@@ -1055,20 +1146,18 @@ BMI_AVULSION_Get_double_ptr (void *self, const char *name, double **dest)
 }
 
 int
-BMI_AVULSION_Get_double (void *self, const char *name, double *dest)
+BMI_AVULSION_Get_value (void *self, const char *name, void *dest)
 {
   int rtn = BMI_FAILURE;
+
   if (dest) {
-    double *src = NULL;
-    int err = BMI_AVULSION_Get_double_ptr (self, name, &src);
+    void *src = NULL;
+    int err = BMI_AVULSION_Get_value_ptr (self, name, &src);
 
-    if (!err) { /* Copy the data */
-      int len;
-
-      if (src) {
-        BMI_AVULSION_Get_var_point_count (self, name, &len);
-        memcpy (dest, src, sizeof (double) * len);
-      }
+    if (!err && src) { /* Copy the data */
+      int nbytes;
+      BMI_AVULSION_Get_var_nbytes (self, name, &nbytes);
+      memcpy (dest, src, nbytes);
 
       rtn = BMI_SUCCESS;
     }
@@ -1081,24 +1170,24 @@ BMI_AVULSION_Get_double (void *self, const char *name, double *dest)
 }
 
 int
-BMI_AVULSION_Set_double (void *self, const char *name, double *src)
+BMI_AVULSION_Set_value (void *self, const char *name, void *src)
 {
   AvulsionModel *model = (AvulsionModel*)self;
 
   int rtn = BMI_FAILURE;
   if (src) {
-    double *dest = NULL;
+    void *dest = NULL;
     int err;
 
     if (!has_input_var (model, name))
       return BMI_FAILURE_BAD_NAME_ERROR;
 
-    err = BMI_AVULSION_Get_double_ptr (self, name, &dest);
+    err = BMI_AVULSION_Get_value_ptr (self, name, &dest);
 
     if (!err) { /* Copy the data */
-      int len;
-      BMI_AVULSION_Get_var_point_count (self, name, &len);
-      memcpy (dest, src, sizeof (double) * len);
+      int nbytes;
+      BMI_AVULSION_Get_var_nbytes (self, name, &nbytes);
+      memcpy (dest, src, nbytes);
 
       if (strcmp (name, "surface__elevation") == 0) {
         eh_message ("set bathymetry");
