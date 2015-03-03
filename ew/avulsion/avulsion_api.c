@@ -850,14 +850,16 @@ BMI_AVULSION_Get_input_var_name_count (void *self, int *number_of_input_vars)
 }
 
 int
-BMI_AVULSION_Get_var_type (void *self, const char * name, BMI_Var_type *type)
+BMI_AVULSION_Get_var_type (void *self, const char * name, char *type)
 {
   if (type) {
-    *type = BMI_VAR_TYPE_DOUBLE;
+    strncpy(type, "double", 2048);
     return BMI_SUCCESS;
   }
-  else
+  else {
+    type[0] = '\0';
     return BMI_FAILURE;
+  }
 }
 
 int
