@@ -915,10 +915,12 @@ int
 BMI_AVULSION_Get_grid_type (void *self, const char * name, BMI_Grid_type *type)
 {
   if (*type) {
-    *type = BMI_GRID_TYPE_UNIFORM;
+    strncpy(type, "uniform_rectilinear", 2048);
     return BMI_SUCCESS;
+  } else {
+    type[0] = '\0';
+    return BMI_FAILURE;
   }
-  return BMI_FAILURE_BAD_ARGUMENT_ERROR;
 }
 
 int
