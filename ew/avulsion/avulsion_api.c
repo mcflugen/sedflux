@@ -1185,18 +1185,18 @@ BMI_AVULSION_Get_value_at_indices (void *self, const char *name, void *dest,
   int status = BMI_FAILURE;
 
   {
-    void *src = NULL;
+    char *src = NULL;
     const int itemsize = sizeof(double);
 
-    status = BMI_AVULSION_Get_value_ptr (self, name, &src);
+    status = BMI_AVULSION_Get_value_ptr (self, name, (void**)&src);
     if (status == BMI_FAILURE)
       return status;
 
     { /* Copy the data */
       int i;
       int offset;
-      void * ptr;
-      for (i=0; ptr=dest; i<len; i++, ptr+=itemsize) {
+      char * ptr;
+      for (i=0, ptr=(char*)dest; i<len; i++, ptr+=itemsize) {
         offset = inds[i] * itemsize;
         memcpy (ptr, src + offset, itemsize);
       }
@@ -1237,6 +1237,39 @@ BMI_AVULSION_Set_value (void *self, const char *name, void *src)
       rtn = err;
   }
   return rtn;
+}
+
+int
+BMI_AVULSION_Set_value_at_indices (void *self, const char *name, int * inds,
+    int len, void *src)
+{
+  int status = BMI_FAILURE;
+
+  {
+    char *dest = NULL;
+    const int itemsize = sizeof(double);
+
+    status = BMI_AVULSION_Get_value_ptr (self, name, (void**)&dest);
+    if (status == BMI_FAILURE)
+      return status;
+
+    { /* Copy the data */
+      int i;
+      int offset;
+      char * ptr;
+      for (i=0, ptr=(char*)src; i<len; i++, ptr+=itemsize) {
+        offset = inds[i] * itemsize;
+        memcpy (dest + offset, ptr, itemsize);
+      }
+
+      if (strcmp (name, "surface__elevation") == 0) {
+        AvulsionModel * model = (AvulsionModel*)self;
+        sed_cube_set_bathy_data (model->p, model->elevation);
+      }
+    }
+  }
+
+  return BMI_SUCCESS;
 }
 
 const double*
