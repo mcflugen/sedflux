@@ -1,0 +1,13 @@
+name: Avulsion
+language: c
+register: register_bmi_avulsion
+build:
+  brew:
+    formula: csdms/models/sedflux
+    options: "--HEAD"
+includes:
+  - "#include <avulsion/bmi_avulsion.h>"
+cflags:
+  pkgconfig: avulsion
+libs:
+  pkgconfig: avulsion

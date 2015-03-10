@@ -1,0 +1,9 @@
+summary:
+  Avulsion dictates the movement of rivermouths along a coastline by modeling
+  the changes of river channel angles through the floodplain as a stochastic
+  random walk process.
+url: https://github.com/mcflugen/sedflux
+author: Eric Hutton
+email: eric.hutton@colorado.edu
+version: 0.1
+license: MIT

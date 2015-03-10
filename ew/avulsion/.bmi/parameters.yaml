@@ -1,0 +1,136 @@
+%YAML 1.2
+---
+_name: Run Parameters
+
+run_duration:
+  description: Simulation run time
+  value:
+    type: float
+    default: 3650.0
+    units: d
+    range:
+      min: 1.0
+      max: 1.79769313486e+308
+
+---
+_name: Grid
+
+number_of_rows:
+  description: Number of rows in the computational grid
+  value:
+    type: int
+    default: 500
+    units: "-"
+    range:
+      min: 0
+      max: 2147483647
+
+number_of_columns:
+  description: Number of columns in the computational grid
+  value:
+    type: int
+    default: 500
+    units: "-"
+    range:
+      min:0
+      max: 2147483647
+
+row_spacing:
+  description: Grid resolution in cross-shore (row) direction
+  value:
+    type: float
+    default: 100.0
+    units: m
+    range:
+      min: 0.0
+      max: 10000.0
+
+column_spacing:
+  description: Grid resolution in along-shore (column) direction
+  value:
+    type: float
+    default: 100.0
+    units: m
+    range:
+      min: 0.12
+      max: 10000.0
+
+row_location_of_inflow:
+  description: Grid row containing point of inflow
+  value:
+    type: int
+    default: 250
+    units: "-"
+    range:
+      min: 0
+      max: 1000
+
+column_location_of_inflow:
+  description: Grid column containing point of inflow
+  value:
+    type: int
+    default: 0
+    units: "-"
+    range:
+      min: 0
+      max: 1000
+
+minimum_angle_limit_of_river:
+  description: Minimum river angle
+  value:
+    type: float
+    default: 45.0
+    units: deg
+    range:
+      min: -180.0
+      max: 180.0
+
+maximum_angle_limit_of_river:
+  description: Maximum river angle
+  value:
+    type: float
+    default: 135.0
+    units: deg
+    range:
+      min: -180.0
+      max: 180.0
+
+random_walk_variance:
+  description: Variance of avulsion angle changes
+  value:
+    type: float
+    default: 10.0
+    units: deg
+    range:
+      min: 0.0
+      max: 100.0
+
+bed_load_exponent:
+  description: Exponent used to divide sediment among branches
+  value:
+    type: float
+    default: 1.67
+    units: "-"
+    range:
+      min: 0.0
+      max: 10.0
+
+water_discharge_exponent:
+  description: Exponent used to divide water among branches
+  value:
+    type: float
+    default:1.0
+    units: -
+    range:
+      min: 0.0
+      max: 10.0
+
+number_of_rivers:
+  description: Number of rivers
+  value:
+    type: int
+    default:1
+    units: "-"
+    range:
+      min: 0
+      max: 25
