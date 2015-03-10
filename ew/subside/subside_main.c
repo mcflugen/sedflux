@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <utils/utils.h>
-#include "subside_api.h"
+
+#include "bmi_subside.h"
 #include <sed/sed_sedflux.h>
 #include <utils/utils.h>
 
@@ -46,9 +47,14 @@ main( int argc , char *argv[] )
 {
   GError*     error = NULL;
   Eh_dbl_grid z     = NULL;
+  BMI_Model * model = NULL;
 
   g_thread_init( NULL );
   eh_init_glib();
+
+  model = g_new0(BMI_Model, 1);
+  register_bmi_subside(model);
+  model->initialize(NULL, &(model->self));
 
   { /* Parse command-line arguments */
     GOptionContext* context = g_option_context_new( "Run subsidence model." );
@@ -80,37 +86,50 @@ main( int argc , char *argv[] )
   }
 
   { /* Run the model */
-    Subside_state* state = NULL;
-    const int n_x = _nx;
-    const int n_y = _ny;
-    const double dx = _width_x / n_x;
-    const double dy = _width_y / n_y;
+    int grid;
+    int size;
+    int shape[2];
+    double * load = NULL;
 
-    state = sub_init (n_x, n_y, dx, dy);
+    model->get_var_grid(model->self, "earth_material_load__pressure", &grid);
+    model->get_grid_shape(model->self, grid, shape);
+    model->get_grid_size(model->self, grid, &size);
 
-    sub_set_eet (state, _eet);
-    sub_set_youngs (state, _y);
-    sub_set_load_at (state, _load, n_x/2, n_y/2);
+    model->get_value_ptr(model->self, "earth_material_load__pressure", &load);
 
-    sub_run (state, 1e6);
+    load[size / 2] = _load;
+
+    model->update(model->self);
 
     { /* Print deflections */
       GError *error = NULL;
-      int len[3] = {1, n_x, n_y};
-      double size[3] = {1, dx, dy};
-      const double* dz = sub_get_deflection (state);
-      const double* y = sub_get_y (state);
-     
-      eh_bov_print ("deflections", dz, "Deflection (m)", len, size, &error);
-      //eh_curve2d_print ("deflections.csv", y, dz, "Deflection (m)", len, &error);
+      void * dz;
+
+      model->get_value_ptr(model->self, "lithosphere__increment_of_elevation", &dz);
+
+      {
+         int i, j;
+         double *row = (double*)dz;
+         int grid;
+         int shape[2];
+
+         model->get_var_grid(model->self, "lithosphere__increment_of_elevation", &grid);
+         model->get_grid_shape(model->self, grid, shape);
+
+         for (i=0; i<shape[0]; i++) {
+           for (j=0; j<shape[1]; j++)
+             fprintf (stdout,"%.3g ", row[j]);
+           fprintf (stdout, "\n");
+           row += shape[1];
+         }
+      }
 
       if (error)
         eh_error( "Error writing output file: %s" , error->message );
     }
 
-    sub_destroy (state);
+    model->finalize(model->self);
   }
 
    return EXIT_SUCCESS;
 }
-
