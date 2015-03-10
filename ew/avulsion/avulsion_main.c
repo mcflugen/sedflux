@@ -24,7 +24,7 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 #include "avulsion.h"
-#include "avulsion_api.h"
+#include "bmi_avulsion.h"
 
 static double   init_angle = 90.;
 static double   min_angle  = 0.;
@@ -346,7 +346,7 @@ main_new ()
 {
   BMI_Model *model = (BMI_Model*)malloc(sizeof(BMI_Model));
 
-  register_avulsion_bmi(model);
+  register_bmi_avulsion(model);
 
   eh_message ("Read sediment file");
   {
@@ -454,6 +454,7 @@ main_new ()
     eh_message ("Run the model");
     {
       int i, n;
+      int grid;
       int size = 0;
       double *q = NULL;
       double * river_angles = NULL;
@@ -463,7 +464,8 @@ main_new ()
       double * river_mouth_qb = NULL;
       int error;
 
-      model->get_var_size(model->self, "surface__elevation", &size);
+      model->get_var_grid(model->self, "surface__elevation", &grid);
+      model->get_grid_size(model->self, grid, &size);
       if (error) {
         fprintf (stderr, "Unable to get size for surface__elevation\n");
         exit (1);
@@ -485,7 +487,8 @@ main_new ()
         }
       }
 
-      model->get_var_size(model->self, "channel_inflow_end_to_channel_outflow_end__angle", &size);
+      model->get_var_grid(model->self, "channel_inflow_end_to_channel_outflow_end__angle", &grid);
+      model->get_grid_size(model->self, grid, &size);
       river_angles = g_new (double, size);
       river_mouth_x = g_new (double, size);
       river_mouth_y = g_new (double, size);
