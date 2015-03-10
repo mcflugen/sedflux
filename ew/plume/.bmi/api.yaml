@@ -1,0 +1,13 @@
+name: Plume
+language: c
+register: register_bmi_plume
+build:
+  brew:
+    formula: csdms/models/sedflux
+    options: "--HEAD"
+includes:
+  - "#include <plume/bmi_plume.h>"
+cflags:
+  pkgconfig: plume
+libs:
+  pkgconfig: plume

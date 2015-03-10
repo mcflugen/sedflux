@@ -1,0 +1,12 @@
+summary:
+  Plume simulates the sediment transport and deposition of single-grain size
+  sediment from a river mouth entering into a marine basin by creating a
+  turbulent jet. The model calculates a steady-state hypopycnal plume as a
+  result of river water and sediment discharge based on simplified
+  advection-diffusion equations. The model allows for plume deflection due to
+  systematic coastal currents or Coriolis force
+url: https://github.com/mcflugen/sedflux
+author: Eric Hutton
+email: eric.hutton@colorado.edu
+version: 0.1
+license: MIT
