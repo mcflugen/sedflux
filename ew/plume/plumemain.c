@@ -1,9 +1,9 @@
 #include "plumevars.h"
 #include "plumeinput.h"
 #include "plume_local.h"
-#include "plume_bmi.h"
+#include "bmi_plume.h"
 
-#include "glib.h"
+#include <glib.h>
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
@@ -49,7 +49,8 @@ main(int argc, char *argv[])
 
    if ( _version )
    { /* Print version and exit */
-      eh_fprint_version_info( stdout , "plume" , PLUME_MAJOR_VERSION , PLUME_MINOR_VERSION , PLUME_MICRO_VERSION );
+      eh_fprint_version_info( stdout , "plume" , PLUME_MAJOR_VERSION ,
+          PLUME_MINOR_VERSION , PLUME_MICRO_VERSION );
       eh_exit( 0 );
    }
 
@@ -62,11 +63,13 @@ main(int argc, char *argv[])
    }
 
    if (!error) {
-     BMI_Model * model = NULL;
+     BMI_Model * model = g_new0(BMI_Model, 1);
      int err;
 
+     register_bmi_plume(model);
+      
      fprintf (stderr, "Initializing... ");
-     err = BMI_PLUME_Initialize ("plume_config.txt", &model);
+     err = model->initialize("plume_config.txt", model->self);
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to initialize\n", err);
@@ -75,7 +78,7 @@ main(int argc, char *argv[])
      fprintf (stderr, "PASS\n");
 
      fprintf (stderr, "Updating... ");
-     err = BMI_PLUME_Update (model);
+     err = model->update(model->self);
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to update\n", err);
@@ -86,86 +89,41 @@ main(int argc, char *argv[])
      fprintf (stderr, "Getting deposit... ");
      {
        double *z;
-       double *row;
-       int size;
-       int i, j, n;
-       int shape[2];
-       int n_grains;
-       char * var_name = NULL;
+       int *shape;
 
-       BMI_PLUME_Get_value (model, "model_grain_class__count", &n_grains);
+       {
+         int grid, size, rank;
 
-       for (n=0; n<n_grains; n++) {
-         var_name = g_strdup_printf ("model_grain_class_%d__deposition_rate", n);
-
-         BMI_PLUME_Get_var_point_count (model, var_name, &size);
+         model->get_var_grid(model->self,
+             "sea_bottom_sediment__deposition_rate", &grid);
+         model->get_grid_size(model->self, grid, &size);
          z = g_new (double, size);
 
-         BMI_PLUME_Get_double (model, var_name, z);
+         model->get_grid_rank(model->self, grid, &rank);
+         shape = g_new(int, rank);
 
-         BMI_PLUME_Get_grid_shape (model, var_name, shape);
+         model->get_grid_shape(model->self, grid, shape);
+       }
 
-         row = z;
+       model->get_value(model->self, "sea_bottom_sediment__deposition_rate", z);
+
+       {
+         int i, j;
+         double *row = z;
          for (i=0; i<shape[0]; i++) {
            for (j=0; j<shape[1]; j++)
              fprintf (stdout,"%g ", row[j]);
            fprintf (stdout, "\n");
            row += shape[1];
          }
-
-         g_free (z);
-         g_free (var_name);
        }
+
+       g_free (z);
+       g_free (shape);
      }
 
-     BMI_PLUME_Finalize (model);
-   }
-
-   return EXIT_SUCCESS;
-
-   if ( !error )
-   { /* Run the model */
-      Sed_hydro*      flood_arr = NULL;
-      Sed_hydro*      r         = NULL;
-      Plume_param_st* param     = NULL;
-      Eh_dbl_grid*    dep_grid  = NULL;
-      gint            len       = 0;
-      gint            n_grains  = 0;
-
-      if ( !error ) param     = plume_scan_parameter_file( _in_file    , &error );
-      if ( !error ) flood_arr = sed_hydro_scan           ( _flood_file , &error );
-
-      if ( !error )
-      {
-         param->n_dim  = _n_dim;
-         param->rotate = _rotate;
-
-         for ( r=flood_arr ; *r ; r++ )
-         { /* Run each of the flood events */
-            if ( _verbose ) sed_hydro_fprint( stderr , *r );
-
-            dep_grid = plume_wrapper( *r , param , &len , &n_grains );
-
-            eh_message( "Write output grid: %s" , _data_file );
-            if ( _data_file ) plume_print_data( _data_file , dep_grid , len , n_grains );
-
-            eh_message( "Finished.  Cleaning up." );
-            {
-               Eh_dbl_grid* d;
-
-               for ( d=dep_grid ; *d ; d++ )
-                  eh_grid_destroy( *d , TRUE );
-
-               eh_free( dep_grid );
-            }
-         }
-      }
-
-      sed_hydro_array_destroy( flood_arr );
-
-      eh_exit_on_error( error , "plume" );
+     model->finalize(model->self);
    }
 
    return EXIT_SUCCESS;
 }
-
