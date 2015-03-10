@@ -1,5 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/ew )
 
+set(PLUME_VERSION "0.1")
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/plume.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/plume.pc )
 
 ########### next target ###############
@@ -10,8 +11,7 @@ SET(plume_SRCS
 
 add_executable(run_plume ${plume_SRCS})
 
-#target_link_libraries(run_plume plume plume_bmi)
-target_link_libraries(run_plume bmiplume-static sedflux-static)
+target_link_libraries(run_plume bmi_plume sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_plume DESTINATION bin RENAME plume COMPONENT sedflux)
 
@@ -63,22 +63,19 @@ target_link_libraries(plume sedflux)
 
 install(TARGETS plume DESTINATION lib COMPONENT sedflux)
 
-set (plume_bmi_LIB_SRCS
-  plume_bmi.c
-  ${plume_LIB_SRCS})
-
-set_source_files_properties (${plume_bmi_LIB_SRCS} PROPERTIES LANGUAGE CXX)
-
-add_library(bmiplume ${plume_bmi_LIB_SRCS})
-add_library(bmiplume-static STATIC ${plume_bmi_LIB_SRCS})
-target_link_libraries(bmiplume sedflux)
-install(TARGETS bmiplume DESTINATION lib)
-
 ########### install files ###############
 
 install(FILES  plumevars.h plumeinput.h plume_types.h plume_approx.h plume_local.h DESTINATION include/ew-2.0 COMPONENT sedflux)
-install (FILES plume_bmi.h RENAME bmi_plume.h DESTINATION include COMPONENT sedflux)
 
 
 install (FILES plume.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
+### BMI
+
+set(bmi_lib_sources bmi_plume.c plume_model.c)
+add_library(bmi_plume ${bmi_lib_sources})
+target_link_libraries(bmi_plume plume-static sedflux-static)
+
+install(TARGETS bmi_plume DESTINATION lib)
+install (FILES bmi_plume.h DESTINATION include/plume)
+install (FILES bmi.h DESTINATION include/plume)
