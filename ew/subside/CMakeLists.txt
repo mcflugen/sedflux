@@ -1,5 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/ew )
 
+set(SUBSIDE_VERSION "0.1")
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/subside.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/subside.pc )
 
 ########### next target ###############
 
@@ -9,7 +11,7 @@ SET(subside_SRCS
 
 add_executable(run_subside ${subside_SRCS})
 
-target_link_libraries(run_subside subside-static sedflux-static)
+target_link_libraries(run_subside bmi_subside subside-static sedflux-static)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_subside DESTINATION bin RENAME subside COMPONENT sedflux)
 
@@ -35,6 +37,15 @@ install(FILES  subside.h subside_api.h
         COMPONENT sedflux)
 
 
+### BMI
+
+set(bmi_lib_sources bmi_subside.c)
+add_library(bmi_subside ${bmi_lib_sources})
+target_link_libraries(bmi_subside subside-static sedflux-static)
+
+install(TARGETS bmi_subside DESTINATION lib)
+install (FILES bmi_subside.h DESTINATION include/subside)
+install (FILES bmi.h DESTINATION include/subside)
 
 #original Makefile.am contents follow:
 
