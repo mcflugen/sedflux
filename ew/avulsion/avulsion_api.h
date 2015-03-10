@@ -11,6 +11,7 @@
 
 #include <glib.h>
 #include "sed/sed_hydro.h"
+#include "sed/sed_cube.h"
 
 G_BEGIN_DECLS
 
@@ -35,6 +36,7 @@ const int BMI_AVULSION_UNITS_NAME_MAX = 2048;
 #define NO_BMI_AVULSION_GET_GRID_X
 #define NO_BMI_AVULSION_GET_GRID_Y
 #define NO_BMI_AVULSION_GET_GRID_Z
+
 
 typedef struct
 {
@@ -129,6 +131,12 @@ const double* avulsion_get_value (AvulsionModel* self, const gchar* val_string,
                             gint dimen[3]);
 const double* avulsion_get_value_data (AvulsionModel* self, const gchar* val_string,
                                  gint lower[3], gint upper[3], gint stride[3]);
+
+extern int BMI_AVULSION_Initialize (const char *config_file, void **handle);
+extern int BMI_AVULSION_Finalize (void *self);
+extern int _avulsion_run_until (AvulsionModel* s, int until);
+extern double avulsion_get_current_time (AvulsionModel* self);
+extern double avulsion_get_end_time (AvulsionModel* self);
 
 G_END_DECLS
 
