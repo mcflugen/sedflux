@@ -1,0 +1,12 @@
+summary:
+  The model is used to simulate the lithospheric load changes as the model
+  evolves. Depending upon how the load distribution develops, this flexure
+  can result in the basin uplifting or subsiding (or both). The pattern of
+  subsidence in time and space largely determines the gross geometry of
+  time-bounded units because it controls the rate at which space is created
+  for sedimentation.
+url: https://github.com/mcflugen/sedflux
+author: Eric Hutton
+email: eric.hutton@colorado.edu
+version: 0.1
+license: MIT

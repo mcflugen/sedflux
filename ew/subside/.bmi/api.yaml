@@ -1,0 +1,13 @@
+name: Subside
+language: c
+register: register_bmi_subside
+build:
+  brew:
+    formula: csdms/models/sedflux
+    options: "--HEAD"
+includes:
+  - "#include <subside/bmi_subside.h>"
+cflags:
+  pkgconfig: subside
+libs:
+  pkgconfig: subside
