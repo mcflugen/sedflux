@@ -1,0 +1,10 @@
+name: Sedflux2D
+
+language: c
+register: register_bmi_sedflux2d
+includes:
+  - "#include <sedflux2d/bmi_sedflux2d.h>"
+cflags:
+  pkgconfig: sedflux2d
+libs:
+  pkgconfig: sedflux2d

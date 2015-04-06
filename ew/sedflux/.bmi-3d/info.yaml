@@ -1,0 +1,12 @@
+summary:
+  Sedflux3D is a basin filling stratigraphic model. Sedflux3d simulates
+  long-term marine sediment transport and accumulation into a
+  three-dimensional basin over time scales of tens of thousands of years. It
+  simulates the dynamics of strata formation of continental margins based on
+  distribution of river plumes and tectonics.
+url: http://csdms.colorado.edu/wiki/Model_help:Sedflux
+author: Eric Hutton
+email: eric.hutton@colorado.edu
+version: "2.1"
+license: MIT
+doi: "10.1594/IEDA/100161"
