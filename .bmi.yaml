@@ -1,0 +1,13 @@
+bmi_paths:
+  - ew/avulsion
+  - ew/subside
+  - ew/plume
+  - ew/sedflux/.bmi-2d
+  - ew/sedflux/.bmi-3d
+
+build:
+  - mkdir -p _build
+  - cd _build
+  - cmake .. -DCMAKE_INSTALL_PREFIX=$CSDMS_PREFIX
+  - make -j6
+  - make install
