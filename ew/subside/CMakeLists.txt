@@ -35,6 +35,7 @@ install(TARGETS subside DESTINATION lib COMPONENT sedflux)
 install(FILES  subside.h subside_api.h
         DESTINATION include/ew-2.0
         COMPONENT sedflux)
+install (FILES subside.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 
 ### BMI
