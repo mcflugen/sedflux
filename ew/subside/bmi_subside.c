@@ -492,6 +492,7 @@ register_bmi_subside(BMI_Model *model)
     model->get_var_grid = get_var_grid;
     model->get_var_type = get_var_type;
     model->get_var_units = get_var_units;
+    model->get_var_itemsize = get_var_itemsize;
     model->get_var_nbytes = get_var_nbytes;
     model->get_current_time = get_current_time;
     model->get_start_time = get_start_time;
