@@ -81,9 +81,6 @@ target_link_libraries(bmi_plume plume sedflux)
 target_link_libraries(bmi_plume-static plume-static sedflux-static)
 set_target_properties(bmi_plume-static PROPERTIES OUTPUT_NAME bmi_plume)
 
-#add_library(bmi_plume ${bmi_lib_sources})
-#target_link_libraries(bmi_plume plume-static sedflux-static)
-
 install(TARGETS bmi_plume DESTINATION lib)
 install(TARGETS bmi_plume-static DESTINATION lib)
 install (FILES bmi_plume.h DESTINATION include/plume)

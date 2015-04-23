@@ -49,39 +49,7 @@ target_link_libraries(bmi_subside subside sedflux)
 target_link_libraries(bmi_subside-static subside-static subside-static)
 set_target_properties(bmi_subside-static PROPERTIES OUTPUT_NAME bmi_subside)
 
-#add_library(bmi_subside ${bmi_lib_sources})
-#target_link_libraries(bmi_subside subside-static sedflux-static)
-
 install(TARGETS bmi_subside DESTINATION lib)
 install(TARGETS bmi_subside-static DESTINATION lib)
 install (FILES bmi_subside.h DESTINATION include/subside)
 install (FILES bmi.h DESTINATION include/subside)
-
-#original Makefile.am contents follow:
-
-#INCLUDES                 = -I$(top_srcdir)/ew
-#
-#AM_LDFLAGS               = $(top_builddir)/ew/utils/libutils.la \
-#                           $(top_builddir)/ew/sed/libsedflux.la
-#
-#bin_PROGRAMS              = subside
-#subside_SOURCES           = subside_main.c
-#subside_DEPENDENCIES      = libsubside.la
-#subsideinclude_HEADERS    = subside.h
-#subsideincludedir         = $(includedir)/ew-2.0
-#
-#lib_LTLIBRARIES           = libsubside.la
-#libsubside_la_SOURCES     = subside.c
-#
-#subside_LDADD             = -lsubside -lglib-2.0 -lm
-#
-#if ENABLE_CHECK
-#
-#bin_PROGRAMS                   += subside_unit_test
-#subside_unit_test_SOURCES       = subside_unit_test.c
-#subside_unit_test_DEPENDENCIES  = libsubside.la
-#
-#subside_unit_test_LDADD   = -lsubside -lglib-2.0 -lm @CHECK_LIBS@
-#subside_unit_test_CFLAGS  = @CHECK_CFLAGS@
-#
-#endif
