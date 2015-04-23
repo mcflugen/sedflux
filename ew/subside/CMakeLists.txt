@@ -41,10 +41,19 @@ install (FILES subside.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 ### BMI
 
 set(bmi_lib_sources bmi_subside.c)
+
 add_library(bmi_subside ${bmi_lib_sources})
-target_link_libraries(bmi_subside subside-static sedflux-static)
+add_library(bmi_subside-static STATIC ${bmi_lib_sources})
+
+target_link_libraries(bmi_subside subside sedflux)
+target_link_libraries(bmi_subside-static subside-static subside-static)
+set_target_properties(bmi_subside-static PROPERTIES OUTPUT_NAME bmi_subside)
+
+#add_library(bmi_subside ${bmi_lib_sources})
+#target_link_libraries(bmi_subside subside-static sedflux-static)
 
 install(TARGETS bmi_subside DESTINATION lib)
+install(TARGETS bmi_subside-static DESTINATION lib)
 install (FILES bmi_subside.h DESTINATION include/subside)
 install (FILES bmi.h DESTINATION include/subside)
 

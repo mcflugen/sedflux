@@ -38,9 +38,15 @@ install (FILES avulsion.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 ### BMI lib ###
 
 set(bmi_lib_sources bmi_avulsion.c)
+
 add_library(bmi_avulsion ${bmi_lib_sources})
-target_link_libraries(bmi_avulsion avulsion-static sedflux-static)
+add_library(bmi_avulsion-static STATIC ${bmi_lib_sources})
+
+target_link_libraries(bmi_avulsion avulsion sedflux)
+target_link_libraries(bmi_avulsion-static avulsion-static sedflux-static)
+set_target_properties(bmi_avulsion-static PROPERTIES OUTPUT_NAME bmi_avulsion)
 
 install(TARGETS bmi_avulsion DESTINATION lib)
+install(TARGETS bmi_avulsion-static DESTINATION lib)
 install(FILES bmi_avulsion.h DESTINATION include/avulsion)
 install(FILES bmi.h DESTINATION include/avulsion)

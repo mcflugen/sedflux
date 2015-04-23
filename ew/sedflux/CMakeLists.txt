@@ -93,17 +93,27 @@ install(FILES  sedflux3d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 ### BMI lib ###
 
 add_library(bmi_sedflux2d bmi_sedflux2d.c ${sedflux-2.0_LIB_SRCS})
+add_library(bmi_sedflux2d-static STATIC bmi_sedflux2d.c ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(bmi_sedflux2d ${sedflux_LIBS})
-#target_link_libraries(bmi_avulsion avulsion-static sedflux-static)
+target_link_libraries(bmi_sedflux2d-static ${sedflux_STATIC_LIBS})
+set_target_properties(bmi_sedflux2d-static PROPERTIES OUTPUT_NAME
+  bmi_sedflux2d)
 
 install(TARGETS bmi_sedflux2d DESTINATION lib)
+install(TARGETS bmi_sedflux2d-static DESTINATION lib)
 install(FILES bmi_sedflux2d.h DESTINATION include/sedflux2d)
 install(FILES bmi.h DESTINATION include/sedflux2d)
 
 add_library(bmi_sedflux3d bmi_sedflux3d.c ${sedflux-2.0_LIB_SRCS})
+add_library(bmi_sedflux3d-static STATIC bmi_sedflux3d.c ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(bmi_sedflux3d ${sedflux_LIBS})
+target_link_libraries(bmi_sedflux3d-static ${sedflux_STATIC_LIBS})
+set_target_properties(bmi_sedflux3d-static PROPERTIES OUTPUT_NAME
+  bmi_sedflux3d)
+#target_link_libraries(bmi_sedflux3d ${sedflux_LIBS})
 
 install(TARGETS bmi_sedflux3d DESTINATION lib)
+install(TARGETS bmi_sedflux3d-static DESTINATION lib)
 install(FILES bmi_sedflux3d.h DESTINATION include/sedflux3d)
 install(FILES bmi.h DESTINATION include/sedflux3d)
 
