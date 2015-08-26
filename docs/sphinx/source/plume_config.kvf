@@ -1,0 +1,25 @@
+[ PLUME ]
+/* River sediment properties */
+Bulk density (kg/m^3):               1750   , 1600   , 1500   , 1400
+Removal rate constant (1/day):         12.3 ,    4.7 ,    2.7 ,    2.0
+
+/* River location and orientation */
+Coast normal (deg):                     0.
+River angle wrt coast normal (deg):     0.
+Latitude (deg):                         45.
+
+/* Ocean characteristics */
+Ocean sediment concentration:            0.
+Normalized width of coastal current (-): 0.4
+Velocity of coastal current (m/s):       0.
+
+/* Numerical constants */
+Number of grid nodes within river mouth (odd): 3.
+Ratio of cross- to along-shore grid spacing:   17.
+
+/* Output variables */
+Basin width (m):                               30000.
+Basin length (m):                              32000.
+Cross-shore output resolution (m):             100.
+Along-shore output resolution (m):             100.
+
