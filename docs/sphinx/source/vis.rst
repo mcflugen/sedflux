@@ -4,8 +4,10 @@ Visualizing sedflux Output
 ==========================
 
 There are two main sedflux output files: a property file, and a measuring
-stations file.  Both can be visualized with Matlab mfiles that come with the
-sedflux distribution.
+station file.  Both can be visualized with Matlab mfiles located in the
+`sedflux-mfiles <https://github.com/mcflugen/sedflux-mfiles>`_ GitHub
+repository.
+
 
 Sedflux Property File
 ---------------------
