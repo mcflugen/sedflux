@@ -62,6 +62,12 @@ void sedflux_set_subaerial_deposition_to (Sedflux_state* state, const double* va
 void sedflux_set_discharge (Sedflux_state* state, const double* val);
 void sedflux_set_bed_load_flux (Sedflux_state* state, const double* val);
 
+void sedflux_set_channel_bedload(Sedflux_state* state, const double* val);
+void sedflux_set_channel_suspended_load(Sedflux_state* state, const double* val);
+void sedflux_set_channel_width(Sedflux_state* state, const double* val);
+void sedflux_set_channel_depth(Sedflux_state* state, const double* val);
+void sedflux_set_channel_velocity(Sedflux_state* state, const double* val);
+
 G_END_DECLS
 
 #endif

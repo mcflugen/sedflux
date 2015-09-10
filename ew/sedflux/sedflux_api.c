@@ -1448,6 +1448,42 @@ sedflux_set_discharge (Sedflux_state* state, const double* val)
   return;
 }
 
+
+void
+sedflux_set_channel_bedload(Sedflux_state* state, const double* val)
+{
+  sed_cube_set_external_river_bedload(state->p, *val);
+}
+
+
+void
+sedflux_set_channel_suspended_load(Sedflux_state* state, const double* val)
+{
+  sed_cube_set_external_river_suspended_load(state->p, *val);
+}
+
+
+void
+sedflux_set_channel_width(Sedflux_state* state, const double* val)
+{
+  sed_cube_set_external_river_width(state->p, *val);
+}
+
+
+void
+sedflux_set_channel_depth(Sedflux_state* state, const double* val)
+{
+  sed_cube_set_external_river_depth(state->p, *val);
+}
+
+
+void
+sedflux_set_channel_velocity(Sedflux_state* state, const double* val)
+{
+  sed_cube_set_external_river_velocity(state->p, *val);
+}
+
+
 typedef struct
 {
    double val;
