@@ -77,6 +77,7 @@ typedef enum
    SED_HYDRO_HYDROTREND    ,
    SED_HYDRO_HYDROTREND_BE ,
    SED_HYDRO_HYDROTREND_LE ,
+   SED_HYDRO_EXTERNAL ,
    SED_HYDRO_UNKNOWN
 }
 Sed_hydro_file_type;

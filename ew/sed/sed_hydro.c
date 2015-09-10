@@ -452,6 +452,8 @@ sed_hydro_str_to_type( const gchar* type_s )
                 || g_ascii_strcasecmp( type_s , "EVENT"      )==0
                 || g_ascii_strcasecmp( type_s , "BUFFER"     )==0 )
          t = SED_HYDRO_HYDROTREND;
+      else if (g_ascii_strcasecmp( type_s , "EXTERNAL" )==0)
+         t = SED_HYDRO_EXTERNAL;
    }
 
    return t;
