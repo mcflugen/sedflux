@@ -67,6 +67,7 @@ void sedflux_set_channel_suspended_load(Sedflux_state* state, const double* val)
 void sedflux_set_channel_width(Sedflux_state* state, const double* val);
 void sedflux_set_channel_depth(Sedflux_state* state, const double* val);
 void sedflux_set_channel_velocity(Sedflux_state* state, const double* val);
+void sedflux_set_sea_level(Sedflux_state* state, const double* val);
 
 G_END_DECLS
 
