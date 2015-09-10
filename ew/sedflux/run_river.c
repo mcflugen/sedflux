@@ -42,7 +42,12 @@ run_river( Sed_process proc , Sed_cube prof )
    if ( sed_process_run_count(proc)==0 )
       init_river_data( proc , prof , NULL );
 
-   river_data = sed_hydro_file_read_record( data->fp_river );
+   if (data->type == SED_HYDRO_EXTERNAL) {
+      river_data = sed_hydro_dup(sed_cube_external_river(prof));
+   }
+   else
+      river_data = sed_hydro_file_read_record( data->fp_river );
+
    if ( river_data )
    {
       gint i;
@@ -201,46 +206,48 @@ init_river( Sed_process p , Eh_symbol_table tab , GError** error )
 
       data->type = sed_hydro_str_to_type( str );
 
-      if ( (    g_ascii_strcasecmp( str , "EVENT"  )==0
-             || g_ascii_strcasecmp( str , "BUFFER" )==0 )
-           && data->type == SED_HYDRO_HYDROTREND )
-      {
-         data->buffer_is_on = TRUE;
-      }
+      if (data->type != SED_HYDRO_EXTERNAL) {
+        if ( (    g_ascii_strcasecmp( str , "EVENT"  )==0
+               || g_ascii_strcasecmp( str , "BUFFER" )==0 )
+             && data->type == SED_HYDRO_HYDROTREND )
+        {
+           data->buffer_is_on = TRUE;
+        }
 
-      if ( data->type==SED_HYDRO_UNKNOWN )
-         g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM ,
-                      "Invalid river type key (season, hydrotrend, or event): %s" , str );
+        if ( data->type==SED_HYDRO_UNKNOWN )
+           g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM ,
+                        "Invalid river type key (season, hydrotrend, or event): %s" , str );
 
-      if ( !tmp_err ) eh_touch_file( data->filename , O_RDONLY , &tmp_err );
+        if ( !tmp_err ) eh_touch_file( data->filename , O_RDONLY , &tmp_err );
 
-      if ( !tmp_err )
-      {
-         Sed_hydro_file_type t = sed_hydro_file_guess_type( data->filename , &tmp_err );
+        if ( !tmp_err )
+        {
+           Sed_hydro_file_type t = sed_hydro_file_guess_type( data->filename , &tmp_err );
 
-         if ( !tmp_err )
-         {
-            if (    ( t==SED_HYDRO_HYDROTREND_BE && G_BYTE_ORDER!=G_BIG_ENDIAN    )
-                 || ( t==SED_HYDRO_HYDROTREND_LE && G_BYTE_ORDER!=G_LITTLE_ENDIAN ) )
-               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
-                            "Byte-order of river file type doesn't match machine's: "
-                            "Machine is %s but file is %s" ,
-                               G_BYTE_ORDER==G_BIG_ENDIAN?"big-endian":"little-endian" ,
-                               G_BYTE_ORDER==G_BIG_ENDIAN?"little-endian":"big-endian" );
-         }
+           if ( !tmp_err )
+           {
+              if (    ( t==SED_HYDRO_HYDROTREND_BE && G_BYTE_ORDER!=G_BIG_ENDIAN    )
+                   || ( t==SED_HYDRO_HYDROTREND_LE && G_BYTE_ORDER!=G_LITTLE_ENDIAN ) )
+                 g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
+                              "Byte-order of river file type doesn't match machine's: "
+                              "Machine is %s but file is %s" ,
+                                 G_BYTE_ORDER==G_BIG_ENDIAN?"big-endian":"little-endian" ,
+                                 G_BYTE_ORDER==G_BIG_ENDIAN?"little-endian":"big-endian" );
+           }
 
-         if ( t==SED_HYDRO_HYDROTREND_BE || t==SED_HYDRO_HYDROTREND_LE ) t = SED_HYDRO_HYDROTREND;
+           if ( t==SED_HYDRO_HYDROTREND_BE || t==SED_HYDRO_HYDROTREND_LE ) t = SED_HYDRO_HYDROTREND;
 
-         if ( !tmp_err && t!=data->type )
-         {
-            if ( t==SED_HYDRO_UNKNOWN )
-               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_UNKNOWN_FILE_TYPE ,
-                            "Could not determine file type of river file: %s" , data->filename );
-            else
-               g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
-                            "River file type doesn't match the specified type: "
-                            "Specified type is %s but file is type %s" , sed_hydro_type_to_s(data->type) , sed_hydro_type_to_s(t) );
-         }
+           if ( !tmp_err && t!=data->type )
+           {
+              if ( t==SED_HYDRO_UNKNOWN )
+                 g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_UNKNOWN_FILE_TYPE ,
+                              "Could not determine file type of river file: %s" , data->filename );
+              else
+                 g_set_error( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_FILE_TYPE ,
+                              "River file type doesn't match the specified type: "
+                              "Specified type is %s but file is type %s" , sed_hydro_type_to_s(data->type) , sed_hydro_type_to_s(t) );
+           }
+        }
       }
    }
 
