@@ -209,6 +209,14 @@ Sed_cube sed_cube_set_sea_level( Sed_cube s , double new_sea_level );
 Sed_cube sed_cube_set_base_height( Sed_cube s , gssize i , gssize j , double height );
 Sed_cube sed_cube_adjust_base_height( Sed_cube s , gssize i , gssize j , double dz );
 void sed_cube_set_discharge (Sed_cube s, const double* val);
+
+Sed_hydro sed_cube_external_river(Sed_cube s);
+void sed_cube_set_external_river_bedload(Sed_cube s, const double val);
+void sed_cube_set_external_river_suspended_load(Sed_cube s, const double val);
+void sed_cube_set_external_river_width(Sed_cube s, const double val);
+void sed_cube_set_external_river_depth(Sed_cube s, const double val);
+void sed_cube_set_external_river_velocity(Sed_cube s, const double val);
+
 void sed_cube_set_bed_load_flux (Sed_cube s, const double* val);
 Sed_cube sed_cube_set_nth_river (Sed_cube s, gssize n, Sed_riv river);
 Sed_riv sed_cube_borrow_nth_river (Sed_cube s, gint n);

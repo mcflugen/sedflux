@@ -51,6 +51,7 @@ CLASS ( Sed_cube )
 
    double** discharge; //< Water discharge at each column
    double** bed_load_flux; //< Bed load flux at each column
+   Sed_hydro external_river; //< River to be set by an external source
 };
 
 GQuark
@@ -170,6 +171,7 @@ sed_cube_new_empty( gssize n_x , gssize n_y )
 
    s->discharge    = eh_new_2 (double, n_x, n_y);
    s->bed_load_flux= eh_new_2 (double, n_x, n_y);
+   s->external_river = NULL;
    
    return s;
 }
@@ -255,6 +257,7 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          g_free (full_name);
       }
 
+
       /* Scan the bathymetry file */
       if ( !tmp_err )
       {
@@ -303,6 +306,10 @@ sed_cube_new_from_file (const gchar* file, const gchar* prefix, GError** error)
          g_free (full_name);
       }
 
+      if (!tmp_err) {
+          p->external_river = sed_hydro_new(sed_sediment_env_n_types() - 1);
+      }
+
       if ( tmp_err )
          g_propagate_error( error , tmp_err );
 
@@ -332,6 +339,7 @@ sed_cube_free( Sed_cube s , gboolean free_data )
 
       eh_free_2 (s->discharge);
       eh_free_2 (s->bed_load_flux);
+      sed_hydro_destroy(s->external_river);
 
       sed_cube_remove_all_trunks( s );
 
@@ -1646,6 +1654,56 @@ sed_cube_set_discharge (Sed_cube s, const double* val)
 
   return;
 }
+
+
+Sed_hydro
+sed_cube_external_river(Sed_cube s)
+{
+  return s->external_river;
+}
+
+
+void
+sed_cube_set_external_river_bedload(Sed_cube s, const double val)
+{
+  sed_hydro_set_bedload(s->external_river, val);
+}
+
+
+void
+sed_cube_set_external_river_suspended_load(Sed_cube s, const double val)
+{
+  int n;
+  const int n_types = sed_hydro_size(s->external_river);
+
+  for (n=0; n<n_types; n++)
+    sed_hydro_set_nth_concentration(s->external_river, n, val);
+}
+
+
+void
+sed_cube_set_external_river_width(Sed_cube s, const double val)
+{
+  fprintf(stderr, "setting width to %f\n", val);
+  sed_hydro_set_width(s->external_river, val);
+}
+
+
+void
+sed_cube_set_external_river_depth(Sed_cube s, const double val)
+{
+  fprintf(stderr, "setting depth to %f\n", val);
+  sed_hydro_set_depth(s->external_river, val);
+}
+
+
+void
+sed_cube_set_external_river_velocity(Sed_cube s, const double val)
+{
+  fprintf(stderr, "setting velocity to %f\n", val);
+  sed_hydro_set_velocity(s->external_river, val);
+}
+
 
 void
 sed_cube_set_bed_load_flux (Sed_cube s, const double* val)
