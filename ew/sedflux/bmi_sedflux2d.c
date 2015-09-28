@@ -24,7 +24,7 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
     "sea_bottom_sediment__increment_of_thickness",
     "bedrock_surface__increment_of_elevation",
     //"channel_exit_water__volume_flow_rate",
-    "channel_exit_water_sediment~suspended__volume_concentration",
+    "channel_exit_water_sediment~suspended__mass_concentration",
     "channel_exit_water_sediment~bedload__mass_flow_rate",
     "channel_exit_water_x-section__width",
     "channel_exit_water_x-section__depth",
@@ -354,7 +354,7 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "channel_exit_water_x-section__width") == 0 ||
                strcmp(name, "channel_exit_water_x-section__depth") == 0 ||
-               strcmp(name, "channel_exit_water_sediment~suspended__volume_concentration") == 0 ||
+               strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0 ||
                strcmp(name, "channel_exit_water_flow__speed") == 0 ||
                strcmp(name, "channel_exit_water_sediment~bedload__mass_flow_rate") == 0 ||
                strcmp(name, "sea_water_surface__elevation") == 0) {
@@ -443,7 +443,7 @@ get_var_type(void *self, const char *name, char *type)
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "channel_exit_water_x-section__width") == 0 ||
                strcmp(name, "channel_exit_water_x-section__depth") == 0 ||
-               strcmp(name, "channel_exit_water_sediment~suspended__volume_concentration") == 0 ||
+               strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0 ||
                strcmp(name, "channel_exit_water_flow__speed") == 0 ||
                strcmp(name, "channel_exit_water_sediment~bedload__mass_flow_rate") == 0 ||
                strcmp(name, "sea_water_surface__elevation") == 0) {
@@ -534,8 +534,8 @@ get_var_units(void *self, const char *name, char *units)
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "channel_exit_water_x-section__depth") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
-    } else if (strcmp(name, "channel_exit_water_sediment~suspended__volume_concentration") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0) {
+        strncpy(units, "kg / m^3", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "channel_exit_water_flow__speed") == 0) {
         strncpy(units, "m / s", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_water_surface__elevation") == 0) {
@@ -626,7 +626,7 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
         *itemsize = sizeof(double);
     } else if (strcmp(name, "channel_exit_water_x-section__width") == 0 ||
                strcmp(name, "channel_exit_water_x-section__depth") == 0 ||
-               strcmp(name, "channel_exit_water_sediment~suspended__volume_concentration") == 0 ||
+               strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0 ||
                strcmp(name, "channel_exit_water_flow__speed") == 0 ||
                strcmp(name, "sea_water_surface__elevation") == 0) {
         *itemsize = sizeof(double);
@@ -850,7 +850,7 @@ set_value (void *self, const char *name, void *array)
         sedflux_set_channel_width(self, (double*)array);
     else if (strcmp(name, "channel_exit_water_x-section__depth") == 0)
         sedflux_set_channel_depth(self, (double*)array);
-    else if (strcmp(name, "channel_exit_water_sediment~suspended__volume_concentration") == 0)
+    else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0)
         sedflux_set_channel_suspended_load(self, (double*)array);
     else if (strcmp(name, "channel_exit_water_flow__speed") == 0)
         sedflux_set_channel_velocity(self, (double*)array);
