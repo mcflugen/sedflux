@@ -287,7 +287,7 @@ static integer c__0 = 0;
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -452,7 +452,7 @@ L120:
 	bb = cyi[i__];
 	atol = 1.;
 /* Computing MAX */
-	d__1 = abs(aa), d__2 = abs(bb);
+	d__1 = _abs(aa), d__2 = _abs(bb);
 	if (max(d__1,d__2) > ascle) {
 	    goto L135;
 	}
@@ -716,7 +716,7 @@ L260:
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -801,7 +801,7 @@ L40:
 	bb = cyi[i__];
 	atol = 1.;
 /* Computing MAX */
-	d__1 = abs(aa), d__2 = abs(bb);
+	d__1 = _abs(aa), d__2 = _abs(bb);
 	if (max(d__1,d__2) > ascle) {
 	    goto L55;
 	}
@@ -1056,7 +1056,7 @@ L260:
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -1139,7 +1139,7 @@ L50:
 	bb = cyi[i__];
 	atol = 1.;
 /* Computing MAX */
-	d__1 = abs(aa), d__2 = abs(bb);
+	d__1 = _abs(aa), d__2 = _abs(bb);
 	if (max(d__1,d__2) > ascle) {
 	    goto L55;
 	}
@@ -1406,7 +1406,7 @@ L260:
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -1833,7 +1833,7 @@ L60:
     k1 = i1mach_(&c__15);
     k2 = i1mach_(&c__16);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     d1m5 = d1mach_(&c__5);
 /* ----------------------------------------------------------------------- */
@@ -1841,7 +1841,7 @@ L60:
 /* ----------------------------------------------------------------------- */
     elim = ((doublereal) ((real) k) * d1m5 - 3.) * 2.303;
     ey = 0.;
-    tay = (d__1 = *zi + *zi, abs(d__1));
+    tay = (d__1 = *zi + *zi, _abs(d__1));
     if (tay < elim) {
 	ey = exp(-tay);
     }
@@ -1862,7 +1862,7 @@ L60:
 	zvi = cwrki[i__];
 	atol = 1.;
 /* Computing MAX */
-	d__1 = abs(zvr), d__2 = abs(zvi);
+	d__1 = _abs(zvr), d__2 = _abs(zvi);
 	if (max(d__1,d__2) > ascle) {
 	    goto L75;
 	}
@@ -1877,7 +1877,7 @@ L75:
 	zui = cyi[i__];
 	atol = 1.;
 /* Computing MAX */
-	d__1 = abs(zur), d__2 = abs(zui);
+	d__1 = _abs(zur), d__2 = _abs(zui);
 	if (max(d__1,d__2) > ascle) {
 	    goto L85;
 	}
@@ -2223,7 +2223,7 @@ L70:
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -2262,7 +2262,7 @@ L70:
 	goto L80;
     }
     bk = ztar;
-    ck = -abs(bk);
+    ck = -_abs(bk);
     ztar = ck;
     ztai = ak;
 L80:
@@ -2667,7 +2667,7 @@ L40:
     ztar = tth * (*zr * str - *zi * sti);
     ztai = tth * (*zr * sti + *zi * str);
     aa = ztar;
-    aa = -abs(aa);
+    aa = -_abs(aa);
     eaa = exp(aa);
     *bir *= eaa;
     *bii *= eaa;
@@ -2691,7 +2691,7 @@ L60:
     ztar = tth * (*zr * str - *zi * sti);
     ztai = tth * (*zr * sti + *zi * str);
     aa = ztar;
-    aa = -abs(aa);
+    aa = -_abs(aa);
     eaa = exp(aa);
     *bir *= eaa;
     *bii *= eaa;
@@ -2716,7 +2716,7 @@ L70:
     k2 = i1mach_(&c__16);
     r1m5 = d1mach_(&c__5);
 /* Computing MIN */
-    i__1 = abs(k1), i__2 = abs(k2);
+    i__1 = _abs(k1), i__2 = _abs(k2);
     k = min(i__1,i__2);
     elim = ((doublereal) ((real) k) * r1m5 - 3.) * 2.303;
     k1 = i1mach_(&c__14) - 1;
@@ -2754,7 +2754,7 @@ L70:
 	goto L80;
     }
     bk = ztar;
-    ck = -abs(bk);
+    ck = -_abs(bk);
     ztar = ck;
     ztai = ak;
 L80:
@@ -2771,7 +2771,7 @@ L90:
 /* ----------------------------------------------------------------------- */
 /*     OVERFLOW TEST */
 /* ----------------------------------------------------------------------- */
-    bb = abs(aa);
+    bb = _abs(aa);
     if (bb < alim) {
 	goto L100;
     }
@@ -2960,7 +2960,7 @@ L20:
 	goto L30;
     }
     *br = 0.;
-    *bi = sqrt((abs(*ar)));
+    *bi = sqrt((_abs(*ar)));
     return 0;
 L30:
     *br = sqrt(*ar);
@@ -3053,7 +3053,7 @@ L10:
 	goto L60;
     }
     *bi = dhpi;
-    *br = log((abs(*ai)));
+    *br = log((_abs(*ai)));
     if (*ai < 0.) {
 	*bi = -(*bi);
     }
@@ -3062,7 +3062,7 @@ L20:
     if (*ar > 0.) {
 	goto L30;
     }
-    *br = log((abs(*ar)));
+    *br = log((_abs(*ar)));
     *bi = dpi;
     return 0;
 L30:
@@ -3102,8 +3102,8 @@ doublereal zabs_(doublereal *zr, doublereal *zi)
 
 /* ***ROUTINES CALLED  (NONE) */
 /* ***END PROLOGUE  ZABS */
-    u = abs(*zr);
-    v = abs(*zi);
+    u = _abs(*zr);
+    v = _abs(*zi);
     s = u + v;
 /* ----------------------------------------------------------------------- */
 /*     S*1.0D0 MAKES AN UNNORMALIZED UNDERFLOW ON CDC MACHINES INTO A */
@@ -3242,11 +3242,11 @@ L20:
     rzi = (sti + sti) * rcaz;
     inu = (integer) ((real) (*fnu + .5));
     dnu = *fnu - (doublereal) ((real) inu);
-    if (abs(dnu) == .5) {
+    if (_abs(dnu) == .5) {
 	goto L110;
     }
     dnu2 = 0.;
-    if (abs(dnu) > *tol) {
+    if (_abs(dnu) > *tol) {
 	dnu2 = dnu * dnu;
     }
     if (caz > r1) {
@@ -3274,7 +3274,7 @@ L10:
 /* ----------------------------------------------------------------------- */
     t2 = exp(-dgamln_(&a2, &idum));
     t1 = 1. / (t2 * fc);
-    if (abs(dnu) > .1) {
+    if (_abs(dnu) > .1) {
 	goto L40;
     }
 /* ----------------------------------------------------------------------- */
@@ -3286,7 +3286,7 @@ L10:
 	ak *= dnu2;
 	tm = cc[k - 1] * ak;
 	s += tm;
-	if (abs(tm) < *tol) {
+	if (_abs(tm) < *tol) {
 	    goto L30;
 	}
 /* L20: */
@@ -3397,7 +3397,7 @@ L90:
 L100:
     kflag = 2;
     a1 = *fnu + 1.;
-    ak = a1 * abs(smur);
+    ak = a1 * _abs(smur);
     if (ak > *alim) {
 	kflag = 3;
     }
@@ -3436,18 +3436,18 @@ L110:
     str *= cos(*zi);
     zmlt_(&coefr, &coefi, &str, &sti, &coefr, &coefi);
 L120:
-    if (abs(dnu) == .5) {
+    if (_abs(dnu) == .5) {
 	goto L300;
     }
 /* ----------------------------------------------------------------------- */
 /*     MILLER ALGORITHM FOR CABS(Z).GT.R1 */
 /* ----------------------------------------------------------------------- */
     ak = cos(dpi * dnu);
-    ak = abs(ak);
+    ak = _abs(ak);
     if (ak == czeror) {
 	goto L300;
     }
-    fhs = (d__1 = .25 - dnu2, abs(d__1));
+    fhs = (d__1 = .25 - dnu2, _abs(d__1));
     if (fhs == czeror) {
 	goto L300;
     }
@@ -3469,7 +3469,7 @@ L120:
     goto L140;
 L130:
     t1 = atan(*zi / *zr);
-    t1 = abs(t1);
+    t1 = _abs(t1);
 L140:
     if (t2 > caz) {
 	goto L170;
@@ -3497,7 +3497,7 @@ L140:
 	fks = fks + fk + fk + ctwor;
 	fhs = fhs + fk + fk;
 	fk += coner;
-	str = abs(p2r) * fk;
+	str = _abs(p2r) * fk;
 	if (etest < str) {
 	    goto L160;
 	}
@@ -3506,7 +3506,7 @@ L140:
     goto L310;
 L160:
     fk += spi * t1 * sqrt(t2 / caz);
-    fhs = (d__1 = .25 - dnu2, abs(d__1));
+    fhs = (d__1 = .25 - dnu2, _abs(d__1));
     goto L180;
 L170:
 /* ----------------------------------------------------------------------- */
@@ -3636,8 +3636,8 @@ L225:
 	}
 	p2r = s2r * p1r;
 	p2i = s2i * p1r;
-	str = abs(p2r);
-	sti = abs(p2i);
+	str = _abs(p2r);
+	sti = _abs(p2i);
 	p2m = max(str,sti);
 	if (p2m <= ascle) {
 	    goto L230;
@@ -3699,8 +3699,8 @@ L250:
 	if (kflag >= 3) {
 	    goto L260;
 	}
-	str = abs(p2r);
-	sti = abs(p2i);
+	str = _abs(p2r);
+	sti = _abs(p2i);
 	p2m = max(str,sti);
 	if (p2m <= ascle) {
 	    goto L260;
@@ -4354,8 +4354,8 @@ L10:
 
     /* Function Body */
     *nz = 0;
-    ax = abs(*zr) * 1.7321;
-    ay = abs(*zi);
+    ax = _abs(*zr) * 1.7321;
+    ay = _abs(*zi);
     if (ay > ax) {
 	goto L10;
     }
@@ -5152,12 +5152,12 @@ L190:
     czr = zeror;
     czi = *zi;
 L10:
-    if (abs(czr) > *elim) {
+    if (_abs(czr) > *elim) {
 	goto L100;
     }
     dnu2 = dfnu + dfnu;
     koded = 1;
-    if (abs(czr) > *alim && *n > 2) {
+    if (_abs(czr) > *alim && *n > 2) {
 	goto L20;
     }
     koded = 0;
@@ -5206,7 +5206,7 @@ L30:
     i__1 = il;
     for (k = 1; k <= i__1; ++k) {
 	sqk = fdn - 1.;
-	atol = s * abs(sqk);
+	atol = s * _abs(sqk);
 	sgn = 1.;
 	cs1r = coner;
 	cs1i = conei;
@@ -5231,7 +5231,7 @@ L30:
 	    cs1i += cki * sgn;
 	    dkr += ezr;
 	    dki += ezi;
-	    aa = aa * abs(sqk) / bb;
+	    aa = aa * _abs(sqk) / bb;
 	    bb += aez;
 	    ak += 8.;
 	    sqk -= ak;
@@ -5395,8 +5395,8 @@ L110:
 L10:
     zbr = zrr;
     zbi = zri;
-    ax = abs(*zr) * 1.7321;
-    ay = abs(*zi);
+    ax = _abs(*zr) * 1.7321;
+    ay = _abs(*zi);
     iform = 1;
     if (ay > ax) {
 	iform = 2;
@@ -5847,8 +5847,8 @@ L70:
 	if (kflag >= 3) {
 	    goto L80;
 	}
-	ptr = abs(c1r);
-	pti = abs(c1i);
+	ptr = _abs(c1r);
+	pti = _abs(c1i);
 	c1m = max(ptr,pti);
 	if (c1m <= bscle) {
 	    goto L80;
@@ -5943,7 +5943,7 @@ L10:
 /*     POWER SERIES */
 /* ----------------------------------------------------------------------- */
     zseri_(zr, zi, fnu, kode, &nn, &cyr[1], &cyi[1], &nw, tol, elim, alim);
-    inw = abs(nw);
+    inw = _abs(nw);
     *nz += inw;
     nn -= inw;
     if (nn == 0) {
@@ -6223,7 +6223,7 @@ L20:
     for (k = 2; k <= 22; ++k) {
 	zp *= zsq;
 	trm = cf[k - 1] * zp;
-	if (abs(trm) < tst) {
+	if (_abs(trm) < tst) {
 	    goto L40;
 	}
 	s += trm;
@@ -6431,8 +6431,8 @@ L80:
 
 /*     COMPLEX Y */
     *nz = 0;
-    wr = abs(*yr);
-    wi = abs(*yi);
+    wr = _abs(*yr);
+    wi = _abs(*yi);
     st = min(wr,wi);
     if (st > *ascle) {
 	return 0;
@@ -6560,10 +6560,10 @@ L80:
 /* ----------------------------------------------------------------------- */
     test = d1mach_(&c__1) * 1e3;
     ac = *fnu * test;
-    if (abs(*zrr) > ac || abs(*zri) > ac) {
+    if (_abs(*zrr) > ac || _abs(*zri) > ac) {
 	goto L15;
     }
-    *zeta1r = (d__1 = log(test), abs(d__1)) * 2. + *fnu;
+    *zeta1r = (d__1 = log(test), _abs(d__1)) * 2. + *fnu;
     *zeta1i = 0.;
     *zeta2r = *fnu;
     *zeta2i = 0.;
@@ -6617,7 +6617,7 @@ L15:
 	cwrkr[k] = crfnr * sr - crfni * si;
 	cwrki[k] = crfnr * si + crfni * sr;
 	ac *= rfn;
-	test = (d__1 = cwrkr[k], abs(d__1)) + (d__2 = cwrki[k], abs(d__2));
+	test = (d__1 = cwrkr[k], _abs(d__1)) + (d__2 = cwrki[k], _abs(d__2));
 	if (ac < *tol && test < *tol) {
 	    goto L30;
 	}
@@ -7013,10 +7013,10 @@ L60:
 /* ----------------------------------------------------------------------- */
     test = d1mach_(&c__1) * 1e3;
     ac = *fnu * test;
-    if (abs(*zr) > ac || abs(*zi) > ac) {
+    if (_abs(*zr) > ac || _abs(*zi) > ac) {
 	goto L15;
     }
-    *zeta1r = (d__1 = log(test), abs(d__1)) * 2. + *fnu;
+    *zeta1r = (d__1 = log(test), _abs(d__1)) * 2. + *fnu;
     *zeta1i = 0.;
     *zeta2r = *fnu;
     *zeta2i = 0.;
@@ -7104,7 +7104,7 @@ L20:
     *bsumi = sumbi;
     l1 = 0;
     l2 = 30;
-    btol = *tol * (abs(*bsumr) + abs(*bsumi));
+    btol = *tol * (_abs(*bsumr) + _abs(*bsumi));
     atol = *tol;
     pp = 1.;
     ias = 0;
@@ -7271,7 +7271,7 @@ L140:
     upr[0] = coner;
     upi[0] = conei;
     pp = 1.;
-    btol = *tol * (abs(*bsumr) + abs(*bsumi));
+    btol = *tol * (_abs(*bsumr) + _abs(*bsumi));
     ks = 0;
     kp1 = 2;
     l = 3;
@@ -7330,7 +7330,7 @@ L140:
 	}
 	*asumr += sumar;
 	*asumi += sumai;
-	test = abs(sumar) + abs(sumai);
+	test = _abs(sumar) + _abs(sumai);
 	if (pp < *tol && test < *tol) {
 	    ias = 1;
 	}
@@ -7352,7 +7352,7 @@ L180:
 	}
 	*bsumr += sumbr;
 	*bsumi += sumbi;
-	test = abs(sumbr) + abs(sumbi);
+	test = _abs(sumbr) + _abs(sumbi);
 	if (pp < btol && test < btol) {
 	    ibs = 1;
 	}
@@ -7505,13 +7505,13 @@ L30:
 /* ----------------------------------------------------------------------- */
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L60;
 	}
 	if (kdflg == 1) {
 	    kflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L40;
 	}
 /* ----------------------------------------------------------------------- */
@@ -7519,7 +7519,7 @@ L30:
 /* ----------------------------------------------------------------------- */
 	aphi = zabs_(&phir[j - 1], &phii[j - 1]);
 	rs1 += log(aphi);
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L60;
 	}
 	if (kdflg == 1) {
@@ -7629,10 +7629,10 @@ L80:
     s1i = zet1di - zet2di;
 L90:
     rs1 = s1r;
-    if (abs(rs1) > *elim) {
+    if (_abs(rs1) > *elim) {
 	goto L95;
     }
-    if (abs(rs1) < *alim) {
+    if (_abs(rs1) < *alim) {
 	goto L100;
     }
 /* ---------------------------------------------------------------------------- */
@@ -7640,11 +7640,11 @@ L90:
 /* ------------------------------------------------------------------------- */
     aphi = zabs_(&phidr, &phidi);
     rs1 += log(aphi);
-    if (abs(rs1) < *elim) {
+    if (_abs(rs1) < *elim) {
 	goto L100;
     }
 L95:
-    if (abs(rs1) > 0.) {
+    if (_abs(rs1) > 0.) {
 	goto L300;
     }
 /* ----------------------------------------------------------------------- */
@@ -7688,8 +7688,8 @@ L100:
 	if (kflag >= 3) {
 	    goto L120;
 	}
-	str = abs(c2r);
-	sti = abs(c2i);
+	str = _abs(c2r);
+	sti = _abs(c2i);
 	c2m = max(str,sti);
 	if (c2m <= ascle) {
 	    goto L120;
@@ -7795,13 +7795,13 @@ L210:
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
 	rs1 = s1r;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L260;
 	}
 	if (kdflg == 1) {
 	    iflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L220;
 	}
 /* ----------------------------------------------------------------------- */
@@ -7809,7 +7809,7 @@ L210:
 /* ----------------------------------------------------------------------- */
 	aphi = zabs_(&phidr, &phidi);
 	rs1 += log(aphi);
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L260;
 	}
 	if (kdflg == 1) {
@@ -7932,8 +7932,8 @@ L280:
 	if (iflag >= 3) {
 	    goto L290;
 	}
-	c2r = abs(ckr);
-	c2i = abs(cki);
+	c2r = _abs(ckr);
+	c2i = _abs(cki);
 	c2m = max(c2r,c2i);
 	if (c2m <= ascle) {
 	    goto L290;
@@ -8134,13 +8134,13 @@ L40:
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
 	rs1 = s1r;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L70;
 	}
 	if (kdflg == 1) {
 	    kflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L50;
 	}
 /* ----------------------------------------------------------------------- */
@@ -8149,7 +8149,7 @@ L40:
 	aphi = zabs_(&phir[j - 1], &phii[j - 1]);
 	aarg = zabs_(&argr[j - 1], &argi[j - 1]);
 	rs1 = rs1 + log(aphi) - log(aarg) * .25 - aic;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L70;
 	}
 	if (kdflg == 1) {
@@ -8279,10 +8279,10 @@ L90:
     s1i = zet1di - zet2di;
 L100:
     rs1 = s1r;
-    if (abs(rs1) > *elim) {
+    if (_abs(rs1) > *elim) {
 	goto L105;
     }
-    if (abs(rs1) < *alim) {
+    if (_abs(rs1) < *alim) {
 	goto L120;
     }
 /* ---------------------------------------------------------------------------- */
@@ -8290,7 +8290,7 @@ L100:
 /* ------------------------------------------------------------------------- */
     aphi = zabs_(&phidr, &phidi);
     rs1 += log(aphi);
-    if (abs(rs1) < *elim) {
+    if (_abs(rs1) < *elim) {
 	goto L120;
     }
 L105:
@@ -8335,8 +8335,8 @@ L120:
 	if (kflag >= 3) {
 	    goto L130;
 	}
-	str = abs(c2r);
-	sti = abs(c2i);
+	str = _abs(c2r);
+	sti = _abs(c2i);
 	c2m = max(str,sti);
 	if (c2m <= ascle) {
 	    goto L130;
@@ -8457,13 +8457,13 @@ L230:
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
 	rs1 = s1r;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L280;
 	}
 	if (kdflg == 1) {
 	    iflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L240;
 	}
 /* ----------------------------------------------------------------------- */
@@ -8472,7 +8472,7 @@ L230:
 	aphi = zabs_(&phidr, &phidi);
 	aarg = zabs_(&argdr, &argdi);
 	rs1 = rs1 + log(aphi) - log(aarg) * .25 - aic;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L280;
 	}
 	if (kdflg == 1) {
@@ -8607,8 +8607,8 @@ L300:
 	if (iflag >= 3) {
 	    goto L310;
 	}
-	c2r = abs(ckr);
-	c2i = abs(cki);
+	c2r = _abs(ckr);
+	c2i = _abs(cki);
 	c2m = max(c2r,c2i);
 	if (c2m <= ascle) {
 	    goto L310;
@@ -8678,8 +8678,8 @@ L320:
 
     /* Function Body */
     *nz = 0;
-    ax = abs(*zr) * 1.7321;
-    ay = abs(*zi);
+    ax = _abs(*zr) * 1.7321;
+    ay = _abs(*zi);
     iform = 1;
     if (ay > ax) {
 	iform = 2;
@@ -8764,8 +8764,8 @@ L25:
 	}
 	str = s2r * cscrr;
 	sti = s2i * cscrr;
-	c1r = abs(str);
-	c1i = abs(sti);
+	c1r = _abs(str);
+	c1i = _abs(sti);
 	c1m = max(c1r,c1i);
 	if (c1m <= ascle) {
 	    goto L30;
@@ -8810,8 +8810,8 @@ L30:
 	if (iflag >= 3) {
 	    goto L40;
 	}
-	c1r = abs(str);
-	c1i = abs(sti);
+	c1r = _abs(str);
+	c1i = _abs(sti);
 	c1m = max(c1r,c1i);
 	if (c1m <= ascle) {
 	    goto L40;
@@ -8974,7 +8974,7 @@ L10:
     s1i = -zeta1i + zeta2i;
 L20:
     rs1 = s1r;
-    if (abs(rs1) > *elim) {
+    if (_abs(rs1) > *elim) {
 	goto L130;
     }
 L30:
@@ -9004,13 +9004,13 @@ L50:
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
 	rs1 = s1r;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L110;
 	}
 	if (i__ == 1) {
 	    iflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L60;
 	}
 /* ----------------------------------------------------------------------- */
@@ -9018,7 +9018,7 @@ L50:
 /* ----------------------------------------------------------------------- */
 	aphi = zabs_(&phir, &phii);
 	rs1 += log(aphi);
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L110;
 	}
 	if (i__ == 1) {
@@ -9092,8 +9092,8 @@ L70:
 	if (iflag >= 3) {
 	    goto L90;
 	}
-	str = abs(c2r);
-	sti = abs(c2i);
+	str = _abs(c2r);
+	sti = _abs(c2i);
 	c2m = max(str,sti);
 	if (c2m <= ascle) {
 	    goto L90;
@@ -9304,7 +9304,7 @@ L20:
     s1i = -zeta1i + zeta2i;
 L30:
     rs1 = s1r;
-    if (abs(rs1) > *elim) {
+    if (_abs(rs1) > *elim) {
 	goto L150;
     }
 L40:
@@ -9324,7 +9324,7 @@ L40:
 	str = str * rast * rast;
 	sti = -sti * rast * rast;
 	s1r = -zeta1r + str;
-	s1i = -zeta1i + sti + abs(*zi);
+	s1i = -zeta1i + sti + _abs(*zi);
 	goto L60;
 L50:
 	s1r = -zeta1r + zeta2r;
@@ -9334,13 +9334,13 @@ L60:
 /*     TEST FOR UNDERFLOW AND OVERFLOW */
 /* ----------------------------------------------------------------------- */
 	rs1 = s1r;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L120;
 	}
 	if (i__ == 1) {
 	    iflag = 2;
 	}
-	if (abs(rs1) < *alim) {
+	if (_abs(rs1) < *alim) {
 	    goto L70;
 	}
 /* ----------------------------------------------------------------------- */
@@ -9350,7 +9350,7 @@ L60:
 	aphi = zabs_(&phir, &phii);
 	aarg = zabs_(&argr, &argi);
 	rs1 = rs1 + log(aphi) - log(aarg) * .25 - aic;
-	if (abs(rs1) > *elim) {
+	if (_abs(rs1) > *elim) {
 	    goto L120;
 	}
 	if (i__ == 1) {
@@ -9440,8 +9440,8 @@ L80:
 	if (iflag >= 3) {
 	    goto L100;
 	}
-	str = abs(c2r);
-	sti = abs(c2i);
+	str = _abs(c2r);
+	sti = _abs(c2i);
 	c2m = max(str,sti);
 	if (c2m <= ascle) {
 	    goto L100;
