@@ -12,5 +12,15 @@ requirements:
   run:
     - glib [osx]
 
+test:
+  commands:
+  - make test
+
+about:
+  home: https://github.com/mcflugen/sedflux
+  license: MIT
+  license_file: LICENSE
+  summary: A stratigraphic basin-filling model
+
 build:
   string: {{ environ.get('BUILD_STR', '') }}
