@@ -7,7 +7,7 @@ install:
   - if [[ "$TRAVIS_TAG" == v* ]]; then export BUILD_STR=""; else export BUILD_STR="dev"; fi
   - bash .ci/travis/install_python.sh
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda build -q conda-recipe
+  - conda build -q conda-recipe -c csdms
   - conda install -q sedflux --use-local
 script:
   - make test
