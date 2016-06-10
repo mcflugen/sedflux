@@ -129,6 +129,8 @@ run_turbidity_inflow( Sed_process proc , Sed_cube p )
    if ( sed_mode_is_3d() )
       return info;
 
+   eh_message( "time             : %f" , sed_cube_age_in_years(p) );
+
    fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
 
    eh_require( fail );
@@ -178,6 +180,8 @@ run_turbidity_sakura( Sed_process proc , Sed_cube p )
    //---
    if ( sed_mode_is_3d() )
       return info;
+
+   eh_message( "time             : %f" , sed_cube_age_in_years(p) );
 
    fail = (Sed_cube)sed_process_use( proc , FAILURE_PROFILE_DATA );
    //fail = data->failure;
