@@ -9,7 +9,5 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda build -q conda-recipe -c csdms
   - conda install -q sedflux --use-local
-script:
-  - make test
 after_success:
   - bash .ci/travis/deploy_to_anaconda.sh
