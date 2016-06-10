@@ -12,10 +12,6 @@ requirements:
   run:
     - glib [osx]
 
-test:
-  commands:
-  - make test
-
 about:
   home: https://github.com/mcflugen/sedflux
   license: MIT
