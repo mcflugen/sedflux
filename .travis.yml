@@ -11,7 +11,7 @@ install:
   - bash .ci/travis/install_python.sh
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda build -q conda-recipe -c csdms
-  - conda install -q sedflux --use-local
+  - conda install -q sedflux --use-local -c csdms
 script:
   - sedflux -h
 after_success:
