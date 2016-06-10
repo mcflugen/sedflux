@@ -161,6 +161,8 @@ run_failure( Sed_process proc , Sed_cube p )
             else if ( decision == DECIDER_DEBRIS_FLOW       ) fail_process = data->debris_flow;
             else if ( decision == DECIDER_SLUMP             ) fail_process = data->slump;
 
+            fprintf(stderr, "***** decision is %d (tc=%d)\n", decision, DECIDER_TURBIDITY_CURRENT);
+
             sed_process_provide( fail_process , FAILURE_PROFILE_DATA , fail );
 
             flow_ok = sed_process_run_now( fail_process , p );
@@ -236,7 +238,6 @@ init_failure( Sed_process p , Eh_symbol_table tab , GError** error )
    data->decider_clay_fraction = eh_symbol_table_dbl_value( tab , S_KEY_CLAY_FRACTION  );
 
    data->friction_angle        *= S_RADS_PER_DEGREE;
-   data->decider_clay_fraction /= 100.;
 
    data->gravity                = sed_gravity();
    data->density_sea_water      = sed_rho_sea_water();
