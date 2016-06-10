@@ -8,8 +8,10 @@ source:
 requirements:
   build:
     - cmake
+    - gcc
     - glib [osx]
   run:
+    - libgcc
     - glib [osx]
 
 about:
