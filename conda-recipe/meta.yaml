@@ -1,0 +1,16 @@
+package:
+  name: sedflux
+  version: "2.1"
+
+source:
+  path: ..
+
+requirements:
+  build:
+    - cmake
+    - glib [osx]
+  run:
+    - glib [osx]
+
+build:
+  string: {{ environ.get('BUILD_STR', '') }}
