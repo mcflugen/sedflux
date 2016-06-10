@@ -1,0 +1,14 @@
+os:
+- linux
+- osx
+sudo: false
+install:
+  - echo "Build on $TRAVIS_OS_NAME"
+  - bash .ci/travis/install_python.sh
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda build -q conda-recipe
+  - conda install -q sedflux --use-local
+script:
+  - make test
+after_success:
+  - bash .ci/travis/deploy_to_anaconda.sh
