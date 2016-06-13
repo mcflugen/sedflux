@@ -27,13 +27,13 @@ G_BEGIN_DECLS
 
 #define PROGRAM_NAME "sedflux"
 #define SED_MAJOR_VERSION_S "2"
-#define SED_MINOR_VERSION_S "0"
-#define SED_MICRO_VERSION_S "81"
+#define SED_MINOR_VERSION_S "1"
+#define SED_MICRO_VERSION_S "1"
 #define SED_VERSION_S SED_MAJOR_VERSION_S"."SED_MINOR_VERSION_S"."SED_MICRO_VERSION_S
 
 #define S_MAJOR_VERSION (2)
-#define S_MINOR_VERSION (0)
-#define S_MICRO_VERSION (81)
+#define S_MINOR_VERSION (1)
+#define S_MICRO_VERSION (1)
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \
