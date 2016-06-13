@@ -9,10 +9,15 @@ requirements:
   build:
     - cmake
     - gcc
+    - pkgconfig-command [osx]
     - glib [osx]
   run:
     - libgcc
     - glib [osx]
+
+test:
+  commands:
+  - sedflux -h
 
 about:
   home: https://github.com/mcflugen/sedflux
