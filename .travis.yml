@@ -16,4 +16,4 @@ after_success:
 - bash .ci/travis/deploy_to_anaconda.sh
 env:
   global:
-    secure: dbr504ej+yUnfPB7l9ivfq2jfpgDKD3zGBlIAqUwhh2nXJrgUGdWqkvyOzhhfZdeelhlh+MFa6qapD0GNl/ZoUi0qpqcdl7Tzm++5B0ZU0TVqJ7QqQecBbjSqSAXnV5auHhqKDpONyQyL7LX/YOEqQJ/XgGGI7JYnBN6kcO+tYk=
+    secure: L+Yqd1nmMuQtCDKbhFPpfKiO1dPwH9J4jcdq6KW3vMixlFYs2546ZxhFaDXVgMXogVziq1FcSrNspaPxn0Zxk1ZuUAeFYU+gVp8/jqZGnkTL4UORMk0hHX6EwFNoUJl9LxpmO3140S67td14U0vBz8dOh9oeNui+VrMJn7NGlpI=
