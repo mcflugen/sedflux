@@ -124,6 +124,27 @@ static GHashTable *GRID_RANK =  NULL;
 static GHashTable *GRID_TYPE =  NULL;
 
 
+static gboolean
+is_var(gchar* name)
+{
+    return g_hash_table_lookup_extended(ALL_VAR_NAMES, name, NULL, NULL);
+}
+
+
+static gboolean
+is_input_var(gchar* name)
+{
+    return g_hash_table_lookup_extended(INPUT_VAR_NAMES, name, NULL, NULL);
+}
+
+
+static gboolean
+is_output_var(gchar* name)
+{
+    return g_hash_table_lookup_extended(OUTPUT_VAR_NAMES, name, NULL, NULL);
+}
+
+
 typedef struct {
     gchar* name;
     gchar* units;
@@ -189,14 +210,14 @@ setup_var_tables()
   VAR_SET_FUNC = g_hash_table_new(g_str_hash, g_str_equal);
 
   for (item = exchange_items ; item->name ; item++ ) {
-    g_hash_table_add(ALL_VAR_NAMES, item->name);
+    g_hash_table_insert(ALL_VAR_NAMES, item->name, NULL);
     if (strcmp(item->intent, "in") == 0) {
-        g_hash_table_add(INPUT_VAR_NAMES, item->name);
+        g_hash_table_insert(INPUT_VAR_NAMES, item->name, NULL);
     } else if (strcmp(item->intent, "out") == 0) {
-        g_hash_table_add(OUTPUT_VAR_NAMES, item->name);
+        g_hash_table_insert(OUTPUT_VAR_NAMES, item->name, NULL);
     } else if (strcmp(item->intent, "inout") == 0) {
-        g_hash_table_add(INPUT_VAR_NAMES, item->name);
-        g_hash_table_add(OUTPUT_VAR_NAMES, item->name);
+        g_hash_table_insert(INPUT_VAR_NAMES, item->name, NULL);
+        g_hash_table_insert(OUTPUT_VAR_NAMES, item->name, NULL);
     }
 
     {
@@ -208,11 +229,11 @@ setup_var_tables()
       *grid = item->grid;
       g_hash_table_insert(VAR_GRID, item->name, grid);
     }
-    if (g_hash_table_contains(OUTPUT_VAR_NAMES, item->name)) {
+    if (is_output_var(item->name)) {
       gchar* local = g_strdup(item->local_name);
       g_hash_table_insert(VAR_LOCAL_NAME, item->name, local);
     }
-    if (g_hash_table_contains(INPUT_VAR_NAMES, item->name)) {
+    if (is_input_var(item->name)) {
       g_hash_table_insert(VAR_SET_FUNC, item->name, item->set_func);
     }
   }
@@ -526,7 +547,7 @@ get_var_grid(void *self, const char *name, int *grid)
 static int
 get_var_type(void *self, const char *name, char *type)
 {
-    if (g_hash_table_contains(ALL_VAR_NAMES, name)) {
+    if (is_var(name)) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
         return BMI_SUCCESS;
     } else {
@@ -554,7 +575,7 @@ get_var_units(void *self, const char *name, char *units)
 static int
 get_var_itemsize(void *self, const char *name, int *itemsize)
 {
-    if (g_hash_table_contains(ALL_VAR_NAMES, name)) {
+    if (is_var(name)) {
         *itemsize = sizeof(double);
         return BMI_SUCCESS;
     } else {
@@ -589,7 +610,7 @@ get_value(void *self, const char *name, void *dest)
 {
     int status = BMI_FAILURE;
 
-    if (g_hash_table_contains(OUTPUT_VAR_NAMES, name)) {
+    if (is_output_var(name)) {
         gchar* sedflux_name = g_hash_table_lookup(VAR_LOCAL_NAME, name);
         if (sedflux_get_surface_value(self, sedflux_name, (double*)dest, 0))
             status = BMI_SUCCESS;
@@ -651,7 +672,7 @@ set_value (void *self, const char *name, void *array)
 {
     int status = BMI_FAILURE;
 
-    if (g_hash_table_contains(INPUT_VAR_NAMES, name)) {
+    if (is_input_var(name)) {
         void (*func)(void*, double*);
 
         func = g_hash_table_lookup(VAR_SET_FUNC, name);
