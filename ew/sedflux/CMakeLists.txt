@@ -27,6 +27,10 @@ target_link_libraries(run_sedflux sedflux-2.0-static ${sedflux_STATIC_LIBS}
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME sedflux COMPONENT sedflux)
 
+# add_executable(run_sedgrid sedgrid_main.c)
+# target_link_libraries(run_sedgrid bmi_sedgrid-static)
+# install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedgrid DESTINATION bin RENAME sedgrid COMPONENT sedflux)
+
 ########### next target ###############
 
 set (sedflux-2.0_LIB_SRCS
@@ -100,6 +104,18 @@ install(TARGETS bmi_sedflux3d DESTINATION lib)
 install(TARGETS bmi_sedflux3d-static DESTINATION lib)
 install(FILES bmi_sedflux3d.h DESTINATION include/sedflux3d)
 install(FILES bmi.h DESTINATION include/sedflux3d)
+
+add_library(bmi_sedgrid bmi_sedgrid.c ${sedflux-2.0_LIB_SRCS})
+add_library(bmi_sedgrid-static STATIC bmi_sedgrid.c ${sedflux-2.0_LIB_SRCS})
+target_link_libraries(bmi_sedgrid ${sedflux_LIBS})
+target_link_libraries(bmi_sedgrid-static ${sedflux_STATIC_LIBS})
+set_target_properties(bmi_sedgrid-static PROPERTIES OUTPUT_NAME
+  bmi_sedgrid)
+
+install(TARGETS bmi_sedgrid DESTINATION lib)
+install(TARGETS bmi_sedgrid-static DESTINATION lib)
+install(FILES bmi_sedgrid.h DESTINATION include/sedgrid)
+install(FILES bmi.h DESTINATION include/sedgrid)
 
 ########### install files ###############
 
