@@ -4,6 +4,7 @@ bmi_paths:
   - ew/plume
   - ew/sedflux/.bmi-2d
   - ew/sedflux/.bmi-3d
+  - ew/sedflux/.bmi-sedgrid
 
 build:
   - mkdir -p _build

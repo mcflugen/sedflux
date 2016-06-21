@@ -1,0 +1,54 @@
+number_of_x_columns:
+  description: Number of sediment columns along the x-axis
+  value:
+    type: int
+    default: 100
+    units: "-"
+    range:
+      min: 1
+      max: 1000
+number_of_y_columns:
+  description: Number of sediment columns along the y-axis
+  value:
+    type: int
+    default: 100
+    units: "-"
+    range:
+      min: 1
+      max: 1000
+dx:
+  description: Width of columns in the x-direction
+  value:
+    type: float
+    default: 100.
+    units: m
+    range:
+      min: 1.
+      max: 1.e6
+dy:
+  description: Width of columns in the y-direction
+  value:
+    type: float
+    default: 100.
+    units: m
+    range:
+      min: 1.
+      max: 1.e6
+dz:
+  description: Thickness of columns in the z-direction
+  value:
+    type: float
+    default: 10.
+    units: m
+    range:
+      min: 1e-2
+      max: 100.
+n_grains:
+  description: Number of grain types to track
+  value:
+    type: int
+    default: 3
+    units: "-"
+    range:
+      min: 1
+      max: 10

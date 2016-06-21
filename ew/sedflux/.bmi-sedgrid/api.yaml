@@ -1,0 +1,10 @@
+name: sedgrid
+
+language: c
+register: register_bmi_sedgrid
+includes:
+  - "#include <sedflux3d/bmi_sedflux3d.h>"
+cflags:
+  pkgconfig: sedflux3d
+libs:
+  pkgconfig: sedflux3d
