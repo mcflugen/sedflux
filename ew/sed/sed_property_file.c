@@ -673,10 +673,11 @@ sed_cube_n_rows (Sed_cube p)
         top_row = upper/dz;
 
       n_rows = top_row - bottom_row;
-
+/*
       fprintf (stderr, "Number of rows is %d\n", n_rows);
       fprintf (stderr, "lower row %f\n", lower);
       fprintf (stderr, "upper row %f\n", upper);
+*/
    }
 
    return n_rows;
