@@ -57,6 +57,9 @@ sed_inflow( Sed_cube         p       ,
       c->get_phe      = (Inflow_query_func)sed_get_phe;
       c->get_phe_data = p;
 
+      fprintf(stderr, "i_start is %d\n", i_start);
+      fprintf(stderr, "p->size is %d\n", sed_cube_size(p));
+
       width         = inflow_set_width_from_cube       ( p , i_start );
       bathy_data    = inflow_set_bathy_data_from_cube  ( p , width , i_start , dx );
       sediment_data = inflow_set_sediment_data_from_env( );
@@ -86,6 +89,9 @@ sed_inflow( Sed_cube         p       ,
             inflow_deposit_sediment( p , bathy_data , i_start , deposit_in_m );
 
             inflow_destroy_bathy_data( bathy_data );
+      fprintf(stderr, "* i_start is %d\n", i_start);
+      fprintf(stderr, "* p->size is %d\n", sed_cube_size(p));
+
             bathy_data = inflow_set_bathy_data_from_cube( p , width , i_start , dx );
          }
 
@@ -239,9 +245,15 @@ inflow_flood_from_cell( Sed_cell c , double area )
                                    * area
                                    * sed_cell_density( c )
                                    / INFLOW_GRAIN_DENSITY;
-         gint   n_days             = volume_of_sediment
+         //gint   n_days             = volume_of_sediment
+         double   n_days           = volume_of_sediment
                                    / sed_hydro_suspended_flux(h)
                                    * S_DAYS_PER_SECOND;
+
+         fprintf(stderr, "volume of sediment is %f\n", volume_of_sediment);
+         fprintf(stderr, "suspended flux is %f\n", sed_hydro_suspended_flux(h));
+         fprintf(stderr, "days per second is %f\n", S_DAYS_PER_SECOND);
+         fprintf(stderr, "number of days is %f\n", n_days);
 
          sed_hydro_set_duration( h , n_days );
       }
