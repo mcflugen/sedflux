@@ -149,13 +149,20 @@ run_turbidity_inflow( Sed_process proc , Sed_cube p )
    inflow_const.channel_width   = data->channel_width;
 
    // Start the flow at the end of the failure.
-   ind_start    = (int)( sed_cube_col_y( fail,sed_cube_n_y(fail)-1 ) );
+   // ind_start = (int)(sed_cube_col_y(fail, sed_cube_n_y(fail) - 1));
+   ind_start = (int)(sed_cube_col_y(fail, sed_cube_n_y(fail) - 1) / sed_cube_y_res(p));
+
+   fprintf(stderr, "The turbidity current starts at %d\n", ind_start);
 
    // Average the failure into one cell.
    flow_cell = sed_cube_to_cell( fail , NULL );
 
+   sed_cell_fprint(stderr, flow_cell);
+
    // initial flow conditions.
    flow = inflow_flood_from_cell( flow_cell , sed_cube_x_res(p)*sed_cube_y_res(p) );
+
+   sed_hydro_fprint(stderr, flow);
 
    sed_inflow( p , flow , ind_start , TURBIDITY_CURRENT_GRID_SPACING , &inflow_const );
 
@@ -691,12 +698,14 @@ init_inflow( Sed_process p , Eh_symbol_table tab , GError** error )
    gboolean     is_ok   = TRUE;
    //gchar*       key;
 
+  fprintf(stderr, "Trying to initialize inflow!!!\n");
    eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
 
    eh_symbol_table_require_labels( tab , inflow_labels , &tmp_err );
 
    if ( !tmp_err )
    {
+  fprintf(stderr, "Initializing inflow!!!\n");
       data->sua            = eh_symbol_table_dbl_value( tab , S_KEY_SUA            );
       data->sub            = eh_symbol_table_dbl_value( tab , S_KEY_SUB            );
       data->E_a            = eh_symbol_table_dbl_value( tab , S_KEY_E_A            );
