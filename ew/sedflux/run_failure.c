@@ -167,10 +167,13 @@ run_failure( Sed_process proc , Sed_cube p )
 
             flow_ok = sed_process_run_now( fail_process , p );
 
+            fprintf(stderr, "Flow is OK: %d\n", flow_ok);
+
             sed_process_withhold( fail_process , FAILURE_PROFILE_DATA );
+            fprintf(stderr, "withholding failure\n");
 
             sed_cube_destroy(fail);
-
+            fprintf(stderr, "destroyed failure\n");
          }
 
          fail_set_failure_surface_ignore( fail_prof    ,
@@ -278,9 +281,9 @@ init_failure_data( Sed_process proc , Sed_cube prof , GError** error )
       data->fail_prof = fail_init_fail_profile( prof , failure_const );
 
       data->turbidity_current = sed_process_child( proc , "TURBIDITY CURRENT" );
+      // data->turbidity_current = sed_process_child( proc , "INFLOW" );
       data->debris_flow       = sed_process_child( proc , "DEBRIS FLOW"       );
       data->slump             = sed_process_child( proc , "SLUMP"             );
-
    }
 
    return TRUE;
