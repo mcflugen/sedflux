@@ -1096,8 +1096,19 @@ Fail_column *fail_reinit_fail_column( Fail_column *f ,
 //         f->c[i]      = sed_get_top_property_with_load( S_COHESION ,
 //                                                        c ,
 //                                                        depth );
-         f->u[i]      = sed_cell_excess_pressure( sed_column_nth_cell(c,i_bot+i) ,
-                                                  hydro_static );
+         {
+           Sed_cell cell = sed_column_nth_cell(c, i_bot + i);
+           if (!cell) {
+             f->u[i] = 0.;
+             fprintf(stderr, "column is %d\n", c);
+             fprintf(stderr, "i_bot is %d\n", i_bot);
+             fprintf(stderr, "i is %d\n", i);
+             fprintf(stderr, "c->len is %d\n", sed_column_len(c));
+           } else {
+             f->u[i]      = sed_cell_excess_pressure( sed_column_nth_cell(c,i_bot+i) , hydro_static );
+           }
+         // f->u[i] = sed_cell_excess_pressure(sed_column_nth_cell(c, i_bot + i - 1), hydro_static);
+         }
 
 #else                     // the global model
 
