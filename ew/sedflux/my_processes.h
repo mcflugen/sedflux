@@ -71,6 +71,8 @@ Sed_process_info run_storm        ( Sed_process , Sed_cube );
 Sed_process_info run_subsidence   ( Sed_process , Sed_cube );
 Sed_process_info run_tide         ( Sed_process , Sed_cube );
 Sed_process_info run_xshore       ( Sed_process , Sed_cube );
+Sed_process_info run_turbidity_inflow( Sed_process , Sed_cube );
+
 
 Sed_proc_destroy destroy_avulsion;
 Sed_proc_destroy destroy_bbl;

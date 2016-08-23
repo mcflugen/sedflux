@@ -79,6 +79,8 @@ static Sed_process_init_t my_proc_defs[] =
    { "bbl"               , init_bbl           , run_bbl         , destroy_bbl         } ,
    { "cpr"               , init_cpr           , run_cpr         , destroy_cpr         } ,
 
+   { "turbidity current" , init_inflow        , run_turbidity_inflow, destroy_inflow     } ,
+
    { "hypopycnal plume"  , init_plume_hypo    , run_plume_hypo  , destroy_plume_hypo  } ,
    { "inflow"            , init_inflow        , run_plume_hyper_inflow , destroy_inflow     } ,
    { "sakura"            , init_inflow        , run_plume_hyper_sakura , destroy_inflow     } ,
