@@ -1,20 +1,3 @@
-%YAML 1.2
----
-_name: Run Parameters
-
-run_duration:
-  description: Simulation run time
-  value:
-    type: float
-    default: 3650.0
-    units: d
-    range:
-      min: 1.0
-      max: 1.79769313486e+308
-
----
-_name: Grid
-
 number_of_rows:
   description: Number of rows in the computational grid
   value:
@@ -32,7 +15,7 @@ number_of_columns:
     default: 500
     units: "-"
     range:
-      min:0
+      min: 0
       max: 2147483647
 
 row_spacing:
@@ -54,9 +37,6 @@ column_spacing:
     range:
       min: 0.12
       max: 10000.0
-
----
-_name: Earth Properties
 
 effective_elastic_thickness:
   description: Effective elastic thickness of lithosphere
