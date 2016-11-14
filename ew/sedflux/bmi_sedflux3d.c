@@ -854,7 +854,7 @@ set_value_at_indices (void *self, const char *name, int * inds, int len,
 #endif
 
 BMI_Model*
-register_bmi_sedflux2d(BMI_Model *model)
+register_bmi_sedflux3d(BMI_Model *model)
 {
     model->self = NULL;
 

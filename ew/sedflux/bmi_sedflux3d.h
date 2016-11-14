@@ -1,5 +1,5 @@
-#ifndef BMI_SEDFLUX2D_H_INCLUDED
-#define BMI_SEDFLUX2D_H_INCLUDED
+#ifndef BMI_SEDFLUX3D_H_INCLUDED
+#define BMI_SEDFLUX3D_H_INCLUDED
 
 #if defined(__cplusplus)
 extern "C" {
