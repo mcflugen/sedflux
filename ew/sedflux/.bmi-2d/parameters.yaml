@@ -1,16 +1,3 @@
----
-_name: Run Parameters
-run_duration:
-  description: Simulation run time
-  value:
-    default: 1825000
-    range:
-      max: 1.79769313486e+308
-      min: 0
-    type: int
-    units: d
----
-_name: Bathymetry
 bathymetry_method:
   description: Use a bathymetry with a linear shelf and slope
   value:
@@ -66,8 +53,6 @@ domain_width:
       min: 0.0
     type: float
     units: m
----
-_name: Sea Level
 
 sea_level_method:
   description: Use a linear rise/fall in sea level or user-defined
@@ -108,8 +93,6 @@ ending_sea_level_elevation:
     type: float
     units: m
   description: Grid
----
-_name: Grid
 
 z_resolution:
   description: Resolution in the vertical direction
@@ -141,8 +124,6 @@ cross_shore_resolution:
     type: float
     units: m
   description: Compaction
----
-_name: Compaction
 
 compaction_process_is_on:
   description: Turn on/off the compaction process module
@@ -150,8 +131,6 @@ compaction_process_is_on:
     choices: [yes, no]
     default: no
     type: choice
----
-_name: Isostasy
 
 isostasy_process_is_on:
   description: Turn on/off the isostasy process module
@@ -191,8 +170,6 @@ isostasy_relaxation_time:
     type: float
     units: Pa
   description: River
----
-_name: River
 
 river_bed_load_flux:
   description: Bed-load flux at river mouth
@@ -263,8 +240,6 @@ bed_load_dump_length:
       min: 10.0
     type: float
     units: m
----
-_name: Plume
 
 plume_max_width:
   description: Maximum width of the river plume
@@ -286,7 +261,7 @@ plume_cross_shore_nodes:
       max: 21
       min: 3
     type: int
-    units: '-'
+    units: "-"
 
 plume_river_mouth_nodes:
   description:
@@ -298,10 +273,7 @@ plume_river_mouth_nodes:
       max: 21
       min: 3
     type: int
-    units: '-'
-
----
-_name: Bed Load
+    units: "-"
 
 bed_load_sediment_grain_size:
   description: Grain size of bed-load sediment
@@ -341,7 +313,7 @@ bed_load_sediment_minimum_void_ratio:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
+    units: "-"
 
 bed_load_sediment_diffusion_coefficient:
   description: Diffusion coefficient of bed-load sediment
@@ -351,10 +323,7 @@ bed_load_sediment_diffusion_coefficient:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
-
----
-_name: Suspended Load
+    units: "-"
 
 suspended_load_sediment_1_grain_size:
   description: Grain size of suspended-load sediment class 1
@@ -375,6 +344,7 @@ suspended_load_sediment_2_grain_size:
       min: 0.1
     type: float
     units: um
+
 suspended_load_sediment_1_grain_density:
   description: Grain density of suspended-load sediment class 1
   value:
@@ -424,7 +394,7 @@ suspended_load_sediment_1_minimum_void_ratio:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
+    units: "-"
 
 suspended_load_sediment_2_minimum_void_ratio:
   description:
@@ -435,7 +405,7 @@ suspended_load_sediment_2_minimum_void_ratio:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
+    units: "-"
 
 suspended_load_sediment_1_diffusion_coefficient:
   description: Diffusion coefficient of suspended-load sediment class 1
@@ -445,7 +415,7 @@ suspended_load_sediment_1_diffusion_coefficient:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
+    units: "-"
 
 suspended_load_sediment_2_diffusion_coefficient:
   description: Diffusion coefficient of suspended-load sediment class 2
@@ -455,7 +425,7 @@ suspended_load_sediment_2_diffusion_coefficient:
       max: 1.0
       min: 0.0
     type: float
-    units: '-'
+    units: "-"
 
 suspended_load_sediment_1_removal_rate:
   description: Removal rate of suspended-load sediment class 1
