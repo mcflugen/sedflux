@@ -3,6 +3,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/.
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc )
 
 set( sedflux_LIBS
   utils sedflux sakura avulsion bio diffusion subside xshore squall flow muds
