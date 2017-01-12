@@ -79,6 +79,7 @@ install(TARGETS sedflux-2.0 DESTINATION lib COMPONENT sedflux)
 install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 install(FILES  sedflux2d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 install(FILES  sedflux3d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
+install(FILES  sedgrid.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
 
 ### BMI lib ###
 
