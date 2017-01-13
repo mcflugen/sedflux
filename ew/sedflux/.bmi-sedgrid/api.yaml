@@ -1,4 +1,4 @@
-name: sedgrid
+name: Sedgrid
 
 language: c
 register: register_bmi_sedgrid
