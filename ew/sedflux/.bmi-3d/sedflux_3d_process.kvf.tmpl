@@ -1,0 +1,119 @@
+[ 'sea level' ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+sea level file:                         {sea_level_file}
+
+[ compaction ]
+active:                                 {compaction_process_is_on}
+logging:                                no
+repeat interval:                        25y
+
+[ subsidence ]
+active:                                 no
+logging:                                no
+repeat interval:                        25y
+subsidence file:                        dummy.csv
+
+[ isostasy ]
+active:                                 {isostasy_process_is_on}
+logging:                                no
+repeat interval:                        25y
+effective elastic thickness (m):        {isostasy_effective_elastic_thickness}
+Youngs modulus (Pa):                    {isostasy_youngs_modulus}
+relaxation time (years):                {isostasy_relaxation_time}
+
+[ bbl ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+algorithm (none|muds):                  none
+external sediment source file:          none
+
+[ river ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+river values:                           season
+river file:                             sedflux_3d_river.kvf
+river name:                             po
+
+[ avulsion ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+standard deviation (deg):               0.
+minimum angle (deg):                    -179.0
+maximum angle (deg):                    -1.0
+hinge point:                            20,40
+fraction of sediment remaining in plane: 1.
+seed for random number generator:       1973
+river can branch?:                      no
+river name:                             po
+
+[ erosion ]
+active:                                 no
+logging:                                no
+repeat interval:                        always
+reach of highest order stream (m):      10000
+relief of highest order stream (m):     1
+method (diffusion|slope):               diffusion
+
+[ 'bedload dumping' ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+distance to dump bedload (m):           {bed_load_dump_length}
+ratio of flood plain to bedload rate:   0.0
+fraction of bedload retained in the delta plain: 0.0
+river name:                             po
+
+[ plume ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+hyperpycnal plume model:                <none>
+hypopycnal plume model:                 'hypopycnal plume'
+
+[ 'hypopycnal plume' ]
+active:                                 yes
+logging:                                no
+repeat interval:                        always
+background ocean concentration:         0.
+velocity of coastal current (m/s):      0.
+maximum plume width (km):               {plume_max_width}
+number of grid nodes in cross-shore:    {plume_cross_shore_nodes}
+number of grid nodes in river mouth:    {plume_river_mouth_nodes}
+
+['measuring station']
+active:                                 no
+logging:                                no
+repeat interval:                        10000y
+parameter to measure:                   elevation
+position wrt river mouth:               no
+position of station:                    all
+filename:                               elevation.bin
+
+[ 'data dump' ]
+active:                                 no
+logging:                                no
+repeat interval:                        10000y
+output directory:                       ./output-age
+vertical resolution:                    full
+horizontal resolution:                  full
+vertical limits:                        tight
+horizontal limits:                      tight
+property:                               age
+
+[ 'data dump' ]
+active:                                 yes
+logging:                                no
+repeat interval:                        1000y
+output directory:                       ./output-grain
+vertical resolution:                    full
+horizontal resolution:                  full
+vertical limits:                        tight
+horizontal limits:                      tight
+property:                               grain
+
+
