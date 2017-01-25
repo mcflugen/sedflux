@@ -38,7 +38,7 @@ typedef const char* Class_Desc;
 
 #else
 
-#define NEW_OBJECT( type , obj ) ( obj = (type)g_new( type , 1 ) )
+#define NEW_OBJECT( type , obj ) ( obj = (type)g_malloc(sizeof(*obj)) )
 #define FREE_OBJECT( obj ) ( g_free( obj ) )
 
 #endif
