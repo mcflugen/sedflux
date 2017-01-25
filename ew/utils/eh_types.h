@@ -27,8 +27,8 @@ typedef const char* Class_Desc;
 
 //   static Class_Desc _CD( type ) = { #type } ; typedef struct tag##base_type type
 
-#define USE_MY_VTABLE
-//#undef USE_MY_VTABLE
+//#define USE_MY_VTABLE
+#undef USE_MY_VTABLE
 #if defined( USE_MY_VTABLE )
 
 #define NEW_OBJECT( type , obj ) \
