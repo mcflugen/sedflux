@@ -1,3 +1,13 @@
+run_duration:
+  description: Total model run time
+  value:
+    default: 36500.0
+    range:
+      min: 0.
+      max: 1.79769313486e+308
+    type: float
+    units: d
+
 bathymetry_method:
   description: Use a bathymetry with a linear shelf and slope
   value:
@@ -8,7 +18,7 @@ bathymetry_method:
 bathymetry_file:
   description: CSV-formatted bathymetry file
   value:
-    default: sedflux2d_bathy.csv
+    default: sedflux_3d_bathy.csv
     files:
       - sedflux2d_bathy_adriatic.csv
       - sedflux2d_bathy.csv
@@ -97,33 +107,32 @@ ending_sea_level_elevation:
 z_resolution:
   description: Resolution in the vertical direction
   value:
-    default: 0.01
+    default: 0.5
     range:
       max: 10.0
-      min: 0
+      min: 0.01
     type: float
     units: m
 
-along_shore_resolution:
-  description: Width of the coastline
+x_resolution:
+  description: Grid resolution in the x-direction
   value:
-    default: 50000.0
+    default: 500.0
     range:
       max: 1.79769313486e+308
       min: 0
     type: float
     units: m
 
-cross_shore_resolution:
-  description: Spatial resolution in the cross-shore direction
+y_resolution:
+  description: Grid resolution in the y-direction
   value:
-    default: 250.0
+    default: 500.0
     range:
-      max: 10000.0
+      max: 1.79769313486e+308
       min: 0.0
     type: float
     units: m
-  description: Compaction
 
 compaction_process_is_on:
   description: Turn on/off the compaction process module
@@ -169,7 +178,6 @@ isostasy_relaxation_time:
       min: 0.0
     type: float
     units: Pa
-  description: River
 
 river_bed_load_flux:
   description: Bed-load flux at river mouth
