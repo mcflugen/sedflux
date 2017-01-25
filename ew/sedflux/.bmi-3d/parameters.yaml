@@ -76,11 +76,9 @@ sea_level_method:
 sea_level_file:
   description: CSV-formatted sea-level file
   value:
-    default: sedflux2d_sea_level_constant.csv
+    default: sedflux_3d_sea_level.csv
     files:
-      - sedflux2d_sea_level_constant.csv
-      - sedflux2d_sea_level_falling.csv
-      - sedflux2d_sea_level_rising.csv
+      - sedflux_3d_sea_level.csv
     type: file
 
 starting_sea_level_elevation:
