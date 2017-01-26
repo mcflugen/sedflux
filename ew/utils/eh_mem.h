@@ -28,8 +28,8 @@ extern "C" {
 #define win_assert( exp ) if ( !(exp) ) { assert_error; } else
 void API_ENTRY report_win_assert( char *file_name , int line_no );
 
-#define USE_MY_VTABLE
-//#undef USE_MY_VTABLE
+//#define USE_MY_VTABLE
+#undef USE_MY_VTABLE
 
 gpointer API_ENTRY eh_malloc         ( gsize    w_size   , Class_Desc desc , const char* file    , int line_no );
 gpointer API_ENTRY eh_realloc        ( gpointer old      , gsize w_size , const char *file , int line_no );
