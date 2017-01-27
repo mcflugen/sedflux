@@ -132,7 +132,7 @@ static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
     *dt = 1.;
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
