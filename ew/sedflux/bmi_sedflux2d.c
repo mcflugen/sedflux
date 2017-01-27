@@ -136,7 +136,7 @@ get_current_time(void * self, double *time)
 static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
-    *dt = -1.;
+    *dt = 1.;
     return BMI_FAILURE;
 }
 
