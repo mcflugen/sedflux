@@ -20,8 +20,7 @@ bathymetry_file:
   value:
     default: sedflux_3d_bathy.csv
     files:
-      - sedflux2d_bathy_adriatic.csv
-      - sedflux2d_bathy.csv
+      - sedflux_3d_bathy.csv
     type: file
 
 shelf_gradient:
