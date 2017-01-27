@@ -301,7 +301,9 @@ get_grid_size(void *self, int id, int *size)
     if (get_grid_rank(self, id, &rank) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    {
+    if (rank == 0) {
+        *size = 1;
+    } else {
         int * shape = (int*) malloc(sizeof(int) * rank);
         int i;
 
