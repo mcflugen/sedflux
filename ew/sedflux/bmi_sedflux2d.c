@@ -164,6 +164,9 @@ initialize(const char * file, void **handle)
         Sedflux_state * self = NULL;
         char *args = NULL;
 
+        args = g_strdup_printf("sedflux -2 -i %s", file);
+
+#if 0
         if (file) { /* Read the config file */
             FILE * fp = fopen (file, "r");
 
@@ -180,6 +183,7 @@ initialize(const char * file, void **handle)
         }
         else
             return BMI_FAILURE;
+#endif
 
         fprintf (stderr, "Initializing sedflux with these args: %s\n", args);
         if (args) { /* Initialize with these argments */
