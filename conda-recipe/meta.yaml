@@ -9,7 +9,7 @@ requirements:
   build:
     - cmake
     - gcc
-    - pkgconfig-command [osx]
+    - pkg-config [osx]
     - glib [osx]
   run:
     - libgcc
