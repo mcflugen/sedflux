@@ -46,6 +46,7 @@ double* sedflux_get_value_spacing (Sedflux_state* state, const char* val_s,
 double sedflux_get_start_time (Sedflux_state* state);
 double sedflux_get_end_time (Sedflux_state* state);
 double sedflux_get_current_time (Sedflux_state* state);
+double sedflux_get_time_step(Sedflux_state* state);
 int sedflux_get_nx (Sedflux_state* state);
 int sedflux_get_ny (Sedflux_state* state);
 int sedflux_get_nz (Sedflux_state* state);

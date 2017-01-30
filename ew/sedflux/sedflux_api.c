@@ -1756,6 +1756,16 @@ sedflux_get_current_time (Sedflux_state* state)
   return sed_cube_age_in_years (state->p);
 }
 
+double
+sedflux_get_time_step(Sedflux_state* state)
+{
+  eh_require(state);
+
+  double now = sed_cube_age(state->p);
+  Sed_epoch epoch = sed_epoch_queue_find(state->q, now);
+  return sed_epoch_time_step(epoch);
+}
+
 int
 sedflux_get_nx (Sedflux_state* state)
 {
