@@ -1176,14 +1176,18 @@ sed_epoch_queue_run_until( Sed_epoch_queue   epoch_q ,
       { /* If the times are the same, do nothing.  Otherwise, run until stop time. */
          if ( t_in_years > t_start )
          { /* Run until the stop time */
-            Sed_epoch         epoch     = sed_epoch_queue_find( epoch_q , t_start );
-            double            epoch_end = t_start + sed_epoch_duration( epoch );
+            Sed_epoch epoch = sed_epoch_queue_find(epoch_q, t_start);
+            double epoch_end = t_start + sed_epoch_duration(epoch);
+            double time_step = sed_epoch_time_step(epoch);
+
+            if (t_start + time_step > t_in_years)
+              time_step = t_in_years - t_start;
 
             if ( epoch_end >= t_in_years )
             { /* t_0 and t_1 are in the same epoch */
-               Sed_process_queue proc_q = sed_epoch_proc_queue( epoch );
+               Sed_process_queue proc_q = sed_epoch_proc_queue(epoch);
 
-               sed_cube_set_time_step( p , sed_epoch_time_step( epoch ) );
+               sed_cube_set_time_step(p, time_step);
 
                sed_process_queue_run_until( proc_q , p , t_in_years );
 
