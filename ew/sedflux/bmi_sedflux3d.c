@@ -131,7 +131,7 @@ get_current_time(void * self, double *time)
 static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
-    *dt = 1.;
+    *dt = sedflux_get_time_step(self);
     return BMI_SUCCESS;
 }
 
@@ -222,18 +222,27 @@ update_frac(void * self, double f)
 
 
 static int
-update(void * self)
+update_until(void * self, double then)
 {
-    sedflux_run_time_step(self);
+    sedflux_run_until(self, then / 365.);
     return BMI_SUCCESS;
 }
 
 
 static int
-update_until(void * self, double then)
+update(void * self)
 {
-    sedflux_run_until(self, then / 365.);
-    return BMI_SUCCESS;
+    double now, dt;
+
+    if (get_current_time(self, &now) != BMI_SUCCESS)
+      return BMI_FAILURE;
+    if (get_time_step(self, &dt) == BMI_SUCCESS)
+      return BMI_FAILURE;
+
+    return update_until(self, now + dt);
+
+    // sedflux_run_time_step(self);
+    // return BMI_SUCCESS;
 }
 
 
