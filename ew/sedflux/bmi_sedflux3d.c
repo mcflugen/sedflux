@@ -7,6 +7,7 @@
 
 /* Implement this: Add model-specific includes */
 #include "utils/utils.h"
+#include "sed/sed_const.h"
 #include "sedflux_api.h"
 
 
@@ -123,7 +124,7 @@ get_end_time(void * self, double *time)
 static int
 get_current_time(void * self, double *time)
 { /* Implement this: Set current time */
-    *time = sedflux_get_current_time(self) * 365.;
+    *time = sedflux_get_current_time(self) * S_DAYS_PER_YEAR;
     return BMI_SUCCESS;
 }
 
@@ -131,7 +132,7 @@ get_current_time(void * self, double *time)
 static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
-    *dt = sedflux_get_time_step(self);
+    *dt = sedflux_get_time_step(self) * S_DAYS_PER_YEAR;
     return BMI_SUCCESS;
 }
 
