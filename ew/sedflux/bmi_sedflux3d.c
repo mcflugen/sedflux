@@ -225,7 +225,7 @@ update_frac(void * self, double f)
 static int
 update_until(void * self, double then)
 {
-    sedflux_run_until(self, then / 365.);
+    sedflux_run_until(self, then * S_YEARS_PER_DAY);
     return BMI_SUCCESS;
 }
 
@@ -237,13 +237,10 @@ update(void * self)
 
     if (get_current_time(self, &now) != BMI_SUCCESS)
       return BMI_FAILURE;
-    if (get_time_step(self, &dt) == BMI_SUCCESS)
+    if (get_time_step(self, &dt) != BMI_SUCCESS)
       return BMI_FAILURE;
 
     return update_until(self, now + dt);
-
-    // sedflux_run_time_step(self);
-    // return BMI_SUCCESS;
 }
 
 
