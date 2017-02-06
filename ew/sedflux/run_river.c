@@ -58,9 +58,18 @@ run_river( Sed_process proc , Sed_cube prof )
       // Set the cube time step to be that of the river.
       //---
 //      if ( data->type & (HYDRO_USE_BUFFER|HYDRO_INLINE) )
-      if ( data->type==SED_HYDRO_INLINE || data->buffer_is_on )
-         sed_cube_set_time_step( prof , 
-                                 sed_hydro_duration_in_seconds(river_data)/S_SECONDS_PER_YEAR );
+      if ( data->type==SED_HYDRO_INLINE || data->buffer_is_on ) {
+        const double river_dt = sed_hydro_duration_in_seconds(river_data) / S_SECONDS_PER_YEAR;
+        const double cube_dt = sed_cube_time_step(prof);
+
+        if (river_dt > cube_dt)
+          sed_hydro_set_duration(river_data, cube_dt * S_DAYS_PER_YEAR);
+        sed_cube_set_time_step(prof, sed_hydro_duration_in_seconds(river_data) / S_SECONDS_PER_YEAR);
+
+        // sed_cube_set_time_step(prof,
+        //                        sed_hydro_duration_in_seconds(river_data)/S_SECONDS_PER_YEAR);
+      }
+
       dt = sed_cube_time_step_in_seconds( prof );
 
       //---
