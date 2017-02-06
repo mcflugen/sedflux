@@ -635,18 +635,26 @@ sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
 
    if ( q && p )
    {
-      double         t; /* Time in years */
+      double t = sed_cube_age_in_years(p);
+      const double dt = sed_cube_time_step(p);
+      int last_iteration = FALSE;
+
+      if (t >= t_total)
+        return q;
+
 //      Eh_status_bar* bar = eh_status_bar_new( &t , &t_total );
 
-      t = sed_cube_age_in_years(p);
-      while (fabs(t_total - t) > 1e-6) {
+      do {
         if (sed_signal_is_pending(SED_SIG_QUIT) ||
             sed_signal_is_pending(SED_SIG_NEXT)) {
           break;
         }
 
+        if (t + sed_cube_time_step(p) > t_total) {
+          sed_cube_set_time_step(p, t_total - t);
+          last_iteration = TRUE;
+        }
         sed_process_queue_remove_expired(q, p);
-
         sed_process_queue_run(q, p);
 
         if (sed_signal_is_pending(SED_SIG_DUMP)) {
@@ -656,13 +664,14 @@ sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
 
         sed_cube_increment_age(p);
         t = sed_cube_age_in_years(p);
-      }
 
+      } while (t < t_total || last_iteration);
+
+      sed_cube_set_time_step(p, dt);
       if (fabs(sed_cube_age_in_years(p) - t_total) <= 1e-6)
         sed_cube_set_age(p, t_total);
 
-      if ( sed_signal_is_pending( SED_SIG_NEXT ) )
-      {
+      if ( sed_signal_is_pending( SED_SIG_NEXT ) ) {
          sed_cube_set_age( p , t_total );
          sed_signal_reset( SED_SIG_NEXT );
       }
