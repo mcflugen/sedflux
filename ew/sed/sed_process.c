@@ -665,7 +665,7 @@ sed_process_queue_run_until( Sed_process_queue q , Sed_cube p , double t_total )
         sed_cube_increment_age(p);
         t = sed_cube_age_in_years(p);
 
-      } while (t < t_total || last_iteration);
+      } while (t < t_total && !last_iteration);
 
       sed_cube_set_time_step(p, dt);
       if (fabs(sed_cube_age_in_years(p) - t_total) <= 1e-6)
