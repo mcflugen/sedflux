@@ -390,7 +390,7 @@ get_var_grid(void *self, const char *name, int *grid)
     } else if (strcmp(name, "land-or-seabed_sediment_silt__volume_fraction") == 0) {
         *grid = 0;
     } else if (strcmp(name, "channel_water_sediment~bedload__mass_flow_rate") == 0) {
-        *grid = 2;
+        *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment_surface__elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment_clay__volume_fraction") == 0) {
@@ -424,7 +424,7 @@ get_var_grid(void *self, const char *name, int *grid)
     } else if (strcmp(name, "bedrock_surface__increment_of_elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0) {
-        *grid = 2;
+        *grid = 0;
     } else if (strcmp(name, "sediment__porosity") == 0) {
         *grid = 1;
     } else if (strcmp(name, "sediment__bulk_mass-per-volume_density") == 0) {
