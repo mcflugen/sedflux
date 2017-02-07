@@ -371,6 +371,8 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment__bulk_mass-per-volume_density") == 0) {
         *grid = 0;
+    } else if (strcmp(name, "land-or-seabed_sediment__bulk_mass-per-volume_density") == 0) {
+        *grid = 0;
     } else if (strcmp(name, "sea_bottom_surface__elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment_grain__mean_diameter") == 0) {
@@ -454,6 +456,8 @@ get_var_type(void *self, const char *name, char *type)
     } else if (strcmp(name, "sea_water__depth") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__bulk_mass-per-volume_density") == 0) {
+        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "land-or-seabed_sediment__bulk_mass-per-volume_density") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__elevation") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
@@ -539,6 +543,8 @@ get_var_units(void *self, const char *name, char *units)
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__bulk_mass-per-volume_density") == 0) {
         strncpy(units, "kg / m^3", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "land-or-seabed_sediment__bulk_mass-per-volume_density") == 0) {
+        strncpy(units, "kg / m^3", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_grain__mean_diameter") == 0) {
@@ -622,6 +628,8 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
     } else if (strcmp(name, "sea_water__depth") == 0) {
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_sediment__bulk_mass-per-volume_density") == 0) {
+        *itemsize = sizeof(double);
+    } else if (strcmp(name, "land-or-seabed_sediment__bulk_mass-per-volume_density") == 0) {
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_surface__elevation") == 0) {
         *itemsize = sizeof(double);
