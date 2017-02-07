@@ -532,8 +532,8 @@ sedflux_initialize (const gint argc, const gchar* argv[])
     _sedflux_save_time_variables (state);
   }
   eh_info ("Sedflux is set up.");
-  fprintf (stderr, "Sedflux state is %d\n", state);
-  fprintf (stderr, "Sedflux size is %d\n", sed_cube_size (state->p));
+//   fprintf (stderr, "Sedflux state is %d\n", state);
+//   fprintf (stderr, "Sedflux size is %d\n", sed_cube_size (state->p));
 
   return state;
 }
@@ -698,8 +698,8 @@ sedflux_get_value_data (Sedflux_state* state, const char* val_s, int dimen[3])
           min = erosion[i];
       }
 
-      fprintf (stderr, "Sedflux: Max erosion is %f\n", max);
-      fprintf (stderr, "Sedflux: Min erosion is %f\n", min);
+      // fprintf (stderr, "Sedflux: Max erosion is %f\n", max);
+      // fprintf (stderr, "Sedflux: Min erosion is %f\n", min);
       fflush (stderr);
     }
 
@@ -811,8 +811,8 @@ sedflux_get_double (Sedflux_state* state, const char* val_s, int * n_dim,
           min = erosion[i];
       }
 
-      fprintf (stderr, "Sedflux: Max erosion is %f\n", max);
-      fprintf (stderr, "Sedflux: Min erosion is %f\n", min);
+      // fprintf (stderr, "Sedflux: Max erosion is %f\n", max);
+      // fprintf (stderr, "Sedflux: Min erosion is %f\n", min);
       fflush (stderr);
     }
 
@@ -982,9 +982,9 @@ sedflux_get_surface_value (Sedflux_state* state, const char* val_s, double *dest
         sub = sed_cube_sub (state->p, i);
         dest[i] = sed_measurement_make (m, state->p, sub.i, sub.j);
       }
-      fprintf (stderr, "These are my elevations (all %d=%dx%d of them):\n", len, sedflux_get_nx (state), sedflux_get_ny (state));
-      for (i=0; i<len; ++i)
-        fprintf (stderr, "%d, %f\n", i, sed_cube_elevation (state->p, 0, i));
+      // fprintf (stderr, "These are my elevations (all %d=%dx%d of them):\n", len, sedflux_get_nx (state), sedflux_get_ny (state));
+      // for (i=0; i<len; ++i)
+      //   fprintf (stderr, "%d, %f\n", i, sed_cube_elevation (state->p, 0, i));
     }
 
     sed_measurement_destroy (m);
@@ -1024,7 +1024,7 @@ sedflux_get_sediment_value (Sedflux_state* state, const char* val_s, double *des
   {
     int i;
     const int len = dimen[0] * dimen[1] * dimen[2];
-    fprintf (stderr, "These are my dimensions: %d x %d x %d\n", dimen[0], dimen[1], dimen[2]);
+    // fprintf (stderr, "These are my dimensions: %d x %d x %d\n", dimen[0], dimen[1], dimen[2]);
     for (i=0; i<len; ++i)
       dest[i] = buffer[i];
   }
