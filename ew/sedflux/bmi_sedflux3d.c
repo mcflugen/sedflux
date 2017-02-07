@@ -395,16 +395,16 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
         *grid = 0;
-    } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
-        *grid = 0;
+    // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
         *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         *grid = 0;
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
         *grid = 1;
-    } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
-        *grid = 0;
+    // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     *grid = 0;
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
@@ -479,16 +479,16 @@ get_var_type(void *self, const char *name, char *type)
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
-    } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+    // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
-    } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+    // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
@@ -563,16 +563,16 @@ get_var_units(void *self, const char *name, char *units)
         strncpy(units, "-", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
         strncpy(units, "-", BMI_MAX_UNITS_NAME);
-    } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+    // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     strncpy(units, "-", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
         strncpy(units, "-", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
-    } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+    // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     strncpy(units, "-", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
@@ -647,16 +647,16 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
         *itemsize = sizeof(double);
-    } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
-        *itemsize = sizeof(double);
+    // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     *itemsize = sizeof(double);
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
         *itemsize = sizeof(double);
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
         *itemsize = sizeof(double);
-    } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
-        *itemsize = sizeof(double);
+    // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
+    //     *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
