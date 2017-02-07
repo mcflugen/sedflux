@@ -725,7 +725,7 @@ get_value(void *self, const char *name, void *dest)
 
     if (strcmp(name, "sea_water__depth") == 0)
         sedflux_name = "DEPTH";
-    if (strcmp(name, "bedrock_surface__elevation") == 0)
+    else if (strcmp(name, "bedrock_surface__elevation") == 0)
         sedflux_name = "BASEMENT";
     else if (g_str_has_suffix(name, "surface__elevation"))
         sedflux_name = "ELEVATION";
