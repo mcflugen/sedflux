@@ -48,7 +48,8 @@ get_input_var_names(void *self, char **names)
 }
 
 
-#define OUTPUT_VAR_NAME_COUNT (33)
+// #define OUTPUT_VAR_NAME_COUNT (33)
+#define OUTPUT_VAR_NAME_COUNT (31)
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "land-or-seabed_sediment_grain__mean_diameter",
     "sea_water__depth",
@@ -58,21 +59,21 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "bedrock_surface__elevation",
     "land-or-seabed_sediment__permeability",
     "sediment_grain__mean_diameter",
-    "land-or-seabed_sediment_surface__y_derivative_of_elevation",
+    "land-or-seabed_sediment_surface__y_derivative_of_elevation", // land-or-seabed_surface__y_derivative_of_elevation
     "sea_bottom_sediment__porosity",
     "land-or-seabed_sediment_silt__volume_fraction",
     "land-or-seabed_sediment_surface__elevation",
     "land-or-seabed_sediment_clay__volume_fraction",
     "sea_bottom_sediment_mud__volume_fraction",
-    "surface_sediment_model_grain_class_0__volume_fraction",
+//    "surface_sediment_model_grain_class_0__volume_fraction",
     "land-or-seabed_sediment_sand__volume_fraction",
     "land-or-seabed_sediment__mean_of_deposition_age",
     "sediment__mean_of_deposition_age",
-    "sea_bottom_sediment_model_grain_class_0__volume_fraction",
+//    "sea_bottom_sediment_model_grain_class_0__volume_fraction",
     "sea_bottom_surface__y_derivative_of_elevation",
     "sea_bottom_sediment_clay__volume_fraction",
     "land-or-seabed_sediment__porosity",
-    "land-or-seabed_sediment__bulk_density",
+    "land-or-seabed_sediment__bulk_mass-per-volume_density",
     "land-or-seabed_sediment_mud__volume_fraction",
     "land-or-seabed_sediment_surface__x_derivative_of_elevation",
     "sediment__porosity",
@@ -724,6 +725,8 @@ get_value(void *self, const char *name, void *dest)
 
     if (strcmp(name, "sea_water__depth") == 0)
         sedflux_name = "DEPTH";
+    if (strcmp(name, "bedrock_surface__elevation") == 0)
+        sedflux_name = "BASEMENT";
     else if (g_str_has_suffix(name, "surface__elevation"))
         sedflux_name = "ELEVATION";
     else if (g_str_has_suffix(name, "surface__x_derivative_of_elevation"))
@@ -742,16 +745,14 @@ get_value(void *self, const char *name, void *dest)
         sedflux_name = "CLAY";
     else if (g_str_has_suffix(name, "sediment_mud__volume_fraction"))
         sedflux_name = "MUD";
-    else if (g_str_has_suffix(name, "sediment__bulk_density"))
+    else if (g_str_has_suffix(name, "sediment__bulk_mass-per-volume_density"))
         sedflux_name = "DENSITY";
     else if (g_str_has_suffix(name, "sediment__porosity"))
         sedflux_name = "POROSITY";
     else if (g_str_has_suffix(name, "sediment__permeability"))
         sedflux_name = "PERMEABILITY";
-    else if (strcmp(name, "bedrock_surface__elevation") == 0)
-        sedflux_name = "BASEMENT";
-    else if (g_str_has_suffix(name, "sediment_model_grain_class_0__volume_fraction"))
-        sedflux_name = "";
+//     else if (g_str_has_suffix(name, "sediment_model_grain_class_0__volume_fraction"))
+//         sedflux_name = "";
     else
         return BMI_FAILURE;
 
@@ -760,10 +761,13 @@ get_value(void *self, const char *name, void *dest)
             return BMI_FAILURE;
     }
     else {
+        // NOTE: Need to check for 'land-or-seabed_sediment_'
         gint mask = 0;
 
         if (g_str_has_prefix(name, "sea_bottom_"))
             mask |= MASK_LAND;
+        else if (g_str_has_prefix(name, "land-or-seabed_"))
+            mask = 0;
 
         if (!sedflux_get_surface_value(self, sedflux_name, (double*)dest, mask))
             return BMI_FAILURE;
@@ -827,7 +831,7 @@ set_value (void *self, const char *name, void *array)
         sedflux_set_basement(self, (double*)array);
     else if (strcmp(name, "bedrock_surface__increment_of_elevation") == 0)
         sedflux_set_uplift(self, (double*)array);
-    else if (strcmp(name, "sea_bottom_sediment__increment_to_thickness") == 0) // Should this be sea_bottom_sediment__thickness???
+    else if (strcmp(name, "sea_bottom_sediment__increment_of_thickness") == 0) // Should this be sea_bottom_sediment__thickness???
         sedflux_set_subaerial_deposition_to(self, (double*)array);
     else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0)
         sedflux_set_discharge(self, (double*)array);
