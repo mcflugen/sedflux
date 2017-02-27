@@ -61,7 +61,7 @@ typedef struct {
   int (* get_grid_y)(void *, int, double *);
   int (* get_grid_z)(void *, int, double *);
 
-  int (* get_grid_cell_count)(void *, int, int *);
+  int (* get_grid_face_count)(void *, int, int *);
   int (* get_grid_point_count)(void *, int, int *);
   int (* get_grid_vertex_count)(void *, int, int *);
 
