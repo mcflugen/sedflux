@@ -10,3 +10,14 @@ email: eric.hutton@colorado.edu
 version: "2.1"
 license: MIT
 doi: "10.1594/IEDA/100161"
+cite_as: |
+  @article{hutton2008sedflux,
+  title={Sedflux 2.0: An advanced process-response model that generates three-dimensional stratigraphy},
+  author={Hutton, Eric WH and Syvitski, James PM},
+  journal={Computers \& Geosciences},
+  volume={34},
+  number={10},
+  pages={1319--1337},
+  year={2008},
+  publisher={Pergamon}
+  }
