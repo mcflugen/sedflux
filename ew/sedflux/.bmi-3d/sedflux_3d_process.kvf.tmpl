@@ -42,7 +42,7 @@ river name:                             po
 active:                                 yes
 logging:                                no
 repeat interval:                        always
-standard deviation (deg):               0.
+standard deviation (deg):               1.
 minimum angle (deg):                    -179.0
 maximum angle (deg):                    -1.0
 hinge point:                            20,41
@@ -80,7 +80,7 @@ active:                                 yes
 logging:                                no
 repeat interval:                        always
 background ocean concentration:         0.
-velocity of coastal current (m/s):      0.
+velocity of coastal current (m/s):      normal=0,.5
 maximum plume width (km):               {plume_max_width}
 number of grid nodes in cross-shore:    {plume_cross_shore_nodes}
 number of grid nodes in river mouth:    {plume_river_mouth_nodes}
@@ -106,7 +106,7 @@ horizontal limits:                      tight
 property:                               age
 
 [ 'data dump' ]
-active:                                 yes
+active:                                 no
 logging:                                no
 repeat interval:                        1000y
 output directory:                       ./output-grain
