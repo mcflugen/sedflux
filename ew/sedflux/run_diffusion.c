@@ -55,7 +55,8 @@ run_diffusion( Sed_process proc , Sed_cube prof )
    skin_depth  = data->skin_depth
                * sed_cube_storm(prof);
    
-   eh_require( k_max>=0 )
+   eh_require(k_max >= 0)
+   eh_require(skin_depth >= 0)
    {
       Sed_cell *lost;
 
@@ -117,8 +118,8 @@ init_diffusion( Sed_process p , Eh_symbol_table tab , GError** error )
       data->k_max      = eh_symbol_table_input_value( tab , DIFFUSION_KEY_K_MAX , &tmp_err );
       data->skin_depth = eh_symbol_table_dbl_value  ( tab , DIFFUSION_KEY_SKIN_DEPTH );
 
-      eh_check_to_s( data->k_max>0      , "Diffusion coefficient positive" , &err_s );
-      eh_check_to_s( data->skin_depth>0 , "Skin depth positive"            , &err_s );
+      // eh_check_to_s(data->k_max > 0., "Diffusion coefficient positive", &err_s);
+      eh_check_to_s(data->skin_depth > 0., "Skin depth positive", &err_s);
 
       if ( !tmp_err && err_s )
          eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
