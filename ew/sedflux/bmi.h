@@ -34,6 +34,7 @@ typedef struct {
   int (* get_var_units)(void *, const char *, char *);
   int (* get_var_itemsize)(void *, const char *, int *);
   int (* get_var_nbytes)(void *, const char *, int *);
+  int (* get_var_location)(void *, const char *, char *);
   int (* get_current_time)(void *, double *);
   int (* get_start_time)(void *, double *);
   int (* get_end_time)(void *, double *);

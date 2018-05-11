@@ -153,12 +153,14 @@ static int
 initialize(const char * file, void **handle)
 { /* Implement this: Create and initialize a model handle */
     *handle = NULL;
-
+/*
     if (!g_thread_get_initialized()) {
         g_thread_init(NULL);
         eh_init_glib();
         g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
     }
+*/
+    g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
 
     {
         Sedflux_state * self = NULL;

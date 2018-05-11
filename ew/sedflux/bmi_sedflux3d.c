@@ -150,12 +150,14 @@ static int
 initialize(const char * file, void **handle)
 { /* Implement this: Create and initialize a model handle */
     *handle = NULL;
-
+/*
     if (!g_thread_get_initialized()) {
         g_thread_init(NULL);
         eh_init_glib();
         g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
     }
+*/
+    g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
 
     {
         Sedflux_state * self = NULL;
@@ -558,37 +560,37 @@ get_var_units(void *self, const char *name, char *units)
     } else if (strcmp(name, "land-or-seabed_sediment_surface__y_derivative_of_elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__porosity") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_silt__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "channel_water_sediment~bedload__mass_flow_rate") == 0) {
         strncpy(units, "kg / s", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_surface__elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_clay__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
-    //     strncpy(units, "-", BMI_MAX_UNITS_NAME);
+    //     strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
     // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
-    //     strncpy(units, "-", BMI_MAX_UNITS_NAME);
+    //     strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment__porosity") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment__bulk_density") == 0) {
         strncpy(units, "kg / m^3", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_mud__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_surface__x_derivative_of_elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__increment_of_thickness") == 0) {
@@ -598,7 +600,7 @@ get_var_units(void *self, const char *name, char *units)
     } else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0) {
         strncpy(units, "m^3 / s", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sediment__porosity") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sediment__bulk_mass-per-volume_density") == 0) {
         strncpy(units, "kg / m^3", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__permeability") == 0) {
@@ -608,11 +610,11 @@ get_var_units(void *self, const char *name, char *units)
     } else if (strcmp(name, "sea_bottom_surface__x_derivative_of_elevation") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_sand__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment__mean_of_deposition_age") == 0) {
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
-        strncpy(units, "-", BMI_MAX_UNITS_NAME);
+        strncpy(units, "", BMI_MAX_UNITS_NAME);
     } else {
         units[0] = '\0'; return BMI_FAILURE;
     }
@@ -722,6 +724,14 @@ get_var_nbytes(void *self, const char *name, int *nbytes)
 
     *nbytes = itemsize * size;
 
+    return BMI_SUCCESS;
+}
+
+
+static int
+get_var_location(void *self, const char *name, char *location)
+{
+    strncpy(location, "node", BMI_MAX_UNITS_NAME);
     return BMI_SUCCESS;
 }
 
@@ -900,6 +910,7 @@ register_bmi_sedflux3d(BMI_Model *model)
     model->get_var_units = get_var_units;
     model->get_var_itemsize = get_var_itemsize;
     model->get_var_nbytes = get_var_nbytes;
+    model->get_var_location = get_var_location;
     model->get_current_time = get_current_time;
     model->get_start_time = get_start_time;
     model->get_end_time = get_end_time;
