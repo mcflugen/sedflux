@@ -116,7 +116,7 @@ get_time_units(void * self, char *units)
 static int
 initialize(const char * file, void **handle)
 { /* Implement this: Create and initialize a model handle */
-    return BMI_FAILURE;
+    return plume_initialize(file, handle);
 }
 
 
