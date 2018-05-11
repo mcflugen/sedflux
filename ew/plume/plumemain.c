@@ -69,7 +69,7 @@ main(int argc, char *argv[])
      register_bmi_plume(model);
       
      fprintf (stderr, "Initializing... ");
-     err = model->initialize("plume_config.txt", model->self);
+     err = model->initialize("plume_config.txt", &(model->self));
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to initialize\n", err);
