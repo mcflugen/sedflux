@@ -15,6 +15,40 @@
 
 
 typedef struct {
+    gchar* name;
+    gchar* units;
+    char* intent;
+    gint grid;
+    gchar* local_name;
+    void (*set_func)(void*, double*);
+} ExchangeItem;
+
+
+typedef struct {
+    gint id;
+    gint rank;
+    gchar *type;
+} Grid;
+
+
+static Grid grids[] = {
+  {0, 2, "uniform_rectilinear"},
+  {1, 3, "uniform_rectilinear"},
+  {2, 0, "scalar"},
+  {-1, 0, NULL},
+};
+
+static ExchangeItem exchange_items[] = {
+  {"bedrock_surface__elevation", "m", "inout", 0, "BASEMENT", sedflux_set_basement},
+  {"sea_bottom_sediment__increment_of_thickness", "m", "in", 0, NULL, sedflux_set_subaerial_deposition_to},
+  {"bedrock_surface__increment_of_elevation", "m", "in", 0, NULL, sedflux_set_uplift},
+  {"sea_water__depth", "m", "out", 0, "DEPTH", NULL},
+  {"sea_bottom_surface__elevation", "m", "out", 0, "ELEVATION", NULL},
+  {NULL, "", "", 0, "", NULL},
+};
+
+
+typedef struct {
     int shape[2];
     double spacing[3];
     int n_grains;
@@ -143,39 +177,6 @@ is_output_var(gchar* name)
 {
     return g_hash_table_lookup_extended(OUTPUT_VAR_NAMES, name, NULL, NULL);
 }
-
-
-typedef struct {
-    gchar* name;
-    gchar* units;
-    char* intent;
-    gint grid;
-    gchar* local_name;
-    void (*set_func)(void*, double*);
-} ExchangeItem;
-
-typedef struct {
-    gint id;
-    gint rank;
-    gchar *type;
-} Grid;
-
-
-static Grid grids[] = {
-  {0, 2, "uniform_rectilinear"},
-  {1, 3, "uniform_rectilinear"},
-  {2, 0, "scalar"},
-  {-1, 0, NULL},
-};
-
-static ExchangeItem exchange_items[] = {
-  {"bedrock_surface__elevation", "m", "inout", 0, "BASEMENT", sedflux_set_basement},
-  {"sea_bottom_sediment__increment_of_thickness", "m", "in", 0, NULL, sedflux_set_subaerial_deposition_to},
-  {"bedrock_surface__increment_of_elevation", "m", "in", 0, NULL, sedflux_set_uplift},
-  {"sea_water__depth", "m", "out", 0, "DEPTH", NULL},
-  {"sea_bottom_surface__elevation", "m", "out", 0, "ELEVATION", NULL},
-  {NULL, "", "", 0, "", NULL},
-};
 
 
 static void
