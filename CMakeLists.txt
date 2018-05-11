@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 2.8)
 project(sedflux)
 include(CTest)
 
+set(CMAKE_MACOSX_RPATH 1)
+
+
 #enable_testing()
 
 if (BUILD_TESTING)
@@ -22,12 +25,12 @@ endif()
 
 set (BUILD_SHARED_LIBS ON)
 
-if (APPLE)
-  include_directories (/Developer/Headers/FlatCarbon)
-  find_library (CARBON_LIBRARY Carbon)
-  mark_as_advanced (CARBON_LIBRARY)
-  set (EXTRA_LIBS ${CARBON_LIBRARY})
-endif (APPLE)
+# if (APPLE)
+#   include_directories (/Developer/Headers/FlatCarbon)
+#   find_library (CARBON_LIBRARY Carbon)
+#   mark_as_advanced (CARBON_LIBRARY)
+#   set (EXTRA_LIBS ${CARBON_LIBRARY})
+# endif (APPLE)
 
 ########### Look for glib-2.0 ###############
 
