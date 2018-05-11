@@ -363,8 +363,7 @@ test_sed_hydro_file_new_buffer (void)
                                              SED_HYDRO_HYDROTREND ,
                                              FALSE , TRUE , NULL );
 
-      for (i=0, b_load=0; i<365; i++);
-      {
+      for (i=0, b_load=0; i<365; i++) {
          b       = sed_hydro_file_read_record( f );
          b_load += sed_hydro_total_load( b );
          sed_hydro_destroy( b );
