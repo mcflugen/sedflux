@@ -29,7 +29,7 @@ install(TARGETS pseudoplume DESTINATION bin COMPONENT sedflux)
 
 set (inflow_LIB_SRCS inflow.c inflow_io.c inflow_sedflux_interface.c)
 
-set_source_files_properties (${inflow_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${inflow_LIB_SRCS} PROPERTIES LANGUAGE C)
 add_library(inflow ${inflow_LIB_SRCS})
 add_library(inflow-static STATIC ${inflow_LIB_SRCS})
 

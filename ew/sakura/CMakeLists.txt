@@ -22,7 +22,7 @@ SET(sakura_LIB_SRCS
 )
 
 set_source_files_properties(${sakura_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(sakura ${sakura_LIB_SRCS} get_config_text.c)
 add_library(sakura-static STATIC ${sakura_LIB_SRCS})
 

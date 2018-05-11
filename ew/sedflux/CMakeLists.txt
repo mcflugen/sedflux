@@ -70,7 +70,7 @@ set (sedflux-2.0_LIB_SRCS
   sedflux_esmf.c
 )
 
-set_source_files_properties (${sedflux-2.0_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${sedflux-2.0_LIB_SRCS} PROPERTIES LANGUAGE C)
 add_library(sedflux-2.0 ${sedflux-2.0_LIB_SRCS})
 add_library(sedflux-2.0-static STATIC ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(sedflux-2.0 ${sedflux_LIBS})

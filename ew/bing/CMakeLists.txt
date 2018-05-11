@@ -18,7 +18,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bing DESTINATION bin RENAME bin
 
 set (bing_LIB_SRCS bing.c)
 
-set_source_files_properties (${bing_LIB_SRCS} get_config_text.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${bing_LIB_SRCS} get_config_text.c PROPERTIES LANGUAGE C)
 add_library(bing ${bing_LIB_SRCS} get_config_text.c)
 add_library(bing-static STATIC ${bing_LIB_SRCS})
 

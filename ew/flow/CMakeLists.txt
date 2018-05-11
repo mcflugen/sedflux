@@ -20,7 +20,7 @@ install(TARGETS flow DESTINATION lib COMPONENT sedflux)
 set (flow_SRCS flow_main.c)
 
 set_source_files_properties (${flow_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_executable(run_flow ${flow_SRCS})
 
 target_link_libraries(run_flow flow-static sedflux-static)

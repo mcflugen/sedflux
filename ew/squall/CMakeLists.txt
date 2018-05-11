@@ -19,7 +19,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_squall DESTINATION bin RENAME s
 set (squall_LIB_SRCS squall.c)
 
 set_source_files_properties(${squall_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(squall ${squall_LIB_SRCS} get_config_text.c)
 add_library(squall-static STATIC ${squall_LIB_SRCS})
 

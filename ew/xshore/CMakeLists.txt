@@ -5,7 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/ew )
 
 set (xshore_LIB_SRCS xshore.c)
 
-set_source_files_properties (${xshore_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${xshore_LIB_SRCS} PROPERTIES LANGUAGE C)
 add_library(xshore ${xshore_LIB_SRCS})
 add_library(xshore-static STATIC ${xshore_LIB_SRCS})
 

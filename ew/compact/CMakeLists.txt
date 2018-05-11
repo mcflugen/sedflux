@@ -18,7 +18,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_compact DESTINATION bin RENAME 
 
 set (compact_LIB_SRCS compact.c)
 
-set_source_files_properties (${compact_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${compact_LIB_SRCS} PROPERTIES LANGUAGE C)
 add_library(compact ${compact_LIB_SRCS})
 add_library(compact-static STATIC ${compact_LIB_SRCS})
 

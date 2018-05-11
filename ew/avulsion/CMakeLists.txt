@@ -19,7 +19,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_avulsion
 
 set (avulsion_LIB_SRCS avulsion.c avulsion_api.c)
 
-set_source_files_properties(${avulsion_LIB_SRCS} get_config_text.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(${avulsion_LIB_SRCS} get_config_text.c PROPERTIES LANGUAGE C)
 add_library(avulsion SHARED ${avulsion_LIB_SRCS} get_config_text.c)
 add_library(avulsion-static STATIC ${avulsion_LIB_SRCS})
 

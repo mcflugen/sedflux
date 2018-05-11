@@ -53,7 +53,7 @@ SET(sedflux_LIB_SRCS
    sed_input_files.c
 )
 
-set_source_files_properties (${sedflux_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${sedflux_LIB_SRCS} PROPERTIES LANGUAGE C)
 
 add_library(sedflux SHARED ${sedflux_LIB_SRCS})
 add_library(sedflux-static STATIC ${sedflux_LIB_SRCS})

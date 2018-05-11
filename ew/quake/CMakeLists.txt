@@ -16,7 +16,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_earthquake DESTINATION bin RENA
 
 set (quake_LIB_SRCS earthquake.c)
 
-set_source_files_properties (${quake_LIB_SRCS} PROPERTIES LANGUAGE CXX)
+set_source_files_properties (${quake_LIB_SRCS} PROPERTIES LANGUAGE C)
 add_library(quake ${quake_LIB_SRCS})
 add_library(quake-static STATIC ${quake_LIB_SRCS})
 

@@ -6,7 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR}/ew )
 set (failure_LIB_SRCS failure.c getsurface.c decider.c)
 
 set_source_files_properties(${failure_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(failure ${failure_LIB_SRCS} get_config_text.c)
 add_library(failure-static STATIC ${failure_LIB_SRCS})
 

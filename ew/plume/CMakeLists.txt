@@ -55,7 +55,7 @@ SET(plume_LIB_SRCS
 )
 
 set_source_files_properties(${plume_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(plume ${plume_LIB_SRCS} get_config_text.c)
 add_library(plume-static STATIC ${plume_LIB_SRCS})
 

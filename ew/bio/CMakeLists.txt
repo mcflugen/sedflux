@@ -19,7 +19,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_bio DESTINATION bin RENAME bio 
 set(bio_LIB_SRCS bio.c bio_sed_interface.c)
 
 set_source_files_properties(${bio_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(bio ${bio_LIB_SRCS} get_config_text.c)
 add_library(bio-static STATIC ${bio_LIB_SRCS})
 

@@ -19,7 +19,7 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_diffusion DESTINATION bin RENAM
 set (diffusion_LIB_SRCS diffusion.c)
 
 set_source_files_properties (${diffusion_LIB_SRCS} get_config_text.c
-  PROPERTIES LANGUAGE CXX)
+  PROPERTIES LANGUAGE C)
 add_library(diffusion ${diffusion_LIB_SRCS} get_config_text.c)
 add_library(diffusion-static STATIC ${diffusion_LIB_SRCS})
 
