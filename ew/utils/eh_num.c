@@ -2191,11 +2191,11 @@ double *eh_dbl_array_cum_min_dir( double *x , gsize n , gboolean forward )
       return NULL;
    min = eh_new( double , n );
    if ( forward )
-      for ( min[0]=x[0],i=1 ; i<n ; i++ )
+      for (min[0] = x[0], i = 1; i < n; i++)
          min[i] = (x[i]<min[i-1])?x[i]:min[i-1];
    else
-      for ( min[n-1]=x[n-1],i=n-2 ; n>=0 ; i-- )
-         min[i] = (x[i]<min[i+1])?x[i]:min[i+1];
+      for (min[n-1] = x[n-1], i = n-2; i >= 0; i--)
+         min[i] = (x[i] < min[i+1]) ? x[i] : min[i+1];
    return min;
 }
 
