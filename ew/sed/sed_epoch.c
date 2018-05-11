@@ -932,7 +932,7 @@ sed_epoch_fprint( FILE* fp , Sed_epoch e )
 
       n += fprintf( fp , "[Epoch Info]\n" );
 
-      n += fprintf( fp , "Id           = %f\n" , e->number    );
+      n += fprintf( fp , "Id           = %d\n" , e->number    );
       n += fprintf( fp , "Start        = %f\n" , e->start     );
       n += fprintf( fp , "Duration     = %f\n" , e->duration  );
 

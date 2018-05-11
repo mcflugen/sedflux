@@ -34,7 +34,7 @@ sedflux_setup( gchar* command_s )
    int               argc;
    char**            argv;
 
-   g_thread_init( NULL );
+   // g_thread_init( NULL );
    eh_init_glib();
    g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
 

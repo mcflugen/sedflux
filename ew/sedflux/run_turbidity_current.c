@@ -152,7 +152,7 @@ run_turbidity_inflow( Sed_process proc , Sed_cube p )
    // ind_start = (int)(sed_cube_col_y(fail, sed_cube_n_y(fail) - 1));
    ind_start = (int)(sed_cube_col_y(fail, sed_cube_n_y(fail) - 1) / sed_cube_y_res(p));
 
-   fprintf(stderr, "The turbidity current starts at %d\n", ind_start);
+   fprintf(stderr, "The turbidity current starts at %ld\n", ind_start);
 
    // Average the failure into one cell.
    flow_cell = sed_cube_to_cell( fail , NULL );
