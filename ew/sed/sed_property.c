@@ -20,6 +20,7 @@ CLASS( Sed_property )
 
 //const Sed_property S_AGE = sed_property_new_full( "age" , "age" , &sed_cell_age , 1 );
 
+#ifdef __cplusplus
 static Sed_property_static all_properties[41] = {
    {"age", "age", sed_cell_age, 1},
    {"shear_strength", "sheer", sed_cell_shear_strength, 2},
@@ -63,7 +64,8 @@ static Sed_property_static all_properties[41] = {
    {NULL, NULL, (Sed_cell_property_func_0)NULL, 0}
 };
 
-#ifndef __cplusplus
+#else
+/*#ifndef __cplusplus*/
 static Sed_property_static all_properties[41] = {
    {"age", "age",
     {(Sed_cell_property_func_0)(&sed_cell_age)}, 1},
