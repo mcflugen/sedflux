@@ -721,7 +721,7 @@ eh_str_trim_left( gchar *str )
 //   ptr = (char*)malloc1D(sizeof(char)*(strlen(str)+1));
    ptr = eh_new( char , strlen(str)+1 );
    strcpy(ptr,str);
-   while ( strchr(WHITE_SPACE,ptr[0])!=0 && ptr!='\0' )
+   while (strchr(WHITE_SPACE,ptr[0]) != 0 && *ptr != '\0')
       ptr++;
    strcpy(str,ptr);
    return str;
