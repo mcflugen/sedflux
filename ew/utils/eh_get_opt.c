@@ -183,12 +183,12 @@ void check_label_is_possible( char *key , char *value , Label_is_valid_st *user_
    gboolean found=FALSE;
    gboolean is_valid=FALSE;
 
-   if ( g_strncasecmp( key , "arg"      , 3 )==0 )
+   if ( g_ascii_strncasecmp( key , "arg"      , 3 )==0 )
      is_valid=TRUE;
    else
    {
       for ( i=0 ; possible[i] && !found ; i++ )
-         if ( g_strcasecmp ( key , possible[i] )==0 )
+         if ( g_ascii_strcasecmp ( key , possible[i] )==0 )
             found = TRUE;
       if ( !found )
          fprintf(stderr,"error : arg %s is not a valid argument\n",key);
@@ -202,9 +202,9 @@ void check_label_is_valid( char *key , char *value , int *err_flag )
 {
    gboolean is_valid=FALSE;
 
-   if ( g_strncasecmp( key , "arg" , 3 )==0 )
+   if ( g_ascii_strncasecmp( key , "arg" , 3 )==0 )
       is_valid=TRUE;
-   else if ( g_strcasecmp( value , "" )==0 )
+   else if ( g_ascii_strcasecmp( value , "" )==0 )
       fprintf(stderr,"error : no value given for arg %s\n",key);
    else
       is_valid=TRUE;

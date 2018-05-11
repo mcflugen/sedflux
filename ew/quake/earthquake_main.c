@@ -218,6 +218,7 @@ int main(int argc, char *argv[])
 {
    char *unit_vals[] = { "si" , "mercalli" , "omori" , "g" , NULL };
    char *info_vals[] = { "mercalli" , "omori" , NULL };
+   char *basename = NULL;
    int i;
    int n, units, info;
    double dt, mag;
@@ -276,18 +277,20 @@ int main(int argc, char *argv[])
          break;
    }
 
-   if ( strcmp(g_basename(argv[0]),"quakeconvert_to")==0 )
+   basename = g_path_get_basename(argv[0]);
+   if (strcmp(basename, "quakeconvert_to") == 0)
    {
       while ( fscanf(stdin,"%lf",&acceleration)==1 )
          fprintf(stdout,"%f\n",convert_func(acceleration));
       return 0;
    }
-   else if ( strcmp(g_basename(argv[0]),"quakeconvert_from")==0 )
+   else if (strcmp(basename, "quakeconvert_from") == 0)
    {
       while ( fscanf(stdin,"%lf",&acceleration)==1 )
          fprintf(stdout,"%f\n",convert_inv_func(acceleration));
       return 0;
    }
+   g_free(basename);
 
    average_quake = convert_inv_func(mag);
 

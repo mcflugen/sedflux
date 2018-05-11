@@ -415,7 +415,7 @@ fill_sedflux_info_file( Eh_project p , const gchar* cmd_str , const gchar* desc 
       GDate *today = g_date_new();
 
       g_stat( command , &stat_buf );
-      g_date_set_time( today , time(&(stat_buf.st_mtime)) );
+      g_date_set_time_t( today , time(&(stat_buf.st_mtime)) );
       g_date_strftime( mod_str , S_LINEMAX , "%d/%m/%Y" , today );
 
       eh_require( mod_str );

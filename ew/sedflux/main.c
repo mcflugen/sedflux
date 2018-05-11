@@ -82,8 +82,8 @@ main (int argc, char *argv[])
     sedflux_finalize (state);
   }
 
-  if (g_getenv("SED_MEM_CHECK"))
-    eh_heap_dump( "heap_dump.txt" );
+  // if (g_getenv("SED_MEM_CHECK"))
+  //   eh_heap_dump( "heap_dump.txt" );
 
   eh_exit (EXIT_SUCCESS);
 
@@ -168,8 +168,8 @@ old_main (int argc, char *argv[])
     sedflux_finalize (state);
   }
 
-  if (g_getenv("SED_MEM_CHECK"))
-    eh_heap_dump( "heap_dump.txt" );
+  // if (g_getenv("SED_MEM_CHECK"))
+  //   eh_heap_dump( "heap_dump.txt" );
 
   eh_exit (EXIT_SUCCESS);
 
@@ -210,7 +210,7 @@ main( int argc , char *argv[] )
 
    eh_free( p );
 
-   if ( g_getenv("SED_MEM_CHECK") ) eh_heap_dump( "heap_dump.txt" );
+   // if ( g_getenv("SED_MEM_CHECK") ) eh_heap_dump( "heap_dump.txt" );
 
    if ( success ) eh_exit( EXIT_SUCCESS );
    else           eh_exit( EXIT_FAILURE );

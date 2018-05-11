@@ -202,7 +202,7 @@ Eh_project eh_set_project_current_time( Eh_project p )
       struct tm now;
       GDate *today = g_date_new();
 
-      g_date_set_time( today , time(&clock) );
+      g_date_set_time_t( today , time(&clock) );
       localtime_r( &clock , &now );
       g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
       sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
@@ -244,7 +244,7 @@ Eh_project eh_fill_project_info( Eh_project p )
       struct tm now;
       GDate *today = g_date_new();
 
-      g_date_set_time( today , time(&clock) );
+      g_date_set_time_t( today , time(&clock) );
       localtime_r( &clock , &now );
       g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
       sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
