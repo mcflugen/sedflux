@@ -33,6 +33,10 @@ gchar* sedflux_get_file_name_interactively (gchar **working_dir,
                                             gchar **in_file);
 G_END_DECLS
 
+
+const gint MASK_LAND = 1;
+const gint MASK_OCEAN = 2;
+
 struct _Sedflux_state
 {
   Sed_epoch_queue q;
@@ -1414,17 +1418,7 @@ sedflux_set_subaerial_deposition_to (Sedflux_state* state, const double* val)
     double* dz = sedflux_get_value (state, "Elevation", NULL);
     int i;
 
-    for (i=0; i<len; i++)
-    {
-      if (fabs (val[i]-dz[i]>1e-3))
-      {
-/*
-        eh_watch_int (i);
-        eh_watch_dbl (val[i]);
-        eh_watch_dbl (dz[i]);
-        eh_watch_dbl (val[i]-dz[i]);
-*/
-      }
+    for (i=0; i<len; i++) {
       dz[i] = val[i] - dz[i];
     }
 

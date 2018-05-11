@@ -5,8 +5,8 @@
 
 G_BEGIN_DECLS
 
-const gint MASK_LAND = (1);
-const gint MASK_OCEAN = (2);
+extern const gint MASK_LAND;
+extern const gint MASK_OCEAN;
 
 typedef struct _Sedflux_state Sedflux_state;
 
