@@ -14,7 +14,7 @@
 static int
 get_component_name (void *self, char * name)
 {
-    strncpy (name, "sedflux3d", BMI_MAX_COMPONENT_NAME);
+    strncpy (name, "sedflux3d", 10);
     return BMI_SUCCESS;
 }
 
@@ -42,7 +42,11 @@ get_input_var_names(void *self, char **names)
 {
     int i;
     for (i=0; i<INPUT_VAR_NAME_COUNT; i++) {
-        strncpy(names[i], input_var_names[i], BMI_MAX_VAR_NAME);
+        strncpy(
+            names[i],
+            input_var_names[i],
+            strnlen(input_var_names[i], BMI_MAX_VAR_NAME - 1) + 1
+        );
     }
     return BMI_SUCCESS;
 }
@@ -100,7 +104,11 @@ get_output_var_names(void *self, char **names)
 {
     int i;
     for (i=0; i<OUTPUT_VAR_NAME_COUNT; i++) {
-        strncpy(names[i], output_var_names[i], BMI_MAX_VAR_NAME);
+        strncpy(
+            names[i],
+            output_var_names[i],
+            strnlen(output_var_names[i], BMI_MAX_VAR_NAME - 1) + 1
+        );
     }
     return BMI_SUCCESS;
 }
@@ -141,7 +149,7 @@ get_time_step(void * self, double *dt)
 static int
 get_time_units(void * self, char *units)
 {
-    strncpy(units, "d", BMI_MAX_UNITS_NAME);
+    strncpy(units, "d", 2);
     return BMI_SUCCESS;
 }
 
@@ -259,11 +267,11 @@ static int
 get_grid_type(void *self, int id, char *type)
 {
     if (id == 0) {
-        strncpy(type, "uniform_rectilinear", 2048);
+        strncpy(type, "uniform_rectilinear", 20);
     } else if (id == 1) {
-        strncpy(type, "uniform_rectilinear", 2048);
+        strncpy(type, "uniform_rectilinear", 20);
     } else if (id == 2) {
-        strncpy(type, "scalar", 2048);
+        strncpy(type, "scalar", 7);
     } else {
         type[0] = '\0'; return BMI_FAILURE;
     }
@@ -454,81 +462,81 @@ static int
 get_var_type(void *self, const char *name, char *type)
 {
     if (strcmp(name, "land-or-seabed_sediment_grain__mean_diameter") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_water__depth") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment__bulk_mass-per-volume_density") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment__bulk_mass-per-volume_density") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_surface__elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_grain__mean_diameter") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "bedrock_surface__elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment__permeability") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sediment_grain__mean_diameter") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_surface__y_derivative_of_elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment__porosity") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_silt__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "channel_water_sediment~bedload__mass_flow_rate") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_surface__elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_clay__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_mud__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     // } else if (strcmp(name, "surface_sediment_model_grain_class_0__volume_fraction") == 0) {
     //     strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "land-or-seabed_sediment_sand__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
     //     strncpy(type, "double", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_clay__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment__porosity") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment__bulk_density") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_mud__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "land-or-seabed_sediment_surface__x_derivative_of_elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment__increment_of_thickness") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "bedrock_surface__increment_of_elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sediment__porosity") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sediment__bulk_mass-per-volume_density") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment__permeability") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sediment__permeability") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_surface__x_derivative_of_elevation") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_sand__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment__mean_of_deposition_age") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
-        strncpy(type, "double", BMI_MAX_UNITS_NAME);
+        strncpy(type, "double", 7);
     } else {
         type[0] = '\0'; return BMI_FAILURE;
     }
@@ -731,7 +739,7 @@ get_var_nbytes(void *self, const char *name, int *nbytes)
 static int
 get_var_location(void *self, const char *name, char *location)
 {
-    strncpy(location, "node", BMI_MAX_UNITS_NAME);
+    strncpy(location, "node", 5);
     return BMI_SUCCESS;
 }
 
