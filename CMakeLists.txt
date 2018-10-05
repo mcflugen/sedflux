@@ -5,8 +5,7 @@ include(CTest)
 
 set(CMAKE_MACOSX_RPATH 1)
 
-
-#enable_testing()
+# enable_testing()
 
 if (BUILD_TESTING)
   add_test (Help ${CMAKE_CURRENT_BINARY_DIR}/ew/sedflux/run_sedflux --help)
@@ -24,13 +23,6 @@ if (BUILD_TESTING)
 endif()
 
 set (BUILD_SHARED_LIBS ON)
-
-# if (APPLE)
-#   include_directories (/Developer/Headers/FlatCarbon)
-#   find_library (CARBON_LIBRARY Carbon)
-#   mark_as_advanced (CARBON_LIBRARY)
-#   set (EXTRA_LIBS ${CARBON_LIBRARY})
-# endif (APPLE)
 
 ########### Look for glib-2.0 ###############
 
@@ -73,6 +65,7 @@ if (WITH_BLAS)
 endif (WITH_BLAS)
 
 ########### Path to libintl  ###############
+
 find_library(LIBINTL intl
              HINTS ${CMAKE_LIBINTL_DIR})
 if (NOT LIBINTL)
@@ -84,30 +77,8 @@ get_filename_component( LIBINTL_DIR ${LIBINTL} PATH )
 message(STATUS "Looking for libintl... - found ${LIBINTL_DIR}") 
 link_directories( ${LIBINTL_DIR} )
 
-########### Version number ###############
-#set (TARBALL_VERSION ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
-#set (PACKAGE_VERSION ${CMAKE_SOURCE_DIR}/build-aux/package-version)
-#set (VERSION_GEN ${CMAKE_SOURCE_DIR}/build-aux/version-gen)
-#execute_process (
-#  COMMAND ${VERSION_GEN} ${TARBALL_VERSION} ${PACKAGE_VERSION}
-#  OUTPUT_FILE ${CMAKE_SOURCE_DIR}/.version
-#  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-#file (STRINGS .version version LIMIT_COUNT 1)
-#string (REPLACE "." ";" v "${version}")
-#list (GET v 0 MAJOR_VERSION)
-#list (GET v 1 MINOR_VERSION)
-#list (LENGTH v len)
-#if (len GREATER 2)
-#  list (GET v 2 PATCH_VERSION)
-#else ()
-#  set (PATCH_VERSION 0)
-#endif ()
-#string (REGEX MATCH "([0-9]+)" RELEASE_VERSION ${PATCH_VERSION})
-
-#set (SEDFLUX_VERSION ${MAJOR_VERSION}.${MINOR_VERSION})
-
 ########### Create a distribution ###############
+
 set (CPACK_PACKAGE_NAME sedflux)
 set (CPACK_PACKAGE_INSTALL_DIRECTORY /usr/local/csdms/sedflux)
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "sedflux is a basin-filling model")
@@ -128,6 +99,7 @@ add_custom_target (dist
   COMMAND rm ${CMAKE_SOURCE_DIR}/build-aux/tarball-version)
 
 ########### Run unit tests ###############
+
 find_program (GTESTER gtester HINTS ${CMAKE_GLIB_DIR}/bin)
 if (NOT GTESTER)
   message(STATUS
@@ -143,10 +115,8 @@ add_custom_target (unit_tests_slow
   COMMAND ${GTESTER} ew/sed/sed-test-* -m=slow)
 
 ########### Build in subdirectories ###############
+
 add_subdirectory(ew)
-
-########### install files ###############
-
 
 ########### Configuration Information ###############
 
@@ -180,4 +150,3 @@ message("  BLAS CFLAGS:                ${BLAS_CFLAGS}")
 message("")
 message("  See config.h for further configuration information.")
 message("------------------------------------------------------------------------")
-
