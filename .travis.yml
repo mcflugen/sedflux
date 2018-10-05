@@ -19,8 +19,10 @@ install:
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     OS="MacOSX-x86_64"
+    C_COMPILER="clang_osx-64"
   else
     OS="Linux-x86_64"
+    C_COMPILER="gcc_linux-64"
   fi
 
 # Install Miniconda.
@@ -41,7 +43,7 @@ install:
   conda config --set always_yes yes --set changeps1 no
   conda config --add channels conda-forge
 
-- conda install -q gcc cmake pkg-config glib
+- conda install -q $C_COMPILER cmake pkg-config glib
 script:
 - |
   export CXXFLAGS="-std=c++98"
