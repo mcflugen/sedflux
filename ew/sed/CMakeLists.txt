@@ -117,7 +117,7 @@ target_link_libraries (sed-test-river sedflux-static)
 
 set (sediment_tests_SRCS test_sediment.c test_sed.c)
 add_executable (sed-test-sediment ${sediment_tests_SRCS})
-target_link_libraries (sed-test-sediment sedflux-static)
+target_link_libraries (sed-test-sediment m sedflux-static)
 
 set (wave_tests_SRCS test_wave.c test_sed.c)
 add_executable (sed-test-wave ${wave_tests_SRCS})
