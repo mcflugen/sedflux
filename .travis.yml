@@ -41,7 +41,7 @@ install:
   conda config --set always_yes yes --set changeps1 no
   conda config --add channels conda-forge
 
-- conda install -q cmake pkg-config glib
+- conda install -q gcc cmake pkg-config glib
 script:
 - |
   export CXXFLAGS="-std=c++98"
