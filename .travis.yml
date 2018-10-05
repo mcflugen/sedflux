@@ -47,7 +47,6 @@ install:
 script:
 - |
   export CXXFLAGS="-std=c++98"
-  export LDFLAGS="$LDFLAGS -lm"
 
   mkdir _build && cd _build
   cmake .. -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
