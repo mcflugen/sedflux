@@ -19,10 +19,10 @@ install:
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     OS="MacOSX-x86_64"
-    C_COMPILER="clang_osx-64"
+    CXX_COMPILER="clangxx_osx-64"
   else
     OS="Linux-x86_64"
-    C_COMPILER="gcc_linux-64"
+    CXX_COMPILER="gxx_linux-64"
   fi
 
 # Install Miniconda.
