@@ -360,10 +360,13 @@ plume_initialize (const char * config_file, PlumeModel **handle)
   if (handle) {
     PlumeModel *self = NULL;
 
-    if (config_file)
+    if (config_file) {
+      fprintf(stderr, "reading from config file.\n"); fflush(stderr);
       self = from_input_file(config_file);
-    else
+    } else {
+      fprintf(stderr, "from config file.\n"); fflush(stderr);
       self = from_defaults();
+    }
 
     if (self) {
         //int n_events;

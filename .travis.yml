@@ -2,18 +2,54 @@ os:
 - linux
 - osx
 sudo: false
-install:
-- echo "Build on $TRAVIS_OS_NAME"
-- if [[ "$TRAVIS_TAG" == v* ]]; then export BUILD_STR=""; else export BUILD_STR="dev";
-  fi
-- bash .ci/travis/install_python.sh
-- export PATH="$HOME/miniconda/bin:$PATH"
-- conda build -q conda-recipe -c csdms
-- conda install -q sedflux --use-local -c csdms
-script:
-- sedflux -h
-after_success:
-- bash .ci/travis/deploy_to_anaconda.sh
+osx_image: xcode6.4
 env:
   global:
-    secure: L+Yqd1nmMuQtCDKbhFPpfKiO1dPwH9J4jcdq6KW3vMixlFYs2546ZxhFaDXVgMXogVziq1FcSrNspaPxn0Zxk1ZuUAeFYU+gVp8/jqZGnkTL4UORMk0hHX6EwFNoUJl9LxpmO3140S67td14U0vBz8dOh9oeNui+VrMJn7NGlpI=
+  - CONDA_PREFIX=$HOME/miniconda
+  - MINICONDA_URL_BASE="https://repo.continuum.io/miniconda/Miniconda2-latest"
+  - secure: L+Yqd1nmMuQtCDKbhFPpfKiO1dPwH9J4jcdq6KW3vMixlFYs2546ZxhFaDXVgMXogVziq1FcSrNspaPxn0Zxk1ZuUAeFYU+gVp8/jqZGnkTL4UORMk0hHX6EwFNoUJl9LxpmO3140S67td14U0vBz8dOh9oeNui+VrMJn7NGlpI=
+before_install:
+- |
+  if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    brew remove --force $(brew list)
+    brew cleanup -s
+    rm -rf $(brew --cache)
+  fi
+install:
+- |
+  if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    OS="MacOSX-x86_64"
+    CXX_COMPILER="clangxx_osx-64"
+  else
+    OS="Linux-x86_64"
+    CXX_COMPILER="gxx_linux-64"
+  fi
+
+# Install Miniconda.
+- |
+  echo ""
+  echo "Installing a fresh version of Miniconda."
+  MINICONDA_URL="https://repo.continuum.io/miniconda"
+  MINICONDA_FILE="Miniconda3-latest-$OS.sh"
+  curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+  bash $MINICONDA_FILE -b
+
+# Configure conda.
+- |
+  echo ""
+  echo "Configuring conda."
+  source $HOME/miniconda3/bin/activate root
+
+  conda config --set always_yes yes --set changeps1 no
+  conda config --add channels conda-forge
+
+- conda install -q $C_COMPILER cmake pkg-config glib
+script:
+- |
+  export CXXFLAGS="-std=c++98"
+
+  mkdir _build && cd _build
+  cmake .. -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
+  make -j$CPU_COUNT all install
+
+- sedflux -h

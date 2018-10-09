@@ -1,19 +1,77 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../sakura ${CMAKE_CURRENT_SOURCE_DIR}/../avulsion ${CMAKE_CURRENT_SOURCE_DIR}/../bio ${CMAKE_CURRENT_SOURCE_DIR}/../diffusion ${CMAKE_CURRENT_SOURCE_DIR}/../subside ${CMAKE_CURRENT_SOURCE_DIR}/../xshore ${CMAKE_CURRENT_SOURCE_DIR}/../squall ${CMAKE_CURRENT_SOURCE_DIR}/../flow ${CMAKE_CURRENT_SOURCE_DIR}/../muds ${CMAKE_CURRENT_SOURCE_DIR}/../bing ${CMAKE_CURRENT_SOURCE_DIR}/../failure ${CMAKE_CURRENT_SOURCE_DIR}/../quake ${CMAKE_CURRENT_SOURCE_DIR}/../compact ${CMAKE_CURRENT_SOURCE_DIR}/../inflow ${CMAKE_CURRENT_SOURCE_DIR}/../plume )
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/..
+  ${CMAKE_CURRENT_SOURCE_DIR}/../sakura
+  ${CMAKE_CURRENT_SOURCE_DIR}/../avulsion
+  ${CMAKE_CURRENT_SOURCE_DIR}/../bio
+  ${CMAKE_CURRENT_SOURCE_DIR}/../diffusion
+  ${CMAKE_CURRENT_SOURCE_DIR}/../subside
+  ${CMAKE_CURRENT_SOURCE_DIR}/../xshore
+  ${CMAKE_CURRENT_SOURCE_DIR}/../squall
+  ${CMAKE_CURRENT_SOURCE_DIR}/../flow
+  ${CMAKE_CURRENT_SOURCE_DIR}/../muds
+  ${CMAKE_CURRENT_SOURCE_DIR}/../bing
+  ${CMAKE_CURRENT_SOURCE_DIR}/../failure
+  ${CMAKE_CURRENT_SOURCE_DIR}/../quake
+  ${CMAKE_CURRENT_SOURCE_DIR}/../compact
+  ${CMAKE_CURRENT_SOURCE_DIR}/../inflow
+  ${CMAKE_CURRENT_SOURCE_DIR}/../plume
+)
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc )
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc.cmake ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux.pc
+)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux2d.pc
+)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedflux3d.pc
+)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/sedgrid.pc
+)
 
-set( sedflux_LIBS
-  utils sedflux sakura avulsion bio diffusion subside xshore squall flow muds
-  bing failure quake compact inflow plume)
+set(sedflux_LIBS
+  utils
+  sedflux
+  sakura
+  avulsion
+  bio
+  diffusion
+  subside
+  xshore
+  squall
+  flow
+  muds
+  bing
+  failure
+  quake
+  compact
+  inflow plume
+)
 
 set(sedflux_STATIC_LIBS
-  utils-static sedflux-static sakura-static avulsion-static bio-static
-  diffusion-static subside-static xshore-static squall-static flow-static
-  muds-static bing-static failure-static quake-static compact-static
-  inflow-static plume-static)
+  utils-static
+  sedflux-static
+  sakura-static
+  avulsion-static
+  bio-static
+  diffusion-static
+  subside-static
+  xshore-static
+  squall-static
+  flow-static
+  muds-static
+  bing-static
+  failure-static
+  quake-static
+  compact-static
+  inflow-static
+  plume-static
+)
 
 ########### next target ###############
 
@@ -23,14 +81,19 @@ set(sedflux_SRCS
 
 add_executable(run_sedflux ${sedflux_SRCS})
 
-target_link_libraries(run_sedflux sedflux-2.0-static ${sedflux_STATIC_LIBS}
-  sedflux-static)
+target_link_libraries(
+  run_sedflux
+  sedflux-2.0-static
+  ${sedflux_STATIC_LIBS}
+  sedflux-static
+)
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux DESTINATION bin RENAME sedflux COMPONENT sedflux)
-
-# add_executable(run_sedgrid sedgrid_main.c)
-# target_link_libraries(run_sedgrid bmi_sedgrid-static)
-# install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedgrid DESTINATION bin RENAME sedgrid COMPONENT sedflux)
+install(
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/run_sedflux
+  DESTINATION bin
+  RENAME sedflux
+  COMPONENT sedflux
+)
 
 ########### next target ###############
 
@@ -76,10 +139,10 @@ add_library(sedflux-2.0-static STATIC ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(sedflux-2.0 ${sedflux_LIBS})
 
 install(TARGETS sedflux-2.0 DESTINATION lib COMPONENT sedflux)
-install(FILES  sedflux.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
-install(FILES  sedflux2d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
-install(FILES  sedflux3d.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
-install(FILES  sedgrid.pc DESTINATION lib/pkgconfig  COMPONENT sedflux)
+install(FILES sedflux.pc DESTINATION lib/pkgconfig COMPONENT sedflux)
+install(FILES sedflux2d.pc DESTINATION lib/pkgconfig COMPONENT sedflux)
+install(FILES sedflux3d.pc DESTINATION lib/pkgconfig COMPONENT sedflux)
+install(FILES sedgrid.pc DESTINATION lib/pkgconfig COMPONENT sedflux)
 
 ### BMI lib ###
 
@@ -87,8 +150,10 @@ add_library(bmi_sedflux2d bmi_sedflux2d.c ${sedflux-2.0_LIB_SRCS})
 add_library(bmi_sedflux2d-static STATIC bmi_sedflux2d.c ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(bmi_sedflux2d ${sedflux_LIBS})
 target_link_libraries(bmi_sedflux2d-static ${sedflux_STATIC_LIBS})
-set_target_properties(bmi_sedflux2d-static PROPERTIES OUTPUT_NAME
-  bmi_sedflux2d)
+set_target_properties(
+  bmi_sedflux2d-static
+  PROPERTIES OUTPUT_NAME bmi_sedflux2d
+)
 
 install(TARGETS bmi_sedflux2d DESTINATION lib)
 install(TARGETS bmi_sedflux2d-static DESTINATION lib)
@@ -99,8 +164,10 @@ add_library(bmi_sedflux3d bmi_sedflux3d.c ${sedflux-2.0_LIB_SRCS})
 add_library(bmi_sedflux3d-static STATIC bmi_sedflux3d.c ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(bmi_sedflux3d ${sedflux_LIBS})
 target_link_libraries(bmi_sedflux3d-static ${sedflux_STATIC_LIBS})
-set_target_properties(bmi_sedflux3d-static PROPERTIES OUTPUT_NAME
-  bmi_sedflux3d)
+set_target_properties(
+  bmi_sedflux3d-static
+  PROPERTIES OUTPUT_NAME bmi_sedflux3d
+)
 
 install(TARGETS bmi_sedflux3d DESTINATION lib)
 install(TARGETS bmi_sedflux3d-static DESTINATION lib)
@@ -111,8 +178,10 @@ add_library(bmi_sedgrid bmi_sedgrid.c ${sedflux-2.0_LIB_SRCS})
 add_library(bmi_sedgrid-static STATIC bmi_sedgrid.c ${sedflux-2.0_LIB_SRCS})
 target_link_libraries(bmi_sedgrid ${sedflux_LIBS})
 target_link_libraries(bmi_sedgrid-static ${sedflux_STATIC_LIBS})
-set_target_properties(bmi_sedgrid-static PROPERTIES OUTPUT_NAME
-  bmi_sedgrid)
+set_target_properties(
+  bmi_sedgrid-static
+  PROPERTIES OUTPUT_NAME bmi_sedgrid
+)
 
 install(TARGETS bmi_sedgrid DESTINATION lib)
 install(TARGETS bmi_sedgrid-static DESTINATION lib)
