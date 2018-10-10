@@ -279,10 +279,18 @@ get_var_nbytes(void *self, const char *name, int *nbytes)
 
 
 static int
+get_var_location(void *self, const char *name, char *loc)
+{
+    strncpy(loc, "node", BMI_MAX_VAR_NAME);
+    return BMI_SUCCESS;
+}
+
+
+static int
 get_grid_type(void *self, int id, char *type)
 {
     if (id == 0) {
-        strncpy(type, "uniform_rectlinear", 2048);
+        strncpy(type, "uniform_rectilinear", 2048);
     } else {
         type[0] = '\0'; return BMI_FAILURE;
     }
@@ -494,6 +502,7 @@ register_bmi_subside(BMI_Model *model)
     model->get_var_units = get_var_units;
     model->get_var_itemsize = get_var_itemsize;
     model->get_var_nbytes = get_var_nbytes;
+    model->get_var_location = get_var_location;
     model->get_current_time = get_current_time;
     model->get_start_time = get_start_time;
     model->get_end_time = get_end_time;
