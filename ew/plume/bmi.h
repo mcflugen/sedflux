@@ -34,6 +34,7 @@ typedef struct {
   int (* get_var_units)(void *, const char *, char *);
   int (* get_var_itemsize)(void *, const char *, int *);
   int (* get_var_nbytes)(void *, const char *, int *);
+  int (* get_var_location)(void *, const char *, char *);
   int (* get_current_time)(void *, double *);
   int (* get_start_time)(void *, double *);
   int (* get_end_time)(void *, double *);
@@ -61,7 +62,7 @@ typedef struct {
   int (* get_grid_y)(void *, int, double *);
   int (* get_grid_z)(void *, int, double *);
 
-  int (* get_grid_cell_count)(void *, int, int *);
+  int (* get_grid_face_count)(void *, int, int *);
   int (* get_grid_point_count)(void *, int, int *);
   int (* get_grid_vertex_count)(void *, int, int *);
 
