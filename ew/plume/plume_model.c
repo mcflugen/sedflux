@@ -18,21 +18,7 @@
 #endif
 
 struct _PlumeModel {
-  //int input_var_name_count;
-  //int output_var_name_count;
-  //int output_var_grid_name_count;
-  //const char ** input_var_names;
-  //const char ** output_var_names;
-  //const char ** output_var_grid_names;
-
   Plume_param_st *param;
-
-  //int n_events;
-  //int n_grains;
-  //double * event_times;
-  // Sed_hydro * flood_events;
-  //int current_event;
-  
   Sed_hydro flood_event;
 
   Eh_dbl_grid * deposit;
@@ -272,31 +258,11 @@ plume_update_until (PlumeModel *self, double time)
 
   {
     int n;
-    //int event_index = self->n_events;
-    //const int n_event_times = self->n_events + 1;
-
-    /* If out of time span, return an error */
-    //if (time >= self->event_times[n_event_times-1])
-    //  return BMI_FAILURE;
-
-    /* Find index to the flood that contains the requested time */
-    //for (n=self->current_event; n<n_event_times; n++) {
-    //  if (time < self->event_times[n]) {
-    //    event_index = n-1;
-    //    break;
-    //  }
-    //}
-
-    /* If out of time span, return an error */
-    //if (event_index < 0)
-    //  return BMI_FAILURE;
 
     /* If it is a different flood than the current one, run the new one */
     //if (event_index > self->current_event)
     if (!self->cached) {
       int n_grains, len;
-      // Sed_hydro event = self->flood_events[event_index];
-      // Sed_hydro event = self->flood_events[0];
 
       sed_hydro_set_velocity (self->flood_event, self->velocity);
       sed_hydro_set_width (self->flood_event, self->width);
@@ -308,14 +274,6 @@ plume_update_until (PlumeModel *self, double time)
 
       self->deposit = plume_wrapper (self->flood_event, self->param, &len, &n_grains);
       self->cached = TRUE;
-
-      //self->current_event = event_index;
-
-      //self->velocity = sed_hydro_velocity (event);
-      //self->width = sed_hydro_width (event);
-      //self->depth = sed_hydro_depth (event);
-      //self->bedload = sed_hydro_bedload (event);
-      //self->qs = sed_hydro_nth_concentration (event, 0);
     }
 
     self->time_in_days = time;
@@ -331,33 +289,6 @@ int
 plume_update (PlumeModel *self)
 {
   return plume_update_until(self, self->time_in_days + 1);
-#if 0
-  int rtn = BMI_FAILURE;
-  if (self) {
-
-    if (self->current_event < self->n_events) {
-      gint len;
-      gint n_grains;
-      Eh_dbl_grid *dep_grid = NULL;
-      Sed_hydro event = self->flood_events[self->current_event];
-      
-      if (self->verbose)
-        sed_hydro_fprint (stderr, event);
-
-      dep_grid = plume_wrapper (event, self->param, &len, &n_grains);
-
-      destroy_deposit_grids(self);
-
-      self->deposit = dep_grid;
-
-      self->current_event++;
-      self->time_in_days = self->event_times[self->current_event];
-
-      rtn = BMI_SUCCESS;
-    }
-  }
-  return rtn;
-#endif
 }
 
 
@@ -382,34 +313,10 @@ plume_initialize (const char * config_file, PlumeModel **handle)
     }
 
     if (self) {
-        //int n_events;
-
-        //Sed_hydro *r = NULL;
         self->param->n_dim  = 2;
         self->param->rotate = 0;
 
-        //n_events = 0;
-        //for (r=self->flood_events; *r; r++) {
-        //  n_events ++;
-        //}
-
-        //if (n_events > 0)
         {
-          //int n;
-
-          //self->n_events = n_events;
-          //self->event_times = g_new (double, n_events+1);
-          ////self->event_times[0] = sed_hydro_duration_in_seconds (self->flood_events[0]);
-          //self->event_times[0] = 0.;
-
-          //for (n=1; n<=n_events; n++) {
-          //  self->event_times[n] = self->event_times[n-1] +
-          //    sed_hydro_duration_in_seconds (self->flood_events[n-1]) * DAYS_PER_SECOND;
-          //}
-
-          //self->n_grains = sed_hydro_size (self->flood_events[0]);
-          //self->current_event = -1;
-          //self->time_in_days = self->event_times[0] - 1;
           self->time_in_days = 0.;
           self->cached = FALSE;
 
@@ -422,8 +329,7 @@ plume_initialize (const char * config_file, PlumeModel **handle)
           { /* Run the first event */
             int len, n_grains;
             self->deposit = NULL;
-            // rtn = plume_update_until (self, self->event_times[0]);
-            rtn = plume_update (self);
+            rtn = plume_update(self);
             self->time_in_days = plume_get_start_time(self);
           }
           rtn = BMI_SUCCESS;
