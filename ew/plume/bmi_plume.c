@@ -100,8 +100,8 @@ get_current_time(void * self, double *time)
 static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
-    *dt = -1.;
-    return BMI_FAILURE;
+    *dt = 1.;
+    return BMI_SUCCESS;
 }
 
 
@@ -142,28 +142,7 @@ update(void * self)
 static int
 update_until(void * self, double then)
 {
-    double dt;
-    double now;
-
-    if (get_time_step(self, &dt) == BMI_FAILURE)
-        return BMI_FAILURE;
-
-    if (get_current_time(self, &now) == BMI_FAILURE)
-        return BMI_FAILURE;
-
-    {
-        int n;
-        const double n_steps = (then - now) / dt;
-        for (n=0; n<(int)n_steps; n++) {
-            if (update(self) == BMI_FAILURE)
-                return BMI_FAILURE;
-        }
-
-        if (update_frac(self, n_steps - (int)n_steps) == BMI_FAILURE)
-            return BMI_FAILURE;
-    }
-
-    return BMI_SUCCESS;
+    return plume_update_until((PlumeModel*)self, then);
 }
 
 
@@ -337,7 +316,9 @@ get_grid_size(void *self, int id, int *size)
     if (get_grid_rank(self, id, &rank) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    {
+    if (rank == 0) {
+        *size = 1;
+    } else {
         int * shape = (int*) malloc(sizeof(int) * rank);
         int i;
 
