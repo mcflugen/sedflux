@@ -385,7 +385,7 @@ get_value_ptr(void *self, const char *name, void **dest)
 }
 
 
-int
+static int
 get_value(void * self, const char * name, void *dest)
 {
     void *src = NULL;
