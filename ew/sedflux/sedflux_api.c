@@ -1445,6 +1445,34 @@ sedflux_set_discharge (Sedflux_state* state, const double* val)
 }
 
 
+double
+sedflux_get_channel_suspended_load(Sedflux_state* state)
+{
+  return sed_hydro_nth_concentration(sed_cube_external_river(state->p), 0);
+}
+
+
+double
+sedflux_get_channel_width(Sedflux_state* state)
+{
+  return sed_hydro_width(sed_cube_external_river(state->p));
+}
+
+
+double
+sedflux_get_channel_depth(Sedflux_state* state)
+{
+  return sed_hydro_depth(sed_cube_external_river(state->p));
+}
+
+
+double
+sedflux_get_channel_velocity(Sedflux_state* state)
+{
+  return sed_hydro_velocity(sed_cube_external_river(state->p));
+}
+
+
 void
 sedflux_set_channel_bedload(Sedflux_state* state, const double* val)
 {
@@ -1608,27 +1636,37 @@ sedflux_set_bed_load_flux (Sedflux_state* state, const double* val)
         top_n_total += sorted_flux[i];
       for (i=0; i<n_trunks; i++)
         sorted_flux[i] *= total_flux/top_n_total;
-      eh_watch_dbl (total_flux);
-    
+
       for (i=0; i<n_trunks; i++) {
         Sed_riv* leaves = sed_river_leaves (trunks[i]);
         Sed_riv* leaf;
         const gint n_leaves = g_strv_length ((gchar**)leaves);
-        const double total_thickness = sorted_flux[i] * flux_to_thickness / n_leaves;
+        const double total_thickness = sorted_flux[i] * flux_to_thickness / n_leaves * 10.;
         const Eh_ind_2 sub = sed_cube_sub (c, sorted_ids[i]);
 
         sed_cell_clear (add_cell);
         sed_cell_add_equal_amounts (add_cell, total_thickness);
-        eh_watch_dbl (sed_cell_size (add_cell));
+        // eh_watch_dbl (sed_cell_size (add_cell));
+
+        // sed_river_add_cell (trunks[i], add_cell);
+        // sed_river_set_hinge (trunks[i], sub.i, sub.j);
 
         for (leaf=leaves; *leaf; leaf++) {
           sed_river_add_cell (*leaf, add_cell);
           sed_river_set_hinge (*leaf, sub.i, sub.j);
         }
 
+        {
+          Sed_hydro river_data = sed_cube_external_river(c);
+
+          // sed_hydro_set_velocity(river_data, 1.2);
+          // sed_hydro_set_width(river_data, 400.);
+          // sed_hydro_set_depth(river_data, 4.);
+          sed_hydro_add_cell(river_data, add_cell);
+        }
+
         g_free (leaves);
       }
-
       g_free (trunks);
     }
 

@@ -19,13 +19,17 @@ get_component_name (void *self, char * name)
 }
 
 
-#define INPUT_VAR_NAME_COUNT (5)
+#define INPUT_VAR_NAME_COUNT (9)
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
     "bedrock_surface__elevation",
     "channel_water_sediment~bedload__mass_flow_rate",
     "sea_bottom_sediment__increment_of_thickness",
     "bedrock_surface__increment_of_elevation",
-    "channel_exit_water__volume_flow_rate"
+    "channel_exit_water__volume_flow_rate",
+    "channel_exit_water_flow__speed",
+    "channel_exit_x-section__mean_of_width",
+    "channel_exit_x-section__mean_of_depth",
+    "channel_exit_water_sediment~suspended__mass_concentration"
 };
 
 
@@ -53,7 +57,7 @@ get_input_var_names(void *self, char **names)
 
 
 // #define OUTPUT_VAR_NAME_COUNT (33)
-#define OUTPUT_VAR_NAME_COUNT (31)
+#define OUTPUT_VAR_NAME_COUNT (35)
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "land-or-seabed_sediment_grain__mean_diameter",
     "sea_water__depth",
@@ -87,7 +91,11 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "sea_bottom_surface__x_derivative_of_elevation",
     "sea_bottom_sediment_sand__volume_fraction",
     "sea_bottom_sediment__mean_of_deposition_age",
-    "sea_bottom_sediment_silt__volume_fraction"
+    "sea_bottom_sediment_silt__volume_fraction",
+    "channel_exit_water_flow__speed",
+    "channel_exit_x-section__mean_of_width",
+    "channel_exit_x-section__mean_of_depth",
+    "channel_exit_water_sediment~suspended__mass_concentration"
 };
 
 
@@ -451,6 +459,14 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
         *grid = 0;
+    } else if (strcmp(name, "channel_exit_water_flow__speed") == 0) {
+        *grid = 2;
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_width") == 0) {
+        *grid = 2;
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_depth") == 0) {
+        *grid = 2;
+    } else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0) {
+        *grid = 2;
     } else {
         *grid = -1; return BMI_FAILURE;
     }
@@ -536,6 +552,14 @@ get_var_type(void *self, const char *name, char *type)
     } else if (strcmp(name, "sea_bottom_sediment__mean_of_deposition_age") == 0) {
         strncpy(type, "double", 7);
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
+        strncpy(type, "double", 7);
+    } else if (strcmp(name, "channel_exit_water_flow__speed") == 0) {
+        strncpy(type, "double", 7);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_width") == 0) {
+        strncpy(type, "double", 7);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_depth") == 0) {
+        strncpy(type, "double", 7);
+    } else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0) {
         strncpy(type, "double", 7);
     } else {
         type[0] = '\0'; return BMI_FAILURE;
@@ -623,6 +647,14 @@ get_var_units(void *self, const char *name, char *units)
         strncpy(units, "d", BMI_MAX_UNITS_NAME);
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
         strncpy(units, "", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "channel_exit_water_flow__speed") == 0) {
+        strncpy(units, "m/s", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_width") == 0) {
+        strncpy(units, "m", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_depth") == 0) {
+        strncpy(units, "m", BMI_MAX_UNITS_NAME);
+    } else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0) {
+        strncpy(units, "kg/m^3", BMI_MAX_UNITS_NAME);
     } else {
         units[0] = '\0'; return BMI_FAILURE;
     }
@@ -709,6 +741,14 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
         *itemsize = sizeof(double);
     } else if (strcmp(name, "sea_bottom_sediment_silt__volume_fraction") == 0) {
         *itemsize = sizeof(double);
+    } else if (strcmp(name, "channel_exit_water_flow__speed") == 0) {
+        *itemsize = sizeof(double);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_width") == 0) {
+        *itemsize = sizeof(double);
+    } else if (strcmp(name, "channel_exit_x-section__mean_of_depth") == 0) {
+        *itemsize = sizeof(double);
+    } else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0) {
+        *itemsize = sizeof(double);
     } else {
         *itemsize = 0; return BMI_FAILURE;
     }
@@ -748,6 +788,20 @@ static int
 get_value(void *self, const char *name, void *dest)
 {
     const char *sedflux_name = NULL;
+
+    if (g_str_has_prefix(name, "channel_exit_")) {
+      if (g_str_has_suffix(name, "water_flow__speed"))
+          *(double*)dest = sedflux_get_channel_velocity(self);
+      else if (g_str_has_suffix(name, "x-section__mean_of_width"))
+          *(double*)dest = sedflux_get_channel_width(self);
+      else if (g_str_has_suffix(name, "x-section__mean_of_depth"))
+          *(double*)dest = sedflux_get_channel_depth(self);
+      else if (g_str_has_suffix(name, "water_sediment~suspended__mass_concentration"))
+          *(double*)dest = sedflux_get_channel_suspended_load(self);
+      else
+          return BMI_FAILURE;
+      return BMI_SUCCESS;
+    }
 
     if (strcmp(name, "sea_water__depth") == 0)
         sedflux_name = "DEPTH";
@@ -863,6 +917,14 @@ set_value (void *self, const char *name, void *array)
         sedflux_set_discharge(self, (double*)array);
     else if (strcmp(name, "channel_water_sediment~bedload__mass_flow_rate") == 0)
         sedflux_set_bed_load_flux(self, (double*)array);
+    else if (strcmp(name, "channel_exit_water_flow__speed") == 0)
+      sedflux_set_channel_velocity(self, (double*)array);
+    else if (strcmp(name, "channel_exit_x-section__mean_of_width") == 0)
+      sedflux_set_channel_width(self, (double*)array);
+    else if (strcmp(name, "channel_exit_x-section__mean_of_depth") == 0)
+      sedflux_set_channel_depth(self, (double*)array);
+    else if (g_str_has_suffix(name, "water_sediment~suspended__mass_concentration"))
+      sedflux_set_channel_suspended_load(self, (double*)array);
     else
         return BMI_FAILURE;
     return BMI_SUCCESS;

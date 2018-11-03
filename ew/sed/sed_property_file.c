@@ -632,9 +632,6 @@ sed_cube_n_rows_between( Sed_cube p , double dz , double lower , double upper , 
         top_row = upper/dz;
 
       n_rows = top_row-bottom_row;
-      fprintf (stderr, "NUMBER of rows is %ld\n", n_rows);
-      fprintf (stderr, "lower row %f\n", lower);
-      fprintf (stderr, "upper row %f\n", upper);
    }
 
    return n_rows;
