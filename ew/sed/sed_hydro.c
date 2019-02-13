@@ -1817,7 +1817,15 @@ sed_hydro_file_new( const char*         filename     ,
             fp->data_start   = ftell(fp->fp);
 
          }
-         else
+         else if (type == SED_HYDRO_EXTERNAL) {
+            fp->buf_set = NULL;
+            fp->buf_cur = NULL;
+            fp->buffer_len = 0;
+            fp->n_sig_values = 0;
+            fp->read_hdr = NULL;
+            fp->read_record = NULL;
+            fp->hdr = NULL;
+         } else
             eh_require_not_reached();
 
          fp->data_size    = sizeof(float);
@@ -1848,7 +1856,7 @@ Sed_hydro_file sed_hydro_file_destroy( Sed_hydro_file fp )
    if ( fp )
    {
       fclose( fp->fp );
-      eh_free( fp->file );
+      eh_free(fp->file);
 
       if ( fp->buf_set )
       {
@@ -1861,10 +1869,10 @@ Sed_hydro_file sed_hydro_file_destroy( Sed_hydro_file fp )
       /* If the input file was of type 'inline', there is NULL */
       if ( fp->hdr )
       {
-         eh_free( fp->hdr->comment );
-         eh_free( fp->hdr );
+         eh_free(fp->hdr->comment);
+         eh_free(fp->hdr);
       }
-      eh_free( fp );
+      eh_free(fp);
    }
 
    return NULL;

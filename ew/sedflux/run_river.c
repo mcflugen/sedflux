@@ -298,19 +298,15 @@ init_river_data( Sed_process proc , Sed_cube prof , GError** error )
 gboolean
 destroy_river( Sed_process p )
 {
-   if ( p )
-   {
-      River_t* data = (River_t*)sed_process_user_data( p );
+   if (p) {
+      River_t* data = (River_t*)sed_process_user_data(p);
       
-      if ( data )
-      {
-         sed_cube_remove_trunk (data->prof, data->this_river);
-
-         sed_hydro_file_destroy( data->fp_river );
-
-         eh_free( data->filename   );
-         eh_free( data->river_name );
-         eh_free( data             );
+      if (data) {
+         sed_cube_remove_trunk(data->prof, data->this_river);
+         sed_hydro_file_destroy(data->fp_river);
+         eh_free(data->filename);
+         eh_free(data->river_name);
+         eh_free(data);
       }
    }
 
