@@ -101,7 +101,7 @@ static int
 get_end_time(void * self, double *time)
 { /* Implement this: Set end time */
     *time = avulsion_get_end_time ((AvulsionModel*)self);
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
@@ -109,7 +109,7 @@ static int
 get_current_time(void * self, double *time)
 { /* Implement this: Set current time */
     *time = avulsion_get_current_time ((AvulsionModel*)self);
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
@@ -117,7 +117,7 @@ static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
     *dt = ((AvulsionModel*)self)->time_step;
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
