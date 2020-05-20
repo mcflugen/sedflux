@@ -82,7 +82,7 @@ static int
 get_end_time(void * self, double *time)
 { /* Implement this: Set end time */
     *time = -1.;
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
@@ -90,7 +90,7 @@ static int
 get_current_time(void * self, double *time)
 { /* Implement this: Set current time */
     *time = -1.;
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
@@ -98,7 +98,7 @@ static int
 get_time_step(void * self, double *dt)
 { /* Implement this: Set time step */
     *dt = -1.;
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
