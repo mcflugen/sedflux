@@ -57,7 +57,8 @@ get_input_var_names(void *self, char **names)
 
 
 // #define OUTPUT_VAR_NAME_COUNT (33)
-#define OUTPUT_VAR_NAME_COUNT (35)
+// #define OUTPUT_VAR_NAME_COUNT (35)
+#define OUTPUT_VAR_NAME_COUNT (30)
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "land-or-seabed_sediment_grain__mean_diameter",
     "sea_water__depth",
@@ -66,7 +67,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "sea_bottom_sediment_grain__mean_diameter",
     "bedrock_surface__elevation",
     "land-or-seabed_sediment__permeability",
-    "sediment_grain__mean_diameter",
+    // "sediment_grain__mean_diameter",
     "land-or-seabed_sediment_surface__y_derivative_of_elevation", // land-or-seabed_surface__y_derivative_of_elevation
     "sea_bottom_sediment__porosity",
     "land-or-seabed_sediment_silt__volume_fraction",
@@ -76,7 +77,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
 //    "surface_sediment_model_grain_class_0__volume_fraction",
     "land-or-seabed_sediment_sand__volume_fraction",
     "land-or-seabed_sediment__mean_of_deposition_age",
-    "sediment__mean_of_deposition_age",
+    // "sediment__mean_of_deposition_age",
 //    "sea_bottom_sediment_model_grain_class_0__volume_fraction",
     "sea_bottom_surface__y_derivative_of_elevation",
     "sea_bottom_sediment_clay__volume_fraction",
@@ -84,10 +85,10 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
     "land-or-seabed_sediment__bulk_mass-per-volume_density",
     "land-or-seabed_sediment_mud__volume_fraction",
     "land-or-seabed_sediment_surface__x_derivative_of_elevation",
-    "sediment__porosity",
-    "sediment__bulk_mass-per-volume_density",
+    // "sediment__porosity",
+    // "sediment__bulk_mass-per-volume_density",
     "sea_bottom_sediment__permeability",
-    "sediment__permeability",
+    // "sediment__permeability",
     "sea_bottom_surface__x_derivative_of_elevation",
     "sea_bottom_sediment_sand__volume_fraction",
     "sea_bottom_sediment__mean_of_deposition_age",
@@ -399,8 +400,8 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment__permeability") == 0) {
         *grid = 0;
-    } else if (strcmp(name, "sediment_grain__mean_diameter") == 0) {
-        *grid = 1;
+    // } else if (strcmp(name, "sediment_grain__mean_diameter") == 0) {
+    //     *grid = 1;
     } else if (strcmp(name, "land-or-seabed_sediment_surface__y_derivative_of_elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment__porosity") == 0) {
@@ -421,8 +422,8 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "land-or-seabed_sediment__mean_of_deposition_age") == 0) {
         *grid = 0;
-    } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
-        *grid = 1;
+    // } else if (strcmp(name, "sediment__mean_of_deposition_age") == 0) {
+    //     *grid = 1;
     // } else if (strcmp(name, "sea_bottom_sediment_model_grain_class_0__volume_fraction") == 0) {
     //     *grid = 0;
     } else if (strcmp(name, "sea_bottom_surface__y_derivative_of_elevation") == 0) {
@@ -443,14 +444,14 @@ get_var_grid(void *self, const char *name, int *grid)
         *grid = 0;
     } else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0) {
         *grid = 0;
-    } else if (strcmp(name, "sediment__porosity") == 0) {
-        *grid = 1;
-    } else if (strcmp(name, "sediment__bulk_mass-per-volume_density") == 0) {
-        *grid = 1;
+    // } else if (strcmp(name, "sediment__porosity") == 0) {
+    //     *grid = 1;
+    // } else if (strcmp(name, "sediment__bulk_mass-per-volume_density") == 0) {
+    //     *grid = 1;
     } else if (strcmp(name, "sea_bottom_sediment__permeability") == 0) {
         *grid = 0;
-    } else if (strcmp(name, "sediment__permeability") == 0) {
-        *grid = 1;
+    // } else if (strcmp(name, "sediment__permeability") == 0) {
+    //     *grid = 1;
     } else if (strcmp(name, "sea_bottom_surface__x_derivative_of_elevation") == 0) {
         *grid = 0;
     } else if (strcmp(name, "sea_bottom_sediment_sand__volume_fraction") == 0) {
