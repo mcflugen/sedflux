@@ -69,7 +69,7 @@ main(int argc, char *argv[])
      register_bmi_plume(model);
       
      fprintf (stderr, "Initializing... ");
-     err = model->initialize("plume_config.txt", &(model->self));
+     err = model->initialize(model, "plume_config.txt");
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to initialize\n", err);
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
      fprintf (stderr, "PASS\n");
 
      fprintf (stderr, "Updating... ");
-     err = model->update(model->self);
+     err = model->update(model);
      if (err) {
        fprintf (stderr, "FAIL\n");
        fprintf (stderr, "Error: %d: Unable to update\n", err);
@@ -94,18 +94,18 @@ main(int argc, char *argv[])
        {
          int grid, size, rank;
 
-         model->get_var_grid(model->self,
+         model->get_var_grid(model,
              "sea_bottom_sediment__deposition_rate", &grid);
-         model->get_grid_size(model->self, grid, &size);
+         model->get_grid_size(model, grid, &size);
          z = g_new (double, size);
 
-         model->get_grid_rank(model->self, grid, &rank);
+         model->get_grid_rank(model, grid, &rank);
          shape = g_new(int, rank);
 
-         model->get_grid_shape(model->self, grid, shape);
+         model->get_grid_shape(model, grid, shape);
        }
 
-       model->get_value(model->self, "sea_bottom_sediment__deposition_rate", z);
+       model->get_value(model, "sea_bottom_sediment__deposition_rate", z);
 
        {
          int i, j;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
        g_free (shape);
      }
 
-     model->finalize(model->self);
+     model->finalize(model);
    }
 
    return EXIT_SUCCESS;
