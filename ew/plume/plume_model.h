@@ -25,7 +25,7 @@ void plume_set_bedload(PlumeModel *self, double val);
 void plume_set_qs(PlumeModel *self, double val);
 void plume_get_grid_spacing(PlumeModel * self, double spacing[2]);
 void plume_get_grid_origin(PlumeModel * self, double origin[2]);
-int plume_initialize (const char * config_file, PlumeModel **handle);
+PlumeModel *plume_initialize (PlumeModel * self, const char * config_file);
 int plume_update_until (PlumeModel *self, double time);
 int plume_finalize (PlumeModel * self);
 

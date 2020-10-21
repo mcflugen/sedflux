@@ -52,13 +52,16 @@ destroy_deposit_grids(PlumeModel *self)
 
 
 PlumeModel *
-from_input_file(const char *fname)
+from_input_file(PlumeModel *self, const char *fname)
 {
-    PlumeModel * self = g_new (PlumeModel, 1);
+    // PlumeModel * self = g_new (PlumeModel, 1);
     GError* error = NULL;
     FILE * fp = fopen (fname, "r");
     gchar plume_file[LINE_MAX];
     gchar hydro_file[LINE_MAX];
+
+    if (self == NULL)
+      self = g_new (PlumeModel, 1);
 
     if (fp) {
         char line[LINE_MAX];
@@ -94,15 +97,20 @@ from_input_file(const char *fname)
 
 
 PlumeModel *
-from_defaults(void)
+from_defaults(PlumeModel *self)
 {
-    PlumeModel * self = g_new (PlumeModel, 1);
+    // PlumeModel * self = g_new (PlumeModel, 1);
     GError* error = NULL;
     gchar *buffer = sed_hydro_default_text ();
     Sed_hydro *flood_events;
 
+    if (self == NULL)
+      self = g_new(PlumeModel, 1);
+
     self->param = plume_scan_parameter_file (NULL, &error);
     flood_events = sed_hydro_scan_text(buffer, &error);
+
+    self->flood_event = flood_events[0];
 
     self->velocity = sed_hydro_velocity(flood_events[0]);
     self->width = sed_hydro_width(flood_events[0]);
@@ -292,60 +300,44 @@ plume_update (PlumeModel *self)
 }
 
 
-int
-plume_initialize (const char * config_file, PlumeModel **handle)
+PlumeModel*
+plume_initialize (PlumeModel * self, const char * config_file)
 {
-  int rtn = BMI_FAILURE;
-
   if (!g_thread_get_initialized ()) {
     g_thread_init (NULL);
     eh_init_glib ();
     g_log_set_handler (NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
   }
 
-  if (handle) {
-    PlumeModel *self = NULL;
+  if (config_file == NULL || strcmp(config_file, "") == 0) {
+      self = from_defaults(self);
+  } else {
+      self = from_input_file(self, config_file);
+  }
 
-    if (config_file) {
-      self = from_input_file(config_file);
-    } else {
-      self = from_defaults();
-    }
+  if (self) {
+      self->param->n_dim  = 2;
+      self->param->rotate = 0;
 
-    if (self) {
-        self->param->n_dim  = 2;
-        self->param->rotate = 0;
+      {
+        self->time_in_days = 0.;
+        self->cached = FALSE;
 
-        {
-          self->time_in_days = 0.;
-          self->cached = FALSE;
+        self->velocity = sed_hydro_velocity(self->flood_event);
+        self->width = sed_hydro_width(self->flood_event);
+        self->depth = sed_hydro_depth(self->flood_event);
+        self->bedload = sed_hydro_bedload(self->flood_event);
+        self->qs = sed_hydro_nth_concentration(self->flood_event, 0);
 
-          self->velocity = sed_hydro_velocity(self->flood_event);
-          self->width = sed_hydro_width(self->flood_event);
-          self->depth = sed_hydro_depth(self->flood_event);
-          self->bedload = sed_hydro_bedload(self->flood_event);
-          self->qs = sed_hydro_nth_concentration(self->flood_event, 0);
-
-          { /* Run the first event */
-            int len, n_grains;
-            self->deposit = NULL;
-            rtn = plume_update(self);
-            self->time_in_days = plume_get_start_time(self);
-          }
-          rtn = BMI_SUCCESS;
+        { /* Run the first event */
+          int len, n_grains;
+          self->deposit = NULL;
+          plume_update(self);
+          self->time_in_days = plume_get_start_time(self);
         }
-      } else
-          return BMI_FAILURE;
-
-      if (rtn == BMI_SUCCESS) {
-        *handle = self;
-        rtn = BMI_SUCCESS;
       }
   }
-  else
-      rtn = BMI_FAILURE;
-
-  return rtn;
+  return self;
 }
 
 

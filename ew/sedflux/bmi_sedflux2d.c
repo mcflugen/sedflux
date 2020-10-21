@@ -11,7 +11,7 @@
 
 
 static int
-get_component_name (void *self, char * name)
+get_component_name (BMI_Model *self, char * name)
 {
     strncpy (name, "sedflux2d", BMI_MAX_COMPONENT_NAME);
     return BMI_SUCCESS;
@@ -34,7 +34,7 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
 
 
 static int
-get_input_var_name_count(void *self, int *count)
+get_input_var_name_count(BMI_Model *self, int *count)
 {
     *count = INPUT_VAR_NAME_COUNT;
     return BMI_SUCCESS;
@@ -42,7 +42,7 @@ get_input_var_name_count(void *self, int *count)
 
 
 static int
-get_input_var_names(void *self, char **names)
+get_input_var_names(BMI_Model *self, char **names)
 {
     int i;
     for (i=0; i<INPUT_VAR_NAME_COUNT; i++) {
@@ -91,7 +91,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
 
 
 static int
-get_output_var_name_count(void *self, int *count)
+get_output_var_name_count(BMI_Model *self, int *count)
 {
     *count = OUTPUT_VAR_NAME_COUNT;
     return BMI_SUCCESS;
@@ -99,7 +99,7 @@ get_output_var_name_count(void *self, int *count)
 
 
 static int
-get_output_var_names(void *self, char **names)
+get_output_var_names(BMI_Model *self, char **names)
 {
     int i;
     for (i=0; i<OUTPUT_VAR_NAME_COUNT; i++) {
@@ -110,7 +110,7 @@ get_output_var_names(void *self, char **names)
 
 
 static int
-get_start_time(void * self, double *time)
+get_start_time(BMI_Model *self, double *time)
 {
     *time = 0.;
     return BMI_SUCCESS;
@@ -118,23 +118,23 @@ get_start_time(void * self, double *time)
 
 
 static int
-get_end_time(void * self, double *time)
+get_end_time(BMI_Model *self, double *time)
 { /* Implement this: Set end time */
-    *time = sedflux_get_end_time((Sedflux_state*)self) * 365.;
+    *time = sedflux_get_end_time((Sedflux_state*)self->data) * 365.;
     return BMI_SUCCESS;
 }
 
 
 static int
-get_current_time(void * self, double *time)
+get_current_time(BMI_Model *self, double *time)
 { /* Implement this: Set current time */
-    *time = sedflux_get_current_time(self) * 365.;
+    *time = sedflux_get_current_time((Sedflux_state*)self->data) * 365.;
     return BMI_SUCCESS;
 }
 
 
 static int
-get_time_step(void * self, double *dt)
+get_time_step(BMI_Model *self, double *dt)
 { /* Implement this: Set time step */
     *dt = 1.;
     return BMI_SUCCESS;
@@ -142,7 +142,7 @@ get_time_step(void * self, double *dt)
 
 
 static int
-get_time_units(void * self, char *units)
+get_time_units(BMI_Model *self, char *units)
 {
     strncpy(units, "d", BMI_MAX_UNITS_NAME);
     return BMI_SUCCESS;
@@ -150,9 +150,8 @@ get_time_units(void * self, char *units)
 
 
 static int
-initialize(const char * file, void **handle)
+initialize(BMI_Model *self, const char * file)
 { /* Implement this: Create and initialize a model handle */
-    *handle = NULL;
 /*
     if (!g_thread_get_initialized()) {
         g_thread_init(NULL);
@@ -163,7 +162,7 @@ initialize(const char * file, void **handle)
     g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
 
     {
-        Sedflux_state * self = NULL;
+        Sedflux_state * data = NULL;
         char *args = NULL;
 
         args = g_strdup_printf("sedflux -2 -i %s", file);
@@ -187,7 +186,6 @@ initialize(const char * file, void **handle)
             return BMI_FAILURE;
 #endif
 
-        fprintf (stderr, "Initializing sedflux with these args: %s\n", args);
         if (args) { /* Initialize with these argments */
             int argc;
             char **argv;
@@ -199,12 +197,12 @@ initialize(const char * file, void **handle)
             for (i=0; i<argc; i++)
                 g_strstrip (argv[i]);
 
-            self = sedflux_initialize(argc, (const char**)argv);
+            data = sedflux_initialize(argc, (const char**)argv);
 
             g_strfreev(argv);
 
-            if (self)
-                *handle = self;
+            if (data)
+                self->data = data;
             else
                 return BMI_FAILURE;
 
@@ -215,14 +213,13 @@ initialize(const char * file, void **handle)
             return BMI_FAILURE;
     }
   
-    fprintf (stderr, "Sedflux is initialized !!!\n");
     return BMI_SUCCESS;
 }
 
 
 #if 0
 static int
-update_frac(void * self, double f)
+update_frac(BMI_Model *self, double f)
 { /* Implement this: Update for a fraction of a time step */
     return BMI_FAILURE;
 }
@@ -230,31 +227,31 @@ update_frac(void * self, double f)
 
 
 static int
-update(void * self)
+update(BMI_Model *self)
 {
-    sedflux_run_time_step(self);
+    sedflux_run_time_step((Sedflux_state*)self->data);
     return BMI_SUCCESS;
 }
 
 
 static int
-update_until(void * self, double then)
+update_until(BMI_Model *self, double then)
 {
-    sedflux_run_until(self, then / 365.);
+    sedflux_run_until((Sedflux_state*)self->data, then / 365.);
     return BMI_SUCCESS;
 }
 
 
 static int
-finalize(void * self)
+finalize(BMI_Model *self)
 { /* Implement this: Clean up */
-    sedflux_finalize(self);
+    sedflux_finalize((Sedflux_state*)self->data);
     return BMI_SUCCESS;
 }
 
 
 static int
-get_grid_type(void *self, int id, char *type)
+get_grid_type(BMI_Model *self, int id, char *type)
 {
     if (id == 0) {
         strncpy(type, "uniform_rectilinear", 2048);
@@ -270,7 +267,7 @@ get_grid_type(void *self, int id, char *type)
 
 
 static int
-get_grid_rank(void *self, int id, int *rank)
+get_grid_rank(BMI_Model *self, int id, int *rank)
 {
     if (id == 0) {
         *rank = 1;
@@ -286,13 +283,13 @@ get_grid_rank(void *self, int id, int *rank)
 
 
 static int
-get_grid_shape(void *self, int id, int *shape)
+get_grid_shape(BMI_Model *self, int id, int *shape)
 { /* Implement this: set shape of structured grids */
     if (id == 0) {
-        shape[0] = sedflux_get_ny(self);
+        shape[0] = sedflux_get_ny((Sedflux_state*)self->data);
     } else if (id == 1) {
-        shape[0] = sedflux_get_ny(self);
-        shape[1] = sedflux_get_nz(self);
+        shape[0] = sedflux_get_ny((Sedflux_state*)self->data);
+        shape[1] = sedflux_get_nz((Sedflux_state*)self->data);
     } else {
         return BMI_FAILURE;
     }
@@ -301,10 +298,10 @@ get_grid_shape(void *self, int id, int *shape)
 
 
 static int
-get_grid_size(void *self, int id, int *size)
+get_grid_size(BMI_Model *self, int id, int *size)
 {
     int rank;
-    if (get_grid_rank(self, id, &rank) == BMI_FAILURE)
+    if (self->get_grid_rank(self, id, &rank) == BMI_FAILURE)
         return BMI_FAILURE;
 
     if (rank == 0) {
@@ -313,7 +310,7 @@ get_grid_size(void *self, int id, int *size)
         int * shape = (int*) malloc(sizeof(int) * rank);
         int i;
 
-        if (get_grid_shape(self, id, shape) == BMI_FAILURE)
+        if (self->get_grid_shape(self, id, shape) == BMI_FAILURE)
             return BMI_FAILURE;
 
         *size = 1;
@@ -327,13 +324,13 @@ get_grid_size(void *self, int id, int *size)
 
 
 static int
-get_grid_spacing(void *self, int id, double *spacing)
+get_grid_spacing(BMI_Model *self, int id, double *spacing)
 { /* Implement this: set spacing of uniform rectilinear grids */
     if (id == 0) {
-        spacing[0] = sedflux_get_yres(self);
+        spacing[0] = sedflux_get_yres((Sedflux_state*)self->data);
     } else if (id == 1) {
-        spacing[0] = sedflux_get_yres(self);
-        spacing[1] = sedflux_get_zres(self);
+        spacing[0] = sedflux_get_yres((Sedflux_state*)self->data);
+        spacing[1] = sedflux_get_zres((Sedflux_state*)self->data);
     } else {
         return BMI_FAILURE;
     }
@@ -342,7 +339,7 @@ get_grid_spacing(void *self, int id, double *spacing)
 
 
 static int
-get_grid_origin(void *self, int id, double *origin)
+get_grid_origin(BMI_Model *self, int id, double *origin)
 { /* Implement this: set origin of uniform rectilinear grids */
     if (id == 0) {
         origin[0] = 0.;
@@ -356,7 +353,7 @@ get_grid_origin(void *self, int id, double *origin)
 
 
 static int
-get_var_grid(void *self, const char *name, int *grid)
+get_var_grid(BMI_Model *self, const char *name, int *grid)
 {
     if (strcmp(name, "land-or-seabed_sediment_grain__mean_diameter") == 0) {
         *grid = 0;
@@ -445,7 +442,7 @@ get_var_grid(void *self, const char *name, int *grid)
 
 
 static int
-get_var_type(void *self, const char *name, char *type)
+get_var_type(BMI_Model *self, const char *name, char *type)
 {
     if (strcmp(name, "land-or-seabed_sediment_grain__mean_diameter") == 0) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
@@ -534,7 +531,7 @@ get_var_type(void *self, const char *name, char *type)
 
 
 static int
-get_var_units(void *self, const char *name, char *units)
+get_var_units(BMI_Model *self, const char *name, char *units)
 {
     if (strcmp(name, "land-or-seabed_sediment_grain__mean_diameter") == 0) {
         strncpy(units, "meter", BMI_MAX_UNITS_NAME);
@@ -628,7 +625,7 @@ get_var_units(void *self, const char *name, char *units)
 
 
 static int
-get_var_itemsize(void *self, const char *name, int *itemsize)
+get_var_itemsize(BMI_Model *self, const char *name, int *itemsize)
 {
     if (strcmp(name, "land-or-seabed_sediment_grain__mean_diameter") == 0) {
         *itemsize = sizeof(double);
@@ -718,17 +715,17 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
 
 
 static int
-get_var_nbytes(void *self, const char *name, int *nbytes)
+get_var_nbytes(BMI_Model *self, const char *name, int *nbytes)
 {
     int id, size, itemsize;
 
-    if (get_var_grid(self, name, &id) == BMI_FAILURE)
+    if (self->get_var_grid(self, name, &id) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    if (get_grid_size(self, id, &size) == BMI_FAILURE)
+    if (self->get_grid_size(self, id, &size) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    if (get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
+    if (self->get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
         return BMI_FAILURE;
 
     *nbytes = itemsize * size;
@@ -738,7 +735,7 @@ get_var_nbytes(void *self, const char *name, int *nbytes)
 
 
 static int
-get_value(void *self, const char *name, void *dest)
+get_value(BMI_Model *self, const char *name, void *dest)
 {
     const char *sedflux_name = NULL;
 
@@ -776,7 +773,7 @@ get_value(void *self, const char *name, void *dest)
         return BMI_FAILURE;
 
     if (g_str_has_prefix(name, "sediment_")) {
-        if (!sedflux_get_sediment_value(self, sedflux_name, (double*)dest))
+        if (!sedflux_get_sediment_value((Sedflux_state*)self->data, sedflux_name, (double*)dest))
             return BMI_FAILURE;
     }
     else {
@@ -785,7 +782,7 @@ get_value(void *self, const char *name, void *dest)
         if (g_str_has_prefix(name, "sea_bottom_"))
             mask |= MASK_LAND;
 
-        if (!sedflux_get_surface_value(self, sedflux_name, (double*)dest, mask))
+        if (!sedflux_get_surface_value((Sedflux_state*)self->data, sedflux_name, (double*)dest, mask))
             return BMI_FAILURE;
     }
 
@@ -795,7 +792,7 @@ get_value(void *self, const char *name, void *dest)
 
 #if 0
 int
-get_value(void * self, const char * name, void *dest)
+get_value(BMI_Model *self, const char * name, void *dest)
 {
     void *src = NULL;
     int nbytes = 0;
@@ -813,7 +810,7 @@ get_value(void * self, const char * name, void *dest)
 
 
 static int
-get_value_at_indices (void *self, const char *name, void *dest,
+get_value_at_indices (BMI_Model *self, const char *name, void *dest,
     int * inds, int len)
 {
     void *src = NULL;
@@ -841,29 +838,29 @@ get_value_at_indices (void *self, const char *name, void *dest,
 
 
 static int
-set_value (void *self, const char *name, void *array)
+set_value (BMI_Model *self, const char *name, void *array)
 {
     if (strcmp(name, "bedrock_surface__elevation") == 0)
-        sedflux_set_basement(self, (double*)array);
+        sedflux_set_basement((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "bedrock_surface__increment_of_elevation") == 0)
-        sedflux_set_uplift(self, (double*)array);
+        sedflux_set_uplift((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "sea_bottom_sediment__increment_to_thickness") == 0) // Should this be sea_bottom_sediment__thickness???
-        sedflux_set_subaerial_deposition_to(self, (double*)array);
+        sedflux_set_subaerial_deposition_to((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water__volume_flow_rate") == 0)
-        sedflux_set_discharge(self, (double*)array);
+        sedflux_set_discharge((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water_sediment~bedload__mass_flow_rate") == 0)
-        sedflux_set_channel_bedload(self, (double*)array);
-        //sedflux_set_bed_load_flux(self, (double*)array);
+        sedflux_set_channel_bedload((Sedflux_state*)self->data, (double*)array);
+        //sedflux_set_bed_load_flux((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water_x-section__width") == 0)
-        sedflux_set_channel_width(self, (double*)array);
+        sedflux_set_channel_width((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water_x-section__depth") == 0)
-        sedflux_set_channel_depth(self, (double*)array);
+        sedflux_set_channel_depth((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water_sediment~suspended__mass_concentration") == 0)
-        sedflux_set_channel_suspended_load(self, (double*)array);
+        sedflux_set_channel_suspended_load((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "channel_exit_water_flow__speed") == 0)
-        sedflux_set_channel_velocity(self, (double*)array);
+        sedflux_set_channel_velocity((Sedflux_state*)self->data, (double*)array);
     else if (strcmp(name, "sea_water_surface__elevation") == 0)
-        sedflux_set_sea_level(self, (double*)array);
+        sedflux_set_sea_level((Sedflux_state*)self->data, (double*)array);
     else
         return BMI_FAILURE;
     return BMI_SUCCESS;
@@ -871,7 +868,7 @@ set_value (void *self, const char *name, void *array)
 
 #if 0
 static int
-set_value_at_indices (void *self, const char *name, int * inds, int len,
+set_value_at_indices (BMI_Model *self, const char *name, int * inds, int len,
     void *src)
 {
     void * to = NULL;
@@ -899,18 +896,18 @@ set_value_at_indices (void *self, const char *name, int * inds, int len,
 BMI_Model*
 register_bmi_sedflux2d(BMI_Model *model)
 {
-    model->self = NULL;
+    model->data = NULL;
 
     model->initialize = initialize;
     model->update = update;
     model->update_until = update_until;
-    model->update_frac = NULL;
+    // model->update_frac = NULL;
     model->finalize = finalize;
-    model->run_model = NULL;
+    // model->run_model = NULL;
 
     model->get_component_name = get_component_name;
-    model->get_input_var_name_count = get_input_var_name_count;
-    model->get_output_var_name_count = get_output_var_name_count;
+    model->get_input_item_count = get_input_var_name_count;
+    model->get_output_item_count = get_output_var_name_count;
     model->get_input_var_names = get_input_var_names;
     model->get_output_var_names = get_output_var_names;
 
@@ -930,7 +927,7 @@ register_bmi_sedflux2d(BMI_Model *model)
     model->get_value_at_indices = NULL;
 
     model->set_value = set_value;
-    model->set_value_ptr = NULL;
+    // model->set_value_ptr = NULL;
     model->set_value_at_indices = NULL;
 
     model->get_grid_rank = get_grid_rank;

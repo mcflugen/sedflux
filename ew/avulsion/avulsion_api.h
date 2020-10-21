@@ -132,7 +132,8 @@ const double* avulsion_get_value (AvulsionModel* self, const gchar* val_string,
 const double* avulsion_get_value_data (AvulsionModel* self, const gchar* val_string,
                                  gint lower[3], gint upper[3], gint stride[3]);
 
-extern int BMI_AVULSION_Initialize (const char *config_file, void **handle);
+// extern int BMI_AVULSION_Initialize (const char *config_file, void **handle);
+extern int BMI_AVULSION_Initialize (AvulsionModel* self, const char *config_file);
 extern int BMI_AVULSION_Finalize (void *self);
 extern int _avulsion_run_until (AvulsionModel* s, int until);
 extern double avulsion_get_current_time (AvulsionModel* self);

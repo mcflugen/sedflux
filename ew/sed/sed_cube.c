@@ -1874,6 +1874,7 @@ sed_cube_remove_trunk (Sed_cube s, gpointer trunk_id)
   eh_require (s);
   eh_require (trunk_id);
 
+  if (s && trunk_id)
   {
     s->river = g_list_remove (s->river, trunk_id);
   }

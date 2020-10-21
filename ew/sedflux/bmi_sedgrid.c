@@ -242,7 +242,7 @@ setup_var_tables()
 
 
 static int
-get_component_name (void *self, char * name)
+get_component_name (BMI_Model *self, char * name)
 {
     strncpy (name, "sedgrid", BMI_MAX_COMPONENT_NAME);
     return BMI_SUCCESS;
@@ -258,7 +258,7 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
 */
 
 static int
-get_input_var_name_count(void *self, int *count)
+get_input_var_name_count(BMI_Model *self, int *count)
 {
     *count = g_hash_table_size(INPUT_VAR_NAMES);
     return BMI_SUCCESS;
@@ -266,7 +266,7 @@ get_input_var_name_count(void *self, int *count)
 
 
 static int
-get_input_var_names(void *self, char **names)
+get_input_var_names(BMI_Model *self, char **names)
 {
     GHashTableIter iter;
     gpointer key;
@@ -292,7 +292,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
 */
 
 static int
-get_output_var_name_count(void *self, int *count)
+get_output_var_name_count(BMI_Model *self, int *count)
 {
     *count = g_hash_table_size(OUTPUT_VAR_NAMES);
     return BMI_SUCCESS;
@@ -300,7 +300,7 @@ get_output_var_name_count(void *self, int *count)
 
 
 static int
-get_output_var_names(void *self, char **names)
+get_output_var_names(BMI_Model *self, char **names)
 {
     GHashTableIter iter;
     gpointer key;
@@ -317,7 +317,7 @@ get_output_var_names(void *self, char **names)
 
 
 static int
-get_start_time(void * self, double *time)
+get_start_time(BMI_Model *self, double *time)
 {
     *time = 0.;
     return BMI_SUCCESS;
@@ -325,7 +325,7 @@ get_start_time(void * self, double *time)
 
 
 static int
-get_end_time(void * self, double *time)
+get_end_time(BMI_Model *self, double *time)
 { /* Implement this: Set end time */
     *time = G_MAXDOUBLE;
     return BMI_SUCCESS;
@@ -333,15 +333,15 @@ get_end_time(void * self, double *time)
 
 
 static int
-get_current_time(void * self, double *time)
+get_current_time(BMI_Model *self, double *time)
 { /* Implement this: Set current time */
-    *time = sed_cube_age_in_years((Sed_cube)self) * 365.;
+    *time = sed_cube_age_in_years((Sed_cube)self->data) * 365.;
     return BMI_SUCCESS;
 }
 
 
 static int
-get_time_step(void * self, double *dt)
+get_time_step(BMI_Model *self, double *dt)
 { /* Implement this: Set time step */
     *dt = -1.;
     return BMI_FAILURE;
@@ -349,7 +349,7 @@ get_time_step(void * self, double *dt)
 
 
 static int
-get_time_units(void * self, char *units)
+get_time_units(BMI_Model *self, char *units)
 {
     strncpy(units, "d", BMI_MAX_UNITS_NAME);
     return BMI_SUCCESS;
@@ -357,9 +357,9 @@ get_time_units(void * self, char *units)
 
 
 static int
-initialize(const char * file, void **handle)
+initialize(BMI_Model *self, const char * file)
 { /* Implement this: Create and initialize a model handle */
-    *handle = NULL;
+    // *handle = NULL;
 
     if (!g_thread_get_initialized()) {
         g_thread_init(NULL);
@@ -373,8 +373,6 @@ initialize(const char * file, void **handle)
         SedGridParams* params = scan_sedgrid_params(file);
         int n;
 
-        if (!params)
-            return BMI_FAILURE;
         cube = sed_cube_new(params->shape[0], params->shape[1]);
         if (!cube)
             return BMI_FAILURE;
@@ -390,7 +388,8 @@ initialize(const char * file, void **handle)
         sed_sediment_set_env(sediment);
         sed_sediment_destroy(sediment);
 
-        *handle = (void*)cube;
+        // *handle = (void*)cube;
+        self->data = (void*)cube;
     }
   
     return BMI_SUCCESS;
@@ -399,7 +398,7 @@ initialize(const char * file, void **handle)
 
 #if 0
 static int
-update_frac(void * self, double f)
+update_frac(BMI_Model *self, double f)
 { /* Implement this: Update for a fraction of a time step */
     return BMI_FAILURE;
 }
@@ -407,30 +406,30 @@ update_frac(void * self, double f)
 
 
 static int
-update(void * self)
+update(BMI_Model *self)
 {
     return BMI_SUCCESS;
 }
 
 
 static int
-update_until(void * self, double then)
+update_until(BMI_Model *self, double then)
 {
-    sed_cube_set_age((Sed_cube)self, then * 365.);
+    sed_cube_set_age((Sed_cube)self->data, then * 365.);
     return BMI_SUCCESS;
 }
 
 
 static int
-finalize(void * self)
+finalize(BMI_Model *self)
 { /* Implement this: Clean up */
-    sed_cube_destroy((Sed_cube)self);
+    sed_cube_destroy((Sed_cube)self->data);
     return BMI_SUCCESS;
 }
 
 
 static int
-get_grid_type(void *self, int id, char *type)
+get_grid_type(BMI_Model *self, int id, char *type)
 {
     char* gtype = g_hash_table_lookup(GRID_TYPE, &id);
     if (gtype) {
@@ -444,7 +443,7 @@ get_grid_type(void *self, int id, char *type)
 
 
 static int
-get_grid_rank(void *self, int id, int *rank)
+get_grid_rank(BMI_Model *self, int id, int *rank)
 {
     gint* value = g_hash_table_lookup(GRID_RANK, &id);
     if (value) {
@@ -458,15 +457,15 @@ get_grid_rank(void *self, int id, int *rank)
 
 
 static int
-get_grid_shape(void *self, int id, int *shape)
+get_grid_shape(BMI_Model *self, int id, int *shape)
 { /* Implement this: set shape of structured grids */
     if (id == 0) {
-        shape[0] = sed_cube_n_x((Sed_cube)self);
-        shape[1] = sed_cube_n_y((Sed_cube)self);
+        shape[0] = sed_cube_n_x((Sed_cube)self->data);
+        shape[1] = sed_cube_n_y((Sed_cube)self->data);
     } else if (id == 1) {
-        shape[0] = sed_cube_n_x((Sed_cube)self);
-        shape[1] = sed_cube_n_y((Sed_cube)self);
-        shape[2] = sed_cube_n_rows((Sed_cube)self);
+        shape[0] = sed_cube_n_x((Sed_cube)self->data);
+        shape[1] = sed_cube_n_y((Sed_cube)self->data);
+        shape[2] = sed_cube_n_rows((Sed_cube)self->data);
     } else {
         return BMI_FAILURE;
     }
@@ -475,17 +474,17 @@ get_grid_shape(void *self, int id, int *shape)
 
 
 static int
-get_grid_size(void *self, int id, int *size)
+get_grid_size(BMI_Model *self, int id, int *size)
 {
     int rank;
-    if (get_grid_rank(self, id, &rank) == BMI_FAILURE)
+    if (self->get_grid_rank(self, id, &rank) == BMI_FAILURE)
         return BMI_FAILURE;
 
     {
         int * shape = (int*) malloc(sizeof(int) * rank);
         int i;
 
-        if (get_grid_shape(self, id, shape) == BMI_FAILURE)
+        if (self->get_grid_shape(self, id, shape) == BMI_FAILURE)
             return BMI_FAILURE;
 
         *size = 1;
@@ -499,15 +498,15 @@ get_grid_size(void *self, int id, int *size)
 
 
 static int
-get_grid_spacing(void *self, int id, double *spacing)
+get_grid_spacing(BMI_Model *self, int id, double *spacing)
 { /* Implement this: set spacing of uniform rectilinear grids */
     if (id == 0) {
-        spacing[0] = sed_cube_x_res(self);
-        spacing[1] = sed_cube_y_res(self);
+        spacing[0] = sed_cube_x_res((Sed_cube)self->data);
+        spacing[1] = sed_cube_y_res((Sed_cube)self->data);
     } else if (id == 1) {
-        spacing[0] = sed_cube_x_res(self);
-        spacing[1] = sed_cube_y_res(self);
-        spacing[2] = sed_cube_z_res(self);
+        spacing[0] = sed_cube_x_res((Sed_cube)self->data);
+        spacing[1] = sed_cube_y_res((Sed_cube)self->data);
+        spacing[2] = sed_cube_z_res((Sed_cube)self->data);
     } else {
         return BMI_FAILURE;
     }
@@ -516,7 +515,7 @@ get_grid_spacing(void *self, int id, double *spacing)
 
 
 static int
-get_grid_origin(void *self, int id, double *origin)
+get_grid_origin(BMI_Model *self, int id, double *origin)
 { /* Implement this: set origin of uniform rectilinear grids */
     if (id == 0) {
         origin[0] = 0.;
@@ -533,7 +532,7 @@ get_grid_origin(void *self, int id, double *origin)
 
 
 static int
-get_var_grid(void *self, const char *name, int *grid)
+get_var_grid(BMI_Model *self, const char *name, int *grid)
 {
     int *id = g_hash_table_lookup(VAR_GRID, name);
     if (id) {
@@ -546,7 +545,7 @@ get_var_grid(void *self, const char *name, int *grid)
 
 
 static int
-get_var_type(void *self, const char *name, char *type)
+get_var_type(BMI_Model *self, const char *name, char *type)
 {
     if (is_var(name)) {
         strncpy(type, "double", BMI_MAX_UNITS_NAME);
@@ -559,7 +558,7 @@ get_var_type(void *self, const char *name, char *type)
 
 
 static int
-get_var_units(void *self, const char *name, char *units)
+get_var_units(BMI_Model *self, const char *name, char *units)
 {
     char *ustr = g_hash_table_lookup(VAR_UNITS, name);
     if (ustr) {
@@ -574,7 +573,7 @@ get_var_units(void *self, const char *name, char *units)
 
 
 static int
-get_var_itemsize(void *self, const char *name, int *itemsize)
+get_var_itemsize(BMI_Model *self, const char *name, int *itemsize)
 {
     if (is_var(name)) {
         *itemsize = sizeof(double);
@@ -587,17 +586,17 @@ get_var_itemsize(void *self, const char *name, int *itemsize)
 
 
 static int
-get_var_nbytes(void *self, const char *name, int *nbytes)
+get_var_nbytes(BMI_Model *self, const char *name, int *nbytes)
 {
     int id, size, itemsize;
 
-    if (get_var_grid(self, name, &id) == BMI_FAILURE)
+    if (self->get_var_grid(self, name, &id) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    if (get_grid_size(self, id, &size) == BMI_FAILURE)
+    if (self->get_grid_size(self, id, &size) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    if (get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
+    if (self->get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
         return BMI_FAILURE;
 
     *nbytes = itemsize * size;
@@ -607,13 +606,13 @@ get_var_nbytes(void *self, const char *name, int *nbytes)
 
 
 static int
-get_value(void *self, const char *name, void *dest)
+get_value(BMI_Model *self, const char *name, void *dest)
 {
     int status = BMI_FAILURE;
 
     if (is_output_var(name)) {
         gchar* sedflux_name = g_hash_table_lookup(VAR_LOCAL_NAME, name);
-        if (sedflux_get_surface_value(self, sedflux_name, (double*)dest, 0))
+        if (sedflux_get_surface_value((Sed_cube)self->data, sedflux_name, (double*)dest, 0))
             status = BMI_SUCCESS;
     }
 
@@ -623,7 +622,7 @@ get_value(void *self, const char *name, void *dest)
 
 #if 0
 int
-get_value(void * self, const char * name, void *dest)
+get_value(BMI_Model *self, const char * name, void *dest)
 {
     void *src = NULL;
     int nbytes = 0;
@@ -641,7 +640,7 @@ get_value(void * self, const char * name, void *dest)
 
 
 static int
-get_value_at_indices (void *self, const char *name, void *dest,
+get_value_at_indices (BMI_Model *self, const char *name, void *dest,
     int * inds, int len)
 {
     void *src = NULL;
@@ -669,7 +668,7 @@ get_value_at_indices (void *self, const char *name, void *dest,
 
 
 static int
-set_value (void *self, const char *name, void *array)
+set_value (BMI_Model *self, const char *name, void *array)
 {
     int status = BMI_FAILURE;
 
@@ -678,7 +677,7 @@ set_value (void *self, const char *name, void *array)
 
         func = g_hash_table_lookup(VAR_SET_FUNC, name);
         if (func) {
-            func(self, (double*)array);
+            func((Sed_cube)self->data, (double*)array);
             status = BMI_SUCCESS;
         }
     }
@@ -688,7 +687,7 @@ set_value (void *self, const char *name, void *array)
 
 #if 0
 static int
-set_value_at_indices (void *self, const char *name, int * inds, int len,
+set_value_at_indices (BMI_Model *self, const char *name, int * inds, int len,
     void *src)
 {
     void * to = NULL;
@@ -719,18 +718,18 @@ register_bmi_sedgrid(BMI_Model *model)
     setup_grid_tables();
     setup_var_tables();
 
-    model->self = NULL;
+    model->data = NULL;
 
     model->initialize = initialize;
     model->update = update;
     model->update_until = update_until;
-    model->update_frac = NULL;
+    // model->update_frac = NULL;
     model->finalize = finalize;
-    model->run_model = NULL;
+    // model->run_model = NULL;
 
     model->get_component_name = get_component_name;
-    model->get_input_var_name_count = get_input_var_name_count;
-    model->get_output_var_name_count = get_output_var_name_count;
+    model->get_input_item_count = get_input_var_name_count;
+    model->get_output_item_count = get_output_var_name_count;
     model->get_input_var_names = get_input_var_names;
     model->get_output_var_names = get_output_var_names;
 
@@ -750,7 +749,7 @@ register_bmi_sedgrid(BMI_Model *model)
     model->get_value_at_indices = NULL;
 
     model->set_value = set_value;
-    model->set_value_ptr = NULL;
+    // model->set_value_ptr = NULL;
     model->set_value_at_indices = NULL;
 
     model->get_grid_rank = get_grid_rank;

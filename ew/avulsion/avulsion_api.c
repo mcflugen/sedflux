@@ -177,7 +177,7 @@ BMI_AVULSION_Get_var_rank (void *self, const char * name, int *rank)
 }
 
 int
-BMI_AVULSION_Initialize (const char *config_file, void **handle)
+BMI_AVULSION_Initialize (AvulsionModel *self, const char *config_file)
 {
   int rtn = BMI_FAILURE;
 
@@ -187,10 +187,7 @@ BMI_AVULSION_Initialize (const char *config_file, void **handle)
     g_log_set_handler (NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
   }
 
-  if (handle) {
-    AvulsionModel *self = avulsion_init (NULL);
-
-    if (self) {
+  if (self) {
       int shape[2] = {30, 40};
       double spacing[2] = {1, 1};
       int hinge_indices[2] = {0, 20};
@@ -216,8 +213,6 @@ BMI_AVULSION_Initialize (const char *config_file, void **handle)
         else
           return BMI_FAILURE_UNABLE_TO_OPEN_ERROR;
       }
-      //else
-      //  return BMI_FAILURE;
 
       angle_limit[0] *= 3.14/180.;
       angle_limit[1] *= 3.14/180.;
@@ -237,15 +232,10 @@ BMI_AVULSION_Initialize (const char *config_file, void **handle)
       set_input_var_names (self);
       set_output_var_names (self);
 
-      *handle = (void *)self;
-
       rtn = BMI_SUCCESS;
-    }
-    else
-      rtn = BMI_FAILURE_UNKNOWN_ERROR;
   }
   else
-    rtn = BMI_FAILURE_BAD_ARGUMENT_ERROR;
+      rtn = BMI_FAILURE_UNKNOWN_ERROR;
 
   return rtn;
 }
@@ -373,6 +363,7 @@ avulsion_init (AvulsionModel * self)
 
   return self;
 }
+
 
 int
 avulsion_run_until (AvulsionModel * self, double time_in_days)

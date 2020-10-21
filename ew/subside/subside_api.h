@@ -30,7 +30,7 @@ Subside_state;
 @return A newly allocated Subside_state
 
 */
-Subside_state* sub_init (int nx,int ny,double dx,double dy);
+Subside_state* sub_init (Subside_state *state, int nx,int ny,double dx,double dy);
 
 /** Advance a Subside_state forward in time.
 

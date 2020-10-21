@@ -3,9 +3,10 @@
 #include "subside_api.h"
 
 Subside_state*
-sub_init (int nx, int ny, double dx, double dy)
+sub_init (Subside_state* state, int nx, int ny, double dx, double dy)
 {
-  Subside_state* state = g_new (Subside_state, 1);
+  if (state == NULL)
+    state = g_new (Subside_state, 1);
 
   { /* Set default constants */
     state->eet = 5000.;

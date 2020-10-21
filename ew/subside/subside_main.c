@@ -54,7 +54,7 @@ main( int argc , char *argv[] )
 
   model = g_new0(BMI_Model, 1);
   register_bmi_subside(model);
-  model->initialize(NULL, &(model->self));
+  model->initialize(model, NULL);
 
   { /* Parse command-line arguments */
     GOptionContext* context = g_option_context_new( "Run subsidence model." );
@@ -91,21 +91,21 @@ main( int argc , char *argv[] )
     int shape[2];
     double * load = NULL;
 
-    model->get_var_grid(model->self, "earth_material_load__pressure", &grid);
-    model->get_grid_shape(model->self, grid, shape);
-    model->get_grid_size(model->self, grid, &size);
+    model->get_var_grid(model, "earth_material_load__pressure", &grid);
+    model->get_grid_shape(model, grid, shape);
+    model->get_grid_size(model, grid, &size);
 
-    model->get_value_ptr(model->self, "earth_material_load__pressure", &load);
+    model->get_value_ptr(model, "earth_material_load__pressure", &load);
 
     load[size / 2] = _load;
 
-    model->update(model->self);
+    model->update(model);
 
     { /* Print deflections */
       GError *error = NULL;
       void * dz;
 
-      model->get_value_ptr(model->self, "lithosphere__increment_of_elevation", &dz);
+      model->get_value_ptr(model, "lithosphere__increment_of_elevation", &dz);
 
       {
          int i, j;
@@ -113,8 +113,8 @@ main( int argc , char *argv[] )
          int grid;
          int shape[2];
 
-         model->get_var_grid(model->self, "lithosphere__increment_of_elevation", &grid);
-         model->get_grid_shape(model->self, grid, shape);
+         model->get_var_grid(model, "lithosphere__increment_of_elevation", &grid);
+         model->get_grid_shape(model, grid, shape);
 
          for (i=0; i<shape[0]; i++) {
            for (j=0; j<shape[1]; j++)
@@ -128,7 +128,7 @@ main( int argc , char *argv[] )
         eh_error( "Error writing output file: %s" , error->message );
     }
 
-    model->finalize(model->self);
+    model->finalize(model);
   }
 
    return EXIT_SUCCESS;

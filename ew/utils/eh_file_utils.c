@@ -147,7 +147,7 @@ eh_open_file( const char *filename , const char *type )
 FILE*
 eh_open_temp_file( const char *tmpl, char **name_used )
 {
-   GError *error;
+   GError *error = NULL;
    int fd = g_file_open_tmp( tmpl, name_used , &error );
    return fdopen( fd , "w+" );
 }
