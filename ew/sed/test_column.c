@@ -2018,8 +2018,8 @@ main (int argc, char* argv[])
   g_test_add_func ("/libsed/sed_column/limits/load_null", &test_sed_column_load_null );
   g_test_add_func ("/libsed/sed_column/limits/neg_start", &test_sed_column_load_neg_start );
   g_test_add_func ("/libsed/sed_column/limits/load_neg_bins", &test_sed_column_load_neg_bins );
-  g_test_add_func ("/libsed/sed_column/limits/top_null", &test_sed_column_top_index_null );
-  g_test_add_func ("/libsed/sed_column/limits/top_empty", &test_sed_column_top_index_empty );
+  g_test_add_func ("/libsed/sed_column/limits/top_index_null", &test_sed_column_top_index_null );
+  g_test_add_func ("/libsed/sed_column/limits/top_index_empty", &test_sed_column_top_index_empty );
   g_test_add_func ("/libsed/sed_column/limits/nth_empty", &test_sed_column_nth_cell_empty );
   g_test_add_func ("/libsed/sed_column/limits/nth_null", &test_sed_column_nth_cell_null );
   g_test_add_func ("/libsed/sed_column/limits/index_at_base", &test_sed_column_index_at_base );
