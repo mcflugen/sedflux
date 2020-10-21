@@ -389,7 +389,7 @@ main_new ()
       }
     }
 
-    model->initialize("avulsion_input.txt", &(model->self));
+    model->initialize(model, "avulsion_input.txt");
     if (err)
       return EXIT_FAILURE;
 
@@ -401,8 +401,8 @@ main_new ()
       Sed_hydro* hydro_data = sed_hydro_scan_text (sed_hydro_default_text (), &error);
 
       //avulsion_set_river_hydro (model, *hydro_data);
-      model->set_value(model->self, "channel_inflow_end_bed_load_sediment__mass_flow_rate", &mean_qb);
-      model->set_value(model->self, "channel_inflow_end_water__discharge", &mean_q);
+      model->set_value(model, "channel_inflow_end_bed_load_sediment__mass_flow_rate", &mean_qb);
+      model->set_value(model, "channel_inflow_end_water__discharge", &mean_q);
 
 /*
       avulsion_set_river_width (model, 200.);
@@ -419,7 +419,7 @@ main_new ()
     { /* Set the grid */
       Eh_dbl_grid bathy_grid = sed_get_floor_3_default (3, n_i, n_j);
 
-      model->set_value(model->self, "surface__elevation", eh_dbl_grid_data_start (bathy_grid));
+      model->set_value(model, "surface__elevation", eh_dbl_grid_data_start (bathy_grid));
 /*
       {
         int i, j;
@@ -464,8 +464,8 @@ main_new ()
       double * river_mouth_qb = NULL;
       int error;
 
-      model->get_var_grid(model->self, "surface__elevation", &grid);
-      model->get_grid_size(model->self, grid, &size);
+      model->get_var_grid(model, "surface__elevation", &grid);
+      model->get_grid_size(model, grid, &size);
       if (error) {
         fprintf (stderr, "Unable to get size for surface__elevation\n");
         exit (1);
@@ -476,7 +476,7 @@ main_new ()
         double *z = g_new (double, size);
         double *row;
 
-        model->get_value(model->self, "surface__elevation", z);
+        model->get_value(model, "surface__elevation", z);
 
         row = z;
         for (i=0; i<n_i; i++) {
@@ -487,8 +487,8 @@ main_new ()
         }
       }
 
-      model->get_var_grid(model->self, "channel_inflow_end_to_channel_outflow_end__angle", &grid);
-      model->get_grid_size(model->self, grid, &size);
+      model->get_var_grid(model, "channel_inflow_end_to_channel_outflow_end__angle", &grid);
+      model->get_grid_size(model, grid, &size);
       river_angles = g_new (double, size);
       river_mouth_x = g_new (double, size);
       river_mouth_y = g_new (double, size);
@@ -498,13 +498,13 @@ main_new ()
       n_times = 3;
       for (i=1; i<=n_times; i++)
       {
-        model->update(model->self);
+        model->update(model);
 
-        model->get_value(model->self, "channel_inflow_end_to_channel_outflow_end__angle", river_angles);
-        model->get_value(model->self, "channel_outflow_end__location_model_x_component", river_mouth_x);
-        model->get_value(model->self, "channel_outflow_end__location_model_y_component", river_mouth_y);
-        model->get_value(model->self, "channel_outflow_end_water__discharge", river_mouth_q);
-        model->get_value(model->self, "channel_outflow_end_bed_load_sediment__mass_flow_rate", river_mouth_qb);
+        model->get_value(model, "channel_inflow_end_to_channel_outflow_end__angle", river_angles);
+        model->get_value(model, "channel_outflow_end__location_model_x_component", river_mouth_x);
+        model->get_value(model, "channel_outflow_end__location_model_y_component", river_mouth_y);
+        model->get_value(model, "channel_outflow_end_water__discharge", river_mouth_q);
+        model->get_value(model, "channel_outflow_end_bed_load_sediment__mass_flow_rate", river_mouth_qb);
 
         fprintf (stderr, "River angles: ");
         for (n=0; n<size; n++)
@@ -535,7 +535,7 @@ main_new ()
     }
 
     eh_message ("Clean up the model");
-    model->finalize(model->self);
+    model->finalize(model);
     eh_message ("Done");
 
     sed_sediment_unset_env();
