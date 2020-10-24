@@ -257,7 +257,6 @@ river_data.rma = 15.*S_RADS_PER_DEGREE;
          Sed_cell** deposit = sed_cell_grid_data( data->deposit_grid );
 
          deposit_rate = eh_new( double , n_grains );
-
          for ( i=0 ; i<eh_grid_n_x(data->deposit_grid) ; i++ )
          {
             for ( j=0 ; j<eh_grid_n_y(data->deposit_grid) ; j++ )
@@ -579,7 +578,7 @@ gboolean compare_river( Plume_river *r1 , Plume_river *r2 , int n_grains )
    load1 *= r1->Q;
    load2 *= r2->Q;
 
-   if ( fabs(load1-load2)/load1 < .1 )
+   if (eh_compare_dbl(load2, load2, 0.1))
       return TRUE;
 
    for (n=0;n<n_grains;n++)
