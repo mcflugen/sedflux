@@ -70,6 +70,7 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
          double depth;
          double tidal_dt;
          double dz;
+         double sediment_remaining;
 
          eh_require( erode_cell    );
          eh_require( in_suspension );
