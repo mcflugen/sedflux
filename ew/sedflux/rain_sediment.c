@@ -46,7 +46,6 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
 
    eh_require( p          );
    eh_require( this_river );
-
    if ( p && this_river )
    {
       Eh_ind_2 mouth_pos;
@@ -83,12 +82,22 @@ rain_sediment_3( Sed_cube p , int algorithm , Sed_riv this_river )
                  && sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j ) > 0 )
          {
             // The water depth at the river mouth.
-            depth = sed_cube_water_depth( p , mouth_pos.i , mouth_pos.j )+1e-5;
+            depth = sed_cube_water_depth(p, mouth_pos.i, mouth_pos.j) + 1e-5;
 
-            // The fraction of the water column that is going to get filled.
-            fraction = depth / sed_cell_size( sed_cell_grid_val(in_suspension,0,0) );
+            // The fraction of sediment in the water column that will
+            // be deposited.
+            sediment_remaining = sed_cell_size(sed_cell_grid_val(in_suspension, 0, 0));
+            if (sediment_remaining <= depth)
+              fraction = 1.0;
+            else
+              fraction = depth / sediment_remaining;
 
-            eh_clamp( fraction , 1e-5 , 1. );
+            // if (sed_cell_size(sed_cell_grid_val(in_suspension, 0, 0)) > 0)
+            //    fraction = depth / sed_cell_size(sed_cell_grid_val(in_suspension, 0, 0));
+            // else
+            //    fraction = 1.0;
+
+            // eh_clamp( fraction , 1e-5 , 1. );
 
             if ( tidal_range>0 )
             {
