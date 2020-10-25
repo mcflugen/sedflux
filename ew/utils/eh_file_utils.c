@@ -203,6 +203,7 @@ eh_open_temp_file(const char* tmpl, char** name_used)
         g_error_free(error);
     } else {
         g_assert(fd >= 0);
+        return NULL;
     }
     return fdopen(fd, "w+");
 }

@@ -184,13 +184,18 @@ test_getline_realloc(void)
 
     len = 7;
     line_str = eh_new(gchar, len);
+
     saved_line_ptr = line_str;
     saved_len = len;
+
+    g_assert_true(line_str);
 
     fprintf(fp, "%s", line_1);
     fclose(fp);
 
     fp = fopen(name, "r");
+    g_assert_true(fp);
+
     n = getline(&line_str, &len, fp);
     fclose(fp);
 
