@@ -13,6 +13,9 @@ test_getline_one_line(void)
     gchar* line_1 = "one line\n";
     gint   n;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     fprintf(fp, "%s", line_1);
     fclose(fp);
 
@@ -20,9 +23,9 @@ test_getline_one_line(void)
     n = getline(&line_str, &len, fp);
     fclose(fp);
 
-    g_assert(line_str != NULL);
-    g_assert(n == strlen(line_1));
-    g_assert(strlen(line_str) == 9);
+    g_assert_true(line_str != NULL);
+    g_assert_true(n == strlen(line_1));
+    g_assert_true(strlen(line_str) == 9);
 }
 
 void
@@ -35,6 +38,9 @@ test_getline_no_new_line(void)
     gchar* line_1 = "no new line char";
     gint   n;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     fprintf(fp, "%s", line_1);
     fclose(fp);
 
@@ -44,7 +50,7 @@ test_getline_no_new_line(void)
 
     g_assert_cmpint(n, !=, -1);
 
-    g_assert(line_str != NULL);
+    g_assert_true(line_str != NULL);
     g_assert_cmpint(strlen(line_str), ==, strlen(line_1));
     g_assert_cmpstr(line_str, ==, line_1);
 
@@ -59,6 +65,9 @@ test_getline_empty_file(void)
     gsize  len      = 0;
     gint   n;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     fprintf(fp, "");
     fclose(fp);
 
@@ -68,7 +77,7 @@ test_getline_empty_file(void)
 
     g_assert_cmpint(n, ==, -1);
     /*
-    g_assert (line_str == NULL);
+    g_assert_true (line_str == NULL);
     g_assert_cmpint (len, ==, 0);
     g_assert_cmpint (strlen (line_str), ==, 0);
     */
@@ -83,6 +92,9 @@ test_getline_empty_line(void)
     gsize  len      = 0;
     gsize  n;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     fprintf(fp, "\n");
     fclose(fp);
 
@@ -90,10 +102,10 @@ test_getline_empty_line(void)
     n = getline(&line_str, &len, fp);
     fclose(fp);
 
-    g_assert(line_str != NULL);
+    g_assert_true(line_str != NULL);
     g_assert_cmpint(n, ==, 1);
     g_assert_cmpint(strlen(line_str), ==, 1);
-    g_assert(line_str[0] == '\n');
+    g_assert_true(line_str[0] == '\n');
 }
 
 void
@@ -107,6 +119,9 @@ test_getline_multi_line(void)
     gchar* line_2   = "The second line without a new line char";
     gint   n;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     fprintf(fp, "%s", line_1);
     fprintf(fp, "%s", line_2);
     fclose(fp);
@@ -116,7 +131,7 @@ test_getline_multi_line(void)
     n = getline(&line_str, &len, fp);
     fclose(fp);
 
-    g_assert(line_str != NULL);
+    g_assert_true(line_str != NULL);
     g_assert_cmpint(n, ==, strlen(line_2));
     g_assert_cmpint(strlen(line_str), ==, strlen(line_2));
     g_assert_cmpstr(line_str, ==, line_2);
@@ -133,6 +148,9 @@ test_getline_alloc(void)
     gint   n;
     gchar* saved_line_ptr;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     len = 256;
     line_str = eh_new(gchar, len);
     saved_line_ptr = line_str;
@@ -144,7 +162,7 @@ test_getline_alloc(void)
     n = getline(&line_str, &len, fp);
     fclose(fp);
 
-    g_assert(line_str == saved_line_ptr);
+    g_assert_true(line_str == saved_line_ptr);
     g_assert_cmpint(len, ==, 256);
     g_assert_cmpint(strlen(line_str), ==, n);
 }
@@ -161,6 +179,9 @@ test_getline_realloc(void)
     gchar* saved_line_ptr;
     int saved_len;
 
+    g_assert_true(fp);
+    g_assert_true(name);
+
     len = 7;
     line_str = eh_new(gchar, len);
     saved_line_ptr = line_str;
@@ -174,7 +195,7 @@ test_getline_realloc(void)
     fclose(fp);
 
     g_assert_cmpint(len, >, saved_len);
-    g_assert(strlen(line_str) == n);
+    g_assert_true(strlen(line_str) == n);
 }
 
 int
