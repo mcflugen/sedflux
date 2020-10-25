@@ -31,87 +31,93 @@
 
 #define N_THREADS 5
 
-void thread_compact( void *data , void *user_data );
+void
+thread_compact(void* data, void* user_data);
 
 Sed_process_info
-run_compaction( Sed_process proc , Sed_cube p )
+run_compaction(Sed_process proc, Sed_cube p)
 {
-   Sed_process_info info = SED_EMPTY_INFO;
+    Sed_process_info info = SED_EMPTY_INFO;
 
-   compact_cube( p );
-/*
-#if !defined(WITH_THREADS)
+    compact_cube(p);
+    /*
+    #if !defined(WITH_THREADS)
 
-   {
-      gint i;
-      gint len = sed_cube_size(p);
-      for ( i=0 ; i<len ; i++ )
-         compact( sed_cube_col(p,i) , sed_cube_age_in_years(p) );
-   }
+       {
+          gint i;
+          gint len = sed_cube_size(p);
+          for ( i=0 ; i<len ; i++ )
+             compact( sed_cube_col(p,i) , sed_cube_age_in_years(p) );
+       }
 
-#else
+    #else
 
-   if (!g_thread_supported ()) g_thread_init(NULL);
+       if (!g_thread_supported ()) g_thread_init(NULL);
 
-   {
-      GError *error=NULL;
-      GThreadPool *compact_pool;
+       {
+          GError *error=NULL;
+          GThreadPool *compact_pool;
 
-      compact_pool = g_thread_pool_new( (GFunc)&thread_compact ,
-                                        (gpointer)p            ,
-                                        N_THREADS              ,
-                                        TRUE                   ,
-                                        &error );
+          compact_pool = g_thread_pool_new( (GFunc)&thread_compact ,
+                                            (gpointer)p            ,
+                                            N_THREADS              ,
+                                            TRUE                   ,
+                                            &error );
 
-      eh_require( error==NULL );
-      {
-         gint   i;
-         gint*  queue;
-         gssize len = sed_cube_size(p);
+          eh_require( error==NULL );
+          {
+             gint   i;
+             gint*  queue;
+             gssize len = sed_cube_size(p);
 
-         queue = eh_new( int , len );
-         for ( i=0 ; i<len ; i++ )
-         {
-            queue[i] = i;
-            g_thread_pool_push( compact_pool , &(queue[i]) , &error );
-            eh_require( error==NULL );
-         }
-         g_thread_pool_free( compact_pool , FALSE , TRUE );
-         eh_free( queue );
-      }
-   }
+             queue = eh_new( int , len );
+             for ( i=0 ; i<len ; i++ )
+             {
+                queue[i] = i;
+                g_thread_pool_push( compact_pool , &(queue[i]) , &error );
+                eh_require( error==NULL );
+             }
+             g_thread_pool_free( compact_pool , FALSE , TRUE );
+             eh_free( queue );
+          }
+       }
 
-#endif
-*/
+    #endif
+    */
 
-   return info;
+    return info;
 }
 
 #if defined( WITH_THREADS )
 
-int pthread_mutex_spinlock(pthread_mutex_t *mutex);
+int
+pthread_mutex_spinlock(pthread_mutex_t* mutex);
 
-void thread_compact( void *data , void *user_data )
+void
+thread_compact(void* data, void* user_data)
 {
-   Sed_cube p = (Sed_cube)user_data;
-   int i = *((int*)data);
+    Sed_cube p = (Sed_cube)user_data;
+    int i = *((int*)data);
 
-   compact( sed_cube_col(p,i) , sed_cube_age_in_years(p) );
+    compact(sed_cube_col(p, i), sed_cube_age_in_years(p));
 
-   return;
+    return;
 }
 
 #define S_NTRIES 5
 
-int pthread_mutex_spinlock(pthread_mutex_t *mutex)
+int
+pthread_mutex_spinlock(pthread_mutex_t* mutex)
 {
-   int i=0;
-   while ( i++<S_NTRIES )
-   {
-      if ( pthread_mutex_trylock(mutex)==0 )
-         return 0; // got the lock, return.
-   }
-   return pthread_mutex_lock(mutex); // give up.
+    int i = 0;
+
+    while (i++ < S_NTRIES) {
+        if (pthread_mutex_trylock(mutex) == 0) {
+            return 0;    // got the lock, return.
+        }
+    }
+
+    return pthread_mutex_lock(mutex); // give up.
 }
 
 #endif

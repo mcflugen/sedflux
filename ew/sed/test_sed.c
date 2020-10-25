@@ -6,21 +6,23 @@
 #include "sed_sediment.h"
 
 gboolean
-sed_test_setup_sediment (gchar* test_name)
+sed_test_setup_sediment(gchar* test_name)
 {
-  Sed_sediment s = NULL;
-  GError* error = NULL;
-  gchar* buffer = sed_sediment_default_text ();
+    Sed_sediment s = NULL;
+    GError* error = NULL;
+    gchar* buffer = sed_sediment_default_text();
 
-  s = sed_sediment_scan_text (buffer, &error);
-  g_free (buffer);
+    s = sed_sediment_scan_text(buffer, &error);
+    g_free(buffer);
 
-  eh_print_on_error (error, "%s", test_name);
-  if (s)
-    sed_sediment_set_env (s);
-  else
-    return FALSE;
+    eh_print_on_error(error, "%s", test_name);
 
-  return TRUE;
+    if (s) {
+        sed_sediment_set_env(s);
+    } else {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 

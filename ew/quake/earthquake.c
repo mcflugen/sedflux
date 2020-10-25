@@ -25,7 +25,7 @@
 
 /** Generate an earthquake.
 
-This will give the maximum earthquake that occured within the time step dt.  
+This will give the maximum earthquake that occured within the time step dt.
 
 @param a   determined from the mean quake over a time step.
 @param dt  the number of time steps that are considered to find the maximum.
@@ -34,29 +34,31 @@ This will give the maximum earthquake that occured within the time step dt.
 
 */
 
-double earthquake(double a,double dt)
+double
+earthquake(double a, double dt)
 {
-   double acceleration;
-   static long seed=124232;
+    double acceleration;
+    static long seed = 124232;
 
-//   acceleration = powdev(a,&seed);
-   acceleration = eh_maxpowdev(a,dt,&seed);
-   return acceleration;
+    //   acceleration = powdev(a,&seed);
+    acceleration = eh_maxpowdev(a, dt, &seed);
+    return acceleration;
 }
 
 static const gchar* _default_config[] = {
-"mean acceleration of 100 year quake",
-"variance of 100 year quake",
-"seed for random number generator",
-NULL
+    "mean acceleration of 100 year quake",
+    "variance of 100 year quake",
+    "seed for random number generator",
+    NULL
 };
 
 gchar*
-get_config_text (const gchar* file)
+get_config_text(const gchar* file)
 {
-  if (g_ascii_strcasecmp (file, "config")==0)
-    return g_strjoinv ("\n", (gchar**)_default_config);
-  else
-    return NULL;
+    if (g_ascii_strcasecmp(file, "config") == 0) {
+        return g_strjoinv("\n", (gchar**)_default_config);
+    } else {
+        return NULL;
+    }
 }
 

@@ -28,70 +28,71 @@
 #include <sed/sed_sedflux.h>
 
 /*** Self Documentation ***/
-char *help_msg[] =
-{
-"                                                                             ",
-" sed2binary [options] [parameters] [filein]                                  ",
-"  convert a sedflux property output file into flat binary format.            ",
-"                                                                             ",
-" Options                                                                     ",
-"  -v          - be verbose. [off]                                            ",
-"  -h          - print this help message.                                     ",
-"  -hfile      - print a help message on the file formats.                    ",
-"                                                                             ",
-NULL
+char* help_msg[] = {
+    "                                                                             ",
+    " sed2binary [options] [parameters] [filein]                                  ",
+    "  convert a sedflux property output file into flat binary format.            ",
+    "                                                                             ",
+    " Options                                                                     ",
+    "  -v          - be verbose. [off]                                            ",
+    "  -h          - print this help message.                                     ",
+    "  -hfile      - print a help message on the file formats.                    ",
+    "                                                                             ",
+    NULL
 };
 
 #define FORGET_THIS_FOR_NOW
 
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
 #if !defined( FORGET_THIS_FOR_NOW )
-   Sed_file *fpin;
-   FILE *fpout;
-   char *infile, *outfile;
-   char *verbose;
-   Profile_header *hdr;
-   double **data;
-   Eh_args *args;
+    Sed_file* fpin;
+    FILE* fpout;
+    char* infile, *outfile;
+    char* verbose;
+    Profile_header* hdr;
+    double** data;
+    Eh_args* args;
 
-   args = eh_opts_init(argc,argv);
-   if ( eh_check_opts( args , NULL , NULL , NULL )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   infile  = eh_get_opt_str( args , "in"      , NULL );
-   outfile = eh_get_opt_str( args , "out"     , NULL );
-   verbose = eh_get_opt_str( args , "verbose" , "no" );
+    if (eh_check_opts(args, NULL, NULL, NULL) != 0) {
+        eh_exit(-1);
+    }
 
-   fpin = sed_open_sedflux_file_r( infile , NULL );
-   sed_read_sedflux_profile( fpin );
-   hdr = sed_get_sedflux_file_header( fpin );
+    infile  = eh_get_opt_str(args, "in", NULL);
+    outfile = eh_get_opt_str(args, "out", NULL);
+    verbose = eh_get_opt_str(args, "verbose", "no");
 
-   if ( !outfile )
-      fpout = stdout;
-   else
-      if ( !(fpout=fopen(outfile,"w")) )
-         perror(outfile), eh_exit(-1);
+    fpin = sed_open_sedflux_file_r(infile, NULL);
+    sed_read_sedflux_profile(fpin);
+    hdr = sed_get_sedflux_file_header(fpin);
 
-   if ( g_strcasecmp( verbose , "yes" )==0 )
-   {
-      eh_open_log(NULL);
-      eh_print_log(DEFAULT_ERROR_LOG,"number of rows    : %d",hdr->n_rows);
-      eh_print_log(DEFAULT_ERROR_LOG,"number of columns : %d",hdr->n_cols);
-   }
+    if (!outfile) {
+        fpout = stdout;
+    } else if (!(fpout = fopen(outfile, "w"))) {
+        perror(outfile), eh_exit(-1);
+    }
 
-   data = sed_get_sedflux_file_data( fpin );
+    if (g_strcasecmp(verbose, "yes") == 0) {
+        eh_open_log(NULL);
+        eh_print_log(DEFAULT_ERROR_LOG, "number of rows    : %d", hdr->n_rows);
+        eh_print_log(DEFAULT_ERROR_LOG, "number of columns : %d", hdr->n_cols);
+    }
 
-   fwrite( data[0] , sizeof(double) , hdr->n_rows*hdr->n_cols , fpout );
+    data = sed_get_sedflux_file_data(fpin);
 
-   g_free(infile);
-   g_free(outfile);
+    fwrite(data[0], sizeof(double), hdr->n_rows * hdr->n_cols, fpout);
 
-   sed_close_sedflux_file( fpin );
-   fclose(fpout);
+    g_free(infile);
+    g_free(outfile);
+
+    sed_close_sedflux_file(fpin);
+    fclose(fpout);
 #endif
 
-   return 0;
+    return 0;
 }
 
 #undef FORGET_THIS_FOR_NOW

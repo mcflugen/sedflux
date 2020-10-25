@@ -28,7 +28,8 @@
 
 G_BEGIN_DECLS
 
-int muddy(Sed_cube prof,Sed_cell *deposit, double *wave, double duration );
+int
+muddy(Sed_cube prof, Sed_cell* deposit, double* wave, double duration);
 
 G_END_DECLS
 

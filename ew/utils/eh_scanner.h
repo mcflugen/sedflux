@@ -31,39 +31,35 @@ extern "C" {
 //typedef GHashTable Symbol_table;
 
 #ifdef OLD
-typedef struct
-{
-   GHashTable *symbol_table;
-   GPtrArray *data;
+typedef struct {
+    GHashTable* symbol_table;
+    GPtrArray* data;
 }
 Eh_data_record;
 
-typedef struct
-{
-   char *filename;
-   GHashTable *records; // a table of Eh_data_records
+typedef struct {
+    char* filename;
+    GHashTable* records; // a table of Eh_data_records
 }
 Eh_record_file;
 #endif
 
-typedef struct
-{
-   char *filename;
-   const char *delimeter;
-   gboolean row_major;
-   gint fast_dim;
-   gboolean with_header;
-   Eh_data_record* records;
-//   GPtrArray *records; // an array of Eh_data_records
+typedef struct {
+    char* filename;
+    const char* delimeter;
+    gboolean row_major;
+    gint fast_dim;
+    gboolean with_header;
+    Eh_data_record* records;
+    //   GPtrArray *records; // an array of Eh_data_records
 }
 Eh_data_file;
 
-typedef struct
-{
-   char *delimeter;
-   gint fast_dim;
-   gboolean row_major;
-   gboolean with_header;
+typedef struct {
+    char* delimeter;
+    gint fast_dim;
+    gboolean row_major;
+    gboolean with_header;
 }
 Eh_data_file_attr;
 
@@ -96,7 +92,7 @@ Eh_data_file_attr;
 // value        : a value string.
 // fp           : file pointer to print to.
 // return value : nothing.
-void eh_print_symbol(char *key, char  *value, FILE *fp);
+void eh_print_symbol(char* key, char*  value, FILE* fp);
 
 // print all of the key/value pairs of a symbol table.
 // t            : a pointer to a symbol table.
@@ -135,7 +131,7 @@ void eh_print_symbol(char *key, char  *value, FILE *fp);
 // open a scanner file.
 // filename     : the name of the file to open.
 // return value : the opened scanner.
-GScanner *eh_open_scanner(const char *filename , GError** error );
+GScanner* eh_open_scanner(const char* filename, GError** error);
 
 /** Open a scanner from a text buffer
 
@@ -144,9 +140,9 @@ GScanner *eh_open_scanner(const char *filename , GError** error );
 
 @return A new GScanner
 */
-GScanner* eh_open_scanner_text( const gchar* buffer , gint len , GError** error );
+GScanner* eh_open_scanner_text(const gchar* buffer, gint len, GError** error);
 
-void eh_close_scanner( GScanner* );
+void eh_close_scanner(GScanner*);
 
 // scan a data file.
 // filename     : the name of the data file to scan.
@@ -154,7 +150,8 @@ void eh_close_scanner( GScanner* );
 // row_major    : if TRUE, the data is read in row major order.
 // with_header  : if TRUE, the data is preceded by a header.
 // return value : a pointer array containing the data.
-GPtrArray *eh_scan_data_file(const char *filename,const char *delimiter,gboolean row_major, gboolean with_header);
+GPtrArray* eh_scan_data_file(const char* filename, const char* delimiter,
+    gboolean row_major, gboolean with_header);
 
 // scan a data record.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
@@ -162,14 +159,15 @@ GPtrArray *eh_scan_data_file(const char *filename,const char *delimiter,gboolean
 // row_major    : if TRUE, the data is read in row major order.
 // data         : a pointer array to put the data.
 // return value : a pointer array of the data.
-GPtrArray *eh_scan_data_record(GScanner *s,const char *delimeter, gboolean row_major, GPtrArray *data);
+GPtrArray* eh_scan_data_record(GScanner* s, const char* delimeter, gboolean row_major,
+    GPtrArray* data);
 
-double* eh_scan_ascii_data_line_dbl( GScanner* s , const char* delimeter ,  gssize *len );
+double* eh_scan_ascii_data_line_dbl(GScanner* s, const char* delimeter,  gssize* len);
 
 // scan a line of ascii data.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // return value : a string of the line of data.
-char *eh_scan_ascii_data_line(GScanner *s);
+char* eh_scan_ascii_data_line(GScanner* s);
 
 // scan the records of a record file.
 // filename     : the name of the file to scan.
@@ -193,22 +191,22 @@ char *eh_scan_ascii_data_line(GScanner *s);
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // symbol_table : a symbol table to add the record entries to.
 // return value : the name of the record.
-char *eh_scan_next_record(GScanner *s,Eh_symbol_table symbol_table);
+char* eh_scan_next_record(GScanner* s, Eh_symbol_table symbol_table);
 
 // move to the begining of the data of the next record.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // return value : the name of the record.
-char *eh_seek_record_start(GScanner *s);
+char* eh_seek_record_start(GScanner* s);
 
 // scan a label from a scanner.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // return value : a string containing the label read.
-char *eh_scan_label(GScanner *s);
+char* eh_scan_label(GScanner* s);
 
 // scan a entry from a scanner.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // return value : a string containing the entry read.
-char *eh_scan_entry(GScanner *s);
+char* eh_scan_entry(GScanner* s);
 
 // print the symbol tables of a list of symbol tables. intended to be used as a GHFunc.
 // rec_name     : the name of the record.
@@ -220,7 +218,7 @@ char *eh_scan_entry(GScanner *s);
 // indicate if the end of a record has been reached.
 // s            : a scanner set up to read the data.  created with eh_open_scanner.
 // return value : TRUE if the end of a record has been encountered.
-gboolean eh_scanner_eor(GScanner *s);
+gboolean eh_scanner_eor(GScanner* s);
 
 // create a data record.
 // return value : the newly created data record.
@@ -322,23 +320,24 @@ gboolean eh_scanner_eor(GScanner *s);
 // filename     : the name of the file (NULL for stdin);
 // attr         : attributes to use when opening a data file.  use NULL for defaults.
 // return value : pointer to the opened data file.
-Eh_data_file *eh_open_data_file( const char *filename , Eh_data_file_attr *attr , GError** error );
+Eh_data_file* eh_open_data_file(const char* filename, Eh_data_file_attr* attr,
+    GError** error);
 
 // close a data file.
 // data_file    : pointer to a data file.
 // return value : nothing.
-void eh_close_data_file( Eh_data_file *data_file );
+void eh_close_data_file(Eh_data_file* data_file);
 
 // get a row of data from a data file.
 // name         : the name of the record to retrieve.
 // return value : an array containing the row of data.
-GArray *eh_get_row_from_data_file( Eh_data_file *data_file , int row );
+GArray* eh_get_row_from_data_file(Eh_data_file* data_file, int row);
 
 // interpolate a row of data from a data file.
 // data_file    : pointer to a data file.
 // interp_data  : an array of data of interpolation points.
 // return value : the interpolated row.
-GArray *eh_interpolate_data_file( Eh_data_file *data_file , GArray *interp_data , int row );
+GArray* eh_interpolate_data_file(Eh_data_file* data_file, GArray* interp_data, int row);
 
 // get the i-th data record from a data file.
 // data_file    : pointer to a data file.

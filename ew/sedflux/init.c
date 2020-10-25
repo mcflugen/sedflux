@@ -114,39 +114,35 @@ sedflux_create_process_queue( const gchar* file , gchar** user_data , GError** e
 }
 */
 
-typedef struct
-{
-   const gchar* name;
-   gint error;
+typedef struct {
+    const gchar* name;
+    gint error;
 } Process_check_t;
 
 /** Individual process errors
 */
-Process_check_t process_check[] =
-{
-   {"plume"           , SED_ERROR_MULTIPLE_PROCS|SED_ERROR_INACTIVE|SED_ERROR_NOT_ALWAYS } ,
-   {"bedload dumping" , SED_ERROR_MULTIPLE_PROCS|SED_ERROR_INACTIVE|SED_ERROR_NOT_ALWAYS } ,
-   {"bbl"             , SED_ERROR_MULTIPLE_PROCS|SED_ERROR_INACTIVE|SED_ERROR_NOT_ALWAYS } ,
-   {"river"           ,                          SED_ERROR_INACTIVE|SED_ERROR_NOT_ALWAYS } ,
-   {"earthquake"      , SED_ERROR_MULTIPLE_PROCS } ,
-   {"storms"          , SED_ERROR_MULTIPLE_PROCS }
+Process_check_t process_check[] = {
+    {"plume", SED_ERROR_MULTIPLE_PROCS | SED_ERROR_INACTIVE | SED_ERROR_NOT_ALWAYS },
+    {"bedload dumping", SED_ERROR_MULTIPLE_PROCS | SED_ERROR_INACTIVE | SED_ERROR_NOT_ALWAYS },
+    {"bbl", SED_ERROR_MULTIPLE_PROCS | SED_ERROR_INACTIVE | SED_ERROR_NOT_ALWAYS },
+    {"river",                          SED_ERROR_INACTIVE | SED_ERROR_NOT_ALWAYS },
+    {"earthquake", SED_ERROR_MULTIPLE_PROCS },
+    {"storms", SED_ERROR_MULTIPLE_PROCS }
 };
 
-typedef struct
-{
-   const gchar* parent_name;
-   const gchar* child_name;
-   gint error;
+typedef struct {
+    const gchar* parent_name;
+    const gchar* child_name;
+    gint error;
 } Family_check_t;
 
 /** Process-family errors
 */
-Family_check_t family_check[] =
-{
-   { "failure"   , "earthquake" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH },
-   { "squall"    , "storms" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH },
-   { "xshore"    , "storms" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH },
-   { "diffusion" , "storms" , SED_ERROR_INACTIVE_PARENT|SED_ERROR_ABSENT_PARENT|SED_ERROR_DT_MISMATCH }
+Family_check_t family_check[] = {
+    { "failure", "earthquake", SED_ERROR_INACTIVE_PARENT | SED_ERROR_ABSENT_PARENT | SED_ERROR_DT_MISMATCH },
+    { "squall", "storms", SED_ERROR_INACTIVE_PARENT | SED_ERROR_ABSENT_PARENT | SED_ERROR_DT_MISMATCH },
+    { "xshore", "storms", SED_ERROR_INACTIVE_PARENT | SED_ERROR_ABSENT_PARENT | SED_ERROR_DT_MISMATCH },
+    { "diffusion", "storms", SED_ERROR_INACTIVE_PARENT | SED_ERROR_ABSENT_PARENT | SED_ERROR_DT_MISMATCH }
 };
 
 
@@ -214,7 +210,7 @@ check_process_list( Sed_process_queue q , GError** error )
 
       eh_free   ( err_msg    );
       g_strfreev( err_s_list );
-      
+
       file_is_ok = FALSE;
    }
    else
@@ -228,7 +224,7 @@ check_process_list( Sed_process_queue q , GError** error )
 /** Check the input process files.
 
 This function will read in all of the epoch files, and initialize the
-processes.  This is intended to find any errors in the input files at 
+processes.  This is intended to find any errors in the input files at
 the begining of the model run.
 
 If the string array, \p active is non-NULL, it is a NULL-terminated list
@@ -237,7 +233,7 @@ the process file of the epochs.  Any process not listed in \p active
 will \b NOT be active.
 
 \param e_list  A singly liked list of pointers to Epoch's.
-\param active  If non-NULL, a list of process to activate.  
+\param active  If non-NULL, a list of process to activate.
 \param error   A GError
 
 \return TRUE if there were no errors, FALSE otherwise
@@ -258,7 +254,7 @@ check_process_files( Sed_epoch_queue e_list , gchar** active , GError** error )
       Sed_epoch         this_epoch;
 
       //---
-      // For each epoch, we create each of the processes, initialize the 
+      // For each epoch, we create each of the processes, initialize the
       // processes from the appropriate input file, and destroy the processes.
       //---
       for ( i=0 ; i<n_epochs && !tmp_err ; i++ )
@@ -272,7 +268,7 @@ check_process_files( Sed_epoch_queue e_list , gchar** active , GError** error )
             no_errors = no_errors && check_process_list( q , &tmp_err );
             sed_process_queue_destroy( q );
          }
-      } 
+      }
 
       if ( tmp_err )
       {

@@ -30,70 +30,72 @@
 
 #include "sedflux.h"
 
-double   add_sediment_from_external_source( Sed_cube     p      ,
-                                            Eh_sequence* seq    ,
-                                            double       start  ,
-                                            double       finish );
-int      rain_sediment_3                  ( Sed_cube p    , int      algorithm , Sed_riv  r     );
-gboolean init_bbl_data                    ( Sed_process p , Sed_cube prof      , GError** error );
+double
+add_sediment_from_external_source(Sed_cube     p,
+    Eh_sequence* seq,
+    double       start,
+    double       finish);
+int
+rain_sediment_3(Sed_cube p, int      algorithm, Sed_riv  r);
+gboolean
+init_bbl_data(Sed_process p, Sed_cube prof, GError** error);
 
 Sed_process_info
-run_bbl( Sed_process p , Sed_cube prof )
+run_bbl(Sed_process p, Sed_cube prof)
 {
-   Bbl_t*           data = (Bbl_t*)sed_process_user_data(p);
-   Sed_process_info info = SED_EMPTY_INFO;
-   gint             n_rivers;
-   //double mass_before;
-   //double mass_after;
+    Bbl_t*           data = (Bbl_t*)sed_process_user_data(p);
+    Sed_process_info info = SED_EMPTY_INFO;
+    gint             n_rivers;
+    //double mass_before;
+    //double mass_after;
 
-   if ( sed_process_run_count(p)==0 )
-      init_bbl_data( p , prof , NULL );
+    if (sed_process_run_count(p) == 0) {
+        init_bbl_data(p, prof, NULL);
+    }
 
-   if ( data->src_seq )
-   {
-      info.mass_added =
-         add_sediment_from_external_source( prof            ,
-                                            data->src_seq   ,
-                                            data->last_year ,
-                                            sed_cube_age_in_years(prof) );
-      data->last_year = sed_cube_age_in_years( prof );
-   }
+    if (data->src_seq) {
+        info.mass_added =
+            add_sediment_from_external_source(prof,
+                data->src_seq,
+                data->last_year,
+                sed_cube_age_in_years(prof));
+        data->last_year = sed_cube_age_in_years(prof);
+    }
 
-   n_rivers = sed_cube_n_rivers( prof );
+    n_rivers = sed_cube_n_rivers(prof);
 
-   //mass_before = sed_cube_mass (prof);
+    //mass_before = sed_cube_mass (prof);
 
-   info.mass_lost = 0.;
-   if ( n_rivers>0 )
-   {
-      Sed_riv* all = sed_cube_all_branches( prof );
-      Sed_riv* r;
+    info.mass_lost = 0.;
 
-      if ( all )
-      {
-         for ( r=all ; *r ; r++ )
-         {
-            eh_debug( "Depositing sediment for river: %s" , sed_river_name_loc(*r) );
-            rain_sediment_3( prof , data->algorithm , *r );
-         }
+    if (n_rivers > 0) {
+        Sed_riv* all = sed_cube_all_branches(prof);
+        Sed_riv* r;
 
-         info.mass_lost += sed_cube_mass_in_suspension( prof );
+        if (all) {
+            for (r = all ; *r ; r++) {
+                eh_debug("Depositing sediment for river: %s", sed_river_name_loc(*r));
+                rain_sediment_3(prof, data->algorithm, *r);
+            }
 
-         // remove any remaining suspended sediment from the model.
-         for ( r=all ; *r ; r++ )
-            sed_cell_grid_clear( sed_cube_in_suspension( prof , *r ) );
+            info.mass_lost += sed_cube_mass_in_suspension(prof);
 
-         eh_free( all );
-      }
-   }
+            // remove any remaining suspended sediment from the model.
+            for (r = all ; *r ; r++) {
+                sed_cell_grid_clear(sed_cube_in_suspension(prof, *r));
+            }
 
-   //mass_after = sed_cube_mass (prof);
-   eh_message( "time : %f" , sed_cube_age_in_years( prof ) );
-   //eh_message( "Mass before (kg) : %f" , mass_before);
-   //eh_message( "Mass after (kg) : %f" , mass_after);
-   //eh_message( "Mass added (kg) : %f" , mass_after - mass_before); 
+            eh_free(all);
+        }
+    }
 
-   return info;
+    //mass_after = sed_cube_mass (prof);
+    eh_message("time : %f", sed_cube_age_in_years(prof));
+    //eh_message( "Mass before (kg) : %f" , mass_before);
+    //eh_message( "Mass after (kg) : %f" , mass_after);
+    //eh_message( "Mass added (kg) : %f" , mass_after - mass_before);
+
+    return info;
 }
 
 #define BBL_ALGORITHM_NONE    (0)
@@ -102,261 +104,248 @@ run_bbl( Sed_process p , Sed_cube prof )
 #define BBL_KEY_ALGORITHM     "algorithm"
 #define BBL_KEY_SOURCE_FILE   "external sediment source file"
 
-static const gchar* bbl_req_labels[] =
-{
-   BBL_KEY_ALGORITHM   ,
-   BBL_KEY_SOURCE_FILE ,
-   NULL
+static const gchar* bbl_req_labels[] = {
+    BBL_KEY_ALGORITHM,
+    BBL_KEY_SOURCE_FILE,
+    NULL
 };
 
 gboolean
-init_bbl( Sed_process p , Eh_symbol_table t , GError** error )
+init_bbl(Sed_process p, Eh_symbol_table t, GError** error)
 {
-   Bbl_t* data = (Bbl_t*)sed_process_new_user_data (p, Bbl_t);
-   GError* tmp_err = NULL;
-   gboolean is_ok = TRUE;
+    Bbl_t* data = (Bbl_t*)sed_process_new_user_data(p, Bbl_t);
+    GError* tmp_err = NULL;
+    gboolean is_ok = TRUE;
 
-   eh_return_val_if_fail (error==NULL || *error==NULL, FALSE);
-   eh_require (t);
+    eh_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+    eh_require(t);
 
-   data->src_seq = NULL;
-   data->last_year = 0.;
+    data->src_seq = NULL;
+    data->last_year = 0.;
 
-   if (eh_symbol_table_require_labels (t, bbl_req_labels, &tmp_err))
-   {
-     gchar* src_file = eh_symbol_table_value (t, BBL_KEY_SOURCE_FILE);
-     gchar* key = eh_symbol_table_lookup (t, BBL_KEY_ALGORITHM);
-     gchar* prefix = sed_process_prefix (p);
+    if (eh_symbol_table_require_labels(t, bbl_req_labels, &tmp_err)) {
+        gchar* src_file = eh_symbol_table_value(t, BBL_KEY_SOURCE_FILE);
+        gchar* key = eh_symbol_table_lookup(t, BBL_KEY_ALGORITHM);
+        gchar* prefix = sed_process_prefix(p);
 
-     if (!prefix)
-       prefix = g_strdup (".");
+        if (!prefix) {
+            prefix = g_strdup(".");
+        }
 
-     if (g_ascii_strcasecmp (src_file, "NONE")==0)
-     {
-       g_free (src_file);
-       data->src_file = NULL;
-       src_file = NULL;
-     }
-     else
-       data->src_file = g_build_filename (prefix, src_file, NULL);
+        if (g_ascii_strcasecmp(src_file, "NONE") == 0) {
+            g_free(src_file);
+            data->src_file = NULL;
+            src_file = NULL;
+        } else {
+            data->src_file = g_build_filename(prefix, src_file, NULL);
+        }
 
-     if (g_ascii_strcasecmp (key, "MUDS")==0)
-       data->algorithm = BBL_ALGORITHM_MUDS;
-     else if (g_ascii_strcasecmp (key, "NONE")==0)
-       data->algorithm = BBL_ALGORITHM_NONE;
-     else
-       g_set_error (&tmp_err, SEDFLUX_ERROR, SEDFLUX_ERROR_BAD_ALGORITHM,
-                    "Invalid bbl algorithm (muds or none): %s", key);
+        if (g_ascii_strcasecmp(key, "MUDS") == 0) {
+            data->algorithm = BBL_ALGORITHM_MUDS;
+        } else if (g_ascii_strcasecmp(key, "NONE") == 0) {
+            data->algorithm = BBL_ALGORITHM_NONE;
+        } else
+            g_set_error(&tmp_err, SEDFLUX_ERROR, SEDFLUX_ERROR_BAD_ALGORITHM,
+                "Invalid bbl algorithm (muds or none): %s", key);
 
-     if (data->algorithm==BBL_ALGORITHM_MUDS && sed_mode_is_3d())
-     {
-       eh_warning ("Sedflux3D requires bbl algorithm to be 'NONE'.");
-       data->algorithm = BBL_ALGORITHM_NONE;
-     }
+        if (data->algorithm == BBL_ALGORITHM_MUDS && sed_mode_is_3d()) {
+            eh_warning("Sedflux3D requires bbl algorithm to be 'NONE'.");
+            data->algorithm = BBL_ALGORITHM_NONE;
+        }
 
-     g_free (prefix);
-     g_free (src_file);
-   }
+        g_free(prefix);
+        g_free(src_file);
+    }
 
-   if (tmp_err)
-   {
-     g_propagate_error (error, tmp_err);
-     is_ok = FALSE;
-   }
+    if (tmp_err) {
+        g_propagate_error(error, tmp_err);
+        is_ok = FALSE;
+    }
 
-   return is_ok;
+    return is_ok;
 }
 
 gboolean
-init_bbl_data( Sed_process p , Sed_cube prof , GError** error )
+init_bbl_data(Sed_process p, Sed_cube prof, GError** error)
 {
-   gboolean is_ok = TRUE;
-   Bbl_t*   data  = (Bbl_t*)sed_process_user_data( p );
+    gboolean is_ok = TRUE;
+    Bbl_t*   data  = (Bbl_t*)sed_process_user_data(p);
 
-   if ( data )
-   {
-      GError* tmp_err = NULL;
-      double* y       = sed_cube_y( prof , NULL );
+    if (data) {
+        GError* tmp_err = NULL;
+        double* y       = sed_cube_y(prof, NULL);
 
-      if ( data->src_file )
-      {
-         if ( sed_mode_is_3d() )
-            data->src_seq  = sed_get_floor_sequence_3( data->src_file         ,
-                                                       sed_cube_x_res( prof ) ,
-                                                       sed_cube_y_res( prof ) , 
-                                                       &tmp_err );
-         else
-            data->src_seq  = sed_get_floor_sequence_2( data->src_file ,
-                                                       y              ,
-                                                       sed_cube_n_y(prof) ,
-                                                       &tmp_err );
-      }
-      else
-         data->src_seq = NULL;
+        if (data->src_file) {
+            if (sed_mode_is_3d())
+                data->src_seq  = sed_get_floor_sequence_3(data->src_file,
+                        sed_cube_x_res(prof),
+                        sed_cube_y_res(prof),
+                        &tmp_err);
+            else
+                data->src_seq  = sed_get_floor_sequence_2(data->src_file,
+                        y,
+                        sed_cube_n_y(prof),
+                        &tmp_err);
+        } else {
+            data->src_seq = NULL;
+        }
 
-      data->last_year = sed_cube_age_in_years(prof);
+        data->last_year = sed_cube_age_in_years(prof);
 
-      eh_free( y );
+        eh_free(y);
 
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         is_ok = FALSE;
-      }
-   }
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
+            is_ok = FALSE;
+        }
+    }
 
-   return is_ok;
+    return is_ok;
 }
 
 gboolean
-destroy_bbl( Sed_process p )
+destroy_bbl(Sed_process p)
 {
-   if ( p )
-   {
-      Bbl_t* data = (Bbl_t*)sed_process_user_data( p );
+    if (p) {
+        Bbl_t* data = (Bbl_t*)sed_process_user_data(p);
 
-      if ( data )
-      {
-         if ( data->src_seq )
-         {
-            gint i;
-            for ( i=0 ; i<data->src_seq->len ; i++ )
-               eh_grid_destroy ((Eh_dbl_grid)data->src_seq->data[i], TRUE);
+        if (data) {
+            if (data->src_seq) {
+                gint i;
 
-            eh_destroy_sequence( data->src_seq , FALSE );
-         }
+                for (i = 0 ; i < data->src_seq->len ; i++) {
+                    eh_grid_destroy((Eh_dbl_grid)data->src_seq->data[i], TRUE);
+                }
 
-         eh_free( data );
-      }
-   }
-   return TRUE;
-}
-
-double add_sediment_from_external_source( Sed_cube p       ,
-                                          Eh_sequence* seq ,
-                                          double start     ,
-                                          double finish )
-{
-   double mass_added = 0;
-   Sed_cell deposit_cell;
-   double time_step;
-
-   eh_require( p   );
-
-   eh_require( seq && seq->len>0 )
-   {
-      Eh_dbl_grid g;
-      gssize i;
-      for ( i=0 ; i<seq->len ; i++ )
-      {
-         g = (Eh_dbl_grid)seq->data[i];
-
-         eh_require( sed_cube_n_x(p)==eh_grid_n_x(g) );
-         eh_require( sed_cube_n_y(p)==eh_grid_n_y(g) );
-      }
-   }
-
-   eh_require( start<=finish );
-
-   time_step = finish-start;
-
-   deposit_cell = sed_cell_new_env( );
-   sed_cell_set_equal_fraction( deposit_cell );
-
-   //---
-   // Add sediment to the basin.  If there is only one record, assume that 
-   // sedimentation is constant with time.  If there are multiple records
-   // integrate the sedimentation over the time step.
-   //
-   // Note that the time step will be 0 at the beginning of an epoch, in
-   // this case, don't do anything.
-   //---
-   if ( seq->len == 1 && time_step>1e-6 )
-   {
-      double **dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[0]);
-      double h;
-      gssize i, j;
-
-      for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
-         for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
-         {
-            h = eh_min( dzdt[i][j]*time_step ,
-                        sed_cube_water_depth(p,i,j) );
-
-            if ( h>0 )
-            {
-               sed_cell_resize( deposit_cell , h );
-
-               mass_added += sed_cell_mass(deposit_cell);
-
-               sed_column_add_cell( sed_cube_col_ij(p,i,j) , deposit_cell );
+                eh_destroy_sequence(data->src_seq, FALSE);
             }
-         }
-   }
-   else if ( time_step>1e-6 )
-   {
-      double **dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[0]);
-      gssize i, j, n;
-      double h, total_time, lower_edge, upper_edge;
 
-      for ( n=0,total_time=0 ; n<seq->len ; n++ )
-      {
-         lower_edge = seq->t[n];
-         if ( n<seq->len-1 )
-            upper_edge = seq->t[n+1];
-         else
-            upper_edge = G_MAXDOUBLE;
+            eh_free(data);
+        }
+    }
 
-         if ( start >= upper_edge )
-            time_step = -1;
-         else if ( start >= lower_edge && finish <  upper_edge )
-            time_step = finish - start;
-         else if ( start < lower_edge && finish >= upper_edge )
-            time_step = upper_edge - lower_edge;
-         else if ( start >= lower_edge && finish >= upper_edge )
-            time_step = upper_edge - start;
-         else if ( start <  lower_edge && finish <  upper_edge )
-            time_step = finish - lower_edge;
-         else
-            time_step = -1;
+    return TRUE;
+}
 
-         if ( time_step > 0 )
-         {
-            total_time += time_step;
-            dzdt = (double**)eh_dbl_grid_data ((Eh_dbl_grid)seq->data[n]);
-            for ( i=0 ; i<sed_cube_n_x(p) ; i++ )
-               for ( j=0 ; j<sed_cube_n_y(p) ; j++ )
-               {
-                  h = eh_min( dzdt[i][j]*time_step ,
-                              sed_cube_water_depth(p,i,j) );
+double
+add_sediment_from_external_source(Sed_cube p,
+    Eh_sequence* seq,
+    double start,
+    double finish)
+{
+    double mass_added = 0;
+    Sed_cell deposit_cell;
+    double time_step;
 
-                  if ( h>0 )
-                  {
-                     sed_cell_resize( deposit_cell , h );
+    eh_require(p);
 
-                     mass_added += sed_cell_mass(deposit_cell);
+    eh_require(seq && seq->len > 0) {
+        Eh_dbl_grid g;
+        gssize i;
 
-                     sed_column_add_cell( sed_cube_col_ij(p,i,j) , deposit_cell );
-                  }
+        for (i = 0 ; i < seq->len ; i++) {
+            g = (Eh_dbl_grid)seq->data[i];
 
-               }
-         }
-      }
+            eh_require(sed_cube_n_x(p) == eh_grid_n_x(g));
+            eh_require(sed_cube_n_y(p) == eh_grid_n_y(g));
+        }
+    }
 
-      if ( fabs( total_time - (finish-start) ) > 1e-5 )
-      {
-         eh_warning( "The current time interval is not completely contained "
-                     "within the sequence." );
-         eh_warning( "Start of this time interval: %f" , start );
-         eh_warning( "End of this time interval: %f" , finish );
-         eh_warning( "Total time: %f" , total_time );
-      }
-   }
+    eh_require(start <= finish);
 
-   mass_added *= sed_cube_x_res(p)*sed_cube_y_res(p);
+    time_step = finish - start;
 
-   sed_cell_destroy( deposit_cell );
+    deposit_cell = sed_cell_new_env();
+    sed_cell_set_equal_fraction(deposit_cell);
 
-   return mass_added;
+    //---
+    // Add sediment to the basin.  If there is only one record, assume that
+    // sedimentation is constant with time.  If there are multiple records
+    // integrate the sedimentation over the time step.
+    //
+    // Note that the time step will be 0 at the beginning of an epoch, in
+    // this case, don't do anything.
+    //---
+    if (seq->len == 1 && time_step > 1e-6) {
+        double** dzdt = (double**)eh_dbl_grid_data((Eh_dbl_grid)seq->data[0]);
+        double h;
+        gssize i, j;
+
+        for (i = 0 ; i < sed_cube_n_x(p) ; i++)
+            for (j = 0 ; j < sed_cube_n_y(p) ; j++) {
+                h = eh_min(dzdt[i][j] * time_step,
+                        sed_cube_water_depth(p, i, j));
+
+                if (h > 0) {
+                    sed_cell_resize(deposit_cell, h);
+
+                    mass_added += sed_cell_mass(deposit_cell);
+
+                    sed_column_add_cell(sed_cube_col_ij(p, i, j), deposit_cell);
+                }
+            }
+    } else if (time_step > 1e-6) {
+        double** dzdt = (double**)eh_dbl_grid_data((Eh_dbl_grid)seq->data[0]);
+        gssize i, j, n;
+        double h, total_time, lower_edge, upper_edge;
+
+        for (n = 0, total_time = 0 ; n < seq->len ; n++) {
+            lower_edge = seq->t[n];
+
+            if (n < seq->len - 1) {
+                upper_edge = seq->t[n + 1];
+            } else {
+                upper_edge = G_MAXDOUBLE;
+            }
+
+            if (start >= upper_edge) {
+                time_step = -1;
+            } else if (start >= lower_edge && finish <  upper_edge) {
+                time_step = finish - start;
+            } else if (start < lower_edge && finish >= upper_edge) {
+                time_step = upper_edge - lower_edge;
+            } else if (start >= lower_edge && finish >= upper_edge) {
+                time_step = upper_edge - start;
+            } else if (start <  lower_edge && finish <  upper_edge) {
+                time_step = finish - lower_edge;
+            } else {
+                time_step = -1;
+            }
+
+            if (time_step > 0) {
+                total_time += time_step;
+                dzdt = (double**)eh_dbl_grid_data((Eh_dbl_grid)seq->data[n]);
+
+                for (i = 0 ; i < sed_cube_n_x(p) ; i++)
+                    for (j = 0 ; j < sed_cube_n_y(p) ; j++) {
+                        h = eh_min(dzdt[i][j] * time_step,
+                                sed_cube_water_depth(p, i, j));
+
+                        if (h > 0) {
+                            sed_cell_resize(deposit_cell, h);
+
+                            mass_added += sed_cell_mass(deposit_cell);
+
+                            sed_column_add_cell(sed_cube_col_ij(p, i, j), deposit_cell);
+                        }
+
+                    }
+            }
+        }
+
+        if (fabs(total_time - (finish - start)) > 1e-5) {
+            eh_warning("The current time interval is not completely contained "
+                "within the sequence.");
+            eh_warning("Start of this time interval: %f", start);
+            eh_warning("End of this time interval: %f", finish);
+            eh_warning("Total time: %f", total_time);
+        }
+    }
+
+    mass_added *= sed_cube_x_res(p) * sed_cube_y_res(p);
+
+    sed_cell_destroy(deposit_cell);
+
+    return mass_added;
 }
 

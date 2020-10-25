@@ -1,0 +1,49 @@
+# Mozilla Coding Style Options
+# https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Coding_Style
+
+lineend=linux
+
+# braces and indent
+style=1tbs
+indent=spaces=4
+
+attach-namespaces
+attach-classes
+attach-extern-c
+attach-closing-while
+
+
+# indentation
+indent-switches
+indent-cases
+indent-namespaces
+indent-after-parens
+indent-preproc-block
+indent-preproc-define
+indent-col1-comments
+min-conditional-indent=0
+max-continuation-indent=80
+
+# padding
+break-blocks
+pad-oper
+pad-comma
+pad-header
+unpad-paren
+align-pointer=type
+
+# formatting
+break-one-line-headers
+add-braces
+break-return-type
+break-return-type-decl
+convert-tabs
+close-templates
+max-code-length=88
+
+# objective-c
+pad-method-prefix
+unpad-return-type
+unpad-param-type
+align-method-colon
+pad-method-colon=none

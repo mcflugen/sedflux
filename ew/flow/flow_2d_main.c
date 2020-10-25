@@ -57,7 +57,7 @@
 // move to the next time step.  if the predicted solution does not match the
 // calculated solution, then we make a new guess and carry out this precedure
 // again.
-// 
+//
 // we predict the solution at the next iteration, $i+1$, as,
 // $$ \{ \tilde{\psi} \}_{i+1} = \{ \tilde{\psi} \}_i + \lambda ( \{\psi\}_i - \{ \tilde{\psi} \}_i ) $$
 // where $\lambda=.05$.  after we find a solution, we guess at the solution
@@ -81,135 +81,139 @@
 #define N_DEFAULT        (5)
 #define VERBOSE_DEFAULT  (FALSE)
 
-void print_profile_2d( double t , double **psi , int n );
+void
+print_profile_2d(double t, double** psi, int n);
 
-static const char *help_msg[] = {
-" flow - sovle the 1d consolidation equation.                         ",
-"                                                                     ",
-" options:                                                            ",
-"   r       : sedimentation rate (m/s)                                ",
-"   d       : initial depth of the sediment (m)                       ",
-"   u0      : excess porewater pressure at the bsae of the model      ",
-"   umin    : excess porewater pressure of surface sediment           ",
-"   dz      : vertical resolution of the model (m)                    ",
-"   dt      : time resolution of the model (s)                        ",
-"   end     : length of the model (s)                                 ",
-"                                                                     ",
-NULL };
+static const char* help_msg[] = {
+    " flow - sovle the 1d consolidation equation.                         ",
+    "                                                                     ",
+    " options:                                                            ",
+    "   r       : sedimentation rate (m/s)                                ",
+    "   d       : initial depth of the sediment (m)                       ",
+    "   u0      : excess porewater pressure at the bsae of the model      ",
+    "   umin    : excess porewater pressure of surface sediment           ",
+    "   dz      : vertical resolution of the model (m)                    ",
+    "   dt      : time resolution of the model (s)                        ",
+    "   end     : length of the model (s)                                 ",
+    "                                                                     ",
+    NULL
+};
 
 #include <stdlib.h>
 
-int main( int argc , char *argv[] )
+int
+main(int argc, char* argv[])
 {
-   double *sed_rate_vec;
-   double sed_rate;
-   double depth;
-   double psi_base;
-   double psi_min;
-   double dx;
-   double dz;
-   double dt;
-   double dt_init;
-   double end_time;
-   gboolean verbose;
-   int i, j, n;
-   double t;
-   double **psi;
-   double **kx, **kz, **c;
-   Eh_args *args;
+    double* sed_rate_vec;
+    double sed_rate;
+    double depth;
+    double psi_base;
+    double psi_min;
+    double dx;
+    double dz;
+    double dt;
+    double dt_init;
+    double end_time;
+    gboolean verbose;
+    int i, j, n;
+    double t;
+    double** psi;
+    double** kx, **kz, **c;
+    Eh_args* args;
 
-   args = eh_opts_init( argc , argv );
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   sed_rate = eh_get_opt_dbl ( args , "r"    , SED_RATE_DEFAULT );
-   depth    = eh_get_opt_dbl ( args , "d"    , DEPTH_DEFAULT    );
-   psi_base = eh_get_opt_dbl ( args , "u0"   , PSI_BASE_DEFAULT );
-   psi_min  = eh_get_opt_dbl ( args , "umin" , PSI_MIN_DEFAULT  );
-   dz       = eh_get_opt_dbl ( args , "dz"   , DZ_DEFAULT       );
-   n        = eh_get_opt_int ( args , "n"    , N_DEFAULT        );
-   dx       = eh_get_opt_dbl ( args , "dx"   , DZ_DEFAULT       );
-   dt_init  = eh_get_opt_dbl ( args , "dt"   , DT_DEFAULT       );
-   end_time = eh_get_opt_dbl ( args , "end"  , END_TIME_DEFAULT );
-   verbose  = eh_get_opt_bool( args , "v"    , VERBOSE_DEFAULT  );
+    if (eh_check_opts(args, NULL, NULL, help_msg) != 0) {
+        eh_exit(-1);
+    }
 
-   if ( verbose )
-   {
-      eh_print_opt( args , "r" );
-      eh_print_opt( args , "d" );
-      eh_print_opt( args , "u0" );
-      eh_print_opt( args , "umin" );
-      eh_print_opt( args , "dz" );
-      eh_print_opt( args , "dt" );
-      eh_print_opt( args , "end" );
-      eh_print_opt( args , "n" );
-   }
+    sed_rate = eh_get_opt_dbl(args, "r", SED_RATE_DEFAULT);
+    depth    = eh_get_opt_dbl(args, "d", DEPTH_DEFAULT);
+    psi_base = eh_get_opt_dbl(args, "u0", PSI_BASE_DEFAULT);
+    psi_min  = eh_get_opt_dbl(args, "umin", PSI_MIN_DEFAULT);
+    dz       = eh_get_opt_dbl(args, "dz", DZ_DEFAULT);
+    n        = eh_get_opt_int(args, "n", N_DEFAULT);
+    dx       = eh_get_opt_dbl(args, "dx", DZ_DEFAULT);
+    dt_init  = eh_get_opt_dbl(args, "dt", DT_DEFAULT);
+    end_time = eh_get_opt_dbl(args, "end", END_TIME_DEFAULT);
+    verbose  = eh_get_opt_bool(args, "v", VERBOSE_DEFAULT);
 
-   // the number of nodes.
-   n = pow(2,n)+1;
+    if (verbose) {
+        eh_print_opt(args, "r");
+        eh_print_opt(args, "d");
+        eh_print_opt(args, "u0");
+        eh_print_opt(args, "umin");
+        eh_print_opt(args, "dz");
+        eh_print_opt(args, "dt");
+        eh_print_opt(args, "end");
+        eh_print_opt(args, "n");
+    }
 
-   dz = depth/(n-1);
+    // the number of nodes.
+    n = pow(2, n) + 1;
 
-   // allocate memory.
-   psi = allocate_2d( n );
-   kx  = allocate_2d( n );
-   kz  = allocate_2d( n );
-   c   = allocate_2d( n );
+    dz = depth / (n - 1);
 
-   for ( i=0 ; i<n ; i++ )
-   {
-      for ( j=0 ; j<n ; j++ )
-      {
-         psi[i][j] = 1;
-         kx[i][j]  = 1;
-         kz[i][j]  = 1;
-         c[i][j]   = 1.;
-         if ( j>n/4 && j<n/2 ) //&& ( i>n/3 && i<2*n/3 ) )
-         {
-            kx[i][j] = .1;
-            kz[i][j] = .1;
-         }
-      }
-   }
+    // allocate memory.
+    psi = allocate_2d(n);
+    kx  = allocate_2d(n);
+    kz  = allocate_2d(n);
+    c   = allocate_2d(n);
 
-   sed_rate_vec = eh_linspace( 0 , sed_rate , n );
+    for (i = 0 ; i < n ; i++) {
+        for (j = 0 ; j < n ; j++) {
+            psi[i][j] = 1;
+            kx[i][j]  = 1;
+            kz[i][j]  = 1;
+            c[i][j]   = 1.;
 
-   for ( j=0 ; j<n ; j++ )
-   {
-      psi[j][n-1] = psi_min;
-      sed_rate_vec[j] = 0;
-   }
+            if (j > n / 4 && j < n / 2) { //&& ( i>n/3 && i<2*n/3 ) )
+                kx[i][j] = .1;
+                kz[i][j] = .1;
+            }
+        }
+    }
 
-//   sed_rate_vec[(n-1)/2] = sed_rate*dz;
+    sed_rate_vec = eh_linspace(0, sed_rate, n);
 
-   // write out the initial conditions.
-   print_profile_2d( t , psi , n );
+    for (j = 0 ; j < n ; j++) {
+        psi[j][n - 1] = psi_min;
+        sed_rate_vec[j] = 0;
+    }
 
-   for ( t=0 ; t<end_time ; t+=dt)
-   {
+    //   sed_rate_vec[(n-1)/2] = sed_rate*dz;
 
-      dt = dt_init;
+    // write out the initial conditions.
+    print_profile_2d(t, psi, n);
 
-      solve_excess_pore_pressure_mg_2d( psi , kx , kz , c , n , dx , dz , dt , sed_rate_vec );
+    for (t = 0 ; t < end_time ; t += dt) {
 
-      // write out the solution for this time step.
-      print_profile_2d( t+dt , psi , n );
+        dt = dt_init;
 
-   }
+        solve_excess_pore_pressure_mg_2d(psi, kx, kz, c, n, dx, dz, dt, sed_rate_vec);
 
-//   print_profile_2d( t+dt , psi , n );
+        // write out the solution for this time step.
+        print_profile_2d(t + dt, psi, n);
 
-   return 0;
+    }
+
+    //   print_profile_2d( t+dt , psi , n );
+
+    return 0;
 }
 //EOC
 
-void print_profile_2d( double t , double **psi , int n )
+void
+print_profile_2d(double t, double** psi, int n)
 {
-   int i, j;
-   fprintf( stdout , "%f ", t );
-   for ( i=0 ; i<n ; i++ )
-      for ( j=0 ; j<n ; j++ )
-         fprintf( stdout , ", %f ", psi[i][j] );
-   fprintf( stdout , "\n" );
+    int i, j;
+    fprintf(stdout, "%f ", t);
+
+    for (i = 0 ; i < n ; i++)
+        for (j = 0 ; j < n ; j++) {
+            fprintf(stdout, ", %f ", psi[i][j]);
+        }
+
+    fprintf(stdout, "\n");
 }
 

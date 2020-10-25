@@ -26,48 +26,52 @@
 #include <utils/utils.h>
 #include <sed/sed_sedflux.h>
 
-int main(int argc,char *argv[])
+int
+main(int argc, char* argv[])
 {
-   char *rec[] = { "in" , "dx" , "len" , NULL };
-   FILE *fpout;
-   char *infile, *outfile;
-   double *x, *d;
-   double dx, len;
-   int i, n;
-   Eh_args *args;
+    char* rec[] = { "in", "dx", "len", NULL };
+    FILE* fpout;
+    char* infile, *outfile;
+    double* x, *d;
+    double dx, len;
+    int i, n;
+    Eh_args* args;
 
-   args = eh_opts_init(argc,argv);
-   if ( eh_check_opts( args , rec , NULL , NULL )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   dx      = eh_get_opt_dbl( args , "dx"  , -1   );
-   len     = eh_get_opt_dbl( args , "len" , -1   );
-   infile  = eh_get_opt_str( args , "in"  , NULL );
-   outfile = eh_get_opt_str( args , "out" , NULL );
+    if (eh_check_opts(args, rec, NULL, NULL) != 0) {
+        eh_exit(-1);
+    }
 
-   if ( !outfile )
-      fpout = stdout;
-   else
-      if ( !(fpout=fopen(outfile,"w")) )
-         perror(outfile), eh_exit(-1);
+    dx      = eh_get_opt_dbl(args, "dx", -1);
+    len     = eh_get_opt_dbl(args, "len", -1);
+    infile  = eh_get_opt_str(args, "in", NULL);
+    outfile = eh_get_opt_str(args, "out", NULL);
 
-   n = (int) (len / dx);
+    if (!outfile) {
+        fpout = stdout;
+    } else if (!(fpout = fopen(outfile, "w"))) {
+        perror(outfile), eh_exit(-1);
+    }
 
-   x = g_new0( double , n );
-   d = g_new0( double , n );
+    n = (int)(len / dx);
 
-   for (i=0;i<n;i++)
-      x[i] = dx*i;
+    x = g_new0(double, n);
+    d = g_new0(double, n);
 
-   sed_get_floor_vec(infile,x,n,d,NULL);
+    for (i = 0; i < n; i++) {
+        x[i] = dx * i;
+    }
 
-   fwrite(d,n,sizeof(double),fpout);
+    sed_get_floor_vec(infile, x, n, d, NULL);
 
-   free(x);
-   free(d);
-   g_free(infile);
-   g_free(outfile);
+    fwrite(d, n, sizeof(double), fpout);
 
-   return 0;
+    free(x);
+    free(d);
+    g_free(infile);
+    g_free(outfile);
+
+    return 0;
 }
 

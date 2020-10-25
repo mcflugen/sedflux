@@ -28,7 +28,7 @@
 
 #include <sed/datadir_path.h>
 #if !defined( DATADIR )
-# define DATADIR "/usr/local/share"
+    #define DATADIR "/usr/local/share"
 #endif
 #define SAKURA_TEST_PARAM_FILE DATADIR "/ew/sakura_param.kvf"
 #define SAKURA_TEST_BATHY_FILE DATADIR "/ew/sakura_bathy.csv"
@@ -36,18 +36,16 @@
 
 G_BEGIN_DECLS
 
-typedef enum
-{
-   SAKURA_ERROR_BAD_PARAMETER
+typedef enum {
+    SAKURA_ERROR_BAD_PARAMETER
 }
 Sakura_error;
 
-typedef enum
-{
-   SAKURA_VAR_BAD_VAR  = 0 ,
-   SAKURA_VAR_VELOCITY = 1 ,
-   SAKURA_VAR_DEPTH    = 2 ,
-   SAKURA_VAR_WIDTH    = 3
+typedef enum {
+    SAKURA_VAR_BAD_VAR  = 0,
+    SAKURA_VAR_VELOCITY = 1,
+    SAKURA_VAR_DEPTH    = 2,
+    SAKURA_VAR_WIDTH    = 3
 }
 Sakura_var;
 
@@ -64,56 +62,53 @@ Sakura_phe_query_st;
 
 typedef void (*Sakura_query_func) ( Sakura_phe_query_st* data , gpointer user_data );
 */
-typedef struct
-{
-   double* phe;
-   gint    n_grains;
-   double  val;
+typedef struct {
+    double* phe;
+    gint    n_grains;
+    double  val;
 }
 Sakura_phe_st;
 
-typedef struct
-{
-   gint   id; //< Id that identifies the sediment type of the cell
-   double t;  //< The amount of sediment in the cell
+typedef struct {
+    gint   id; //< Id that identifies the sediment type of the cell
+    double t;  //< The amount of sediment in the cell
 }
 Sakura_cell_st;
 
-typedef double (*Sakura_phe_func) ( gpointer data , double x , Sakura_phe_st* s  );
-typedef double (*Sakura_add_func) ( gpointer data , double x , Sakura_cell_st* s );
-typedef double (*Sakura_get_func) ( gpointer data , double x );
+typedef double (*Sakura_phe_func)(gpointer data, double x, Sakura_phe_st* s);
+typedef double (*Sakura_add_func)(gpointer data, double x, Sakura_cell_st* s);
+typedef double (*Sakura_get_func)(gpointer data, double x);
 
-typedef struct
-{
-   double dt;              ///< Model timestep in seconds
+typedef struct {
+    double dt;              ///< Model timestep in seconds
 
-   double e_a;             ///< Entrainment coefficient, a
-   double e_b;             ///< Entrainment coefficient, b
-   double sua;             ///< Gradient of bottom sediment shear strength
-   double sub;             ///< Bottom sediment shear strength at seafloor
-   double c_drag;          ///< Drag coefficient
-   double rho_river_water; ///< Density of river water
-   double rho_sea_water;   ///< Density of sea water
+    double e_a;             ///< Entrainment coefficient, a
+    double e_b;             ///< Entrainment coefficient, b
+    double sua;             ///< Gradient of bottom sediment shear strength
+    double sub;             ///< Bottom sediment shear strength at seafloor
+    double c_drag;          ///< Drag coefficient
+    double rho_river_water; ///< Density of river water
+    double rho_sea_water;   ///< Density of sea water
 
-   double tan_phi;
-   double mu_water;
-   double channel_width;
-   double channel_len;
-   double dep_start;
+    double tan_phi;
+    double mu_water;
+    double channel_width;
+    double channel_len;
+    double dep_start;
 
-   Sakura_var*  data_id;
-   FILE*        data_fp;
-   gint         data_int;
+    Sakura_var*  data_id;
+    FILE*        data_fp;
+    gint         data_int;
 
-   Sakura_phe_func get_phe;
-   Sakura_add_func add;
-   Sakura_add_func remove;
-   Sakura_get_func get_depth;
+    Sakura_phe_func get_phe;
+    Sakura_add_func add;
+    Sakura_add_func remove;
+    Sakura_get_func get_depth;
 
-   gpointer        get_phe_data;
-   gpointer        add_data;
-   gpointer        remove_data;
-   gpointer        depth_data;
+    gpointer        get_phe_data;
+    gpointer        add_data;
+    gpointer        remove_data;
+    gpointer        depth_data;
 }
 Sakura_const_st;
 
@@ -128,17 +123,19 @@ gboolean sakura ( double dx         , double dt              , double basin_Len 
                   Sakura_const_st* c   , double **deposit       , FILE *fp_data );
 */
 double**
-sakura( double  u_riv     , double  c_riv    , double  h_riv  , double* f_riv    ,
-        double  dt        , double  duration ,
-        double* x         , double* z        , double* w      , gint    len      ,
-        double* rho_grain , double* rho_dep  , double* u_fall , gint    n_grains ,
-        Sakura_const_st* c );
-Sed_hydro sakura_flood_from_cell( Sed_cell c , double area );
-gboolean  sed_sakura( Sed_cube         p       ,
-                      Sed_hydro        f       ,
-                      gint             i_start ,
-                      double           dx      ,
-                      Sakura_const_st* c );
+sakura(double  u_riv, double  c_riv, double  h_riv, double* f_riv,
+    double  dt, double  duration,
+    double* x, double* z, double* w, gint    len,
+    double* rho_grain, double* rho_dep, double* u_fall, gint    n_grains,
+    Sakura_const_st* c);
+Sed_hydro
+sakura_flood_from_cell(Sed_cell c, double area);
+gboolean
+sed_sakura(Sed_cube         p,
+    Sed_hydro        f,
+    gint             i_start,
+    double           dx,
+    Sakura_const_st* c);
 
 G_END_DECLS
 

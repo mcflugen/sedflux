@@ -31,12 +31,14 @@
 
 G_BEGIN_DECLS
 
-Sed_cell *diffuse_sediment( Sed_cube prof , double k_max ,
-                            double skin_depth , double dt    ,
-                            int options );
-Sed_cell *diffuse_sediment_2( Sed_cube prof    , double k_cross_max ,
-                              double k_long_max , double skin_depth  ,
-                              double dt         , int options );
+Sed_cell*
+diffuse_sediment(Sed_cube prof, double k_max,
+    double skin_depth, double dt,
+    int options);
+Sed_cell*
+diffuse_sediment_2(Sed_cube prof, double k_cross_max,
+    double k_long_max, double skin_depth,
+    double dt, int options);
 
 G_END_DECLS
 

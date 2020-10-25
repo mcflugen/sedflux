@@ -57,7 +57,7 @@
 // move to the next time step.  if the predicted solution does not match the
 // calculated solution, then we make a new guess and carry out this precedure
 // again.
-// 
+//
 // we predict the solution at the next iteration, $i+1$, as,
 // $$ \{ \tilde{\psi} \}_{i+1} = \{ \tilde{\psi} \}_i + \lambda ( \{\psi\}_i - \{ \tilde{\psi} \}_i ) $$
 // where $\lambda=.05$.  after we find a solution, we guess at the solution
@@ -81,180 +81,180 @@
 #define PSI_MIN_DEFAULT  (10.)
 #define VERBOSE_DEFAULT  (FALSE)
 
-void print_profile_3d( double t , double ***psi , int n );
+void
+print_profile_3d(double t, double*** psi, int n);
 
-static const char *help_msg[] = {
-" flow - sovle the 1d consolidation equation.                         ",
-"                                                                     ",
-" options:                                                            ",
-"   r       : sedimentation rate (m/s)                                ",
-"   d       : initial depth of the sediment (m)                       ",
-"   u0      : excess porewater pressure at the bsae of the model      ",
-"   umin    : excess porewater pressure of surface sediment           ",
-"   dz      : vertical resolution of the model (m)                    ",
-"   dt      : time resolution of the model (s)                        ",
-"   end     : length of the model (s)                                 ",
-"                                                                     ",
-NULL };
+static const char* help_msg[] = {
+    " flow - sovle the 1d consolidation equation.                         ",
+    "                                                                     ",
+    " options:                                                            ",
+    "   r       : sedimentation rate (m/s)                                ",
+    "   d       : initial depth of the sediment (m)                       ",
+    "   u0      : excess porewater pressure at the bsae of the model      ",
+    "   umin    : excess porewater pressure of surface sediment           ",
+    "   dz      : vertical resolution of the model (m)                    ",
+    "   dt      : time resolution of the model (s)                        ",
+    "   end     : length of the model (s)                                 ",
+    "                                                                     ",
+    NULL
+};
 
 #include <stdlib.h>
 
-int main( int argc , char *argv[] )
+int
+main(int argc, char* argv[])
 {
-   double **sed_rate_vec;
-   double sed_rate;
-   double depth;
-   double psi_base;
-   double psi_min;
-   double dx;
-   double dz;
-   double dt;
-   double dt_init;
-   double end_time;
-   gboolean verbose;
-   int i, j, k, n;
-   double t;
-   double ***psi;
-   double ***kx, ***kz, ***c;
-   Eh_args *args;
+    double** sed_rate_vec;
+    double sed_rate;
+    double depth;
+    double psi_base;
+    double psi_min;
+    double dx;
+    double dz;
+    double dt;
+    double dt_init;
+    double end_time;
+    gboolean verbose;
+    int i, j, k, n;
+    double t;
+    double*** psi;
+    double*** kx, *** kz, *** c;
+    Eh_args* args;
 
-   args = eh_opts_init( argc , argv );
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   sed_rate = eh_get_opt_dbl ( args , "r"    , SED_RATE_DEFAULT );
-   depth    = eh_get_opt_dbl ( args , "d"    , DEPTH_DEFAULT    );
-   psi_base = eh_get_opt_dbl ( args , "u0"   , PSI_BASE_DEFAULT );
-   psi_min  = eh_get_opt_dbl ( args , "umin" , PSI_MIN_DEFAULT  );
-   dz       = eh_get_opt_dbl ( args , "dz"   , DZ_DEFAULT       );
-   n        = eh_get_opt_int ( args , "n"    , N_DEFAULT        );
-   dx       = eh_get_opt_dbl ( args , "dx"   , DZ_DEFAULT       );
-   dt_init  = eh_get_opt_dbl ( args , "dt"   , DT_DEFAULT       );
-   end_time = eh_get_opt_dbl ( args , "end"  , END_TIME_DEFAULT );
-   verbose  = eh_get_opt_bool( args , "v"    , VERBOSE_DEFAULT  );
+    if (eh_check_opts(args, NULL, NULL, help_msg) != 0) {
+        eh_exit(-1);
+    }
 
-   if ( verbose )
-   {
-      eh_print_opt( args , "r" );
-      eh_print_opt( args , "d" );
-      eh_print_opt( args , "u0" );
-      eh_print_opt( args , "umin" );
-      eh_print_opt( args , "dz" );
-      eh_print_opt( args , "dt" );
-      eh_print_opt( args , "end" );
-      eh_print_opt( args , "n" );
-   }
+    sed_rate = eh_get_opt_dbl(args, "r", SED_RATE_DEFAULT);
+    depth    = eh_get_opt_dbl(args, "d", DEPTH_DEFAULT);
+    psi_base = eh_get_opt_dbl(args, "u0", PSI_BASE_DEFAULT);
+    psi_min  = eh_get_opt_dbl(args, "umin", PSI_MIN_DEFAULT);
+    dz       = eh_get_opt_dbl(args, "dz", DZ_DEFAULT);
+    n        = eh_get_opt_int(args, "n", N_DEFAULT);
+    dx       = eh_get_opt_dbl(args, "dx", DZ_DEFAULT);
+    dt_init  = eh_get_opt_dbl(args, "dt", DT_DEFAULT);
+    end_time = eh_get_opt_dbl(args, "end", END_TIME_DEFAULT);
+    verbose  = eh_get_opt_bool(args, "v", VERBOSE_DEFAULT);
 
-   // the number of nodes.
-   n = pow(2,n)+1;
+    if (verbose) {
+        eh_print_opt(args, "r");
+        eh_print_opt(args, "d");
+        eh_print_opt(args, "u0");
+        eh_print_opt(args, "umin");
+        eh_print_opt(args, "dz");
+        eh_print_opt(args, "dt");
+        eh_print_opt(args, "end");
+        eh_print_opt(args, "n");
+    }
 
-   dz = depth/(n-1);
+    // the number of nodes.
+    n = pow(2, n) + 1;
 
-   // allocate memory.
-//   psi = allocate_3d( n );
-   psi = eh_new( double** , n );
-   for ( i=0 ; i<n ; i++ )
-   {
-      psi[i] = eh_new( double* , n );
-//      for ( j=0 ; j<n ; j++ )
-//         psi[i][j] = eh_new( double , n );
-   }
+    dz = depth / (n - 1);
 
-   kx  = allocate_3d( n );
-   kz  = allocate_3d( n );
-   c   = allocate_3d( n );
+    // allocate memory.
+    //   psi = allocate_3d( n );
+    psi = eh_new(double**, n);
 
-   for ( i=0 ; i<n ; i++ )
-   {
-      for ( j=0 ; j<n ; j++ )
-      {
-         psi[i][j] = eh_linspace( psi_base , psi_min , n );
-         for ( k=0 ; k<n ; k++ )
-         {
-            psi[i][j][k] = 1.;
-            kx[i][j][k]  = 1;
-            kz[i][j][k]  = 1;
-            c[i][j][k]   = 1.;
-         }
-      }
-   }
+    for (i = 0 ; i < n ; i++) {
+        psi[i] = eh_new(double*, n);
+        //      for ( j=0 ; j<n ; j++ )
+        //         psi[i][j] = eh_new( double , n );
+    }
 
-   for ( i=0 ; i<n ; i++ )
-   {
-      for ( j=0 ; j<n ; j++ )
-         for ( k=0 ; k<n ; k++ )
-         {
-/*
-            if ( i>n/4 && j>n/4  && (k>n/4 && k<n/2)  )
-            {
-               kx[i][j][k] /= 100;
-               kz[i][j][k] /= 1000;
+    kx  = allocate_3d(n);
+    kz  = allocate_3d(n);
+    c   = allocate_3d(n);
+
+    for (i = 0 ; i < n ; i++) {
+        for (j = 0 ; j < n ; j++) {
+            psi[i][j] = eh_linspace(psi_base, psi_min, n);
+
+            for (k = 0 ; k < n ; k++) {
+                psi[i][j][k] = 1.;
+                kx[i][j][k]  = 1;
+                kz[i][j][k]  = 1;
+                c[i][j][k]   = 1.;
             }
-*/
-/*
-            if ( (k>n/2 && k<3*n/4)  )
-            {
-               kx[i][j][k] /= 50;
-               kz[i][j][k] /= 1000;
+        }
+    }
+
+    for (i = 0 ; i < n ; i++) {
+        for (j = 0 ; j < n ; j++)
+            for (k = 0 ; k < n ; k++) {
+                /*
+                            if ( i>n/4 && j>n/4  && (k>n/4 && k<n/2)  )
+                            {
+                               kx[i][j][k] /= 100;
+                               kz[i][j][k] /= 1000;
+                            }
+                */
+                /*
+                            if ( (k>n/2 && k<3*n/4)  )
+                            {
+                               kx[i][j][k] /= 50;
+                               kz[i][j][k] /= 1000;
+                            }
+                */
             }
-*/
-         }
 
-   }
+    }
 
-   sed_rate_vec = allocate_2d( n );
+    sed_rate_vec = allocate_2d(n);
 
-   for ( i=0 ; i<n ; i++ )
-      for ( j=0 ; j<n ; j++ )
-      {
-         psi[i][j][n-1]     = 0;
-         sed_rate_vec[i][j] = 0;
+    for (i = 0 ; i < n ; i++)
+        for (j = 0 ; j < n ; j++) {
+            psi[i][j][n - 1]     = 0;
+            sed_rate_vec[i][j] = 0;
 
-/*
-         if ( (i>=(n-1)/2-1 && i<=(n-1)/2+1) && (j>=(n-1)/2-1 && j<=(n-1)/2+1) )
-            sed_rate_vec[i][j] = sed_rate*10000;
-*/
+            /*
+                     if ( (i>=(n-1)/2-1 && i<=(n-1)/2+1) && (j>=(n-1)/2-1 && j<=(n-1)/2+1) )
+                        sed_rate_vec[i][j] = sed_rate*10000;
+            */
 
-      }
+        }
 
-//   sed_rate_vec[(n-1)/2][(n-1)/2] = sed_rate*dz*dz;
+    //   sed_rate_vec[(n-1)/2][(n-1)/2] = sed_rate*dz*dz;
 
-   // write out the initial conditions.
-   print_profile_3d( t , psi , n );
+    // write out the initial conditions.
+    print_profile_3d(t, psi, n);
 
-   for ( t=0 ; t<end_time ; t+=dt)
-   {
+    for (t = 0 ; t < end_time ; t += dt) {
 
-/*
-      if ( t>end_time/2 )
-         for ( i=0 ; i<n ; i++ )
-            for ( j=0 ; j<n ; j++ )
-               sed_rate_vec[i][j] = 0;
-*/
+        /*
+              if ( t>end_time/2 )
+                 for ( i=0 ; i<n ; i++ )
+                    for ( j=0 ; j<n ; j++ )
+                       sed_rate_vec[i][j] = 0;
+        */
 
-      dt = dt_init;
+        dt = dt_init;
 
-      solve_excess_pore_pressure_mg_3d( psi , kx , kz , c , n , dx , dz , dt , sed_rate_vec );
+        solve_excess_pore_pressure_mg_3d(psi, kx, kz, c, n, dx, dz, dt, sed_rate_vec);
 
-      // write out the solution for this time step.
-      print_profile_3d( t+dt , psi , n );
+        // write out the solution for this time step.
+        print_profile_3d(t + dt, psi, n);
 
-   }
+    }
 
-   return 0;
+    return 0;
 }
 //EOC
 
-void print_profile_3d( double t , double ***psi , int n )
+void
+print_profile_3d(double t, double*** psi, int n)
 {
-   int i, j, k;
+    int i, j, k;
 
-   for ( k=0 ; k<n ; k++ )
-      for ( j=0 ; j<n ; j++ )
-         for ( i=0 ; i<n ; i++ )
-            fwrite( &(psi[i][j][k]) , sizeof(double) , 1 , stdout );
+    for (k = 0 ; k < n ; k++)
+        for (j = 0 ; j < n ; j++)
+            for (i = 0 ; i < n ; i++) {
+                fwrite(&(psi[i][j][k]), sizeof(double), 1, stdout);
+            }
 
-//   fwrite( psi[0][0] , sizeof(double) , n*n*n , stdout );
-fflush(stdout);
+    //   fwrite( psi[0][0] , sizeof(double) , n*n*n , stdout );
+    fflush(stdout);
 }
 

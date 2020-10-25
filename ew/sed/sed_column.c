@@ -27,18 +27,18 @@
 
 #include "sed_column.h"
 
-CLASS( Sed_column )
+CLASS(Sed_column)
 {
-   Sed_cell* cell;    ///< Array of cells making up the column
-   double z;          ///< Height from some datum to bottom of column
-   double t;          ///< The thickness of the column
-   gssize len;        ///< Number of filled cells in the column
-   gssize size;       ///< Total amount of cells available in column
-   double dz;         ///< Height of a cell of sediment
-   double x;          ///< x-position of this column
-   double y;          ///< y-position of this column
-   double age;        ///< age of this column
-   double sl;         ///< sea level
+    Sed_cell* cell;    ///< Array of cells making up the column
+    double z;          ///< Height from some datum to bottom of column
+    double t;          ///< The thickness of the column
+    gssize len;        ///< Number of filled cells in the column
+    gssize size;       ///< Total amount of cells available in column
+    double dz;         ///< Height of a cell of sediment
+    double x;          ///< x-position of this column
+    double y;          ///< y-position of this column
+    double age;        ///< age of this column
+    double sl;         ///< sea level
 };
 
 //@Include: sed_column.h
@@ -53,42 +53,42 @@ CLASS( Sed_column )
 @see sed_column_destroy
 */
 Sed_column
-sed_column_new( gssize n_bins )
+sed_column_new(gssize n_bins)
 {
-   Sed_column s = NULL;
-   
-   if ( n_bins>0 )
-   {
-      NEW_OBJECT( Sed_column , s );
-   
-      // use resize to allocate memory for the column in blocks.
-      s->size = 0;
-      s->cell = NULL;
-      sed_column_resize( s , n_bins );
+    Sed_column s = NULL;
 
-      s->len = 0;
-      s->dz  = 1.;
-      s->t   = 0.;
-      s->z   = 0.;
-      s->x   = 0.;
-      s->y   = 0.;
-      s->age = 0.;
-      s->sl  = 0.;
-   }
-      
-   return s;
+    if (n_bins > 0) {
+        NEW_OBJECT(Sed_column, s);
+
+        // use resize to allocate memory for the column in blocks.
+        s->size = 0;
+        s->cell = NULL;
+        sed_column_resize(s, n_bins);
+
+        s->len = 0;
+        s->dz  = 1.;
+        s->t   = 0.;
+        s->z   = 0.;
+        s->x   = 0.;
+        s->y   = 0.;
+        s->age = 0.;
+        s->sl  = 0.;
+    }
+
+    return s;
 }
 
-Sed_column sed_column_new_filled( double t , Sed_size_class size )
+Sed_column
+sed_column_new_filled(double t, Sed_size_class size)
 {
-   Sed_column c  = sed_column_new( 1 );
-   Sed_cell cell = sed_cell_new_classed( NULL , t , size );
+    Sed_column c  = sed_column_new(1);
+    Sed_cell cell = sed_cell_new_classed(NULL, t, size);
 
-   sed_column_add_cell( c , cell );
+    sed_column_add_cell(c, cell);
 
-   sed_cell_destroy( cell );
+    sed_cell_destroy(cell);
 
-   return c;
+    return c;
 }
 
 /** Destroy a column of sediment.
@@ -98,20 +98,21 @@ Sed_column sed_column_new_filled( double t , Sed_size_class size )
 @see sed_column_new
 */
 Sed_column
-sed_column_destroy( Sed_column s )
+sed_column_destroy(Sed_column s)
 {
-   if ( s )
-   {
-      gssize i;
-   
-      for ( i=0;i<s->size;i++)
-         sed_cell_destroy(s->cell[i]);
-      eh_free(s->cell);
+    if (s) {
+        gssize i;
 
-      eh_free(s);
-   }
-   
-   return NULL;
+        for (i = 0; i < s->size; i++) {
+            sed_cell_destroy(s->cell[i]);
+        }
+
+        eh_free(s->cell);
+
+        eh_free(s);
+    }
+
+    return NULL;
 }
 
 /** Remove all of the sediment from a column.
@@ -119,24 +120,26 @@ sed_column_destroy( Sed_column s )
 @param s The column to remove the sediment from.
 */
 Sed_column
-sed_column_clear( Sed_column s )
+sed_column_clear(Sed_column s)
 {
-   if ( s )
-   {
-      gssize i;
+    if (s) {
+        gssize i;
 
-      for ( i=0 ; i<s->len ; i++ )
-         sed_cell_clear( s->cell[i] );
-      s->len = 0;
-      s->t   = 0.;
-   }
-   return s;
+        for (i = 0 ; i < s->len ; i++) {
+            sed_cell_clear(s->cell[i]);
+        }
+
+        s->len = 0;
+        s->t   = 0.;
+    }
+
+    return s;
 }
 
 /** Copy one column to another.
 
 Copy the contents of one Sed_column into another.  Memory must already be
-allocated for the destination column.  Any sediment information that is 
+allocated for the destination column.  Any sediment information that is
 stored in the destination column will be destroyed and replaced with the
 information from the source column.
 
@@ -148,109 +151,109 @@ information from the source column.
 @see sed_dup_column
 */
 Sed_column
-sed_column_copy( Sed_column dest , const Sed_column src )
+sed_column_copy(Sed_column dest, const Sed_column src)
 {
-   eh_require( src );
+    eh_require(src);
 
-   if ( src )
-   {
-      gssize i;
+    if (src) {
+        gssize i;
 
-      if ( !dest )
-         dest = sed_column_new( src->size );
-   
-      sed_column_resize( dest , src->size );
+        if (!dest) {
+            dest = sed_column_new(src->size);
+        }
 
-      dest->z   = src->z;
-      dest->t   = src->t;
-      dest->len = src->len;
-      dest->dz  = src->dz;
-      dest->x   = src->x;
-      dest->y   = src->y;
-      dest->age = src->age;
-      dest->sl  = src->sl;
+        sed_column_resize(dest, src->size);
 
-      for ( i=0 ; i<src->size ; i++ )
-         sed_cell_copy( dest->cell[i] , src->cell[i] );
-   }
-   else
-      dest = NULL;
-   
-   return dest;
+        dest->z   = src->z;
+        dest->t   = src->t;
+        dest->len = src->len;
+        dest->dz  = src->dz;
+        dest->x   = src->x;
+        dest->y   = src->y;
+        dest->age = src->age;
+        dest->sl  = src->sl;
+
+        for (i = 0 ; i < src->size ; i++) {
+            sed_cell_copy(dest->cell[i], src->cell[i]);
+        }
+    } else {
+        dest = NULL;
+    }
+
+    return dest;
 }
 
 gboolean
-sed_column_is_same( const Sed_column c_1 , const Sed_column c_2 )
+sed_column_is_same(const Sed_column c_1, const Sed_column c_2)
 {
-   gboolean same = TRUE;
+    gboolean same = TRUE;
 
-   if ( c_1!=c_2 )
-   {
-      if ( sed_column_is_same_data(c_1,c_2) )
-      {
-         gssize i;
-         gssize len = sed_column_len( c_1 );
-         for ( i=0 ; same && i<len ; i++ )
-            same = sed_cell_is_same( c_1->cell[i] , c_2->cell[i] );
-      }
-      else
-         same = FALSE;
-   }
+    if (c_1 != c_2) {
+        if (sed_column_is_same_data(c_1, c_2)) {
+            gssize i;
+            gssize len = sed_column_len(c_1);
 
-   return same;
+            for (i = 0 ; same && i < len ; i++) {
+                same = sed_cell_is_same(c_1->cell[i], c_2->cell[i]);
+            }
+        } else {
+            same = FALSE;
+        }
+    }
+
+    return same;
 }
 
 gboolean
-sed_column_is_same_data( const Sed_column c_1 , const Sed_column c_2 )
+sed_column_is_same_data(const Sed_column c_1, const Sed_column c_2)
 {
-   gboolean same = TRUE;
+    gboolean same = TRUE;
 
-   if ( c_1!=c_2 )
-   {
-      same =  eh_compare_dbl( c_1->z   , c_2->z   , 1e-12 )
-           && eh_compare_dbl( c_1->t   , c_2->t   , 1e-12 )
-           && eh_compare_dbl( c_1->dz  , c_2->dz  , 1e-12 )
-           && eh_compare_dbl( c_1->x   , c_2->x   , 1e-12 )
-           && eh_compare_dbl( c_1->y   , c_2->y   , 1e-12 )
-           && eh_compare_dbl( c_1->age , c_2->age , 1e-12 ) 
-           && eh_compare_dbl( c_1->sl  , c_2->sl  , 1e-12 ) 
-           && c_1->len == c_2->len;
-   }
+    if (c_1 != c_2) {
+        same =  eh_compare_dbl(c_1->z, c_2->z, 1e-12)
+            && eh_compare_dbl(c_1->t, c_2->t, 1e-12)
+            && eh_compare_dbl(c_1->dz, c_2->dz, 1e-12)
+            && eh_compare_dbl(c_1->x, c_2->x, 1e-12)
+            && eh_compare_dbl(c_1->y, c_2->y, 1e-12)
+            && eh_compare_dbl(c_1->age, c_2->age, 1e-12)
+            && eh_compare_dbl(c_1->sl, c_2->sl, 1e-12)
+            && c_1->len == c_2->len;
+    }
 
-   return same;
+    return same;
 }
 
-Sed_column sed_column_copy_data( Sed_column dest , const Sed_column src )
+Sed_column
+sed_column_copy_data(Sed_column dest, const Sed_column src)
 {
-   eh_require( src )
-   {
-      dest->z    = src->z;
-      dest->t    = src->t;
-      dest->len  = src->len;
-      dest->size = src->size;
-      dest->dz   = src->dz;
-      dest->x    = src->x;
-      dest->y    = src->y;
-      dest->age  = src->age;
-      dest->sl   = src->sl;
-   }
+    eh_require(src) {
+        dest->z    = src->z;
+        dest->t    = src->t;
+        dest->len  = src->len;
+        dest->size = src->size;
+        dest->dz   = src->dz;
+        dest->x    = src->x;
+        dest->y    = src->y;
+        dest->age  = src->age;
+        dest->sl   = src->sl;
+    }
 
-   return dest;
+    return dest;
 }
 
-Sed_column sed_column_copy_public_data( Sed_column dest , const Sed_column src )
+Sed_column
+sed_column_copy_public_data(Sed_column dest, const Sed_column src)
 {
-   eh_require( src )
-   {
-      dest->z    = src->z;
-      dest->dz   = src->dz;
-      dest->x    = src->x;
-      dest->y    = src->y;
-      dest->age  = src->age;
-      dest->sl   = src->sl;
-   }
+    eh_require(src) {
+        dest->z    = src->z;
+        dest->dz   = src->dz;
+        dest->x    = src->x;
+        dest->y    = src->y;
+        dest->age  = src->age;
+        dest->sl   = src->sl;
+    }
 
-   return dest;
+    return dest;
 }
 
 /** Create a column as a copy of another.
@@ -263,9 +266,10 @@ This is the copy constructor for a Sed_column.
 
 @see sed_dup_column
 */
-Sed_column sed_column_dup( const Sed_column src )
+Sed_column
+sed_column_dup(const Sed_column src)
 {
-   return sed_column_copy( NULL , src );
+    return sed_column_copy(NULL, src);
 }
 
 /** Get fraction information from a Sed_cell of a Sed_column.
@@ -281,9 +285,9 @@ That is, i=0 refers to the lowest cell within the column.
         requested Sed_cell.
 */
 double*
-sed_column_cell_fraction( const Sed_column col , gint i )
+sed_column_cell_fraction(const Sed_column col, gint i)
 {
-   return sed_cell_copy_fraction( NULL, col->cell[i] );
+    return sed_cell_copy_fraction(NULL, col->cell[i]);
 }
 
 /** Get the height of a Sed_column
@@ -292,10 +296,11 @@ sed_column_cell_fraction( const Sed_column col , gint i )
 
 @return The height to the bottom of a Sed_column.
 */
-double sed_column_base_height( const Sed_column col)
+double
+sed_column_base_height(const Sed_column col)
 {
-   eh_return_val_if_fail( col , 0 );
-   return col->z;
+    eh_return_val_if_fail(col, 0);
+    return col->z;
 }
 
 /** Get the position of a Sed_column
@@ -309,9 +314,10 @@ for 2d and so the position only contains one horizontal coordinate.
 
 @see sed_get_column_x_position , sed_get_column_y_position .
 */
-double sed_column_position( const Sed_column col )
+double
+sed_column_position(const Sed_column col)
 {
-   return col->x;
+    return col->x;
 }
 
 /** Get the x-position of a Sed_column
@@ -326,9 +332,10 @@ should no longer be used.
 
 @see sed_get_column_y_position .
 */
-double sed_column_x_position( const Sed_column col )
+double
+sed_column_x_position(const Sed_column col)
 {
-   return col->x;
+    return col->x;
 }
 
 /** Get the y-position of a Sed_column
@@ -343,19 +350,22 @@ should no longer be used.
 
 @see sed_get_column_x_position .
 */
-double sed_column_y_position( const Sed_column col )
+double
+sed_column_y_position(const Sed_column col)
 {
-   return col->y;
+    return col->y;
 }
 
-double sed_column_age( const Sed_column col )
+double
+sed_column_age(const Sed_column col)
 {
-   return col->age;
+    return col->age;
 }
 
-double sed_column_sea_level( const Sed_column col )
+double
+sed_column_sea_level(const Sed_column col)
 {
-   return col->sl;
+    return col->sl;
 }
 
 /** Set the position of a Sed_column
@@ -372,10 +382,11 @@ NOTE: This function is now deprecated.  Use sed_set_column_x_position instead.
 
 @see sed_set_column_x_position , sed_set_column_y_position .
 */
-Sed_column sed_column_set_position( Sed_column col , double x )
+Sed_column
+sed_column_set_position(Sed_column col, double x)
 {
-   col->x = x;
-   return col;
+    col->x = x;
+    return col;
 }
 
 /** Set the x-position of a Sed_column
@@ -391,10 +402,11 @@ no longer be used.
 
 @see sed_set_column_y_position .
 */
-Sed_column sed_column_set_x_position( Sed_column col , double x )
+Sed_column
+sed_column_set_x_position(Sed_column col, double x)
 {
-   col->x = x;
-   return col;
+    col->x = x;
+    return col;
 }
 
 /** Set the y-position of a Sed_column
@@ -410,61 +422,69 @@ no longer be used.
 
 @see sed_set_column_x_position .
 */
-Sed_column sed_column_set_y_position( Sed_column col , double y )
+Sed_column
+sed_column_set_y_position(Sed_column col, double y)
 {
-   col->y = y;
-   return col;
+    col->y = y;
+    return col;
 }
 
-Sed_column sed_column_set_age( Sed_column c , double age )
+Sed_column
+sed_column_set_age(Sed_column c, double age)
 {
-   c->age = age;
-   return c;
+    c->age = age;
+    return c;
 }
 
-Sed_column sed_column_set_sea_level( Sed_column c , double sl )
+Sed_column
+sed_column_set_sea_level(Sed_column c, double sl)
 {
-   c->sl = sl;
-   return c;
+    c->sl = sl;
+    return c;
 }
 
-Sed_column sed_column_set_base_height( Sed_column c , double z )
+Sed_column
+sed_column_set_base_height(Sed_column c, double z)
 {
-   c->z = z;
-   return c;
+    c->z = z;
+    return c;
 }
 
-Sed_column sed_column_adjust_base_height( Sed_column c , double dz )
+Sed_column
+sed_column_adjust_base_height(Sed_column c, double dz)
 {
-   c->z += dz;
-   return c;
+    c->z += dz;
+    return c;
 }
 
 /** Get the vertical resolution of a Sed_column
 
-The vertical resolution of a Sed_column is the initial thickness of the 
-Sed_cell's that make it up.  Sediment can be added to the cell until it 
-reached this thickness.  After it is full, sediment is then added to the 
+The vertical resolution of a Sed_column is the initial thickness of the
+Sed_cell's that make it up.  Sediment can be added to the cell until it
+reached this thickness.  After it is full, sediment is then added to the
 cell above.  Also, it can later be squeezed to a new thickness.
 
 @param col A pointer to a Sed_column.
 
 @return The vertical resolution of the Sed_column.
 */
-double sed_column_cell_height( const Sed_column col )
+double
+sed_column_cell_height(const Sed_column col)
 {
-   return col->dz;
+    return col->dz;
 }
 
-double sed_column_z_res( const Sed_column col )
+double
+sed_column_z_res(const Sed_column col)
 {
-   return col->dz;
+    return col->dz;
 }
 
-Sed_column sed_column_set_z_res( Sed_column col , double new_dz )
+Sed_column
+sed_column_set_z_res(Sed_column col, double new_dz)
 {
-   col->dz = new_dz;
-   return col;
+    col->dz = new_dz;
+    return col;
 }
 
 
@@ -475,10 +495,10 @@ Sed_column sed_column_set_z_res( Sed_column col , double new_dz )
 @return The elevation to the last filled Sed_cell in a Sed_column.
 */
 double
-sed_column_top_height( const Sed_column col )
+sed_column_top_height(const Sed_column col)
 {
-   eh_return_val_if_fail( col , 0 );
-   return col->z + sed_column_thickness(col);
+    eh_return_val_if_fail(col, 0);
+    return col->z + sed_column_thickness(col);
 }
 
 /** Test if the top of a column is below some elevation.
@@ -490,9 +510,10 @@ sed_column_top_height( const Sed_column col )
 
 @see sed_column_above .
 */
-gboolean sed_column_is_below( Sed_column col , double z )
+gboolean
+sed_column_is_below(Sed_column col, double z)
 {
-   return sed_column_top_height( col ) < z;
+    return sed_column_top_height(col) < z;
 }
 
 /** Test if the top of a column is above some elevation.
@@ -504,9 +525,10 @@ gboolean sed_column_is_below( Sed_column col , double z )
 
 @see sed_column_below .
 */
-gboolean sed_column_is_above( Sed_column col , double z )
+gboolean
+sed_column_is_above(Sed_column col, double z)
 {
-   return sed_column_top_height( col ) > z;
+    return sed_column_top_height(col) > z;
 }
 
 /** Get the mass of sediment within a column.
@@ -515,37 +537,40 @@ gboolean sed_column_is_above( Sed_column col , double z )
 
 @return The total mass of sediment contained within a Sed_column.
 */
-double sed_column_mass(const Sed_column s)
+double
+sed_column_mass(const Sed_column s)
 {
-   double sum = 0;
+    double sum = 0;
 
-   eh_require( s );
-   {
-      gssize i;
-      gssize n_bins = sed_column_len(s);
+    eh_require(s);
+    {
+        gssize i;
+        gssize n_bins = sed_column_len(s);
 
-      for ( i=0 ; i<n_bins ; i++ )
-         sum += sed_cell_mass( s->cell[i] );
-   }
+        for (i = 0 ; i < n_bins ; i++) {
+            sum += sed_cell_mass(s->cell[i]);
+        }
+    }
 
-   return sum;
+    return sum;
 }
 
 double
 sed_column_sediment_mass(const Sed_column s)
 {
-   double sum = 0;
+    double sum = 0;
 
-   eh_require( s );
-   {
-      gssize i;
-      gssize n_bins = sed_column_len(s);
+    eh_require(s);
+    {
+        gssize i;
+        gssize n_bins = sed_column_len(s);
 
-      for ( i=0 ; i<n_bins ; i++ )
-         sum += sed_cell_sediment_mass( s->cell[i] );
-   }
+        for (i = 0 ; i < n_bins ; i++) {
+            sum += sed_cell_sediment_mass(s->cell[i]);
+        }
+    }
 
-   return sum;
+    return sum;
 }
 
 /** Get the total load felt by each cell of sediment in a Sed_column.
@@ -555,7 +580,7 @@ Returns an array containing the load felt by each cell (in units of Pa).
 The returned array should be freed using free.  If a value of NULL is given
 for the load pointer, a newly allocated array will be used.  The zero-th
 element of the array will be the load on the start-th bin from the bottom
-of the column.  If n_bins <= 0, we go from the start-th bin to the top. 
+of the column.  If n_bins <= 0, we go from the start-th bin to the top.
 If a value of NULL is given for the load pointer, a newly allocated array
 will be used.
 
@@ -567,112 +592,123 @@ will be used.
 
 @return A pointer to an array of loads.
 */
-double *sed_column_total_load( const Sed_column s    ,
-                               gssize start          ,
-                               gssize n_bins         ,
-                               double overlying_load ,
-                               double *load )
+double*
+sed_column_total_load(const Sed_column s,
+    gssize start,
+    gssize n_bins,
+    double overlying_load,
+    double* load)
 {
 
-   eh_require( s );
+    eh_require(s);
 
-   if ( s )
-   {
-      gssize i;
-      gssize col_len = s->len;
-      double load0 = 0;
+    if (s) {
+        gssize i;
+        gssize col_len = s->len;
+        double load0 = 0;
 
-      eh_lower_bound( start , 0 );
+        eh_lower_bound(start, 0);
 
-      if ( n_bins <= 0 || start+n_bins>col_len )
-         n_bins = col_len - start;
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
 
-      // calculate the load above the top cell.  the load on cell includes the
-      // weight of itself.
-      if ( !load )
-         load = eh_new0( double , n_bins );
+        // calculate the load above the top cell.  the load on cell includes the
+        // weight of itself.
+        if (!load) {
+            load = eh_new0(double, n_bins);
+        }
 
-      for ( i=col_len-1 ; i>=start+n_bins-1 ; i-- )
-         load0 += sed_cell_sediment_load( s->cell[i] );
+        for (i = col_len - 1 ; i >= start + n_bins - 1 ; i--) {
+            load0 += sed_cell_sediment_load(s->cell[i]);
+        }
 
-      load0 += overlying_load;
+        load0 += overlying_load;
 
-      // calculate the overlying load on each of the cells.
-      load[n_bins-1]=load0;
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         load[i] = load[i+1] + sed_cell_sediment_load( s->cell[i+start] );
-   }
-   else
-      load = NULL;
+        // calculate the overlying load on each of the cells.
+        load[n_bins - 1] = load0;
 
-   return load;
-}
+        for (i = n_bins - 2 ; i >= 0 ; i--) {
+            load[i] = load[i + 1] + sed_cell_sediment_load(s->cell[i + start]);
+        }
+    } else {
+        load = NULL;
+    }
 
-double* sed_column_load( const Sed_column s ,
-                         gssize start       ,
-                         gssize n_bins      ,
-                         double* load )
-{
-   return sed_column_total_load( s , start , n_bins , 0. , load );
-}
-
-double* sed_column_load_with_water( const Sed_column s ,
-                                    gssize start       ,
-                                    gssize n_bins      ,
-                                    double* load )
-{
-   double water_load = sed_column_water_pressure( s );
-
-   return sed_column_total_load( s , start , n_bins , water_load , load );
+    return load;
 }
 
 double*
-sed_column_pressure( const   Sed_column s ,
-                     gint    start ,
-                     gint    n_bins ,
-                     double* pressure )
+sed_column_load(const Sed_column s,
+    gssize start,
+    gssize n_bins,
+    double* load)
 {
-  double* p = NULL;
-
-  eh_require( s );
-
-  if ( s )
-    {
-      gint i;
-      gint col_len = s->len;
-
-      eh_lower_bound( start , 0 );
-
-      if ( n_bins <= 0 || start+n_bins>col_len )
-        n_bins = col_len - start;
-
-      if ( !pressure )
-        p = eh_new0( double , n_bins );
-      else
-        p = pressure;
-
-      for ( i=0 ; i<n_bins ; i++ )
-        p[i] = sed_cell_pressure( sed_column_nth_cell( s , i+start ) );
-   }
-
-   return p;
+    return sed_column_total_load(s, start, n_bins, 0., load);
 }
 
-double sed_column_water_pressure( const Sed_column s )
+double*
+sed_column_load_with_water(const Sed_column s,
+    gssize start,
+    gssize n_bins,
+    double* load)
 {
-   double p = 0;
+    double water_load = sed_column_water_pressure(s);
 
-   if ( sed_column_water_depth(s)>0 )
-      p = sed_column_water_depth(s)*sed_rho_sea_water()*sed_gravity();
+    return sed_column_total_load(s, start, n_bins, water_load, load);
+}
 
-   return p;
+double*
+sed_column_pressure(const   Sed_column s,
+    gint    start,
+    gint    n_bins,
+    double* pressure)
+{
+    double* p = NULL;
+
+    eh_require(s);
+
+    if (s) {
+        gint i;
+        gint col_len = s->len;
+
+        eh_lower_bound(start, 0);
+
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
+
+        if (!pressure) {
+            p = eh_new0(double, n_bins);
+        } else {
+            p = pressure;
+        }
+
+        for (i = 0 ; i < n_bins ; i++) {
+            p[i] = sed_cell_pressure(sed_column_nth_cell(s, i + start));
+        }
+    }
+
+    return p;
+}
+
+double
+sed_column_water_pressure(const Sed_column s)
+{
+    double p = 0;
+
+    if (sed_column_water_depth(s) > 0) {
+        p = sed_column_water_depth(s) * sed_rho_sea_water() * sed_gravity();
+    }
+
+    return p;
 }
 
 /** Get the total of a specified property for a series of Sed_cell's
 
 This function will total a specifed property of a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the Sed_property_func, f.
-The total will begin at the start'th cell and work up the Sed_column.  The 
+The total will begin at the start'th cell and work up the Sed_column.  The
 total for each cell will be the sum of the property values of the cells
 preceding it as well as its own.  If a value of NULL is passed for the val
 parameter, an array will be created.  If n_bins<=0, the total will run to
@@ -691,40 +727,45 @@ values.
 @see sed_get_column_load , sed_get_column_avg_property_with_load ,
      sed_get_column_avg_property .
 */
-double* sed_column_total_property( Sed_property f ,
-                                   Sed_column c   ,
-                                   gssize start   ,
-                                   gssize n_bins  ,
-                                   double* val )
+double*
+sed_column_total_property(Sed_property f,
+    Sed_column c,
+    gssize start,
+    gssize n_bins,
+    double* val)
 {
-   eh_require( c );
+    eh_require(c);
 
-   if ( c )
-   {
-      gssize i;
-      gssize low_i;
-      double val0 = 0.;
-      gssize col_len = c->len;
+    if (c) {
+        gssize i;
+        gssize low_i;
+        double val0 = 0.;
+        gssize col_len = c->len;
 
-      if ( n_bins <= 0 || start+n_bins>col_len )
-         n_bins = col_len-start;
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
 
-      low_i = start+n_bins-1;
+        low_i = start + n_bins - 1;
 
-      if ( !val )
-         val = eh_new0( double , n_bins );
+        if (!val) {
+            val = eh_new0(double, n_bins);
+        }
 
-      for ( i=col_len-1 ; i>=low_i ; i-- )
-         val0 += sed_property_measure( f , c->cell[i] );
+        for (i = col_len - 1 ; i >= low_i ; i--) {
+            val0 += sed_property_measure(f, c->cell[i]);
+        }
 
-      val[n_bins-1] = val0;
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         val[i] = val[i+1] + sed_property_measure( f , c->cell[i] );
-   }
-   else
-      val = NULL;
+        val[n_bins - 1] = val0;
 
-   return val;
+        for (i = n_bins - 2 ; i >= 0 ; i--) {
+            val[i] = val[i + 1] + sed_property_measure(f, c->cell[i]);
+        }
+    } else {
+        val = NULL;
+    }
+
+    return val;
 }
 
 /** Get the average of a specified property for a series of Sed_cell's
@@ -732,7 +773,7 @@ double* sed_column_total_property( Sed_property f ,
 This function will average a specifed property of a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the
 Sed_property_with_load_func, f.
-The average will begin at the start'th cell and work up the Sed_column.  The 
+The average will begin at the start'th cell and work up the Sed_column.  The
 average for each cell will be the average of the property values of the cells
 preceding it as well as its own.  If a value of NULL is passed for the val
 parameter, an array will be created.  If n_bins<=0, the total will run to
@@ -753,44 +794,53 @@ the parameter, f is a Sed_property_with_load_func.
 
 @see sed_get_column_load , sed_get_column_avg_property .
 */
-double* sed_column_avg_property_with_load( Sed_property f ,
-                                           Sed_column c   ,
-                                           gssize start   ,
-                                           gssize n_bins  ,
-                                           double* val )
+double*
+sed_column_avg_property_with_load(Sed_property f,
+    Sed_column c,
+    gssize start,
+    gssize n_bins,
+    double* val)
 {
-   eh_require( c );
+    eh_require(c);
 
-   if ( c )
-   {
-      gssize i;
-      double *t, *load;
-      gssize col_len = c->len;
+    if (c) {
+        gssize i;
+        double* t, *load;
+        gssize col_len = c->len;
 
-      if ( n_bins <= 0 || start+n_bins>col_len )
-         n_bins = col_len-start;
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
 
-      if ( !val )
-         val = eh_new( double , n_bins );
-      t = eh_new( double , n_bins );
+        if (!val) {
+            val = eh_new(double, n_bins);
+        }
 
-      load = sed_column_load( c , start , n_bins , NULL );
+        t = eh_new(double, n_bins);
 
-      t[n_bins-1] = sed_cell_size( c->cell[n_bins-1] );
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         t[i] = t[i+1] + sed_cell_size( c->cell[i] );
+        load = sed_column_load(c, start, n_bins, NULL);
 
-      val[n_bins-1] = sed_property_measure( f , c->cell[n_bins-1] , load[n_bins-1] ); // this used to be load[i] (now load[n_bins-1])
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         val[i] = ( val[i+1]*t[i+1] + sed_property_measure( f , c->cell[i] , load[i] )*(t[i]-t[i+1]) ) / t[i];
+        t[n_bins - 1] = sed_cell_size(c->cell[n_bins - 1]);
 
-      eh_free( t    );
-      eh_free( load );
-   }
-   else
-      val = NULL;
+        for (i = n_bins - 2 ; i >= 0 ; i--) {
+            t[i] = t[i + 1] + sed_cell_size(c->cell[i]);
+        }
 
-   return val;
+        val[n_bins - 1] = sed_property_measure(f, c->cell[n_bins - 1],
+                load[n_bins - 1]); // this used to be load[i] (now load[n_bins-1])
+
+        for (i = n_bins - 2 ; i >= 0 ; i--) {
+            val[i] = (val[i + 1] * t[i + 1] + sed_property_measure(f, c->cell[i],
+                        load[i]) * (t[i] - t[i + 1])) / t[i];
+        }
+
+        eh_free(t);
+        eh_free(load);
+    } else {
+        val = NULL;
+    }
+
+    return val;
 }
 
 /** Get the average of a specified property for a series of Sed_cell's
@@ -798,7 +848,7 @@ double* sed_column_avg_property_with_load( Sed_property f ,
 This function will average a specifed property of a series of Sed_cell's within
 a Sed_column.  The property will be obtained using the
 Sed_property_with_load_func, f.
-The average will begin at the start'th cell and work up the Sed_column.  The 
+The average will begin at the start'th cell and work up the Sed_column.  The
 average for each cell will be the average of the property values of the cells
 preceding it as well as its own.  If a value of NULL is passed for the val
 parameter, an array will be created.  If n_bins<=0, the total will run to
@@ -819,44 +869,50 @@ here the parameter, f is a Sed_property_func.
 
 @see sed_get_column_load         , sed_get_column_avg_property_with_load .
 */
-double* sed_column_avg_property( Sed_property f , 
-                                 Sed_column c   ,
-                                 gssize start   ,
-                                 gssize n_bins  ,
-                                 double* val )
+double*
+sed_column_avg_property(Sed_property f,
+    Sed_column c,
+    gssize start,
+    gssize n_bins,
+    double* val)
 {
-   eh_require( c );
+    eh_require(c);
 
-   if ( c )
-   {
-      gssize i;
-      double *t;
-      gssize col_len = c->len;
+    if (c) {
+        gssize i;
+        double* t;
+        gssize col_len = c->len;
 
-      if ( n_bins <= 0 || start+n_bins>col_len )
-         n_bins = col_len-start;
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
 
-      if ( !val )
-         val = eh_new( double , n_bins );
-      t = eh_new( double , n_bins );
+        if (!val) {
+            val = eh_new(double, n_bins);
+        }
 
-      t[n_bins-1] = sed_cell_size( c->cell[n_bins-1] );
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         t[i] = t[i+1] + sed_cell_size( c->cell[i] );
+        t = eh_new(double, n_bins);
 
-      val[n_bins-1] = sed_property_measure( f , c->cell[n_bins-1] );
-      for ( i=n_bins-2 ; i>=0 ; i-- )
-         val[i] = (   val[i+1]*t[i+1] 
-                    + sed_property_measure( f , c->cell[i] )
-                    * (t[i]-t[i+1]) ) 
-                  / t[i];
+        t[n_bins - 1] = sed_cell_size(c->cell[n_bins - 1]);
 
-      eh_free( t );
-   }
-   else
-      val = NULL;
+        for (i = n_bins - 2 ; i >= 0 ; i--) {
+            t[i] = t[i + 1] + sed_cell_size(c->cell[i]);
+        }
 
-   return val;
+        val[n_bins - 1] = sed_property_measure(f, c->cell[n_bins - 1]);
+
+        for (i = n_bins - 2 ; i >= 0 ; i--)
+            val[i] = (val[i + 1] * t[i + 1]
+                    + sed_property_measure(f, c->cell[i])
+                    * (t[i] - t[i + 1]))
+                / t[i];
+
+        eh_free(t);
+    } else {
+        val = NULL;
+    }
+
+    return val;
 }
 
 /** Get the value of a specified property for a series of Sed_cell's
@@ -883,33 +939,35 @@ values.
      sed_get_column_avg_property .
 */
 double*
-sed_column_at_property( Sed_property f ,
-                        Sed_column c   ,
-                        gint start     ,
-                        gint n_bins    ,
-                        double* val )
+sed_column_at_property(Sed_property f,
+    Sed_column c,
+    gint start,
+    gint n_bins,
+    double* val)
 {
-   eh_require( c );
+    eh_require(c);
 
-   if ( c )
-   {
-      gint i;
-      const gint col_len = c->len;
+    if (c) {
+        gint i;
+        const gint col_len = c->len;
 
-      if ( n_bins <= 0 || start+n_bins>col_len )
-         n_bins = col_len-start;
+        if (n_bins <= 0 || start + n_bins > col_len) {
+            n_bins = col_len - start;
+        }
 
-      if ( !val )
-         val = eh_new( double , n_bins );
+        if (!val) {
+            val = eh_new(double, n_bins);
+        }
 
-      //for ( i=n_bins-1 ; i>=0 ; i-- )
-      for ( i=0 ; i<n_bins ; i++ )
-         val[i] = sed_property_measure( f , c->cell[i] );
-   }
-   else
-      val = NULL;
+        //for ( i=n_bins-1 ; i>=0 ; i-- )
+        for (i = 0 ; i < n_bins ; i++) {
+            val[i] = sed_property_measure(f, c->cell[i]);
+        }
+    } else {
+        val = NULL;
+    }
 
-   return val;
+    return val;
 }
 
 /** Get the load felt by the cell n cells from the bottom of the column.
@@ -919,23 +977,25 @@ sed_column_at_property( Sed_property f ,
 
 @return The load felt by the n-th cell.
 */
-double sed_column_load_at( const Sed_column s , gssize n )
+double
+sed_column_load_at(const Sed_column s, gssize n)
 {
-   double load_0 = 0;
+    double load_0 = 0;
 
-   eh_require( s );
-   eh_require( n>=0 );
+    eh_require(s);
+    eh_require(n >= 0);
 
-   if ( s )
-   {
-      gssize i, col_len = s->len;
+    if (s) {
+        gssize i, col_len = s->len;
 
-      eh_lower_bound( n , 0 );
-      for ( i=col_len-1 ; i>=n; i--)
-         load_0 += sed_cell_load( s->cell[i] );
-   }
+        eh_lower_bound(n, 0);
 
-   return load_0;
+        for (i = col_len - 1 ; i >= n; i--) {
+            load_0 += sed_cell_load(s->cell[i]);
+        }
+    }
+
+    return load_0;
 }
 
 /** Get the average property from over the cells within a column.
@@ -953,27 +1013,26 @@ Sed_property_func.
 
 @see sed_get_column_property .
 */
-double sed_column_property_0( Sed_property f, const Sed_column c )
+double
+sed_column_property_0(Sed_property f, const Sed_column c)
 {
-   double val = 0;
+    double val = 0;
 
-   eh_require( c );
+    eh_require(c);
 
-   if ( c )
-   {
-      gssize i;
-      gssize len = sed_column_len( c );
+    if (c) {
+        gssize i;
+        gssize len = sed_column_len(c);
 
-      for ( i=0 ; i<len ; i++ )
-      {
-         val += sed_property_measure( f , c->cell[i] )
-              * sed_cell_size( c->cell[i] );
-      }
+        for (i = 0 ; i < len ; i++) {
+            val += sed_property_measure(f, c->cell[i])
+                * sed_cell_size(c->cell[i]);
+        }
 
-      val /= sed_column_thickness(c);
-   }
+        val /= sed_column_thickness(c);
+    }
 
-   return val;
+    return val;
 }
 
 /** Get the average property from over the cells within a column.
@@ -991,59 +1050,50 @@ Sed_property_with_load_func.
 
 @see sed_get_column_property .
 */
-double sed_column_property( Sed_property f ,
-                            const Sed_column s )
+double
+sed_column_property(Sed_property f,
+    const Sed_column s)
 {
-   double val = 0;
+    double val = 0;
 
-   eh_require( s )
+    eh_require(s)
 
-   if ( s )
-   {
-      gssize i;
-      gssize len = sed_column_len( s );
-      double* load = eh_new( double , len );
+    if (s) {
+        gssize i;
+        gssize len = sed_column_len(s);
+        double* load = eh_new(double, len);
 
-      if ( sed_property_n_args(f)==2 )
-      {
+        if (sed_property_n_args(f) == 2) {
 
-         if (    sed_property_is_named( f , "consolidation" )
-              || sed_property_is_named( f , "consolidation rate" ) )
-         {
-            double extra_arg = sed_column_age( s );
+            if (sed_property_is_named(f, "consolidation")
+                || sed_property_is_named(f, "consolidation rate")) {
+                double extra_arg = sed_column_age(s);
 
-            for ( i=0 ; i<len ; i++ )
-            {
-               val += sed_property_measure( f , s->cell[i] , extra_arg )
+                for (i = 0 ; i < len ; i++) {
+                    val += sed_property_measure(f, s->cell[i], extra_arg)
+                        * sed_cell_size(s->cell[i]);
+                }
+            } else {
+                double* extra_arg = sed_column_load(s, 0, sed_column_len(s), NULL);
+
+                for (i = 0 ; i < len ; i++) {
+                    val += sed_property_measure(f, s->cell[i], extra_arg[i])
+                        * sed_cell_size(s->cell[i]);
+                }
+            }
+        } else {
+            for (i = 0 ; i < len ; i++) {
+                val += sed_property_measure(f, s->cell[i])
                     * sed_cell_size(s->cell[i]);
             }
-         }
-         else
-         {
-            double* extra_arg = sed_column_load( s , 0 , sed_column_len(s) , NULL );
+        }
 
-            for ( i=0 ; i<len ; i++ )
-            {
-               val += sed_property_measure( f , s->cell[i] , extra_arg[i] )
-                    * sed_cell_size(s->cell[i]);
-            }
-         }
-      }
-      else
-      {
-         for ( i=0 ; i<len ; i++ )
-         {
-            val += sed_property_measure( f , s->cell[i] )
-                 * sed_cell_size(s->cell[i]);
-         }
-      }
+        val /= sed_column_thickness(s);
 
-      val /= sed_column_thickness(s);
+        eh_free(load);
+    }
 
-      eh_free( load );
-   }
-
-   return val;
+    return val;
 }
 
 /** Change the thickness of a cell within a column.
@@ -1053,7 +1103,7 @@ cell is changed as well as the thickness of the sediment column.  The cell
 thickness is changed in such a way so as to retain its degree of compactedness.
 
 @param s             A pointer to a Sed_column.
-@param i             Index to a Sed_cell within a Sed_column. 
+@param i             Index to a Sed_cell within a Sed_column.
 @param new_t         The new thickness of the Sed_cell.
 
 @return A pointer to the input Sed_column.
@@ -1061,21 +1111,20 @@ thickness is changed in such a way so as to retain its degree of compactedness.
 @see sed_compact_cell_in_column .
 */
 Sed_column
-sed_column_resize_cell( Sed_column s , gssize i , double new_t )
+sed_column_resize_cell(Sed_column s, gssize i, double new_t)
 {
-   eh_require( s );
+    eh_require(s);
 
-   if ( s && sed_column_is_get_index(s,i) )
-   {
-      double old_t = sed_cell_size(s->cell[i]);
+    if (s && sed_column_is_get_index(s, i)) {
+        double old_t = sed_cell_size(s->cell[i]);
 
-      eh_lower_bound( new_t , 0 );
+        eh_lower_bound(new_t, 0);
 
-      sed_cell_resize( s->cell[i] , new_t );
-      sed_column_set_thickness( s , sed_column_thickness(s) + new_t-old_t );
-   }
+        sed_cell_resize(s->cell[i], new_t);
+        sed_column_set_thickness(s, sed_column_thickness(s) + new_t - old_t);
+    }
 
-   return s;
+    return s;
 }
 
 /** Compact a cell within a column.
@@ -1086,25 +1135,25 @@ thickness of the cell is changed but its original thickness not changed.  This
 will therefore cause the sediment to become more dense.
 
 @param s        A pointer to a Sed_column.
-@param i        Index to a Sed_cell within a Sed_column. 
+@param i        Index to a Sed_cell within a Sed_column.
 @param new_t    The new thickness of the Sed_cell.
 
 @return         A pointer to the input Sed_column.
 
 @see sed_compact_cell_in_column .
 */
-Sed_column sed_column_compact_cell( Sed_column s , gssize i , double new_t )
+Sed_column
+sed_column_compact_cell(Sed_column s, gssize i, double new_t)
 {
-   eh_require( s )
+    eh_require(s)
 
-   if ( s && sed_column_is_get_index(s,i) )
-   {
-      double old_t = sed_cell_size( s->cell[i] );
-      sed_cell_compact( s->cell[i] , new_t );
-      sed_column_set_thickness( s , sed_column_thickness(s) + new_t - old_t );
-   }
+    if (s && sed_column_is_get_index(s, i)) {
+        double old_t = sed_cell_size(s->cell[i]);
+        sed_cell_compact(s->cell[i], new_t);
+        sed_column_set_thickness(s, sed_column_thickness(s) + new_t - old_t);
+    }
 
-   return s;
+    return s;
 }
 
 /** Add a Sed_cell to the top of a Sed_column.
@@ -1122,90 +1171,87 @@ depending weather the pressures should be updated or just averaged.
 
 @see sed_add_cell_to_column , sed_add_cell_to_column_avg_pressure .
 */
-double sed_column_add_cell_real( Sed_column col ,
-                                 Sed_cell cell  ,
-                                 gboolean update_pressure )
+double
+sed_column_add_cell_real(Sed_column col,
+    Sed_cell cell,
+    gboolean update_pressure)
 {
-   double amount_to_add = 0;
+    double amount_to_add = 0;
 
-   eh_require( col  );
-   eh_require( cell );
+    eh_require(col);
+    eh_require(cell);
 
-   if ( col && cell && !sed_cell_is_empty(cell) )
-   {
-      Sed_cell copy = sed_cell_dup( cell );
-      Sed_cell top_cell;
-      double free_space, left_to_add;
-      double cell_load;
+    if (col && cell && !sed_cell_is_empty(cell)) {
+        Sed_cell copy = sed_cell_dup(cell);
+        Sed_cell top_cell;
+        double free_space, left_to_add;
+        double cell_load;
 
-      amount_to_add = sed_cell_size( cell );
-      left_to_add   = sed_cell_size( cell );
+        amount_to_add = sed_cell_size(cell);
+        left_to_add   = sed_cell_size(cell);
 
-      if ( update_pressure )
-      {
-         gssize i;
-         gssize len = sed_column_len( col );
+        if (update_pressure) {
+            gssize i;
+            gssize len = sed_column_len(col);
 
-         cell_load = sed_cell_load( cell );
+            cell_load = sed_cell_load(cell);
 
-         for ( i=0 ; i<len ; i++ )
-            sed_cell_set_pressure( col->cell[i] ,
-                                   sed_cell_pressure( col->cell[i] )
-                                   + cell_load );
-      }
+            for (i = 0 ; i < len ; i++)
+                sed_cell_set_pressure(col->cell[i],
+                    sed_cell_pressure(col->cell[i])
+                    + cell_load);
+        }
 
-      if ( sed_column_is_empty(col) )
-      {
-         top_cell = sed_column_nth_cell(col,0);
-         sed_column_resize( col , 1 );
-         col->len++;
-      }
-      else
-         top_cell = sed_column_top_cell(col);
-
-      while ( left_to_add > 0 )
-      {
-         // Determine how much sediment we need to fill up the next cell.
-         free_space = sed_column_z_res( col ) - sed_cell_size( top_cell );
-         if ( free_space <= 1e-12 )
-         {
-            // Add another cell.
-            sed_column_resize( col , col->len+1 );
+        if (sed_column_is_empty(col)) {
+            top_cell = sed_column_nth_cell(col, 0);
+            sed_column_resize(col, 1);
             col->len++;
-         }
-         else
-         {
-            if ( free_space >= left_to_add )
-               free_space = left_to_add;
-            sed_cell_resize(cell,free_space);
-            sed_cell_add( top_cell , cell );
-            sed_column_set_thickness(col,sed_column_thickness(col)+free_space);
+        } else {
+            top_cell = sed_column_top_cell(col);
+        }
 
-            left_to_add -= free_space;
+        while (left_to_add > 0) {
+            // Determine how much sediment we need to fill up the next cell.
+            free_space = sed_column_z_res(col) - sed_cell_size(top_cell);
 
-            if ( update_pressure )
-            {
-               sed_cell_resize( cell , left_to_add );
-               cell_load = sed_cell_load( cell );
-               sed_cell_set_pressure( top_cell ,
-                                      cell_load
-                                      + sed_column_water_pressure( col ) );
+            if (free_space <= 1e-12) {
+                // Add another cell.
+                sed_column_resize(col, col->len + 1);
+                col->len++;
+            } else {
+                if (free_space >= left_to_add) {
+                    free_space = left_to_add;
+                }
+
+                sed_cell_resize(cell, free_space);
+                sed_cell_add(top_cell, cell);
+                sed_column_set_thickness(col, sed_column_thickness(col) + free_space);
+
+                left_to_add -= free_space;
+
+                if (update_pressure) {
+                    sed_cell_resize(cell, left_to_add);
+                    cell_load = sed_cell_load(cell);
+                    sed_cell_set_pressure(top_cell,
+                        cell_load
+                        + sed_column_water_pressure(col));
+                }
             }
-         }
 
-         top_cell = sed_column_top_cell(col);
-      }
-      sed_cell_copy( cell , copy );
-      sed_cell_destroy( copy );
-   }
+            top_cell = sed_column_top_cell(col);
+        }
 
-   return amount_to_add;
+        sed_cell_copy(cell, copy);
+        sed_cell_destroy(copy);
+    }
+
+    return amount_to_add;
 }
 
 /** Add a Sed_cell to the top of a Sed_column.
 
 The contents of a Sed_cell is added to the top of a Sed_column.  This is the
-default mode.  In this case the pressures of the cells of the column are 
+default mode.  In this case the pressures of the cells of the column are
 updated to reflect the increase in overlying load due to the new sediment.
 
 @param col  A pointer to a Sed_column.
@@ -1216,9 +1262,10 @@ updated to reflect the increase in overlying load due to the new sediment.
 
 @see sed_add_cell_to_column_avg_pressure .
 */
-double sed_column_add_cell( Sed_column col , Sed_cell cell  )
+double
+sed_column_add_cell(Sed_column col, Sed_cell cell)
 {
-   return sed_column_add_cell_real( col , cell , FALSE );
+    return sed_column_add_cell_real(col, cell, FALSE);
 }
 
 /** Add a Sed_cell to the top of a Sed_column.
@@ -1235,9 +1282,10 @@ top cell is averaged with the new cell.
 
 @see sed_add_cell_to_column .
 */
-double sed_column_add_cell_avg_pressure( Sed_column col , Sed_cell cell  )
+double
+sed_column_add_cell_avg_pressure(Sed_column col, Sed_cell cell)
 {
-   return sed_column_add_cell_real( col , cell , FALSE );
+    return sed_column_add_cell_real(col, cell, FALSE);
 }
 
 /** Add a vector of thicknesses to a Sed_column.
@@ -1251,23 +1299,24 @@ column.  The order of the sediment types is also the same.
 
 @return The total amount of sediment that was added to the column.
 */
-double sed_column_add_vec( Sed_column c , const double* t )
+double
+sed_column_add_vec(Sed_column c, const double* t)
 {
-   double rtn = 0;
+    double rtn = 0;
 
-   eh_require( c );
-   eh_require( t );
+    eh_require(c);
+    eh_require(t);
 
-   if ( c && t )
-   {
-      Sed_cell cell = sed_cell_new( sed_sediment_env_n_types() );
+    if (c && t) {
+        Sed_cell cell = sed_cell_new(sed_sediment_env_n_types());
 
-      sed_cell_add_amount( cell , t );
-      rtn = sed_column_add_cell( c , cell );
+        sed_cell_add_amount(cell, t);
+        rtn = sed_column_add_cell(c, cell);
 
-      sed_cell_destroy( cell );
-   }
-   return rtn;
+        sed_cell_destroy(cell);
+    }
+
+    return rtn;
 }
 
 /** Get the Sed_cell at the top of a column.
@@ -1277,14 +1326,15 @@ double sed_column_add_vec( Sed_column c , const double* t )
 @return A pointer to the Sed_cell at the top of a Sed_column.
 */
 Sed_cell
-sed_column_top_cell( const Sed_column col )
+sed_column_top_cell(const Sed_column col)
 {
-   Sed_cell top = NULL;
+    Sed_cell top = NULL;
 
-   if ( !sed_column_is_empty(col) )
-      top = col->cell[col->len-1];
+    if (!sed_column_is_empty(col)) {
+        top = col->cell[col->len - 1];
+    }
 
-   return top;
+    return top;
 }
 
 /** Get the n-th cell from a column.
@@ -1298,16 +1348,17 @@ Get a pointer to the Sed_cell that is n cells from the bottom of a Sed_column.
 
 */
 Sed_cell
-sed_column_nth_cell( const Sed_column col , gssize n )
+sed_column_nth_cell(const Sed_column col, gssize n)
 {
-   Sed_cell cell = NULL;
+    Sed_cell cell = NULL;
 
-   eh_return_val_if_fail( col , NULL );
+    eh_return_val_if_fail(col, NULL);
 
-   if ( sed_column_is_set_index(col,n) )
-      cell = col->cell[n];
+    if (sed_column_is_set_index(col, n)) {
+        cell = col->cell[n];
+    }
 
-   return cell;
+    return cell;
 }
 
 /** Change the number of cells within a column.
@@ -1322,40 +1373,43 @@ In this case, no memory is freed.
 @param n   The new size of the Sed_column.
 */
 Sed_column
-sed_column_resize( Sed_column col , gssize n )
+sed_column_resize(Sed_column col, gssize n)
 {
-   eh_require( col );
+    eh_require(col);
 
-   {
-      gssize i;
+    {
+        gssize i;
 
-      if ( n > col->size )
-      {
-         // Add bins in blocks of S_ADDBINS
-         gssize add_bins = ((n-col->size)/S_ADDBINS+1)*S_ADDBINS;
-         gssize new_size = col->size + add_bins;
+        if (n > col->size) {
+            // Add bins in blocks of S_ADDBINS
+            gssize add_bins = ((n - col->size) / S_ADDBINS + 1) * S_ADDBINS;
+            gssize new_size = col->size + add_bins;
 
-         if ( col->cell ) col->cell = eh_renew( Sed_cell , col->cell , col->size+add_bins );
-         else             col->cell = eh_new  ( Sed_cell             , col->size+add_bins );
+            if (col->cell) {
+                col->cell = eh_renew(Sed_cell, col->cell, col->size + add_bins);
+            } else {
+                col->cell = eh_new(Sed_cell, col->size + add_bins);
+            }
 
-         for ( i=col->size ; i<new_size ; i++ )
-            col->cell[i] = sed_cell_new_env();
-         col->size += add_bins;
-      }
-      else
-      {
-         for ( i=n ; i<col->size ; i++ )
-            sed_cell_clear( col->cell[i] );
-      }
-   }
+            for (i = col->size ; i < new_size ; i++) {
+                col->cell[i] = sed_cell_new_env();
+            }
 
-   return col;
+            col->size += add_bins;
+        } else {
+            for (i = n ; i < col->size ; i++) {
+                sed_cell_clear(col->cell[i]);
+            }
+        }
+    }
+
+    return col;
 }
 
 /** Remove part of the top cell of a column and save the sediment.
 
 The top fraction (given by f) is removed from the cell at the top of a sediment
-column.  The removed sediment is placed into the destination cell.  The 
+column.  The removed sediment is placed into the destination cell.  The
 destination cell is cleared before the new sediment is added.  If a NULL value
 is passed as the destination cell, a new cell is created to hold the sediment.
 
@@ -1368,29 +1422,28 @@ is passed as the destination cell, a new cell is created to hold the sediment.
 @see sed_column_remove_cell.
 */
 Sed_cell
-sed_column_extract_top_cell( Sed_column col ,
-                             double f       ,
-                             Sed_cell dest )
+sed_column_extract_top_cell(Sed_column col,
+    double f,
+    Sed_cell dest)
 {
-   eh_require( col );
-   eh_require( f<=1 );
-   eh_require( f>=0 );
+    eh_require(col);
+    eh_require(f <= 1);
+    eh_require(f >= 0);
 
-   eh_clamp( f , 0 , 1 );
+    eh_clamp(f, 0, 1);
 
-   if ( col && !sed_column_is_empty(col) )
-   {
-      Sed_cell top_cell = sed_column_top_cell(col);
+    if (col && !sed_column_is_empty(col)) {
+        Sed_cell top_cell = sed_column_top_cell(col);
 
-      dest = sed_cell_copy( dest , top_cell );
+        dest = sed_cell_copy(dest, top_cell);
 
-      sed_cell_resize( dest , sed_cell_size(dest)*f );
-      sed_column_remove_top_cell( col , f );
-   }
-   else
-      dest = NULL;
+        sed_cell_resize(dest, sed_cell_size(dest)*f);
+        sed_column_remove_top_cell(col, f);
+    } else {
+        dest = NULL;
+    }
 
-   return dest;
+    return dest;
 }
 
 /** Remove part of the top cell of a column.
@@ -1404,38 +1457,38 @@ column.  The removed sediment is discarded.
 @see sed_extract_cell_from_column .
 */
 Sed_column
-sed_column_remove_top_cell( Sed_column col , double f )
+sed_column_remove_top_cell(Sed_column col, double f)
 {
-   eh_require( col );
-   eh_require( f<=1 );
-   eh_require( f>=0 );
+    eh_require(col);
+    eh_require(f <= 1);
+    eh_require(f >= 0);
 
-   eh_clamp( f , 0 , 1 );
+    eh_clamp(f, 0, 1);
 
-   if ( col && !sed_column_is_empty(col) )
-   {
-      Sed_cell top_cell = sed_column_top_cell(col);
-      sed_column_set_thickness( col ,
-                                  sed_column_thickness(col)
-                                - f*sed_cell_size(top_cell) );
-      sed_cell_resize( top_cell , sed_cell_size(top_cell)*(1.-f) );
+    if (col && !sed_column_is_empty(col)) {
+        Sed_cell top_cell = sed_column_top_cell(col);
+        sed_column_set_thickness(col,
+            sed_column_thickness(col)
+            - f * sed_cell_size(top_cell));
+        sed_cell_resize(top_cell, sed_cell_size(top_cell) * (1. - f));
 
-      if ( sed_cell_size(top_cell) < 1e-12 )
-      {
-         sed_cell_clear( top_cell );
-         (col->len)--;
-         if ( col->len<0 )
-            eh_require_not_reached();
-      }
-   }
+        if (sed_cell_size(top_cell) < 1e-12) {
+            sed_cell_clear(top_cell);
+            (col->len)--;
 
-   return col;
+            if (col->len < 0) {
+                eh_require_not_reached();
+            }
+        }
+    }
+
+    return col;
 }
 
 /** Remove the top of a column and save the sediment.
 
 The top thickness units is removed from the cells at the top of a sediment
-column.  The removed sediment is placed into the destination cell.  The 
+column.  The removed sediment is placed into the destination cell.  The
 destination cell is cleared before the new sediment is added.  If a NULL value
 is passed as the destination cell, a new cell is created to hold the sediment.
 
@@ -1448,83 +1501,83 @@ is passed as the destination cell, a new cell is created to hold the sediment.
 @see sed_remove_top_from_column , sed_get_top_from_column.
 */
 Sed_cell
-sed_column_extract_top( Sed_column col ,
-                        double     t   ,
-                        Sed_cell   dest )
+sed_column_extract_top(Sed_column col,
+    double     t,
+    Sed_cell   dest)
 {
-   return sed_column_extract_top_fill( col , t , NULL , dest );
+    return sed_column_extract_top_fill(col, t, NULL, dest);
 }
 
-Sed_cell sed_column_extract_top_fill( Sed_column col ,
-                                      double t       ,
-                                      Sed_cell fill  ,
-                                      Sed_cell dest )
+Sed_cell
+sed_column_extract_top_fill(Sed_column col,
+    double t,
+    Sed_cell fill,
+    Sed_cell dest)
 {
-   eh_require( col );
+    eh_require(col);
 
-   if ( !dest )
-      dest = sed_cell_new( sed_sediment_env_n_types() );
-   else
-      sed_cell_clear( dest );
+    if (!dest) {
+        dest = sed_cell_new(sed_sediment_env_n_types());
+    } else {
+        sed_cell_clear(dest);
+    }
 
-   if ( fill )
-      sed_cell_resize( fill , G_MINDOUBLE );
+    if (fill) {
+        sed_cell_resize(fill, G_MINDOUBLE);
+    }
 
-   if ( t>0 )
-   {
-      double left_to_remove, available_sediment;
-      double f;
-      Sed_cell cell_temp, top_cell;
-      gboolean more_to_remove = FALSE;
-   
-      cell_temp = sed_cell_new_env();
-      left_to_remove = t;
+    if (t > 0) {
+        double left_to_remove, available_sediment;
+        double f;
+        Sed_cell cell_temp, top_cell;
+        gboolean more_to_remove = FALSE;
 
-      if ( left_to_remove>0 )
-         more_to_remove = TRUE;
+        cell_temp = sed_cell_new_env();
+        left_to_remove = t;
 
-      while ( !sed_column_is_empty(col) && more_to_remove )
-      {
-         top_cell = sed_column_top_cell(col);
-         available_sediment = sed_cell_size( top_cell );
-         if ( available_sediment > left_to_remove )
-         {
-            f = left_to_remove/available_sediment;
-            more_to_remove = FALSE;
-         }
-         else 
-            f = 1.0;
-         sed_column_extract_top_cell( col , f , cell_temp );
-         sed_cell_add( dest , cell_temp );
-         left_to_remove -= sed_cell_size( cell_temp );
-      }
+        if (left_to_remove > 0) {
+            more_to_remove = TRUE;
+        }
 
-      if ( fill && fabs( sed_cell_size(dest) - t ) > 1e-12 )
-      {
-         double dh = t - sed_cell_size(dest);
+        while (!sed_column_is_empty(col) && more_to_remove) {
+            top_cell = sed_column_top_cell(col);
+            available_sediment = sed_cell_size(top_cell);
 
-         if ( dh > 0 )
-         {
-            eh_require( col->t < 1e-12 );
-
-            if ( !(col->t < 1e-12) )
-            {
-               eh_watch_dbl( col->t );
-               eh_watch_dbl( t );
-               eh_watch_dbl( sed_cell_size(dest) );
+            if (available_sediment > left_to_remove) {
+                f = left_to_remove / available_sediment;
+                more_to_remove = FALSE;
+            } else {
+                f = 1.0;
             }
 
-            sed_cell_resize( fill , dh );
-            sed_column_adjust_base_height( col , -dh );
-            col->z -= dh;
-            sed_cell_add( dest , fill );
-         }
-      }
+            sed_column_extract_top_cell(col, f, cell_temp);
+            sed_cell_add(dest, cell_temp);
+            left_to_remove -= sed_cell_size(cell_temp);
+        }
 
-      sed_cell_destroy( cell_temp );
-   }
+        if (fill && fabs(sed_cell_size(dest) - t) > 1e-12) {
+            double dh = t - sed_cell_size(dest);
 
-   return dest;
+            if (dh > 0) {
+                eh_require(col->t < 1e-12);
+
+                if (!(col->t < 1e-12)) {
+                    eh_watch_dbl(col->t);
+                    eh_watch_dbl(t);
+                    eh_watch_dbl(sed_cell_size(dest));
+                }
+
+                sed_cell_resize(fill, dh);
+                sed_column_adjust_base_height(col, -dh);
+                col->z -= dh;
+                sed_cell_add(dest, fill);
+            }
+        }
+
+        sed_cell_destroy(cell_temp);
+    }
+
+    return dest;
 }
 
 /** Remove the top of a column.
@@ -1538,133 +1591,135 @@ column.  The removed sediment is discarded.
 @see sed_extract_top_from_column , sed_get_top_from_column .
 */
 Sed_column
-sed_column_remove_top( Sed_column col , double t )
+sed_column_remove_top(Sed_column col, double t)
 {
-   eh_require( col );
+    eh_require(col);
 
-   if ( col && t>0 && !sed_column_is_empty(col) )
-   {
-      Sed_cell top_cell;
-      double left_to_remove, available_sediment;
-      double f;
-      gboolean more_to_remove = FALSE;
-   
-      left_to_remove = t;
+    if (col && t > 0 && !sed_column_is_empty(col)) {
+        Sed_cell top_cell;
+        double left_to_remove, available_sediment;
+        double f;
+        gboolean more_to_remove = FALSE;
 
-      if ( left_to_remove>0 )
-         more_to_remove = TRUE;
+        left_to_remove = t;
 
-      while ( !sed_column_is_empty(col) && more_to_remove )
-      {
-         top_cell = sed_column_top_cell(col);
-         available_sediment = sed_cell_size( top_cell );
-         if ( available_sediment >= left_to_remove )
-         {
-            f = left_to_remove/available_sediment;
-            more_to_remove = FALSE;
-         }
-         else 
-            f = 1.0;
-         sed_column_remove_top_cell(col,f);
-         left_to_remove -= f*available_sediment;
-      }
-   }
+        if (left_to_remove > 0) {
+            more_to_remove = TRUE;
+        }
 
-   return col;
+        while (!sed_column_is_empty(col) && more_to_remove) {
+            top_cell = sed_column_top_cell(col);
+            available_sediment = sed_cell_size(top_cell);
+
+            if (available_sediment >= left_to_remove) {
+                f = left_to_remove / available_sediment;
+                more_to_remove = FALSE;
+            } else {
+                f = 1.0;
+            }
+
+            sed_column_remove_top_cell(col, f);
+            left_to_remove -= f * available_sediment;
+        }
+    }
+
+    return col;
 }
 
-Sed_column sed_column_remove_top_erode( Sed_column col , double t )
+Sed_column
+sed_column_remove_top_erode(Sed_column col, double t)
 {
-   eh_require( col );
+    eh_require(col);
 
-   if ( col )
-   {
-      double erode = t - sed_column_thickness(col);
+    if (col) {
+        double erode = t - sed_column_thickness(col);
 
-      sed_column_remove_top( col , t );
+        sed_column_remove_top(col, t);
 
-      if ( erode>0 )
-      {
-         col->z -= erode;
-      }
-   }
+        if (erode > 0) {
+            col->z -= erode;
+        }
+    }
 
-   return col;
+    return col;
 }
 
-Sed_cell sed_column_separate_top( Sed_column col  ,
-                                  double t        ,
-                                  double f[]      ,
-                                  Sed_cell rem_cell )
+Sed_cell
+sed_column_separate_top(Sed_column col,
+    double t,
+    double f[],
+    Sed_cell rem_cell)
 {
-   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_n_types() );
+    Sed_cell lag_cell = sed_cell_new(sed_sediment_env_n_types());
 
-   sed_column_extract_top    ( col      , t        , lag_cell );
-   sed_cell_separate_fraction( lag_cell , f        , rem_cell );
-   sed_column_add_cell       ( col      , lag_cell            );
-   sed_cell_destroy          ( lag_cell                       );
+    sed_column_extract_top(col, t, lag_cell);
+    sed_cell_separate_fraction(lag_cell, f, rem_cell);
+    sed_column_add_cell(col, lag_cell);
+    sed_cell_destroy(lag_cell);
 
-   return rem_cell;
+    return rem_cell;
 }
 
-Sed_cell sed_column_separate_top_amounts( Sed_column col ,
-                                          double total_t ,
-                                          double t[]     ,
-                                          Sed_cell rem_cell )
+Sed_cell
+sed_column_separate_top_amounts(Sed_column col,
+    double total_t,
+    double t[],
+    Sed_cell rem_cell)
 {
-   Sed_cell lag_cell = sed_cell_new( sed_sediment_env_n_types() );
+    Sed_cell lag_cell = sed_cell_new(sed_sediment_env_n_types());
 
-   sed_column_extract_top  ( col      , total_t  , lag_cell );
-   sed_cell_separate_amount( lag_cell , t        , rem_cell );
-   sed_column_add_cell     ( col      , lag_cell            );
-   sed_cell_destroy        ( lag_cell );
+    sed_column_extract_top(col, total_t, lag_cell);
+    sed_cell_separate_amount(lag_cell, t, rem_cell);
+    sed_column_add_cell(col, lag_cell);
+    sed_cell_destroy(lag_cell);
 
-   return rem_cell;
+    return rem_cell;
 }
 
-Sed_cell sed_column_separate_top_amounts_fill( Sed_column col ,
-                                               double total_t ,
-                                               double t[]     ,
-                                               Sed_cell fill  ,
-                                               Sed_cell rem_cell )
+Sed_cell
+sed_column_separate_top_amounts_fill(Sed_column col,
+    double total_t,
+    double t[],
+    Sed_cell fill,
+    Sed_cell rem_cell)
 {
-   Sed_cell lag_cell;
-//   double m_0 = sed_column_mass(col);
-//   double t_0 = sed_column_thickness(col);
-//   gssize len_0 = col->len;
-//   double m_1, t_1;
+    Sed_cell lag_cell;
+    //   double m_0 = sed_column_mass(col);
+    //   double t_0 = sed_column_thickness(col);
+    //   gssize len_0 = col->len;
+    //   double m_1, t_1;
 
-   lag_cell = sed_cell_new_env( );
-   sed_column_extract_top_fill( col , total_t , fill , lag_cell );
-   sed_cell_separate_amount( lag_cell , t , rem_cell );
-   sed_column_add_cell( col , lag_cell );
-   sed_cell_destroy( lag_cell );
-/*
-   m_1 = sed_column_mass(col);
-//   if ( fill && fabs(m_1+sed_cell_mass(rem_cell)-(m_0+sed_cell_mass(fill)) )/m_0 > 1e-5 )
-   if ( fabs(m_1+sed_cell_mass(rem_cell)-m_0 )/m_0 > 1e-5 )
-{
-   t_1 = sed_column_thickness(col);
-eh_watch_int( len_0 );
-eh_watch_int( col->len );
-eh_watch_dbl( t_0 );
-eh_watch_dbl( t_1 );
-eh_watch_dbl( m_0 );
-eh_watch_dbl( m_1 );
-eh_watch_dbl( sed_cell_mass(rem_cell) );
-//eh_watch_dbl( sed_cell_mass(fill) );
-eh_watch_dbl( total_t );
-eh_dbl_array_fprint( stderr , t , sed_sediment_env_n_types() );
-      exit(0);
-}
-*/
-   return rem_cell;
+    lag_cell = sed_cell_new_env();
+    sed_column_extract_top_fill(col, total_t, fill, lag_cell);
+    sed_cell_separate_amount(lag_cell, t, rem_cell);
+    sed_column_add_cell(col, lag_cell);
+    sed_cell_destroy(lag_cell);
+    /*
+       m_1 = sed_column_mass(col);
+    //   if ( fill && fabs(m_1+sed_cell_mass(rem_cell)-(m_0+sed_cell_mass(fill)) )/m_0 > 1e-5 )
+       if ( fabs(m_1+sed_cell_mass(rem_cell)-m_0 )/m_0 > 1e-5 )
+    {
+       t_1 = sed_column_thickness(col);
+    eh_watch_int( len_0 );
+    eh_watch_int( col->len );
+    eh_watch_dbl( t_0 );
+    eh_watch_dbl( t_1 );
+    eh_watch_dbl( m_0 );
+    eh_watch_dbl( m_1 );
+    eh_watch_dbl( sed_cell_mass(rem_cell) );
+    //eh_watch_dbl( sed_cell_mass(fill) );
+    eh_watch_dbl( total_t );
+    eh_dbl_array_fprint( stderr , t , sed_sediment_env_n_types() );
+          exit(0);
+    }
+    */
+    return rem_cell;
 }
 
 /** Get the top of a column.
 
 The top thickness units is copied from the cells at the top of a sediment
-column.  A copy of the sediment is placed into the destination cell.  The 
+column.  A copy of the sediment is placed into the destination cell.  The
 destination cell is cleared before the new sediment is added.  If a NULL value
 is passed as the destination cell, a new cell is created to hold the sediment.
 No sediment is removed from the Sed_column.
@@ -1677,48 +1732,48 @@ No sediment is removed from the Sed_column.
 
 \see sed_remove_top_from_column , sed_extract_top_from_column .
 */
-Sed_cell sed_column_top( const Sed_column col ,
-                         double t             ,
-                         Sed_cell dest )
+Sed_cell
+sed_column_top(const Sed_column col,
+    double t,
+    Sed_cell dest)
 {
-   eh_return_val_if_fail( col , NULL );
+    eh_return_val_if_fail(col, NULL);
 
-   if ( !dest )
-      dest = sed_cell_new( sed_sediment_env_n_types() );
-   sed_cell_clear( dest );
+    if (!dest) {
+        dest = sed_cell_new(sed_sediment_env_n_types());
+    }
 
-   if ( !sed_column_is_empty(col) )
-   {
-      Sed_cell next_cell;
-      double left_to_get, available_sediment;
-      int next_ind;
+    sed_cell_clear(dest);
 
-      left_to_get = t;
+    if (!sed_column_is_empty(col)) {
+        Sed_cell next_cell;
+        double left_to_get, available_sediment;
+        int next_ind;
 
-      next_ind = sed_column_len( col )-1;
-      while ( left_to_get > 1e-12 && next_ind >= 0 )
-      {
-         next_cell = sed_column_nth_cell( col , next_ind );
-         available_sediment = sed_cell_size( next_cell );
+        left_to_get = t;
 
-         if ( available_sediment > left_to_get )
-         {
-            sed_cell_resize( next_cell , left_to_get        );
-            sed_cell_add   ( dest      , next_cell          );
-            sed_cell_resize( next_cell , available_sediment );
+        next_ind = sed_column_len(col) - 1;
 
-            left_to_get = 0.;
-         }
-         else
-         {
-            sed_cell_add( dest , next_cell );
-            left_to_get -= available_sediment;
-         }
-         next_ind--;
-      }
-   }
+        while (left_to_get > 1e-12 && next_ind >= 0) {
+            next_cell = sed_column_nth_cell(col, next_ind);
+            available_sediment = sed_cell_size(next_cell);
 
-   return dest;
+            if (available_sediment > left_to_get) {
+                sed_cell_resize(next_cell, left_to_get);
+                sed_cell_add(dest, next_cell);
+                sed_cell_resize(next_cell, available_sediment);
+
+                left_to_get = 0.;
+            } else {
+                sed_cell_add(dest, next_cell);
+                left_to_get -= available_sediment;
+            }
+
+            next_ind--;
+        }
+    }
+
+    return dest;
 }
 
 /** Get a bulk property from the top of a column.
@@ -1734,27 +1789,27 @@ Sed_property_func.
 
 @see sed_get_top_property_with_load .
 */
-double sed_column_top_property_0( Sed_property property ,
-                                const Sed_column s    ,
-                                double top )
+double
+sed_column_top_property_0(Sed_property property,
+    const Sed_column s,
+    double top)
 {
-   double val = 0;
+    double val = 0;
 
-   eh_require( s );
+    eh_require(s);
 
-   if ( s )
-   {
-      Sed_cell avg;
+    if (s) {
+        Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_n_types() );
+        avg = sed_cell_new(sed_sediment_env_n_types());
 
-      avg = sed_column_top( s , top , avg );
-      val = sed_property_measure( property , avg );
+        avg = sed_column_top(s, top, avg);
+        val = sed_property_measure(property, avg);
 
-      sed_cell_destroy( avg );
-   }
+        sed_cell_destroy(avg);
+    }
 
-   return val;
+    return val;
 }
 
 /** Get a bulk property from the top of a column.
@@ -1771,34 +1826,37 @@ in this case the load is that of the sediment we are examining.
 
 @see sed_get_top_property .
 */
-double sed_column_top_property( Sed_property property , const Sed_column s , double top )
+double
+sed_column_top_property(Sed_property property, const Sed_column s, double top)
 {
-   double val;
+    double val;
 
-   eh_return_val_if_fail( s        , 0 );
-   eh_return_val_if_fail( property , 0 );
+    eh_return_val_if_fail(s, 0);
+    eh_return_val_if_fail(property, 0);
 
-   {
-      Sed_cell avg = sed_column_top( s , top , NULL );
+    {
+        Sed_cell avg = sed_column_top(s, top, NULL);
 
-      if ( sed_property_n_args(property)==2 )
-      {
-         double extra_arg;
-         if (    sed_property_is_named( property , "consolidation" )
-              || sed_property_is_named( property , "consolidation rate" ) )
-            extra_arg = sed_column_age( s );
-         else
-            extra_arg = sed_cell_load( avg );
-         val  = sed_property_measure( property , avg , extra_arg );
-      }
-      else
-         val  = sed_property_measure( property , avg );
+        if (sed_property_n_args(property) == 2) {
+            double extra_arg;
+
+            if (sed_property_is_named(property, "consolidation")
+                || sed_property_is_named(property, "consolidation rate")) {
+                extra_arg = sed_column_age(s);
+            } else {
+                extra_arg = sed_cell_load(avg);
+            }
+
+            val  = sed_property_measure(property, avg, extra_arg);
+        } else {
+            val  = sed_property_measure(property, avg);
+        }
 
 
-      sed_cell_destroy( avg );
-   }
+        sed_cell_destroy(avg);
+    }
 
-   return val;
+    return val;
 }
 
 /** Get the density of the top of a column.
@@ -1811,24 +1869,25 @@ is a convenience function for sed_get_top_property (S_DENSITY,s,top) .
 
 @return The bulk density of the top of a column.
 */
-double sed_column_top_rho( const Sed_column s , double top )
+double
+sed_column_top_rho(const Sed_column s, double top)
 {
-   double rho = 0.;
+    double rho = 0.;
 
-   eh_return_val_if_fail( s , 0. );
+    eh_return_val_if_fail(s, 0.);
 
-   {
-      Sed_cell avg;
+    {
+        Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_n_types() );
+        avg = sed_cell_new(sed_sediment_env_n_types());
 
-      avg = sed_column_top(s,top,avg);
-      rho = sed_cell_density( avg );
+        avg = sed_column_top(s, top, avg);
+        rho = sed_cell_density(avg);
 
-      sed_cell_destroy(avg);
-   }
+        sed_cell_destroy(avg);
+    }
 
-   return rho;
+    return rho;
 }
 
 /** Get the age of the top of a column.
@@ -1841,29 +1900,29 @@ is essentially a convenience function for sed_get_top_property (S_AGE,s,top) .
 
 @return The age of the top of a column.
 */
-double sed_column_top_age( const Sed_column s , double top )
+double
+sed_column_top_age(const Sed_column s, double top)
 {
-   double age = 0;
+    double age = 0;
 
-   eh_require( s );
+    eh_require(s);
 
-   if ( s )
-   {
-      Sed_cell avg;
+    if (s) {
+        Sed_cell avg;
 
-      avg = sed_cell_new( sed_sediment_env_n_types() );
-      sed_column_top(s,top,avg);
-      age = sed_cell_age(avg);
-      sed_cell_destroy(avg);
-   }
+        avg = sed_cell_new(sed_sediment_env_n_types());
+        sed_column_top(s, top, avg);
+        age = sed_cell_age(avg);
+        sed_cell_destroy(avg);
+    }
 
-   return age;
+    return age;
 }
 
 /** Get the number of cells contained within the top of a column.
 
 Return the number of sediment bins that make up the top height-th units of
-a sediment column.  The bins may be of a size that is different from the 
+a sediment column.  The bins may be of a size that is different from the
 vertical resolution of the column.
 
 @param s      A pointer to a Sed_column.
@@ -1872,27 +1931,25 @@ vertical resolution of the column.
 @return The number of sediment bins within the top of a Sed_column.
 */
 gssize
-sed_column_top_nbins( Sed_column s , double z )
+sed_column_top_nbins(Sed_column s, double z)
 {
-   gssize n_bins = 0;
+    gssize n_bins = 0;
 
-   eh_require( s );
+    eh_require(s);
 
-   if ( s && !sed_column_is_empty(s) )
-   {
-      double t = z - sed_column_base_height( s );
+    if (s && !sed_column_is_empty(s)) {
+        double t = z - sed_column_base_height(s);
 
-      if ( t>0 )
-      {
-         gssize ind_bot = sed_column_index_thickness( s , t );
-         gssize ind_top = s->len;
-         n_bins = ind_top - ind_bot;
-      }
-      else
-         n_bins = s->len;
-   }
+        if (t > 0) {
+            gssize ind_bot = sed_column_index_thickness(s, t);
+            gssize ind_top = s->len;
+            n_bins = ind_top - ind_bot;
+        } else {
+            n_bins = s->len;
+        }
+    }
 
-   return n_bins;
+    return n_bins;
 }
 
 /** Get the index of a cell at a specified elevation within a column.
@@ -1902,11 +1959,12 @@ sed_column_top_nbins( Sed_column s , double z )
 
 @return     The index to a cell at a given elevation.
 */
-gssize sed_column_index_at( const Sed_column s , double z )
+gssize
+sed_column_index_at(const Sed_column s, double z)
 {
-   eh_return_val_if_fail( s , -1 );
+    eh_return_val_if_fail(s, -1);
 
-   return sed_column_index_thickness( s , z - sed_column_base_height(s) );
+    return sed_column_index_thickness(s, z - sed_column_base_height(s));
 }
 
 /** Write the contents of Sed_column to a binary file.
@@ -1916,58 +1974,58 @@ gssize sed_column_index_at( const Sed_column s , double z )
 
 @see sed_load_column .
 */
-gssize sed_column_write( FILE* fp , const Sed_column s )
+gssize
+sed_column_write(FILE* fp, const Sed_column s)
 {
-   return sed_column_write_to_byte_order( fp , s , G_BYTE_ORDER );
+    return sed_column_write_to_byte_order(fp, s, G_BYTE_ORDER);
 }
 
-gssize sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint order )
+gssize
+sed_column_write_to_byte_order(FILE* fp, const Sed_column s, gint order)
 {
-   gssize n = 0;
+    gssize n = 0;
 
-   if ( s && fp )
-   {
-      if ( order == G_BYTE_ORDER )
-      {
-         gssize i;
-         gint32 len  = s->len;
-         gint32 size = s->size;
+    if (s && fp) {
+        if (order == G_BYTE_ORDER) {
+            gssize i;
+            gint32 len  = s->len;
+            gint32 size = s->size;
 
-         n += fwrite( &(s->z)    , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->t)    , sizeof(double) , 1 , fp );
-         n += fwrite( &(len)     , sizeof(gint32) , 1 , fp );
-         n += fwrite( &(size)    , sizeof(gint32) , 1 , fp );
-         n += fwrite( &(s->dz)   , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->x)    , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->y)    , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->age)  , sizeof(double) , 1 , fp );
-         n += fwrite( &(s->sl)   , sizeof(double) , 1 , fp );
+            n += fwrite(&(s->z), sizeof(double), 1, fp);
+            n += fwrite(&(s->t), sizeof(double), 1, fp);
+            n += fwrite(&(len), sizeof(gint32), 1, fp);
+            n += fwrite(&(size), sizeof(gint32), 1, fp);
+            n += fwrite(&(s->dz), sizeof(double), 1, fp);
+            n += fwrite(&(s->x), sizeof(double), 1, fp);
+            n += fwrite(&(s->y), sizeof(double), 1, fp);
+            n += fwrite(&(s->age), sizeof(double), 1, fp);
+            n += fwrite(&(s->sl), sizeof(double), 1, fp);
 
-         for ( i=0 ; i<s->size ; i++ )
-            n += sed_cell_write( fp , s->cell[i] );
-      }
-      else
-      {
-         gssize i;
-         gint32 len  = s->len;
-         gint32 size = s->size;
+            for (i = 0 ; i < s->size ; i++) {
+                n += sed_cell_write(fp, s->cell[i]);
+            }
+        } else {
+            gssize i;
+            gint32 len  = s->len;
+            gint32 size = s->size;
 
-         n += eh_fwrite_dbl_swap  ( &(s->z)    , sizeof(double) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->t)    , sizeof(double) , 1 , fp );
-         n += eh_fwrite_int32_swap( &(len)     , sizeof(gint32) , 1 , fp );
-         n += eh_fwrite_int32_swap( &(size)    , sizeof(gint32) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->dz)   , sizeof(double) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->x)    , sizeof(double) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->y)    , sizeof(double) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->age)  , sizeof(double) , 1 , fp );
-         n += eh_fwrite_dbl_swap  ( &(s->sl)   , sizeof(double) , 1 , fp );
+            n += eh_fwrite_dbl_swap(&(s->z), sizeof(double), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->t), sizeof(double), 1, fp);
+            n += eh_fwrite_int32_swap(&(len), sizeof(gint32), 1, fp);
+            n += eh_fwrite_int32_swap(&(size), sizeof(gint32), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->dz), sizeof(double), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->x), sizeof(double), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->y), sizeof(double), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->age), sizeof(double), 1, fp);
+            n += eh_fwrite_dbl_swap(&(s->sl), sizeof(double), 1, fp);
 
-         for ( i=0 ; i<s->size ; i++ )
-            n += sed_cell_write_to_byte_order( fp , s->cell[i] , order );
-      }
-   }
+            for (i = 0 ; i < s->size ; i++) {
+                n += sed_cell_write_to_byte_order(fp, s->cell[i], order);
+            }
+        }
+    }
 
-   return n;
+    return n;
 }
 
 /** Read Sed_column information from a binary file.
@@ -1976,39 +2034,41 @@ gssize sed_column_write_to_byte_order( FILE* fp , const Sed_column s , gint orde
 
 @return A pointer to the loaded Sed_column.
 */
-Sed_column sed_column_read( FILE* fp )
+Sed_column
+sed_column_read(FILE* fp)
 {
-   Sed_column s = NULL;
+    Sed_column s = NULL;
 
-   eh_require( fp );
+    eh_require(fp);
 
-   if ( fp )
-   {
-      gssize i;
-      gint32 len;
-      gint32 size;
+    if (fp) {
+        gssize i;
+        gint32 len;
+        gint32 size;
 
-      NEW_OBJECT( Sed_column , s );
+        NEW_OBJECT(Sed_column, s);
 
-      fread( &(s->z)    , sizeof(double) , 1 , fp );
-      fread( &(s->t)    , sizeof(double) , 1 , fp );
-      fread( &(len)     , sizeof(gint32) , 1 , fp );
-      fread( &(size)    , sizeof(gint32) , 1 , fp );
-      fread( &(s->dz)   , sizeof(double) , 1 , fp );
-      fread( &(s->x)    , sizeof(double) , 1 , fp );
-      fread( &(s->y)    , sizeof(double) , 1 , fp );
-      fread( &(s->age)  , sizeof(double) , 1 , fp );
-      fread( &(s->sl)   , sizeof(double) , 1 , fp );
+        fread(&(s->z), sizeof(double), 1, fp);
+        fread(&(s->t), sizeof(double), 1, fp);
+        fread(&(len), sizeof(gint32), 1, fp);
+        fread(&(size), sizeof(gint32), 1, fp);
+        fread(&(s->dz), sizeof(double), 1, fp);
+        fread(&(s->x), sizeof(double), 1, fp);
+        fread(&(s->y), sizeof(double), 1, fp);
+        fread(&(s->age), sizeof(double), 1, fp);
+        fread(&(s->sl), sizeof(double), 1, fp);
 
-      s->len  = len;
-      s->size = size;
+        s->len  = len;
+        s->size = size;
 
-      s->cell = eh_new( Sed_cell , s->size );
-      for ( i=0 ; i<s->size ; i++ )
-         s->cell[i] = sed_cell_read( fp );
-   }
+        s->cell = eh_new(Sed_cell, s->size);
 
-   return s;
+        for (i = 0 ; i < s->size ; i++) {
+            s->cell[i] = sed_cell_read(fp);
+        }
+    }
+
+    return s;
 }
 
 /** Get a column from a portion of another.
@@ -2026,47 +2086,48 @@ new column is created.
 
 */
 Sed_column
-sed_column_height_copy( const Sed_column src ,
-                        double z             ,
-                        Sed_column dest )
+sed_column_height_copy(const Sed_column src,
+    double z,
+    Sed_column dest)
 {
-   eh_return_val_if_fail( src , NULL );
+    eh_return_val_if_fail(src, NULL);
 
-   {
-      gssize bins_to_extract, start;
-      double t       = z - sed_column_base_height(src);
+    {
+        gssize bins_to_extract, start;
+        double t       = z - sed_column_base_height(src);
 
-      start = sed_column_index_thickness( src , t );
-      bins_to_extract = sed_column_len(src) - start;
+        start = sed_column_index_thickness(src, t);
+        bins_to_extract = sed_column_len(src) - start;
 
-      if ( !dest )
-         dest = sed_column_new( 1 );
-      sed_column_copy_public_data( dest , src );
+        if (!dest) {
+            dest = sed_column_new(1);
+        }
 
-      sed_column_set_base_height( dest , z );
+        sed_column_copy_public_data(dest, src);
 
-      if ( bins_to_extract > 0 )
-      {
-         gssize i;
-         double dh;
+        sed_column_set_base_height(dest, z);
 
-         dh = sed_column_thickness_index( src , start )
-            - ( z - sed_column_base_height(src) );
+        if (bins_to_extract > 0) {
+            gssize i;
+            double dh;
 
-         if ( dh>0 )
-         {
-            sed_column_stack_cell( dest , src->cell[start] );
-            sed_cell_resize( dest->cell[0] , dh );
-         }
+            dh = sed_column_thickness_index(src, start)
+                - (z - sed_column_base_height(src));
 
-         // Add the cells to be extracted.
-         for ( i=1 ; i<bins_to_extract ; i++ )
-            sed_column_stack_cell( dest , src->cell[start+i] );
+            if (dh > 0) {
+                sed_column_stack_cell(dest, src->cell[start]);
+                sed_cell_resize(dest->cell[0], dh);
+            }
 
-      }
-   }
+            // Add the cells to be extracted.
+            for (i = 1 ; i < bins_to_extract ; i++) {
+                sed_column_stack_cell(dest, src->cell[start + i]);
+            }
 
-   return dest;
+        }
+    }
+
+    return dest;
 }
 
 /** Bite off the begining of a column.
@@ -2078,18 +2139,18 @@ Remove the bottom portion of a column starting at an elevation, bottom.
 
 @see sed_chop_column , sed_strip_column .
 */
-Sed_column sed_column_chomp( Sed_column col , double bottom )
+Sed_column
+sed_column_chomp(Sed_column col, double bottom)
 {
-   eh_return_val_if_fail( col , NULL );
+    eh_return_val_if_fail(col, NULL);
 
-   if ( bottom > sed_column_base_height(col) )
-   {
-      Sed_column new_col = sed_column_height_copy( col , bottom , NULL );
-      sed_column_copy( col , new_col );
-      sed_column_destroy( new_col );
-   }
+    if (bottom > sed_column_base_height(col)) {
+        Sed_column new_col = sed_column_height_copy(col, bottom, NULL);
+        sed_column_copy(col, new_col);
+        sed_column_destroy(new_col);
+    }
 
-   return col;
+    return col;
 }
 
 /** Cut off the last portion of a column.
@@ -2102,21 +2163,21 @@ Cut off the top part of a column starting at an elevation, top.
 @see sed_chomp_column , sed_strip_column .
 */
 Sed_column
-sed_column_chop( Sed_column col , double top )
+sed_column_chop(Sed_column col, double top)
 {
-   eh_return_val_if_fail( col , NULL );
+    eh_return_val_if_fail(col, NULL);
 
-   if ( top < sed_column_top_height(col) )
-   {
-      double top_t = sed_column_top_height( col ) - top;
+    if (top < sed_column_top_height(col)) {
+        double top_t = sed_column_top_height(col) - top;
 
-      sed_column_remove_top( col , top_t );
+        sed_column_remove_top(col, top_t);
 
-      if ( top < sed_column_base_height( col ) )
-         sed_column_set_base_height( col , top );
-   }
+        if (top < sed_column_base_height(col)) {
+            sed_column_set_base_height(col, top);
+        }
+    }
 
-   return col;
+    return col;
 }
 
 /** Remove the begining and end of a column.
@@ -2131,9 +2192,10 @@ the top of the column.  That is, keep only the cells between bottom and top.
 
 @see sed_chomp_column , sed_chop_column .
 */
-Sed_column sed_column_strip( Sed_column col , double bottom , double top )
+Sed_column
+sed_column_strip(Sed_column col, double bottom, double top)
 {
-   return sed_column_chop( sed_column_chomp( col , bottom ) , top );
+    return sed_column_chop(sed_column_chomp(col, bottom), top);
 }
 
 /** Get the depth to the top of a column.
@@ -2146,9 +2208,10 @@ Get the depth to the top of a Sed_column.
 
 @see sed_get_depth_from_cube .
 */
-double sed_column_water_depth( const Sed_column col )
+double
+sed_column_water_depth(const Sed_column col)
 {
-   return sed_column_sea_level(col) - sed_column_top_height(col);
+    return sed_column_sea_level(col) - sed_column_top_height(col);
 }
 
 /** Get the number of filled (or partially filled) cells within a column.
@@ -2157,46 +2220,51 @@ double sed_column_water_depth( const Sed_column col )
 
 @return The number of filled (or partially filled) cells in a Sed_column
 */
-int sed_get_column_size(const Sed_column col)
+int
+sed_get_column_size(const Sed_column col)
 {
-   return col->len;
+    return col->len;
 }
 
-gssize sed_column_len( const Sed_column col )
+gssize
+sed_column_len(const Sed_column col)
 {
-   eh_return_val_if_fail( col , 0 );
-   return col->len;
+    eh_return_val_if_fail(col, 0);
+    return col->len;
 }
 
 gboolean
-sed_column_is_empty( const Sed_column col )
+sed_column_is_empty(const Sed_column col)
 {
-   eh_return_val_if_fail( col , TRUE );
-   return col->len==0;
+    eh_return_val_if_fail(col, TRUE);
+    return col->len == 0;
 }
 
 /** Is the index in bounds.
 */
-gboolean sed_column_is_valid_index( const Sed_column c , gssize n )
+gboolean
+sed_column_is_valid_index(const Sed_column c, gssize n)
 {
-   eh_return_val_if_fail( c , FALSE );
-   return n>=0 && n<c->size;
+    eh_return_val_if_fail(c, FALSE);
+    return n >= 0 && n < c->size;
 }
 
 /** Is the index to a cell that can be read.
 */
-gboolean sed_column_is_get_index( const Sed_column c , gssize n )
+gboolean
+sed_column_is_get_index(const Sed_column c, gssize n)
 {
-   eh_return_val_if_fail( c , FALSE );
-   return n>=0 && n<c->len;
+    eh_return_val_if_fail(c, FALSE);
+    return n >= 0 && n < c->len;
 }
 
 /** Is the index to a cell that can be added to.
 */
-gboolean sed_column_is_set_index( const Sed_column c , gssize n )
+gboolean
+sed_column_is_set_index(const Sed_column c, gssize n)
 {
-   eh_return_val_if_fail( c , FALSE );
-   return n>=0 && n<=c->len;
+    eh_return_val_if_fail(c, FALSE);
+    return n >= 0 && n <= c->len;
 }
 
 /** Get the index to the top cell in a Sed_column.
@@ -2206,10 +2274,10 @@ gboolean sed_column_is_set_index( const Sed_column c , gssize n )
 @return The index of the top cell in a Sed_column.
 */
 gssize
-sed_column_top_index( const Sed_column col )
+sed_column_top_index(const Sed_column col)
 {
-   eh_return_val_if_fail( col , -1 );
-   return col->len-1;
+    eh_return_val_if_fail(col, -1);
+    return col->len - 1;
 }
 
 /** Get the sediment thickness of a Sed_column.
@@ -2219,10 +2287,10 @@ sed_column_top_index( const Sed_column col )
 @return The thickness of sediment housed in a Sed_column.
 */
 double
-sed_column_thickness( const Sed_column col)
+sed_column_thickness(const Sed_column col)
 {
-   eh_return_val_if_fail( col , 0 );
-   return col->t;
+    eh_return_val_if_fail(col, 0);
+    return col->t;
 }
 
 /** Set the thickness of sediment in a Sed_column.
@@ -2232,36 +2300,42 @@ sed_column_thickness( const Sed_column col)
 
 @return A pointer to the input Sed_column.
 */
-Sed_column sed_column_set_thickness( Sed_column col , double new_t )
+Sed_column
+sed_column_set_thickness(Sed_column col, double new_t)
 {
-   col->t = new_t;
-   return col;
+    col->t = new_t;
+    return col;
 }
 
-gboolean sed_column_size_is( const Sed_column col , double t )
+gboolean
+sed_column_size_is(const Sed_column col, double t)
 
 {
-   return eh_compare_dbl( col->t , t , 1e-12 );
+    return eh_compare_dbl(col->t, t, 1e-12);
 }
 
-gboolean sed_column_mass_is( const Sed_column c , double m )
+gboolean
+sed_column_mass_is(const Sed_column c, double m)
 {
-   return eh_compare_dbl( sed_column_mass(c) , m , 1e-12 );
+    return eh_compare_dbl(sed_column_mass(c), m, 1e-12);
 }
 
-gboolean sed_column_sediment_mass_is( const Sed_column c , double m )
+gboolean
+sed_column_sediment_mass_is(const Sed_column c, double m)
 {
-   return eh_compare_dbl( sed_column_sediment_mass(c) , m , 1e-12 );
+    return eh_compare_dbl(sed_column_sediment_mass(c), m, 1e-12);
 }
 
-gboolean sed_column_base_height_is( const Sed_column c , double z )
+gboolean
+sed_column_base_height_is(const Sed_column c, double z)
 {
-   return eh_compare_dbl( sed_column_base_height(c) , z , 1e-12 );
+    return eh_compare_dbl(sed_column_base_height(c), z, 1e-12);
 }
 
-gboolean sed_column_top_height_is( const Sed_column c , double z )
+gboolean
+sed_column_top_height_is(const Sed_column c, double z)
 {
-   return eh_compare_dbl( sed_column_top_height(c) , z , 1e-12 );
+    return eh_compare_dbl(sed_column_top_height(c), z, 1e-12);
 }
 
 /** Get the thickness of sediment up to (and including) a cell.
@@ -2272,23 +2346,25 @@ gboolean sed_column_top_height_is( const Sed_column c , double z )
 @return The total sediment thickness from the bottom of a column up to (and
         including) the ind-th cell.
 */
-double sed_column_thickness_index( const Sed_column col , gssize ind )
+double
+sed_column_thickness_index(const Sed_column col, gssize ind)
 {
-   double t=0;
+    double t = 0;
 
-   eh_return_val_if_fail( col , 0 );
+    eh_return_val_if_fail(col, 0);
 
-   {
-      gssize i;
-      gssize top_ind = ind+1;
+    {
+        gssize i;
+        gssize top_ind = ind + 1;
 
-      eh_clamp( top_ind , 0 , sed_column_len(col) );
+        eh_clamp(top_ind, 0, sed_column_len(col));
 
-      for ( i=0 ; i<top_ind ; i++ )
-         t += sed_cell_size( col->cell[i] );
-   }
+        for (i = 0 ; i < top_ind ; i++) {
+            t += sed_cell_size(col->cell[i]);
+        }
+    }
 
-   return t;
+    return t;
 }
 
 /** Get the burial depth to sediment of a specified age.
@@ -2299,20 +2375,22 @@ double sed_column_thickness_index( const Sed_column col , gssize ind )
 @return The depth from the top of a Sed_column to sediment of the specified
         age.
 */
-double sed_column_depth_age( const Sed_column col , double age )
+double
+sed_column_depth_age(const Sed_column col, double age)
 {
-   double d = 0;
+    double d = 0;
 
-   eh_require( col );
+    eh_require(col);
 
-   if ( col )
-   {
-      gssize i;
-      for ( i=col->len-1 ; i>=0 && sed_cell_age(col->cell[i])>age ; i--)
-         d += sed_cell_size( col->cell[i] );
-   }
-   
-   return d;
+    if (col) {
+        gssize i;
+
+        for (i = col->len - 1 ; i >= 0 && sed_cell_age(col->cell[i]) > age ; i--) {
+            d += sed_cell_size(col->cell[i]);
+        }
+    }
+
+    return d;
 }
 
 /** Get the index to the cell that is a specified height above a column bottom.
@@ -2323,27 +2401,28 @@ double sed_column_depth_age( const Sed_column col , double age )
 @return The index to the Sed_cell that is a specifed distance from the bottom
         of a Sed_column.
 */
-gssize sed_column_index_thickness( const Sed_column col , double t )
+gssize
+sed_column_index_thickness(const Sed_column col, double t)
 {
-   gssize i = -1;
+    gssize i = -1;
 
-   eh_return_val_if_fail( col , -1 );
+    eh_return_val_if_fail(col, -1);
 
-   if ( t>sed_column_thickness(col)*.5 )
-      i = sed_column_index_depth( col , sed_column_thickness(col)-t );
-   else
-   {
-      double total_t = 0;
+    if (t > sed_column_thickness(col)*.5) {
+        i = sed_column_index_depth(col, sed_column_thickness(col) - t);
+    } else {
+        double total_t = 0;
 
-      eh_lower_bound( t , 0 );
+        eh_lower_bound(t, 0);
 
-      for ( i=0 ; total_t<t && i<col->len ; i++)
-         total_t += sed_cell_size( col->cell[i] );
+        for (i = 0 ; total_t < t && i < col->len ; i++) {
+            total_t += sed_cell_size(col->cell[i]);
+        }
 
-      i -= 1;
-   }
+        i -= 1;
+    }
 
-   return i;
+    return i;
 }
 
 /** Get the index to a cell that is at a specified burial depth.
@@ -2354,27 +2433,27 @@ gssize sed_column_index_thickness( const Sed_column col , double t )
 @return The index to a Sed_cell that is buried at a specified depth.
 */
 gssize
-sed_column_index_depth( const Sed_column col , double d )
+sed_column_index_depth(const Sed_column col, double d)
 {
-   gssize i;
+    gssize i;
 
-   eh_return_val_if_fail( col , -1 );
+    eh_return_val_if_fail(col, -1);
 
-   if ( d>=sed_column_thickness(col)*.5 )
-      i = sed_column_index_thickness( col , sed_column_thickness(col)-d );
-   else
-   {
-      double total_d = 0;
+    if (d >= sed_column_thickness(col)*.5) {
+        i = sed_column_index_thickness(col, sed_column_thickness(col) - d);
+    } else {
+        double total_d = 0;
 
-      eh_lower_bound( d , 0 );
+        eh_lower_bound(d, 0);
 
-      for ( i=col->len-1 ; total_d<=d && i>=0 ; i--)
-         total_d += sed_cell_size( col->cell[i] );
+        for (i = col->len - 1 ; total_d <= d && i >= 0 ; i--) {
+            total_d += sed_cell_size(col->cell[i]);
+        }
 
-      i += 1;
-   }
+        i += 1;
+    }
 
-   return i;
+    return i;
 }
 
 /** Add the sediment from a portion of a column to a cell.
@@ -2387,21 +2466,24 @@ destination cell is not cleared before the addition of the new sediment.
 
 @return A pointer the the destination Sed_cell.
 */
-Sed_cell sed_cell_add_column( Sed_cell dest , const Sed_column src )
+Sed_cell
+sed_cell_add_column(Sed_cell dest, const Sed_column src)
 {
-   eh_return_val_if_fail(src,NULL);
+    eh_return_val_if_fail(src, NULL);
 
-   {
-      gssize i;
+    {
+        gssize i;
 
-      if ( !dest )
-         dest = sed_cell_new( sed_sediment_env_n_types() );
+        if (!dest) {
+            dest = sed_cell_new(sed_sediment_env_n_types());
+        }
 
-      for ( i=0 ; i<src->len ; i++ )
-         sed_cell_add( dest , src->cell[i] );
-   }
+        for (i = 0 ; i < src->len ; i++) {
+            sed_cell_add(dest, src->cell[i]);
+        }
+    }
 
-   return dest;
+    return dest;
 }
 
 /** Add the contents of one column to the top of another.
@@ -2416,56 +2498,62 @@ destination column.
 @return A pointer to the destination Sed_column.
 */
 Sed_column
-sed_column_add( Sed_column dest , const Sed_column src )
+sed_column_add(Sed_column dest, const Sed_column src)
 {
-   eh_return_val_if_fail( src , NULL );
+    eh_return_val_if_fail(src, NULL);
 
-   if ( src )
-   {
-      gssize i;
-      if ( !dest )
-         dest = sed_column_new( src->size );
-      for ( i=0 ; i<src->len ; i++ )
-         sed_column_add_cell( dest , src->cell[i] );
-   }
+    if (src) {
+        gssize i;
 
-   return dest;
+        if (!dest) {
+            dest = sed_column_new(src->size);
+        }
+
+        for (i = 0 ; i < src->len ; i++) {
+            sed_column_add_cell(dest, src->cell[i]);
+        }
+    }
+
+    return dest;
 }
 
 Sed_column
-sed_column_append( Sed_column dest , const Sed_column src )
+sed_column_append(Sed_column dest, const Sed_column src)
 {
-   eh_require( src );
+    eh_require(src);
 
-   if ( src )
-   {
-      gssize i;
-      for ( i=0 ; i<src->len ; i++ )
-         sed_column_stack_cell( dest , src->cell[i] );
-   }
-   else
-      dest = NULL;
+    if (src) {
+        gssize i;
 
-   return dest;
+        for (i = 0 ; i < src->len ; i++) {
+            sed_column_stack_cell(dest, src->cell[i]);
+        }
+    } else {
+        dest = NULL;
+    }
+
+    return dest;
 }
 
-Sed_column sed_column_remove( Sed_column s1 , const Sed_column s2 )
+Sed_column
+sed_column_remove(Sed_column s1, const Sed_column s2)
 {
-   eh_return_val_if_fail( s1 , NULL );
-   eh_return_val_if_fail( s2 , NULL );
+    eh_return_val_if_fail(s1, NULL);
+    eh_return_val_if_fail(s2, NULL);
 
-   {
-      double d = sed_column_top_height(s1) - sed_column_base_height( s2 );
+    {
+        double d = sed_column_top_height(s1) - sed_column_base_height(s2);
 
-      if ( d > 0 )
-      {
-         sed_column_remove_top( s1 , d );
-         if ( sed_column_is_empty(s1) )
-            sed_column_set_base_height(s1,sed_column_base_height(s2));
-      }
-   }
+        if (d > 0) {
+            sed_column_remove_top(s1, d);
 
-   return s1;
+            if (sed_column_is_empty(s1)) {
+                sed_column_set_base_height(s1, sed_column_base_height(s2));
+            }
+        }
+    }
+
+    return s1;
 }
 
 /** Rebin the cells of a column to their original size.
@@ -2474,297 +2562,291 @@ Sed_column sed_column_remove( Sed_column s1 , const Sed_column s2 )
 
 @return A pointer to the input Sed_column.
 */
-Sed_column sed_column_rebin( Sed_column col )
+Sed_column
+sed_column_rebin(Sed_column col)
 {
-   eh_require( col );
+    eh_require(col);
 
-   if ( col )
-   {
-      gssize i;
-      Sed_column col_temp;
+    if (col) {
+        gssize i;
+        Sed_column col_temp;
 
-      // Create a temporary sediment column that is a copy of the old one.
-      col_temp = sed_column_new( col->size );
-      sed_column_copy( col_temp , col );
+        // Create a temporary sediment column that is a copy of the old one.
+        col_temp = sed_column_new(col->size);
+        sed_column_copy(col_temp, col);
 
-      // Remove all of the sediment from the old one.
-      sed_column_clear( col );
-   
-      // Add each cell from the temporary sediment column back to the
-      // new one so that the cells will be rebinned with the proper cell
-      // heights.
-      for ( i=0 ; i<sed_column_len(col_temp) ; i++ )
-         sed_column_add_cell_avg_pressure( col , col_temp->cell[i] ); 
-   
-      // Destroy the temporary sediment column.
-      sed_column_destroy( col_temp );
-   }
+        // Remove all of the sediment from the old one.
+        sed_column_clear(col);
 
-   return col;
+        // Add each cell from the temporary sediment column back to the
+        // new one so that the cells will be rebinned with the proper cell
+        // heights.
+        for (i = 0 ; i < sed_column_len(col_temp) ; i++) {
+            sed_column_add_cell_avg_pressure(col, col_temp->cell[i]);
+        }
+
+        // Destroy the temporary sediment column.
+        sed_column_destroy(col_temp);
+    }
+
+    return col;
 }
 
 Sed_cell
-sed_column_extract_top_cell_loc( Sed_column col )
+sed_column_extract_top_cell_loc(Sed_column col)
 {
-   Sed_cell c = NULL;
+    Sed_cell c = NULL;
 
-   eh_require( col );
+    eh_require(col);
 
-   if ( col && !sed_column_is_empty(col) )
-   {
-      gint n = sed_column_len(col)-1;
+    if (col && !sed_column_is_empty(col)) {
+        gint n = sed_column_len(col) - 1;
 
-      c = col->cell[n];
+        c = col->cell[n];
 
-      sed_column_set_thickness( col , sed_column_thickness(col) - sed_cell_size(c) );
+        sed_column_set_thickness(col, sed_column_thickness(col) - sed_cell_size(c));
 
-      col->len -= 1;
-      if ( col->len<0 )
-         eh_require_not_reached();
-   }
+        col->len -= 1;
 
-   return c;
+        if (col->len < 0) {
+            eh_require_not_reached();
+        }
+    }
+
+    return c;
 }
 
 Sed_cell*
-sed_column_extract_cells_above( Sed_column col , double z )
+sed_column_extract_cells_above(Sed_column col, double z)
 {
-   Sed_cell* cell_arr = NULL;
+    Sed_cell* cell_arr = NULL;
 
-   eh_require( col  );
+    eh_require(col);
 
-   if ( col && !sed_column_is_empty(col) )
-   {
-      gint n_bins = sed_column_top_nbins( col , z );
+    if (col && !sed_column_is_empty(col)) {
+        gint n_bins = sed_column_top_nbins(col, z);
 
-      if ( n_bins>0 )
-      {
-         double dz_bot;
-         double dz_back;
+        if (n_bins > 0) {
+            double dz_bot;
+            double dz_back;
 
-         cell_arr = sed_column_extract_top_n_cells( col , n_bins );
+            cell_arr = sed_column_extract_top_n_cells(col, n_bins);
 
-         eh_require( cell_arr && cell_arr[0] );
+            eh_require(cell_arr && cell_arr[0]);
 
-         dz_back = z - sed_column_top_height(col);
-         dz_bot  = sed_cell_size( cell_arr[0] ) - dz_back;
+            dz_back = z - sed_column_top_height(col);
+            dz_bot  = sed_cell_size(cell_arr[0]) - dz_back;
 
-         if ( dz_back>1e-12 )
-         {
-//eh_require( sed_cell_is_valid(cell_arr[0]) );
-            sed_cell_resize    ( cell_arr[0] , dz_back     );
-//eh_require( sed_cell_is_valid(cell_arr[0]) );
-            sed_column_add_cell( col         , cell_arr[0] );
+            if (dz_back > 1e-12) {
+                //eh_require( sed_cell_is_valid(cell_arr[0]) );
+                sed_cell_resize(cell_arr[0], dz_back);
+                //eh_require( sed_cell_is_valid(cell_arr[0]) );
+                sed_column_add_cell(col, cell_arr[0]);
 
-            if ( dz_bot>1e-12 )
-{
-               sed_cell_resize( cell_arr[0] , dz_bot );
-//eh_require( sed_cell_is_valid(cell_arr[0]) );
-}
-            else
-            {
-               Sed_cell* c;
-               sed_cell_destroy( cell_arr[0] );
-               for ( c=cell_arr ; *c ; c++ ) *c = *(c+1);
-//eh_require( sed_cell_is_valid(cell_arr[0]) );
+                if (dz_bot > 1e-12) {
+                    sed_cell_resize(cell_arr[0], dz_bot);
+                    //eh_require( sed_cell_is_valid(cell_arr[0]) );
+                } else {
+                    Sed_cell* c;
+                    sed_cell_destroy(cell_arr[0]);
+
+                    for (c = cell_arr ; *c ; c++) {
+                        *c = *(c + 1);
+                    }
+
+                    //eh_require( sed_cell_is_valid(cell_arr[0]) );
+                }
             }
-         }
-/*
-         {
-               Sed_cell* c;
-               for ( c=cell_arr ; *c ; c++ )
-                  if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
-                  {
-                     sed_cell_fprint( stderr , *c );
-                     eh_watch_int( n_bins );
-                     eh_watch_int( g_strv_length( cell_arr ) );
-                     eh_watch_dbl( dz_back );
-                     eh_watch_dbl( dz_bot );
-                     eh_watch_int( c-cell_arr );
-sed_cell_array_fprint( stderr , cell_arr );
-                  }
-         }
-*/
-      }
-   }
 
-   return cell_arr;
+            /*
+                     {
+                           Sed_cell* c;
+                           for ( c=cell_arr ; *c ; c++ )
+                              if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
+                              {
+                                 sed_cell_fprint( stderr , *c );
+                                 eh_watch_int( n_bins );
+                                 eh_watch_int( g_strv_length( cell_arr ) );
+                                 eh_watch_dbl( dz_back );
+                                 eh_watch_dbl( dz_bot );
+                                 eh_watch_int( c-cell_arr );
+            sed_cell_array_fprint( stderr , cell_arr );
+                              }
+                     }
+            */
+        }
+    }
+
+    return cell_arr;
 }
 
 Sed_cell*
-sed_column_extract_top_n_cells( Sed_column col , gint n_cells )
+sed_column_extract_top_n_cells(Sed_column col, gint n_cells)
 {
-   Sed_cell* cell_arr = NULL;
+    Sed_cell* cell_arr = NULL;
 
-   eh_require( col  );
-   eh_require( n_cells>=0 );
+    eh_require(col);
+    eh_require(n_cells >= 0);
 
-   if ( col )
-   {
-      eh_clamp( n_cells , 0 , sed_column_len(col) );
+    if (col) {
+        eh_clamp(n_cells, 0, sed_column_len(col));
 
-      if ( n_cells>0 )
-      {
-         gint   n_0 = sed_column_len(col) - n_cells;
-         double dz  = 0;
-         gint i, n;
+        if (n_cells > 0) {
+            gint   n_0 = sed_column_len(col) - n_cells;
+            double dz  = 0;
+            gint i, n;
 
-         cell_arr          = eh_new( Sed_cell , n_cells+1 );
-         cell_arr[n_cells] = NULL;
+            cell_arr          = eh_new(Sed_cell, n_cells + 1);
+            cell_arr[n_cells] = NULL;
 
-         for ( i=0,n=n_0 ; i<n_cells ; i++,n++ )
-         {
-            dz           += sed_cell_size( col->cell[n] );
-            cell_arr[i]   = col->cell[n];
-            col->cell[n]  = sed_cell_new_env();
-         }
+            for (i = 0, n = n_0 ; i < n_cells ; i++, n++) {
+                dz           += sed_cell_size(col->cell[n]);
+                cell_arr[i]   = col->cell[n];
+                col->cell[n]  = sed_cell_new_env();
+            }
 
-         sed_column_set_thickness( col , sed_column_thickness(col) - dz );
-         col->len -= n_cells;
+            sed_column_set_thickness(col, sed_column_thickness(col) - dz);
+            col->len -= n_cells;
 
-         eh_require( col->len>=0 );
-      }
-   }
+            eh_require(col->len >= 0);
+        }
+    }
 
-   return cell_arr;
+    return cell_arr;
 }
 
 Sed_column
-sed_column_stack_cells( Sed_column dest , Sed_cell* src )
+sed_column_stack_cells(Sed_column dest, Sed_cell* src)
 {
-   eh_require( src );
+    eh_require(src);
 
-   if ( src )
-   {
-      Sed_cell* c;
-      for ( c=src ; *c ; c++ )
-      {
-         sed_column_stack_cell( dest , *c );
-if ( sed_cell_is_clear( *c ) )
-{
-   eh_watch_ptr( (void*)(c-src) );
-   sed_cell_array_fprint( stderr , src );
-}
-      }
-   }
-   else
-      dest = NULL;
+    if (src) {
+        Sed_cell* c;
 
-   return dest;
+        for (c = src ; *c ; c++) {
+            sed_column_stack_cell(dest, *c);
+
+            if (sed_cell_is_clear(*c)) {
+                eh_watch_ptr((void*)(c - src));
+                sed_cell_array_fprint(stderr, src);
+            }
+        }
+    } else {
+        dest = NULL;
+    }
+
+    return dest;
 }
 
 Sed_column
-sed_column_stack_cells_loc( Sed_column dest , Sed_cell* src )
+sed_column_stack_cells_loc(Sed_column dest, Sed_cell* src)
 {
-   eh_require( src );
+    eh_require(src);
 
-   if ( src )
-   {
-      Sed_cell* c;
-      for ( c=src ; *c ; c++ )
-{
-if ( !sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c) )
-   eh_watch_ptr( (void*)(c-src) );
-         sed_column_stack_cell_loc( dest , *c );
-}
-   }
-   else
-      dest = NULL;
+    if (src) {
+        Sed_cell* c;
 
-   return dest;
-}
+        for (c = src ; *c ; c++) {
+            if (!sed_cell_is_valid(*c) || sed_cell_is_empty(*c) || sed_cell_is_clear(*c)) {
+                eh_watch_ptr((void*)(c - src));
+            }
 
-double
-sed_column_stack_cell_real( Sed_column col , Sed_cell cell , gboolean update_pressure )
-{
-   double amount_to_add = 0;
+            sed_column_stack_cell_loc(dest, *c);
+        }
+    } else {
+        dest = NULL;
+    }
 
-   eh_require( col  );
-   eh_require( cell );
-
-   if ( col && cell )
-   {
-      amount_to_add = sed_cell_size( cell );
-
-      sed_column_resize( col , col->len + 1 );
-      sed_cell_copy( col->cell[col->len] , cell );
-      col->len += 1;
-
-      sed_column_set_thickness( col , sed_column_thickness(col)+sed_cell_size(cell) );
-
-      if ( update_pressure )
-      {
-         gssize i;
-         gssize len = sed_column_len( col );
-         double cell_load = sed_cell_load( cell );
-
-         for ( i=0 ; i<len ; i++ )
-            sed_cell_set_pressure( col->cell[i] ,
-                                   sed_cell_pressure( col->cell[i] )
-                                   + cell_load );
-      }
-
-   }
-
-   return amount_to_add;
+    return dest;
 }
 
 double
-sed_column_stack_cell_loc_real( Sed_column col , Sed_cell cell , gboolean update_pressure )
+sed_column_stack_cell_real(Sed_column col, Sed_cell cell, gboolean update_pressure)
 {
-   double amount_to_add = 0;
+    double amount_to_add = 0;
 
-   eh_require( col  );
-   eh_require( cell );
+    eh_require(col);
+    eh_require(cell);
 
-   if ( col && cell )
-   {
-/*
-if ( !sed_cell_is_valid(cell) || sed_cell_is_empty(cell) || sed_cell_is_clear(cell) )
-{
-   sed_cell_fprint( stderr , cell );
-   eh_watch_ptr( cell );
-eh_exit(0);
-}
-*/
-      amount_to_add = sed_cell_size( cell );
+    if (col && cell) {
+        amount_to_add = sed_cell_size(cell);
 
-      sed_column_resize( col , col->len + 1 );
+        sed_column_resize(col, col->len + 1);
+        sed_cell_copy(col->cell[col->len], cell);
+        col->len += 1;
 
-      sed_cell_destroy( col->cell[col->len] );
+        sed_column_set_thickness(col, sed_column_thickness(col) + sed_cell_size(cell));
 
-      col->cell[col->len] = cell;
-      col->len += 1;
+        if (update_pressure) {
+            gssize i;
+            gssize len = sed_column_len(col);
+            double cell_load = sed_cell_load(cell);
 
-      sed_column_set_thickness( col , sed_column_thickness(col)+sed_cell_size(cell) );
+            for (i = 0 ; i < len ; i++)
+                sed_cell_set_pressure(col->cell[i],
+                    sed_cell_pressure(col->cell[i])
+                    + cell_load);
+        }
 
-      if ( update_pressure )
-      {
-         gssize i;
-         gssize len = sed_column_len( col );
-         double cell_load = sed_cell_load( cell );
+    }
 
-         for ( i=0 ; i<len ; i++ )
-            sed_cell_set_pressure( col->cell[i] ,
-                                   sed_cell_pressure( col->cell[i] )
-                                   + cell_load );
-      }
-
-      eh_require( sed_cell_is_valid(col->cell[col->len-1]) );
-   }
-
-   return amount_to_add;
+    return amount_to_add;
 }
 
 double
-sed_column_stack_cell( Sed_column col , Sed_cell cell )
+sed_column_stack_cell_loc_real(Sed_column col, Sed_cell cell, gboolean update_pressure)
 {
-   return sed_column_stack_cell_real( col , cell , FALSE );
+    double amount_to_add = 0;
+
+    eh_require(col);
+    eh_require(cell);
+
+    if (col && cell) {
+        /*
+        if ( !sed_cell_is_valid(cell) || sed_cell_is_empty(cell) || sed_cell_is_clear(cell) )
+        {
+           sed_cell_fprint( stderr , cell );
+           eh_watch_ptr( cell );
+        eh_exit(0);
+        }
+        */
+        amount_to_add = sed_cell_size(cell);
+
+        sed_column_resize(col, col->len + 1);
+
+        sed_cell_destroy(col->cell[col->len]);
+
+        col->cell[col->len] = cell;
+        col->len += 1;
+
+        sed_column_set_thickness(col, sed_column_thickness(col) + sed_cell_size(cell));
+
+        if (update_pressure) {
+            gssize i;
+            gssize len = sed_column_len(col);
+            double cell_load = sed_cell_load(cell);
+
+            for (i = 0 ; i < len ; i++)
+                sed_cell_set_pressure(col->cell[i],
+                    sed_cell_pressure(col->cell[i])
+                    + cell_load);
+        }
+
+        eh_require(sed_cell_is_valid(col->cell[col->len - 1]));
+    }
+
+    return amount_to_add;
 }
 
 double
-sed_column_stack_cell_loc( Sed_column col , Sed_cell cell )
+sed_column_stack_cell(Sed_column col, Sed_cell cell)
 {
-   return sed_column_stack_cell_loc_real( col , cell , FALSE );
+    return sed_column_stack_cell_real(col, cell, FALSE);
+}
+
+double
+sed_column_stack_cell_loc(Sed_column col, Sed_cell cell)
+{
+    return sed_column_stack_cell_loc_real(col, cell, FALSE);
 }
 

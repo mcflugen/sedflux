@@ -7,16 +7,18 @@
 
 G_BEGIN_DECLS
 
-typedef enum
-{
-   COMPACT_ERROR_INPUT_FILE
+typedef enum {
+    COMPACT_ERROR_INPUT_FILE
 }
 Compact_error;
 
 #define COMPACT_ERROR compact_error_quark()
-GQuark   compact_error_quark( void );
-int      compact ( Sed_column col );
-gboolean compact_cube ( Sed_cube cube );
+GQuark
+compact_error_quark(void);
+int
+compact(Sed_column col);
+gboolean
+compact_cube(Sed_cube cube);
 
 #define COMPACTION_PROGRAM_NAME     "compact"
 #define COMPACTION_MAJOR_VERSION    1

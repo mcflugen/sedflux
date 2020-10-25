@@ -7,7 +7,7 @@ extern "C" {
 
 #include "bmi.h"
 
-BMI_Model * register_bmi_subside(BMI_Model *model);
+BMI_Model* register_bmi_subside(BMI_Model* model);
 
 #if defined(__cplusplus)
 }

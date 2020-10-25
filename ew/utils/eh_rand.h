@@ -45,25 +45,25 @@ double eh_ran2(long*);
 double eh_ran3(long*);
 double eh_ran4(long*);
 
-double eh_cosdev               (long*);
-double eh_expdev               (long*);
-double eh_powdev         (double,long*);
-double eh_maxpowdev      (double,double,long*);
-double eh_gasdev         ( long* );
-double eh_reject         (double (*)(double),double (*)(double),double (*)(double) );
+double eh_cosdev(long*);
+double eh_expdev(long*);
+double eh_powdev(double, long*);
+double eh_maxpowdev(double, double, long*);
+double eh_gasdev(long*);
+double eh_reject(double (*)(double), double (*)(double), double (*)(double));
 
-double eh_rand_exponential     ( GRand* rand , double                                 );
-double eh_rand_max_exponential ( GRand* rand , double mean , double n                 );
-double eh_log_normal           ( GRand* rand , double mean , double std               );
-double eh_max_log_normal       ( GRand* rand , double mean , double std , double n    );
-double eh_rand_weibull         ( GRand* rand , double eta  , double beta              );
-double eh_rand_max_weibull     ( GRand* rand , double eta  , double beta , double n   );
-double eh_rand_normal          ( GRand* rand , double mu   , double sigma             );
-double eh_rand_user            ( GRand* rand , double *x   , double *F  , gssize len  );
+double eh_rand_exponential(GRand* rand, double);
+double eh_rand_max_exponential(GRand* rand, double mean, double n);
+double eh_log_normal(GRand* rand, double mean, double std);
+double eh_max_log_normal(GRand* rand, double mean, double std, double n);
+double eh_rand_weibull(GRand* rand, double eta, double beta);
+double eh_rand_max_weibull(GRand* rand, double eta, double beta, double n);
+double eh_rand_normal(GRand* rand, double mu, double sigma);
+double eh_rand_user(GRand* rand, double* x, double* F, gssize len);
 
-double    eh_get_fuzzy_dbl      ( double min  , double max );
-double    eh_get_fuzzy_dbl_norm ( double mean , double std );
-gint32    eh_get_fuzzy_int      ( gint32 min  , gint32 max );
+double    eh_get_fuzzy_dbl(double min, double max);
+double    eh_get_fuzzy_dbl_norm(double mean, double std);
+gint32    eh_get_fuzzy_int(gint32 min, gint32 max);
 
 #ifdef __cplusplus
 }

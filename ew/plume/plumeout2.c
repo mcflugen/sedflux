@@ -70,92 +70,101 @@
 #include <utils/utils.h>
 
 gint
-plumeout2( Plume_enviro* env         ,
-           Plume_grid*   grid        ,
-           double        dx          ,
-           double**      deposit     ,
-           int           deposit_len ,
-           int           n_grains    ,
-           double        basin_width )
+plumeout2(Plume_enviro* env,
+    Plume_grid*   grid,
+    double        dx,
+    double**      deposit,
+    int           deposit_len,
+    int           n_grains,
+    double        basin_width)
 {
-   double *deposit_thickness, *deposit_int;
-   double *deposit_x;
-   double mass_in, mass_out;
-   int   ii, jj, nn;
-   Plume_river river = *(env->river);
-   Plume_sediment *sedload = env->sed;
+    double* deposit_thickness, *deposit_int;
+    double* deposit_x;
+    double mass_in, mass_out;
+    int   ii, jj, nn;
+    Plume_river river = *(env->river);
+    Plume_sediment* sedload = env->sed;
 
-   deposit_thickness = eh_new( double , grid->lx );
-   deposit_int       = eh_new( double , deposit_len );
-   deposit_x         = eh_new( double , deposit_len );
+    deposit_thickness = eh_new(double, grid->lx);
+    deposit_int       = eh_new(double, deposit_len);
+    deposit_x         = eh_new(double, deposit_len);
 
-   //---
-   // initialize the x-coordinate for each deposit location.  this is where
-   // where we want to calculate the sedimentation rates.  we will interpolate
-   // plume's grid to this one.
-   //---
-   for ( ii=0 ; ii<deposit_len ; ii++ )
-      deposit_x[ii] = ii*dx;
-   
-   //---
-   // here we average the 2d plume grid row by row so that we obtain an
-   // average sedimentation rate that we use as the centerline average.
-   // we then interpolate this 1d array to the points that are specified
-   // as input (a constant spacing of dx).
-   //
-   // we also calculate the sediment mass that was input (for each grain
-   // size) and the mass the is output.  if there is a difference, we scale
-   // the output mass to assure that mass is balanced.  we assume that any
-   // discrepancy is a result of small numerical errors.
-   //---
-   for ( nn=0 ; nn<env->n_grains ; nn++ )
-   {
-      mass_in = river.Cs[nn]*river.Q*dTOs;
+    //---
+    // initialize the x-coordinate for each deposit location.  this is where
+    // where we want to calculate the sedimentation rates.  we will interpolate
+    // plume's grid to this one.
+    //---
+    for (ii = 0 ; ii < deposit_len ; ii++) {
+        deposit_x[ii] = ii * dx;
+    }
 
-      // Determine the centerline average for each grain size
-      for( ii=0 ; ii<grid->lx ; ii++ ) 
-      {
-         deposit_thickness[ii] = 0.0;
-         for( jj=0 ; jj<grid->ly ; jj++ )
-            deposit_thickness[ii] += grid->deps[ii][jj][nn];
-         deposit_thickness[ii] /= grid->ly;
-      }
+    //---
+    // here we average the 2d plume grid row by row so that we obtain an
+    // average sedimentation rate that we use as the centerline average.
+    // we then interpolate this 1d array to the points that are specified
+    // as input (a constant spacing of dx).
+    //
+    // we also calculate the sediment mass that was input (for each grain
+    // size) and the mass the is output.  if there is a difference, we scale
+    // the output mass to assure that mass is balanced.  we assume that any
+    // discrepancy is a result of small numerical errors.
+    //---
+    for (nn = 0 ; nn < env->n_grains ; nn++) {
+        mass_in = river.Cs[nn] * river.Q * dTOs;
 
-      // Interpolate to the requested grid.
-      interpolate( grid->xval ,
-                   deposit_thickness ,
-                   grid->lx ,
-                   deposit_x ,
-                   deposit_int ,
-                   deposit_len );
+        // Determine the centerline average for each grain size
+        for (ii = 0 ; ii < grid->lx ; ii++) {
+            deposit_thickness[ii] = 0.0;
 
-      for( ii=0, mass_out=0 ; ii<deposit_len ; ii++ ) 
-         if ( !isnan(deposit_int[ii]) )
-            mass_out += deposit_int[ii]*sedload[nn].rho;
-         else
-            deposit_int[ii] = 0.;
-      mass_out *= basin_width*dx;
+            for (jj = 0 ; jj < grid->ly ; jj++) {
+                deposit_thickness[ii] += grid->deps[ii][jj][nn];
+            }
 
-      // Need to swap these arrays for sedflux.  While we are it, scale the
-      // interpolated deposit for mass balance.
-      if ( mass_out > 0 )
-         for (ii=0;ii<deposit_len;ii++)
-            deposit[ii][nn] = deposit_int[ii];
-            //deposit[ii][nn] = deposit_int[ii]*(mass_in/mass_out);
-      else
-         eh_require_not_reached();
+            deposit_thickness[ii] /= grid->ly;
+        }
 
-eh_watch_dbl( mass_in );
-mass_out = 0;
-         for (ii=0;ii<deposit_len;ii++)
-            mass_out += deposit_int[ii]*dx*basin_width*sedload[nn].rho;
-eh_watch_dbl( mass_out );
-   }
+        // Interpolate to the requested grid.
+        interpolate(grid->xval,
+            deposit_thickness,
+            grid->lx,
+            deposit_x,
+            deposit_int,
+            deposit_len);
 
-   eh_free( deposit_x );
-   eh_free( deposit_thickness );
-   eh_free( deposit_int );
+        for (ii = 0, mass_out = 0 ; ii < deposit_len ; ii++)
+            if (!isnan(deposit_int[ii])) {
+                mass_out += deposit_int[ii] * sedload[nn].rho;
+            } else {
+                deposit_int[ii] = 0.;
+            }
 
-   return 0;
+        mass_out *= basin_width * dx;
+
+        // Need to swap these arrays for sedflux.  While we are it, scale the
+        // interpolated deposit for mass balance.
+        if (mass_out > 0)
+            for (ii = 0; ii < deposit_len; ii++) {
+                deposit[ii][nn] = deposit_int[ii];
+            }
+        //deposit[ii][nn] = deposit_int[ii]*(mass_in/mass_out);
+        else {
+            eh_require_not_reached();
+        }
+
+        eh_watch_dbl(mass_in);
+        mass_out = 0;
+
+        for (ii = 0; ii < deposit_len; ii++) {
+            mass_out += deposit_int[ii] * dx * basin_width * sedload[nn].rho;
+        }
+
+        eh_watch_dbl(mass_out);
+    }
+
+    eh_free(deposit_x);
+    eh_free(deposit_thickness);
+    eh_free(deposit_int);
+
+    return 0;
 }   // end of PlumeOut2
 

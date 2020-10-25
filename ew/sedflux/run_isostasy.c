@@ -30,382 +30,381 @@
 
 #include "sedflux.h"
 
-void     subside_point_load      ( Eh_dbl_grid g , double load , double h ,
-                                   double E       , int i_load  , int j_load );
-void     subside_half_plane_load ( Eh_dbl_grid g , double load , double h , double E );
-double   get_flexure_parameter   ( double h       , double E    , gssize n_dim );
-gboolean init_isostasy_data      ( Sed_process proc , Sed_cube prof );
+void
+subside_point_load(Eh_dbl_grid g, double load, double h,
+    double E, int i_load, int j_load);
+void
+subside_half_plane_load(Eh_dbl_grid g, double load, double h, double E);
+double
+get_flexure_parameter(double h, double E, gssize n_dim);
+gboolean
+init_isostasy_data(Sed_process proc, Sed_cube prof);
 
 Sed_process_info
-run_isostasy( Sed_process proc , Sed_cube prof )
+run_isostasy(Sed_process proc, Sed_cube prof)
 {
-   Isostasy_t*      data = (Isostasy_t*)sed_process_user_data(proc);
-   Sed_process_info info = SED_EMPTY_INFO;
-   double full_n_x, full_n_y;
-   gint   small_n_x, small_n_y;
-   double x_reduction, y_reduction;
-   double C;
-   double time, time_step;
-   Eh_dbl_grid dw_iso;
-   double total_dw = 0;
+    Isostasy_t*      data = (Isostasy_t*)sed_process_user_data(proc);
+    Sed_process_info info = SED_EMPTY_INFO;
+    double full_n_x, full_n_y;
+    gint   small_n_x, small_n_y;
+    double x_reduction, y_reduction;
+    double C;
+    double time, time_step;
+    Eh_dbl_grid dw_iso;
+    double total_dw = 0;
 
-   if ( sed_process_run_count(proc)==0 )
-      init_isostasy_data( proc , prof );
+    if (sed_process_run_count(proc) == 0) {
+        init_isostasy_data(proc, prof);
+    }
 
-   if ( sed_mode_is_3d() )
-   {
-      x_reduction = .2;
-      y_reduction = .2;
-   }
-   else
-   {
-      x_reduction = 1;
-      y_reduction = .2;
-   }
+    if (sed_mode_is_3d()) {
+        x_reduction = .2;
+        y_reduction = .2;
+    } else {
+        x_reduction = 1;
+        y_reduction = .2;
+    }
 
-   if ( sed_mode_is_3d() )
-      C = sed_cube_x_res( prof )
-        * sed_cube_y_res( prof )
-        / x_reduction
-        / y_reduction;
-   else
-      C = sed_cube_y_res( prof )
-        / x_reduction
-        / y_reduction;
+    if (sed_mode_is_3d())
+        C = sed_cube_x_res(prof)
+            * sed_cube_y_res(prof)
+            / x_reduction
+            / y_reduction;
+    else
+        C = sed_cube_y_res(prof)
+            / x_reduction
+            / y_reduction;
 
-   eh_dbl_grid_scalar_mult( data->last_load , C );
+    eh_dbl_grid_scalar_mult(data->last_load, C);
 
-   full_n_x = sed_cube_n_x(prof);
-   full_n_y = sed_cube_n_y(prof);
-   small_n_x = ceil( full_n_x * x_reduction );
-   small_n_y = ceil( full_n_y * y_reduction );
+    full_n_x = sed_cube_n_x(prof);
+    full_n_y = sed_cube_n_y(prof);
+    small_n_x = ceil(full_n_x * x_reduction);
+    small_n_y = ceil(full_n_y * y_reduction);
 
-   //---
-   // Save the current time, and the time since the last subsidence
-   //---
-   time            = sed_cube_age_in_years(prof);
-   time_step       = time - data->last_time;
-   data->last_time = time;
+    //---
+    // Save the current time, and the time since the last subsidence
+    //---
+    time            = sed_cube_age_in_years(prof);
+    time_step       = time - data->last_time;
+    data->last_time = time;
 
-   dw_iso = eh_grid_new( double , full_n_x , full_n_y );
+    dw_iso = eh_grid_new(double, full_n_x, full_n_y);
 
-   //---
-   // First we calculate the total deflection to equilibrium.  Keep updating
-   // the sed_cube but save the deflection so we can add it back later.
-   //---
-   {
-      gssize iter = 0;
-      double last_dw;
-      double this_half_load;
-      Eh_dbl_grid this_dw_small;
-      Eh_dbl_grid this_dw_full;
-      Eh_dbl_grid last_load_small;
-      Eh_dbl_grid last_load_full;
-      Eh_dbl_grid this_load_small;
-      Eh_dbl_grid this_load_full;
+    //---
+    // First we calculate the total deflection to equilibrium.  Keep updating
+    // the sed_cube but save the deflection so we can add it back later.
+    //---
+    {
+        gssize iter = 0;
+        double last_dw;
+        double this_half_load;
+        Eh_dbl_grid this_dw_small;
+        Eh_dbl_grid this_dw_full;
+        Eh_dbl_grid last_load_small;
+        Eh_dbl_grid last_load_full;
+        Eh_dbl_grid this_load_small;
+        Eh_dbl_grid this_load_full;
 
-      //---
-      // Create a grid to hold the calculated deflections.
-      //---
-      eh_debug( "Create a grid to hold the calculated deflections" );
-      {
-         this_dw_small = eh_grid_new( double , small_n_x , small_n_y );
-         eh_grid_set_x_lin( this_dw_small , 0 , sed_cube_x_res(prof)/x_reduction );
-         eh_grid_set_y_lin( this_dw_small , 0 , sed_cube_y_res(prof)/y_reduction );
-      }
+        //---
+        // Create a grid to hold the calculated deflections.
+        //---
+        eh_debug("Create a grid to hold the calculated deflections");
+        {
+            this_dw_small = eh_grid_new(double, small_n_x, small_n_y);
+            eh_grid_set_x_lin(this_dw_small, 0, sed_cube_x_res(prof) / x_reduction);
+            eh_grid_set_y_lin(this_dw_small, 0, sed_cube_y_res(prof) / y_reduction);
+        }
 
-      last_load_full = eh_grid_dup( data->last_load );
+        last_load_full = eh_grid_dup(data->last_load);
 
-      eh_debug( "Subside the basin" );
-      do
-      {
-         eh_debug( "Clear the deflection grid for each iteration" );
-         eh_dbl_grid_scalar_mult( this_dw_small , 0. );
+        eh_debug("Subside the basin");
 
-         //---
-         // Calculate the loads due to each column in a sed_cube.  This is the
-         // total load, which includes all of the sediment and water in each
-         // column.
-         //
-         // Multiply by a constant that takes into account the width and length
-         // of each column.
-         //---
-         eh_debug( "Get the new load grid" );
-         this_load_full = sed_cube_load_grid( prof , NULL );
-         eh_dbl_grid_scalar_mult( this_load_full , C );
-         this_half_load = sed_cube_water_pressure( prof , 0 , sed_cube_n_y(prof)-1 );
-   
-         //---
-         // Remesh the old and new load grids, to a coarser mesh.  We do this to
-         // improve run-time for 2D simulations.
-         //---
-         eh_debug( "Remesh the load grids" );
-         last_load_small = eh_dbl_grid_remesh( last_load_full ,
-                                               small_n_x      ,
-                                               small_n_y );
-         this_load_small = eh_dbl_grid_remesh( this_load_full ,
-                                               small_n_x      ,
-                                               small_n_y );
-
-         //---
-         // Calculate the isostatic subsidence for the newly added sediment.
-         // All of the grids used in this step are reduced from the original
-         // size.  Unfortunately, this method is order n^3 and so we do the
-         // calculations on a small grid to save time.  The result is then
-         // interpolated to a full size grid.
-         //
-         // Skip the subsidence if there is no load change.  However, the load
-         // can now be less than zero.
-         //---
-         eh_debug( "Calculate deflections" );
-         {
-            Eh_dbl_grid v_0 = eh_grid_dup( this_load_small );
-            double      eet = data->eet;
-            double      y   = data->youngs_modulus;
-
-            eh_dbl_grid_subtract( v_0 , last_load_small );
-
-            subside_grid_load( this_dw_small , v_0 , eet , y );
-
-            if ( sed_mode_is_2d() )
-            {
-               double half_load = this_half_load - data->last_half_load;
-               subside_half_plane_load( this_dw_small , half_load , eet , y );
-            }
-
-            eh_grid_destroy( v_0 , TRUE );
-         }
-/*
-         eh_debug( "Calculate the isostatic subsidence" );
-         {
-            gssize i, j;
-            double v_0;
-            double eet = data->eet;
-            double y   = data->youngs_modulus;
-   
-            for ( i=0 ; i<small_n_x ; i++ )
-               for ( j=0 ; j<small_n_y ; j++ )
-               {
-                  v_0 = eh_dbl_grid_val(this_load_small,i,j)
-                      - eh_dbl_grid_val(last_load_small,i,j);
-                  if ( fabs(v_0) > 1e-3 )
-                     subside_point_load( this_dw_small , v_0 , eet , y , i , j );
-               }
-
-            if ( !is_sedflux_3d() )
-            {
-               v_0 = this_half_load - data->last_half_load;
-               subside_half_plane_load( this_dw_small , v_0 , eet , y );
-            }
-
-         }
-*/
-         //---
-         // Save the current load.
-         //---
-         eh_debug( "Save the current load" );
-         eh_grid_copy( last_load_full , this_load_full );
-         data->last_half_load = this_half_load;
-   
-         //---
-         // Expand the deflection grid back to full resolution so that the
-         // sed_cube can be deflected.
-         //---
-         eh_debug( "Expand the grid to full resolution" );
-         this_dw_full = eh_dbl_grid_expand( this_dw_small ,
-                                            full_n_x      ,
-                                            full_n_y );
-   
-         //---
-         // Subside the sed_cube.
-         // Save the total defelction.
-         //---
-         eh_debug( "Subside the basin" );
-         {
-            gssize i, len = sed_cube_size(prof);
-   
-            for ( i=0 ; i<len ; i++ )
-               sed_cube_adjust_base_height( prof , 0 , i , -eh_dbl_grid_val(this_dw_full,0,i) );
-         }
-   
-         eh_dbl_grid_add( dw_iso , this_dw_full );
-   
-         //---
-         // Free the grids.
-         //---
-         eh_grid_destroy( this_dw_full    , TRUE );
-         eh_grid_destroy( last_load_small , TRUE );
-         eh_grid_destroy( this_load_small , TRUE );
-         eh_grid_destroy( this_load_full  , TRUE );
-   
-         last_dw  = total_dw;
-         total_dw = eh_dbl_grid_sum( dw_iso );
-iter++;
-      }
-//      while ( iter<50 );
-      while ( fabs(total_dw)>0 && fabs((total_dw-last_dw)/total_dw )>.01 );
-
-      eh_grid_destroy( this_dw_small  , TRUE );
-      eh_grid_destroy( last_load_full , TRUE );
-
-   }
-
-//---
-// After we know the total deflection, add it back to the sed_cube.  Now we
-// again deflect the sed_cube but this time we add the relaxation-time
-// term.
-//---
-   {
-      gssize i, j;
-      double dt = time_step;
-      double k  = data->relaxation_time;
-      double **last_dw_iso = eh_dbl_grid_data(data->last_dw_iso);
-      double **this_dw_iso = eh_dbl_grid_data(dw_iso);
-      double f = (k<1e-6)?0:exp(-dt/k);
-
-      for ( i=0 ; i<sed_cube_n_x(prof) ; i++ )
-         for ( j=0 ; j<sed_cube_n_y(prof) ; j++ )
-         {
-            sed_cube_adjust_base_height( prof , i , j , this_dw_iso[i][j] );
-            sed_cube_adjust_base_height( prof , i , j ,
-                                         -   (1.-f)
-                                           * (   this_dw_iso[i][j]
-                                               + last_dw_iso[i][j] ) );
+        do {
+            eh_debug("Clear the deflection grid for each iteration");
+            eh_dbl_grid_scalar_mult(this_dw_small, 0.);
 
             //---
-            // Save the distance from isostatic equilibrium.
+            // Calculate the loads due to each column in a sed_cube.  This is the
+            // total load, which includes all of the sediment and water in each
+            // column.
+            //
+            // Multiply by a constant that takes into account the width and length
+            // of each column.
             //---
-            last_dw_iso[i][j] = f*(this_dw_iso[i][j]+last_dw_iso[i][j]);
-         }
-   }
+            eh_debug("Get the new load grid");
+            this_load_full = sed_cube_load_grid(prof, NULL);
+            eh_dbl_grid_scalar_mult(this_load_full, C);
+            this_half_load = sed_cube_water_pressure(prof, 0, sed_cube_n_y(prof) - 1);
 
-   //---
-   // Save the current load.
-   //---
-   eh_grid_destroy( data->last_load , TRUE );
-   data->last_load = sed_cube_load_grid( prof , NULL );
+            //---
+            // Remesh the old and new load grids, to a coarser mesh.  We do this to
+            // improve run-time for 2D simulations.
+            //---
+            eh_debug("Remesh the load grids");
+            last_load_small = eh_dbl_grid_remesh(last_load_full,
+                    small_n_x,
+                    small_n_y);
+            this_load_small = eh_dbl_grid_remesh(this_load_full,
+                    small_n_x,
+                    small_n_y);
 
-   eh_grid_destroy( dw_iso , TRUE );
+            //---
+            // Calculate the isostatic subsidence for the newly added sediment.
+            // All of the grids used in this step are reduced from the original
+            // size.  Unfortunately, this method is order n^3 and so we do the
+            // calculations on a small grid to save time.  The result is then
+            // interpolated to a full size grid.
+            //
+            // Skip the subsidence if there is no load change.  However, the load
+            // can now be less than zero.
+            //---
+            eh_debug("Calculate deflections");
+            {
+                Eh_dbl_grid v_0 = eh_grid_dup(this_load_small);
+                double      eet = data->eet;
+                double      y   = data->youngs_modulus;
 
-   eh_message( "time             : %f" , sed_cube_age_in_years(prof) );
-   eh_message( "Youngs modulus   : %f" , data->youngs_modulus        );
-   eh_message( "EET              : %f" , data->eet                   );
-   eh_message( "sea level        : %f" , sed_cube_sea_level(prof)    );
-   eh_message( "total downward deflection : %f" , total_dw           );
+                eh_dbl_grid_subtract(v_0, last_load_small);
 
-   return info;
+                subside_grid_load(this_dw_small, v_0, eet, y);
+
+                if (sed_mode_is_2d()) {
+                    double half_load = this_half_load - data->last_half_load;
+                    subside_half_plane_load(this_dw_small, half_load, eet, y);
+                }
+
+                eh_grid_destroy(v_0, TRUE);
+            }
+            /*
+                     eh_debug( "Calculate the isostatic subsidence" );
+                     {
+                        gssize i, j;
+                        double v_0;
+                        double eet = data->eet;
+                        double y   = data->youngs_modulus;
+
+                        for ( i=0 ; i<small_n_x ; i++ )
+                           for ( j=0 ; j<small_n_y ; j++ )
+                           {
+                              v_0 = eh_dbl_grid_val(this_load_small,i,j)
+                                  - eh_dbl_grid_val(last_load_small,i,j);
+                              if ( fabs(v_0) > 1e-3 )
+                                 subside_point_load( this_dw_small , v_0 , eet , y , i , j );
+                           }
+
+                        if ( !is_sedflux_3d() )
+                        {
+                           v_0 = this_half_load - data->last_half_load;
+                           subside_half_plane_load( this_dw_small , v_0 , eet , y );
+                        }
+
+                     }
+            */
+            //---
+            // Save the current load.
+            //---
+            eh_debug("Save the current load");
+            eh_grid_copy(last_load_full, this_load_full);
+            data->last_half_load = this_half_load;
+
+            //---
+            // Expand the deflection grid back to full resolution so that the
+            // sed_cube can be deflected.
+            //---
+            eh_debug("Expand the grid to full resolution");
+            this_dw_full = eh_dbl_grid_expand(this_dw_small,
+                    full_n_x,
+                    full_n_y);
+
+            //---
+            // Subside the sed_cube.
+            // Save the total defelction.
+            //---
+            eh_debug("Subside the basin");
+            {
+                gssize i, len = sed_cube_size(prof);
+
+                for (i = 0 ; i < len ; i++) {
+                    sed_cube_adjust_base_height(prof, 0, i, -eh_dbl_grid_val(this_dw_full, 0, i));
+                }
+            }
+
+            eh_dbl_grid_add(dw_iso, this_dw_full);
+
+            //---
+            // Free the grids.
+            //---
+            eh_grid_destroy(this_dw_full, TRUE);
+            eh_grid_destroy(last_load_small, TRUE);
+            eh_grid_destroy(this_load_small, TRUE);
+            eh_grid_destroy(this_load_full, TRUE);
+
+            last_dw  = total_dw;
+            total_dw = eh_dbl_grid_sum(dw_iso);
+            iter++;
+        }
+
+        //      while ( iter<50 );
+        while (fabs(total_dw) > 0 && fabs((total_dw - last_dw) / total_dw) > .01);
+
+        eh_grid_destroy(this_dw_small, TRUE);
+        eh_grid_destroy(last_load_full, TRUE);
+
+    }
+
+    //---
+    // After we know the total deflection, add it back to the sed_cube.  Now we
+    // again deflect the sed_cube but this time we add the relaxation-time
+    // term.
+    //---
+    {
+        gssize i, j;
+        double dt = time_step;
+        double k  = data->relaxation_time;
+        double** last_dw_iso = eh_dbl_grid_data(data->last_dw_iso);
+        double** this_dw_iso = eh_dbl_grid_data(dw_iso);
+        double f = (k < 1e-6) ? 0 : exp(-dt / k);
+
+        for (i = 0 ; i < sed_cube_n_x(prof) ; i++)
+            for (j = 0 ; j < sed_cube_n_y(prof) ; j++) {
+                sed_cube_adjust_base_height(prof, i, j, this_dw_iso[i][j]);
+                sed_cube_adjust_base_height(prof, i, j,
+                    - (1. - f)
+                    * (this_dw_iso[i][j]
+                        + last_dw_iso[i][j]));
+
+                //---
+                // Save the distance from isostatic equilibrium.
+                //---
+                last_dw_iso[i][j] = f * (this_dw_iso[i][j] + last_dw_iso[i][j]);
+            }
+    }
+
+    //---
+    // Save the current load.
+    //---
+    eh_grid_destroy(data->last_load, TRUE);
+    data->last_load = sed_cube_load_grid(prof, NULL);
+
+    eh_grid_destroy(dw_iso, TRUE);
+
+    eh_message("time             : %f", sed_cube_age_in_years(prof));
+    eh_message("Youngs modulus   : %f", data->youngs_modulus);
+    eh_message("EET              : %f", data->eet);
+    eh_message("sea level        : %f", sed_cube_sea_level(prof));
+    eh_message("total downward deflection : %f", total_dw);
+
+    return info;
 }
 
 #define ISOSTASY_KEY_EET             "effective elastic thickness"
 #define ISOSTASY_KEY_YOUNGS_MODULUS  "Youngs modulus"
 #define ISOSTASY_KEY_RELAXATION_TIME "relaxation time"
 
-static const gchar* isostasy_req_labels[] =
-{
-   ISOSTASY_KEY_EET             ,
-   ISOSTASY_KEY_YOUNGS_MODULUS  ,
-   ISOSTASY_KEY_RELAXATION_TIME ,
-   NULL
+static const gchar* isostasy_req_labels[] = {
+    ISOSTASY_KEY_EET,
+    ISOSTASY_KEY_YOUNGS_MODULUS,
+    ISOSTASY_KEY_RELAXATION_TIME,
+    NULL
 };
 
 gboolean
-init_isostasy( Sed_process p , Eh_symbol_table tab , GError** error )
+init_isostasy(Sed_process p, Eh_symbol_table tab, GError** error)
 {
-   Isostasy_t* data    = sed_process_new_user_data( p , Isostasy_t );
-   GError*     tmp_err = NULL;
-   gchar**     err_s   = NULL;
-   gboolean    is_ok   = TRUE;
+    Isostasy_t* data    = sed_process_new_user_data(p, Isostasy_t);
+    GError*     tmp_err = NULL;
+    gchar**     err_s   = NULL;
+    gboolean    is_ok   = TRUE;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+    eh_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-   data->last_dw_iso     = NULL;
-   data->last_load       = NULL;
-   data->last_half_load  = 0.;
+    data->last_dw_iso     = NULL;
+    data->last_load       = NULL;
+    data->last_half_load  = 0.;
 
-   eh_symbol_table_require_labels( tab , isostasy_req_labels , &tmp_err );
+    eh_symbol_table_require_labels(tab, isostasy_req_labels, &tmp_err);
 
-   if ( !tmp_err )
-   {
-      data->relaxation_time = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_RELAXATION_TIME );
-      data->eet             = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_EET             );
-      data->youngs_modulus  = eh_symbol_table_dbl_value( tab , ISOSTASY_KEY_YOUNGS_MODULUS  );
+    if (!tmp_err) {
+        data->relaxation_time = eh_symbol_table_dbl_value(tab, ISOSTASY_KEY_RELAXATION_TIME);
+        data->eet             = eh_symbol_table_dbl_value(tab, ISOSTASY_KEY_EET);
+        data->youngs_modulus  = eh_symbol_table_dbl_value(tab, ISOSTASY_KEY_YOUNGS_MODULUS);
 
-      eh_check_to_s( data->relaxation_time>=0  , "Relaxation time positive"             , &err_s );
-      eh_check_to_s( data->eet>=0              , "Effective elastic thickness positive" , &err_s );
-      eh_check_to_s( data->youngs_modulus>=0   , "Young's Modulus positive"             , &err_s );
+        eh_check_to_s(data->relaxation_time >= 0, "Relaxation time positive", &err_s);
+        eh_check_to_s(data->eet >= 0, "Effective elastic thickness positive", &err_s);
+        eh_check_to_s(data->youngs_modulus >= 0, "Young's Modulus positive", &err_s);
 
-      if ( !tmp_err && err_s )
-         eh_set_error_strv( &tmp_err , SEDFLUX_ERROR , SEDFLUX_ERROR_BAD_PARAM , err_s );
+        if (!tmp_err && err_s) {
+            eh_set_error_strv(&tmp_err, SEDFLUX_ERROR, SEDFLUX_ERROR_BAD_PARAM, err_s);
+        }
 
-   }
+    }
 
-   if ( tmp_err )
-   {
-      g_propagate_error( error , tmp_err );
-      is_ok = FALSE;
-   }
+    if (tmp_err) {
+        g_propagate_error(error, tmp_err);
+        is_ok = FALSE;
+    }
 
-   return is_ok;
+    return is_ok;
 }
 
 gboolean
-init_isostasy_data( Sed_process proc , Sed_cube prof )
+init_isostasy_data(Sed_process proc, Sed_cube prof)
 {
-   Isostasy_t* data = (Isostasy_t*)sed_process_user_data( proc );
+    Isostasy_t* data = (Isostasy_t*)sed_process_user_data(proc);
 
-   if ( data )
-   {
-      data->last_dw_iso    = eh_grid_new( double , sed_cube_n_x(prof) , sed_cube_n_y(prof) );
-      data->last_load      = sed_cube_load_grid( prof , NULL );
+    if (data) {
+        data->last_dw_iso    = eh_grid_new(double, sed_cube_n_x(prof), sed_cube_n_y(prof));
+        data->last_load      = sed_cube_load_grid(prof, NULL);
 
-      data->last_half_load = sed_cube_water_pressure( prof , 0 , sed_cube_n_y(prof)-1 );
-      data->last_time      = sed_cube_age_in_years(prof);
-   }
+        data->last_half_load = sed_cube_water_pressure(prof, 0, sed_cube_n_y(prof) - 1);
+        data->last_time      = sed_cube_age_in_years(prof);
+    }
 
-   return TRUE;
+    return TRUE;
 }
 
 gboolean
-destroy_isostasy( Sed_process p )
+destroy_isostasy(Sed_process p)
 {
-   if ( p )
-   {
-      Isostasy_t* data = (Isostasy_t*)sed_process_user_data( p );
+    if (p) {
+        Isostasy_t* data = (Isostasy_t*)sed_process_user_data(p);
 
-      if ( data )
-      {
-         eh_grid_destroy( data->last_dw_iso , TRUE );
-         eh_grid_destroy( data->last_load   , TRUE );
+        if (data) {
+            eh_grid_destroy(data->last_dw_iso, TRUE);
+            eh_grid_destroy(data->last_load, TRUE);
 
-         eh_free( data );
-      }
-   }
+            eh_free(data);
+        }
+    }
 
-   return TRUE;
+    return TRUE;
 }
 
-gboolean dump_isostasy_data( gpointer ptr , FILE *fp )
+gboolean
+dump_isostasy_data(gpointer ptr, FILE* fp)
 {
-   Isostasy_t *data = (Isostasy_t*)ptr;
+    Isostasy_t* data = (Isostasy_t*)ptr;
 
-   fwrite( data , sizeof(Isostasy_t) , 1 , fp );
-//   fwrite( data->old_thickness , sizeof(double) , data->len , fp );
-//   fwrite( data->old_height    , sizeof(double) , data->len , fp );
+    fwrite(data, sizeof(Isostasy_t), 1, fp);
+    //   fwrite( data->old_thickness , sizeof(double) , data->len , fp );
+    //   fwrite( data->old_height    , sizeof(double) , data->len , fp );
 
-   return TRUE;
+    return TRUE;
 }
 
-gboolean load_isostasy_data( gpointer ptr , FILE *fp )
+gboolean
+load_isostasy_data(gpointer ptr, FILE* fp)
 {
-   Isostasy_t *data = (Isostasy_t*)ptr;
+    Isostasy_t* data = (Isostasy_t*)ptr;
 
-   fread( data , sizeof(Isostasy_t) , 1 , fp );
+    fread(data, sizeof(Isostasy_t), 1, fp);
 
-//   data->old_thickness = eh_new( double , data->len );
-//   data->old_height    = eh_new( double , data->len );
+    //   data->old_thickness = eh_new( double , data->len );
+    //   data->old_height    = eh_new( double , data->len );
 
-//   fread( data->old_thickness , sizeof(double) , data->len , fp );
-//   fread( data->old_height    , sizeof(double) , data->len , fp );
+    //   fread( data->old_thickness , sizeof(double) , data->len , fp );
+    //   fread( data->old_height    , sizeof(double) , data->len , fp );
 
-   return TRUE;
+    return TRUE;
 }

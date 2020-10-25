@@ -5,7 +5,8 @@
 
 G_BEGIN_DECLS
 
-gboolean sed_test_setup_sediment (gchar* test_name);
+gboolean
+sed_test_setup_sediment(gchar* test_name);
 
 G_END_DECLS
 

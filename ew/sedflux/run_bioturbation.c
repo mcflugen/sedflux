@@ -27,75 +27,73 @@
 #include <bio.h>
 
 Sed_process_info
-run_bioturbation( Sed_process proc , Sed_cube p )
+run_bioturbation(Sed_process proc, Sed_cube p)
 {
-   Bioturbation_t*  data = sed_process_user_data(proc);
-   Sed_process_info info = SED_EMPTY_INFO;
+    Bioturbation_t*  data = sed_process_user_data(proc);
+    Sed_process_info info = SED_EMPTY_INFO;
 
-   {
-      gint   i;
-      gint   len   = sed_cube_size                ( p );
-      double dt    = sed_cube_time_step_in_seconds( p );
-      double time  = sed_cube_age_in_years        ( p );
-      double depth = eh_input_val_eval( data->depth , time );
-      double k     = eh_input_val_eval( data->k     , time );
+    {
+        gint   i;
+        gint   len   = sed_cube_size(p);
+        double dt    = sed_cube_time_step_in_seconds(p);
+        double time  = sed_cube_age_in_years(p);
+        double depth = eh_input_val_eval(data->depth, time);
+        double k     = eh_input_val_eval(data->k, time);
 
-      for ( i=0 ; i<len ; i++ ) sed_column_bioturbate( sed_cube_col(p,i) , depth , k , dt );
-   }
+        for (i = 0 ; i < len ; i++) {
+            sed_column_bioturbate(sed_cube_col(p, i), depth, k, dt);
+        }
+    }
 
-   return info;
+    return info;
 }
 
 #define BIO_KEY_DEPTH   "depth of bioturbation"
 #define BIO_KEY_K       "bioturbation diffusion coefficient"
 
-static gchar* bio_req_labels[] =
-{
-   BIO_KEY_DEPTH ,
-   BIO_KEY_K     ,
-   NULL
+static gchar* bio_req_labels[] = {
+    BIO_KEY_DEPTH,
+    BIO_KEY_K,
+    NULL
 };
 
 gboolean
-init_bioturbation( Sed_process p , Eh_symbol_table t , GError** error )
+init_bioturbation(Sed_process p, Eh_symbol_table t, GError** error)
 {
-   Bioturbation_t* data    = sed_process_new_user_data( p , Bioturbation_t );
-   GError*         tmp_err = NULL;
-   gboolean        is_ok   = TRUE;
+    Bioturbation_t* data    = sed_process_new_user_data(p, Bioturbation_t);
+    GError*         tmp_err = NULL;
+    gboolean        is_ok   = TRUE;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
-   eh_require( t );
-   eh_require( p );
+    eh_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+    eh_require(t);
+    eh_require(p);
 
-   if ( eh_symbol_table_require_labels( t , bio_req_labels , &tmp_err ) )
-   {
-      data->k     = eh_symbol_table_input_value( t , BIO_KEY_K     , &tmp_err );
-      data->depth = eh_symbol_table_input_value( t , BIO_KEY_DEPTH , &tmp_err );
-   }
+    if (eh_symbol_table_require_labels(t, bio_req_labels, &tmp_err)) {
+        data->k     = eh_symbol_table_input_value(t, BIO_KEY_K, &tmp_err);
+        data->depth = eh_symbol_table_input_value(t, BIO_KEY_DEPTH, &tmp_err);
+    }
 
-   if ( tmp_err )
-   {
-      g_propagate_error( error , tmp_err );
-      is_ok = FALSE;
-   }
+    if (tmp_err) {
+        g_propagate_error(error, tmp_err);
+        is_ok = FALSE;
+    }
 
-   return is_ok;
+    return is_ok;
 }
 
 gboolean
-destroy_bioturbation( Sed_process p )
+destroy_bioturbation(Sed_process p)
 {
-   if ( p )
-   {
-      Bioturbation_t* data = sed_process_user_data( p );
+    if (p) {
+        Bioturbation_t* data = sed_process_user_data(p);
 
-      if ( data )
-      {
-         eh_input_val_destroy( data->k     );
-         eh_input_val_destroy( data->depth );
-         eh_free             ( data        );
-      }
-   }
-   return TRUE;
+        if (data) {
+            eh_input_val_destroy(data->k);
+            eh_input_val_destroy(data->depth);
+            eh_free(data);
+        }
+    }
+
+    return TRUE;
 }
 
