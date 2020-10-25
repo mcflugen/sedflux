@@ -33,11 +33,9 @@ install:
 - mamba install cmake c-compiler pkg-config glib -c conda-forge --yes
 script:
 - |
-  export CXXFLAGS="-std=c++98"
-
   mkdir _build && cd _build
   cmake .. -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
   make -j$CPU_COUNT all install
+  ew/utils/utils-test-io --verbose
   make test
-
 - sedflux -h
