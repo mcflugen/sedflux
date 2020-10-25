@@ -5,8 +5,6 @@ sudo: false
 osx_image: xcode6.4
 env:
   global:
-  - CONDA_PREFIX=$HOME/miniconda
-  - MINICONDA_URL_BASE="https://repo.continuum.io/miniconda/Miniconda2-latest"
   - secure: L+Yqd1nmMuQtCDKbhFPpfKiO1dPwH9J4jcdq6KW3vMixlFYs2546ZxhFaDXVgMXogVziq1FcSrNspaPxn0Zxk1ZuUAeFYU+gVp8/jqZGnkTL4UORMk0hHX6EwFNoUJl9LxpmO3140S67td14U0vBz8dOh9oeNui+VrMJn7NGlpI=
 before_install:
 - |
@@ -15,35 +13,23 @@ before_install:
     brew cleanup -s
     rm -rf $(brew --cache)
   fi
-install:
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    OS="MacOSX-x86_64"
-    CXX_COMPILER="clangxx_osx-64"
+    curl -L https://micromamba.snakepit.net/api/micromamba/osx-64/latest | tar -xvj bin/micromamba
   else
-    OS="Linux-x86_64"
-    CXX_COMPILER="gxx_linux-64"
+    curl -L https://micromamba.snakepit.net/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
   fi
-
-# Install Miniconda.
+- ./bin/micromamba shell init -s bash -p ~/micromamba
 - |
-  echo ""
-  echo "Installing a fresh version of Miniconda."
-  MINICONDA_URL="https://repo.continuum.io/miniconda"
-  MINICONDA_FILE="Miniconda3-latest-$OS.sh"
-  curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-  bash $MINICONDA_FILE -b
-
-# Configure conda.
-- |
-  echo ""
-  echo "Configuring conda."
-  source $HOME/miniconda3/bin/activate root
-
-  conda config --set always_yes yes --set changeps1 no
-  conda config --add channels conda-forge
-
-- conda install -q $C_COMPILER cmake pkg-config glib
+  if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    source $HOME/.bash_profile
+  else
+    source $HOME/.bashrc
+  fi
+- micromamba activate
+- micromamba install mamba --yes -c conda-forge
+install:
+- mamba install cmake c-compiler pkg-config glib -c conda-forge --yes
 script:
 - |
   export CXXFLAGS="-std=c++98"
