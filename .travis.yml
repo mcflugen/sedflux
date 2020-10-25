@@ -51,5 +51,6 @@ script:
   mkdir _build && cd _build
   cmake .. -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release
   make -j$CPU_COUNT all install
+  make test
 
 - sedflux -h
