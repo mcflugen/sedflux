@@ -16,114 +16,122 @@ static gboolean _rotate     = TRUE;
 static gboolean _version    = FALSE;
 static gboolean _verbose    = FALSE;
 
-static GOptionEntry entries[] =
-{
-   { "in-file"    , 'i' , 0 , G_OPTION_ARG_FILENAME , &_in_file    , "Initialization file" , "<file>" } ,
-//   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &_out_file   , "Output file"         , "<file>" } ,
-   { "flood-file" , 'f' , 0 , G_OPTION_ARG_FILENAME , &_flood_file , "Flood file"          , "<file>" } ,
-   { "data-file"  , 'd' , 0 , G_OPTION_ARG_FILENAME , &_data_file  , "Data file"           , "<file>" } ,
-   { "n-dim"      , 'D' , 0 , G_OPTION_ARG_INT      , &_n_dim      , "Number of dimensions" , "[1|2]" } ,
-   { "no-rotate"  ,  0  , G_OPTION_FLAG_REVERSE , G_OPTION_ARG_NONE     , &_rotate     , "Do not rotate output" , NULL     } ,
-   { "verbose"    , 'V' , 0 , G_OPTION_ARG_NONE     , &_verbose    , "Be verbose"          , NULL     } ,
-   { "version"    , 'v' , 0 , G_OPTION_ARG_NONE     , &_version    , "Print version number and exit" , NULL     } ,
-   { NULL }
+static GOptionEntry entries[] = {
+    { "in-file", 'i', 0, G_OPTION_ARG_FILENAME, &_in_file, "Initialization file", "<file>" },
+    //   { "out-file"   , 'o' , 0 , G_OPTION_ARG_FILENAME , &_out_file   , "Output file"         , "<file>" } ,
+    { "flood-file", 'f', 0, G_OPTION_ARG_FILENAME, &_flood_file, "Flood file", "<file>" },
+    { "data-file", 'd', 0, G_OPTION_ARG_FILENAME, &_data_file, "Data file", "<file>" },
+    { "n-dim", 'D', 0, G_OPTION_ARG_INT, &_n_dim, "Number of dimensions", "[1|2]" },
+    { "no-rotate",  0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &_rotate, "Do not rotate output", NULL     },
+    { "verbose", 'V', 0, G_OPTION_ARG_NONE, &_verbose, "Be verbose", NULL     },
+    { "version", 'v', 0, G_OPTION_ARG_NONE, &_version, "Print version number and exit", NULL     },
+    { NULL }
 };
 
 gint
-main(int argc, char *argv[])
+main(int argc, char* argv[])
 {
-   GError* error = NULL;
+    GError* error = NULL;
 
-   //eh_init_glib();
+    //eh_init_glib();
 
-   eh_set_verbosity_level (0);
+    eh_set_verbosity_level(0);
 
-   { /* Parse command line options */
-      GOptionContext* context = g_option_context_new( "Run hypopycnal flow model." );
-   
-      g_option_context_add_main_entries( context , entries , NULL );
-   
-      if ( !g_option_context_parse( context , &argc , &argv , &error ) )
-         eh_error( "Error parsing command line arguments: %s" , error->message );
-   }
+    { /* Parse command line options */
+        GOptionContext* context = g_option_context_new("Run hypopycnal flow model.");
 
-   if ( _version )
-   { /* Print version and exit */
-      eh_fprint_version_info( stdout , "plume" , PLUME_MAJOR_VERSION ,
-          PLUME_MINOR_VERSION , PLUME_MICRO_VERSION );
-      eh_exit( 0 );
-   }
+        g_option_context_add_main_entries(context, entries, NULL);
 
-   {
-     FILE * fp = fopen ("plume_config.txt", "w");
-     if (fp) {
-       fprintf (fp, "%s %s", _in_file, _flood_file);
-       fclose (fp);
-     }
-   }
+        if (!g_option_context_parse(context, &argc, &argv, &error)) {
+            eh_error("Error parsing command line arguments: %s", error->message);
+        }
+    }
 
-   if (!error) {
-     BMI_Model * model = g_new0(BMI_Model, 1);
-     int err;
+    if (_version) {
+        /* Print version and exit */
+        eh_fprint_version_info(stdout, "plume", PLUME_MAJOR_VERSION,
+            PLUME_MINOR_VERSION, PLUME_MICRO_VERSION);
+        eh_exit(0);
+    }
 
-     register_bmi_plume(model);
-      
-     fprintf (stderr, "Initializing... ");
-     err = model->initialize(model, "plume_config.txt");
-     if (err) {
-       fprintf (stderr, "FAIL\n");
-       fprintf (stderr, "Error: %d: Unable to initialize\n", err);
-       return EXIT_FAILURE;
-     }
-     fprintf (stderr, "PASS\n");
+    {
+        FILE* fp = fopen("plume_config.txt", "w");
 
-     fprintf (stderr, "Updating... ");
-     err = model->update(model);
-     if (err) {
-       fprintf (stderr, "FAIL\n");
-       fprintf (stderr, "Error: %d: Unable to update\n", err);
-       return EXIT_FAILURE;
-     }
-     fprintf (stderr, "PASS\n");
+        if (fp) {
+            fprintf(fp, "%s %s", _in_file, _flood_file);
+            fclose(fp);
+        }
+    }
 
-     fprintf (stderr, "Getting deposit... ");
-     {
-       double *z;
-       int *shape;
+    if (!error) {
+        BMI_Model* model = g_new0(BMI_Model, 1);
+        int err;
 
-       {
-         int grid, size, rank;
+        register_bmi_plume(model);
 
-         model->get_var_grid(model,
-             "sea_bottom_sediment__deposition_rate", &grid);
-         model->get_grid_size(model, grid, &size);
-         z = g_new (double, size);
+        fprintf(stderr, "Initializing... ");
+        err = model->initialize(model, "plume_config.txt");
 
-         model->get_grid_rank(model, grid, &rank);
-         shape = g_new(int, rank);
+        if (err) {
+            fprintf(stderr, "FAIL\n");
+            fprintf(stderr, "Error: %d: Unable to initialize\n", err);
+            return EXIT_FAILURE;
+        }
 
-         model->get_grid_shape(model, grid, shape);
-       }
+        fprintf(stderr, "PASS\n");
 
-       model->get_value(model, "sea_bottom_sediment__deposition_rate", z);
+        fprintf(stderr, "Updating... ");
+        err = model->update(model);
 
-       {
-         int i, j;
-         double *row = z;
-         for (i=0; i<shape[0]; i++) {
-           for (j=0; j<shape[1]; j++)
-             fprintf (stdout,"%g ", row[j]);
-           fprintf (stdout, "\n");
-           row += shape[1];
-         }
-       }
+        if (err) {
+            fprintf(stderr, "FAIL\n");
+            fprintf(stderr, "Error: %d: Unable to update\n", err);
+            return EXIT_FAILURE;
+        }
 
-       g_free (z);
-       g_free (shape);
-     }
+        fprintf(stderr, "PASS\n");
 
-     model->finalize(model);
-   }
+        fprintf(stderr, "Getting deposit... ");
+        {
+            double* z;
+            int* shape;
 
-   return EXIT_SUCCESS;
+            {
+                int grid, size, rank;
+
+                model->get_var_grid(model,
+                    "sea_bottom_sediment__deposition_rate", &grid);
+                model->get_grid_size(model, grid, &size);
+                z = g_new(double, size);
+
+                model->get_grid_rank(model, grid, &rank);
+                shape = g_new(int, rank);
+
+                model->get_grid_shape(model, grid, shape);
+            }
+
+            model->get_value(model, "sea_bottom_sediment__deposition_rate", z);
+
+            {
+                int i, j;
+                double* row = z;
+
+                for (i = 0; i < shape[0]; i++) {
+                    for (j = 0; j < shape[1]; j++) {
+                        fprintf(stdout, "%g ", row[j]);
+                    }
+
+                    fprintf(stdout, "\n");
+                    row += shape[1];
+                }
+            }
+
+            g_free(z);
+            g_free(shape);
+        }
+
+        model->finalize(model);
+    }
+
+    return EXIT_SUCCESS;
 }

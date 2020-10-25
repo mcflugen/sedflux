@@ -20,41 +20,51 @@
 
 #include <eh_utils.h>
 
-gsize eh_string_find_first_of(GString *s, char c)
+gsize
+eh_string_find_first_of(GString* s, char c)
 {
-   char *p = strchr(s->str,c);
-   return (p==NULL)?G_NPOS:p-s->str;
+    char* p = strchr(s->str, c);
+    return (p == NULL) ? G_NPOS : p - s->str;
 }
 
-gsize eh_string_find_last_of(GString *s, char c)
+gsize
+eh_string_find_last_of(GString* s, char c)
 {
-   char *p = strrchr(s->str,c);
-   return (p==NULL)?G_NPOS:p-s->str;
+    char* p = strrchr(s->str, c);
+    return (p == NULL) ? G_NPOS : p - s->str;
 }
 
-void eh_string_remove_chr(GString *s,char c)
+void
+eh_string_remove_chr(GString* s, char c)
 {
-   gsize n;
-   while ( (n=eh_string_find_first_of(s,c))!=G_NPOS )
-      g_string_erase(s,n,1);
+    gsize n;
+
+    while ((n = eh_string_find_first_of(s, c)) != G_NPOS) {
+        g_string_erase(s, n, 1);
+    }
 }
 
-void eh_string_remove_white_space(GString *s)
+void
+eh_string_remove_white_space(GString* s)
 {
-   char *p=(gchar*)G_WHITESPACE;
-   gsize i, len=strlen(p);
-   for ( i=0 ; i<len ; i++, p++ )
-      eh_string_remove_chr(s,*p);
+    char* p = (gchar*)G_WHITESPACE;
+    gsize i, len = strlen(p);
+
+    for (i = 0 ; i < len ; i++, p++) {
+        eh_string_remove_chr(s, *p);
+    }
 }
 
-char *eh_string_c_str(GString *s)
+char*
+eh_string_c_str(GString* s)
 {
-   return s->str;
+    return s->str;
 }
 
-gsize eh_array_size(GArray *a)
+gsize
+eh_array_size(GArray* a)
 {
-   return a->len;
+    return a->len;
 }
 /*
 GArray *eh_array_set_vals(GArray *a, guint index, gconstpointer data, guint len)
@@ -72,15 +82,17 @@ GArray *eh_array_set_vals(GArray *a, guint index, gconstpointer data, guint len)
 // first link containing data is removed.
 // list : a pointer to a GSList
 // data : the data to be removed and freed
-GSList *eh_slist_remove_and_free( GSList *list , gpointer data )
+GSList*
+eh_slist_remove_and_free(GSList* list, gpointer data)
 {
-   list = g_slist_remove( list , data );
-   eh_free( data );
-   return list;
+    list = g_slist_remove(list, data);
+    eh_free(data);
+    return list;
 }
 
-void eh_free_slist_data( gpointer data , gpointer user_data )
+void
+eh_free_slist_data(gpointer data, gpointer user_data)
 {
-   eh_free( data );
+    eh_free(data);
 }
 

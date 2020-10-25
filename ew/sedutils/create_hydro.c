@@ -24,82 +24,88 @@
 
 #define FORGET_THIS_FOR_NOW
 #if !defined(FORGET_THIS_FOR_NOW)
-static char *help_msg[] = {
-" create_hydro - create a hydrotrend file from         ",
-"                discharge data.                       ",
-"                                                      ",
-" options:                                             ",
-"  in    : name of the input file.                     ",
-"  v     : be verbose [no]                             ",
-"                                                      ",
-NULL };
+static char* help_msg[] = {
+    " create_hydro - create a hydrotrend file from         ",
+    "                discharge data.                       ",
+    "                                                      ",
+    " options:                                             ",
+    "  in    : name of the input file.                     ",
+    "  v     : be verbose [no]                             ",
+    "                                                      ",
+    NULL
+};
 #endif
 
-Sed_hydro discharge_to_hydro_record( double q );
+Sed_hydro
+discharge_to_hydro_record(double q);
 
-int main(int argc,char *argv[])
+int
+main(int argc, char* argv[])
 {
 #if !defined(FORGET_THIS_FOR_NOW)
-   char *req[] = { "in" , NULL };
-   char *infile;
-   gboolean verbose;
-   Eh_args *args;
-   int i, n_cols, n_rows;
-   double *row;
-   double novalue;
-   Eh_data_file *fp_in;
-   Eh_data_record *data;
-   Symbol_table *header;
-   Sed_hydro rec;
+    char* req[] = { "in", NULL };
+    char* infile;
+    gboolean verbose;
+    Eh_args* args;
+    int i, n_cols, n_rows;
+    double* row;
+    double novalue;
+    Eh_data_file* fp_in;
+    Eh_data_record* data;
+    Symbol_table* header;
+    Sed_hydro rec;
 
-   args = eh_opts_init(argc,argv);
-   if ( eh_check_opts( args , req , NULL , help_msg )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   verbose = eh_get_opt_bool( args , "v"  , FALSE );
-   infile  = eh_get_opt_str ( args , "in" , NULL  );
+    if (eh_check_opts(args, req, NULL, help_msg) != 0) {
+        eh_exit(-1);
+    }
 
-   fp_in = eh_open_data_file( infile , NULL );
+    verbose = eh_get_opt_bool(args, "v", FALSE);
+    infile  = eh_get_opt_str(args, "in", NULL);
 
-   data = eh_get_data_from_file( fp_in , 0 );
+    fp_in = eh_open_data_file(infile, NULL);
 
-   header = eh_get_data_record_sym_table( data );
+    data = eh_get_data_from_file(fp_in, 0);
 
-   novalue = g_strtod( eh_symbol_table_lookup(header,"no value") , NULL );
+    header = eh_get_data_record_sym_table(data);
 
-   n_rows = eh_get_data_record_size( data , 0 );
-   n_cols = eh_get_data_record_size( data , 1 );
+    novalue = g_strtod(eh_symbol_table_lookup(header, "no value"), NULL);
 
-   row = eh_get_data_record_row_ptr( data , 0 , double );
-   for ( i=0 ; i<n_cols ; i++ )
-   {
-      if ( fabs(row[i]-novalue) > 1e-5 )
-      {
-         rec = discharge_to_hydro_record( row[i] );
-         fprintf(stderr,"%f , %f\n",row[i],rec->velocity);
-         hydro_destroy_hydro_record( rec );
-      }
-   }
+    n_rows = eh_get_data_record_size(data, 0);
+    n_cols = eh_get_data_record_size(data, 1);
+
+    row = eh_get_data_record_row_ptr(data, 0, double);
+
+    for (i = 0 ; i < n_cols ; i++) {
+        if (fabs(row[i] - novalue) > 1e-5) {
+            rec = discharge_to_hydro_record(row[i]);
+            fprintf(stderr, "%f , %f\n", row[i], rec->velocity);
+            hydro_destroy_hydro_record(rec);
+        }
+    }
+
 #endif
-   return 0;
+    return 0;
 }
 
 #undef FORGET_THIS_FOR_NOW
 
-Sed_hydro discharge_to_hydro_record( double q )
+Sed_hydro
+discharge_to_hydro_record(double q)
 {
-   Sed_hydro rec = sed_hydro_new( 1 );
-   double a, b, c, d, e, f;
-   
-   a = c = e = 1.;
-   b = d = f = 1/3.;
-   
-   sed_hydro_set_velocity         ( rec , a*pow(q,b) );
-   sed_hydro_set_width            ( rec , c*pow(q,d) );
-   sed_hydro_set_depth            ( rec , e*pow(q,f) );
-   sed_hydro_set_bedload          ( rec , 0.         );
-   sed_hydro_set_nth_concentration( rec , 0 , 0.     );
+    Sed_hydro rec = sed_hydro_new(1);
+    double a, b, c, d, e, f;
 
-   return rec;
+    a = c = e = 1.;
+    b = d = f = 1 / 3.;
+
+    sed_hydro_set_velocity(rec, a * pow(q, b));
+    sed_hydro_set_width(rec, c * pow(q, d));
+    sed_hydro_set_depth(rec, e * pow(q, f));
+    sed_hydro_set_bedload(rec, 0.);
+    sed_hydro_set_nth_concentration(rec, 0, 0.);
+
+    return rec;
 }
 

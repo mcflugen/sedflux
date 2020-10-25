@@ -43,7 +43,7 @@
 //  that the gravity driven current can hold:
 //
 //                   2
-//             Ri   u 
+//             Ri   u
 //               cr  max
 //  load_max = ---------
 //                s g
@@ -53,7 +53,7 @@
 //    u_max - velocity at top of bbl
 //    s     - submerged weight of sediment (~1.6)
 //    g     - gravity
-//  
+//
 //  for locations where the bbl is over-full, the muds are deposited there.
 //  for locations where the bbl is not yet full, and the near-bed velocities
 //  are greater than the critical velocity for erosion, sediment is eroded
@@ -86,7 +86,7 @@
 //
 //  this will be the maximum time step so that sediment will only travel a
 //  maximum of one grid cell.
-//  
+//
 //
 
 #include <stdio.h>
@@ -103,270 +103,286 @@
 #define sign( a ) ( (a)>0?1:((a)==0?0:-1) )
 #define EROSION_IS_ON ( TRUE )
 
-double get_orbital_velocity( double d , double H , double T , double L );
+double
+get_orbital_velocity(double d, double H, double T, double L);
 
-int test_in_suspension( double *in_suspension , double thickness , int n_grains );
+int
+test_in_suspension(double* in_suspension, double thickness, int n_grains);
 
-int muddy(Sed_cube prof,Sed_cell *in_suspension_cell, double *wave , double duration )
+int
+muddy(Sed_cube prof, Sed_cell* in_suspension_cell, double* wave, double duration)
 {
-   int i, n;
-   int n_grains;
-   int i_start;
-   gssize river_mouth;
-   double s=1.65, g=9.81, Ri=.25, Cd=.003, u_wave_critical=.15;
-   double dt, dx, alpha, beta;
-   double extra, flux, initial_sediment, sediment_in_suspension;
-   double wave_height, wave_period, wave_length;
-   double max_erode_depth;
-   double time_elapsed=0.;
-   double deposit_fraction, flux_fraction;
-   double *max_load;
-   double *u_max, *u_grav, *u_wave, u_grav_max;
-   double *k_grain;
-   double **in_suspension, *in_suspension_thickness;
-   double **temp;
-   Sed_cell temp_cell;
+    int i, n;
+    int n_grains;
+    int i_start;
+    gssize river_mouth;
+    double s = 1.65, g = 9.81, Ri = .25, Cd = .003, u_wave_critical = .15;
+    double dt, dx, alpha, beta;
+    double extra, flux, initial_sediment, sediment_in_suspension;
+    double wave_height, wave_period, wave_length;
+    double max_erode_depth;
+    double time_elapsed = 0.;
+    double deposit_fraction, flux_fraction;
+    double* max_load;
+    double* u_max, *u_grav, *u_wave, u_grav_max;
+    double* k_grain;
+    double** in_suspension, *in_suspension_thickness;
+    double** temp;
+    Sed_cell temp_cell;
 
-   wave_height = wave[0];
-   wave_period = wave[1];
-// for deep water waves.
-//   wave_length = sed_gravity()*wave_period*wave_period/2/M_PI;
+    wave_height = wave[0];
+    wave_period = wave[1];
+    // for deep water waves.
+    //   wave_length = sed_gravity()*wave_period*wave_period/2/M_PI;
 
-// set the wave length so that the orbital velocities match at depth = wave_length/20.
-   wave_length = 5.*sed_gravity()*pow(wave_period*sinh(M_PI/10.)/M_PI,2.);
+    // set the wave length so that the orbital velocities match at depth = wave_length/20.
+    wave_length = 5.*sed_gravity() * pow(wave_period * sinh(M_PI / 10.) / M_PI, 2.);
 
-   n_grains = sed_sediment_env_n_types( );
-   dx = sed_cube_y_res( prof );
+    n_grains = sed_sediment_env_n_types();
+    dx = sed_cube_y_res(prof);
 
-   max_load = eh_new( double , sed_cube_n_y(prof) );
-   u_max    = eh_new( double , sed_cube_n_y(prof) );
-   u_grav   = eh_new( double , sed_cube_n_y(prof) );
-   u_wave   = eh_new( double , sed_cube_n_y(prof) );
+    max_load = eh_new(double, sed_cube_n_y(prof));
+    u_max    = eh_new(double, sed_cube_n_y(prof));
+    u_grav   = eh_new(double, sed_cube_n_y(prof));
+    u_wave   = eh_new(double, sed_cube_n_y(prof));
 
-   // a k_grain of 1 will move all of the sediment possible.
-   k_grain = sed_sediment_property( NULL , &sed_type_diff_coef );
+    // a k_grain of 1 will move all of the sediment possible.
+    k_grain = sed_sediment_property(NULL, &sed_type_diff_coef);
 
-   temp_cell     = sed_cell_new( n_grains );
+    temp_cell     = sed_cell_new(n_grains);
 
-   in_suspension_thickness = eh_new0( double  , sed_cube_n_y(prof) );
-   in_suspension           = eh_new ( double* , sed_cube_n_y(prof) );
-   in_suspension[0]        = eh_new ( double  , sed_cube_n_y(prof)*n_grains );
-   temp                    = eh_new ( double* , sed_cube_n_y(prof) );
-   temp[0]                 = eh_new0( double  , sed_cube_n_y(prof)*n_grains );
+    in_suspension_thickness = eh_new0(double, sed_cube_n_y(prof));
+    in_suspension           = eh_new(double*, sed_cube_n_y(prof));
+    in_suspension[0]        = eh_new(double, sed_cube_n_y(prof) * n_grains);
+    temp                    = eh_new(double*, sed_cube_n_y(prof));
+    temp[0]                 = eh_new0(double, sed_cube_n_y(prof) * n_grains);
 
-   for ( i=1 ; i<sed_cube_n_y(prof) ; i++ )
-   {
-      in_suspension[i] = in_suspension[i-1]+n_grains;
-      temp[i]          = temp[i-1]+n_grains;
-   }
+    for (i = 1 ; i < sed_cube_n_y(prof) ; i++) {
+        in_suspension[i] = in_suspension[i - 1] + n_grains;
+        temp[i]          = temp[i - 1] + n_grains;
+    }
 
-   river_mouth = sed_cube_river_mouth_1d( prof );
-   for ( i=0 ; i<river_mouth ; i++ )
-   {
-      in_suspension_thickness[i] = 0.;
-      for ( n=0 ; n<n_grains ; n++ )
-         in_suspension[i][n] = 0.;
-   }
-   for ( i=river_mouth ; i<sed_cube_n_y(prof) ; i++ )
-   {
-      in_suspension_thickness[i] = sed_cell_size( in_suspension_cell[i] );
-      for ( n=0 ; n<n_grains ; n++ )
-         in_suspension[i][n] = sed_cell_fraction( in_suspension_cell[i] , n )
-                             * in_suspension_thickness[i];
-   }
+    river_mouth = sed_cube_river_mouth_1d(prof);
 
-   initial_sediment = 0.;
-   for ( i=0 ; i<sed_cube_n_y(prof) ; i++ )
-      initial_sediment += in_suspension_thickness[i];
+    for (i = 0 ; i < river_mouth ; i++) {
+        in_suspension_thickness[i] = 0.;
 
-   do
-   {
-      river_mouth = sed_cube_river_mouth_1d( prof );
+        for (n = 0 ; n < n_grains ; n++) {
+            in_suspension[i][n] = 0.;
+        }
+    }
 
-      // calculate the wave orbital velocities at the sea floor.
-      for ( i=0 ; i<river_mouth ; i++ )
-         u_wave[i] = 0.;
-      for ( i=river_mouth ; i<sed_cube_n_y(prof) ; i++ )
-         u_wave[i] = get_orbital_velocity( sed_cube_water_depth( prof , 0 , i ) ,
-                                           wave_height                             ,
-                                           wave_period                             ,
-                                           wave_length );
+    for (i = river_mouth ; i < sed_cube_n_y(prof) ; i++) {
+        in_suspension_thickness[i] = sed_cell_size(in_suspension_cell[i]);
 
-      // determine the maximum load that a gravity driven current can sustain.
-      for ( i=0 ; i<sed_cube_n_y(prof)-1 ; i++ )
-      {
-         alpha     = sed_cube_slope( prof , 0 , i );
-         beta      = Ri*alpha/Cd;
-         if ( fabs(beta)>.9 )
-            beta = (beta>0)?.9:-.9;
-         u_max[i]  = u_wave[i]/sqrt(1-beta*beta);
-//u_max[i] = u_wave[i];
-         u_grav[i] = beta*u_max[i];
-      }
-      u_max[i]  = u_max[i-1];
-      u_grav[i] = u_grav[i-1];
-   
-      for ( i=0 ; i<sed_cube_n_y(prof) ; i++ )
-         max_load[i] = Ri * u_max[i]*u_max[i] / s / g;
+        for (n = 0 ; n < n_grains ; n++)
+            in_suspension[i][n] = sed_cell_fraction(in_suspension_cell[i], n)
+                * in_suspension_thickness[i];
+    }
 
-      i_start = sed_cube_river_mouth_1d( prof );
+    initial_sediment = 0.;
 
-      // check if the maximum load is exceeded.  if so, deposit the extra.  if
-      // more space is available, and there is enough wave energy to erode
-      // sediment then erode enough sediment to reach the maximum load (or as
-      // much sediment as is available).
-      for ( i=i_start ; i<sed_cube_n_y(prof) ; i++ )
-      {
-         extra = in_suspension_thickness[i] - max_load[i];
-         // deposit the extra sediment.
-         if ( extra>0 && in_suspension_thickness[i]>0 )
-         {
-            deposit_fraction = extra/in_suspension_thickness[i];
-            for ( n=0 ; n<n_grains ; n++ )
-               in_suspension[i][n] *= deposit_fraction;
-            sed_column_add_vec( sed_cube_col(prof,i) , in_suspension[i] );
-            in_suspension_thickness[i] = 0.;
-            for ( n=0 ; n<n_grains ; n++ )
-            {
-               in_suspension[i][n] /= deposit_fraction;
-               in_suspension[i][n] *= (1.-deposit_fraction);
-               in_suspension_thickness[i] += in_suspension[i][n];
+    for (i = 0 ; i < sed_cube_n_y(prof) ; i++) {
+        initial_sediment += in_suspension_thickness[i];
+    }
+
+    do {
+        river_mouth = sed_cube_river_mouth_1d(prof);
+
+        // calculate the wave orbital velocities at the sea floor.
+        for (i = 0 ; i < river_mouth ; i++) {
+            u_wave[i] = 0.;
+        }
+
+        for (i = river_mouth ; i < sed_cube_n_y(prof) ; i++)
+            u_wave[i] = get_orbital_velocity(sed_cube_water_depth(prof, 0, i),
+                    wave_height,
+                    wave_period,
+                    wave_length);
+
+        // determine the maximum load that a gravity driven current can sustain.
+        for (i = 0 ; i < sed_cube_n_y(prof) - 1 ; i++) {
+            alpha     = sed_cube_slope(prof, 0, i);
+            beta      = Ri * alpha / Cd;
+
+            if (fabs(beta) > .9) {
+                beta = (beta > 0) ? .9 : -.9;
             }
-            //in_suspension_thickness[i] = max_load[i];
-         }
-         // erode sediment.
-         else if ( u_wave[i]>u_wave_critical && extra<0 && EROSION_IS_ON )
-         {
-            extra *= -1.;
 
-            max_erode_depth = sed_column_depth_age( sed_cube_col(prof,i) ,
-                                                      sed_cube_age(prof)
-                                                    - ERODE_DEPTH_IN_YEARS );
-//            max_erode_depth = .25;
+            u_max[i]  = u_wave[i] / sqrt(1 - beta * beta);
+            //u_max[i] = u_wave[i];
+            u_grav[i] = beta * u_max[i];
+        }
 
-            if ( extra > max_erode_depth )
-               extra = max_erode_depth;
-            if ( extra>0 )
-            {
+        u_max[i]  = u_max[i - 1];
+        u_grav[i] = u_grav[i - 1];
 
-//if ( extra>.25 )
-//   extra = .25;
+        for (i = 0 ; i < sed_cube_n_y(prof) ; i++) {
+            max_load[i] = Ri * u_max[i] * u_max[i] / s / g;
+        }
 
-               sed_column_extract_top( sed_cube_col(prof,i) , extra , temp_cell );
-               for ( n=0 ; n<n_grains ; n++ )
-                  in_suspension[i][n] +=   sed_cell_fraction ( temp_cell , n )
-                                         * sed_cell_size( temp_cell );
-               in_suspension_thickness[i] += sed_cell_size( temp_cell );
+        i_start = sed_cube_river_mouth_1d(prof);
+
+        // check if the maximum load is exceeded.  if so, deposit the extra.  if
+        // more space is available, and there is enough wave energy to erode
+        // sediment then erode enough sediment to reach the maximum load (or as
+        // much sediment as is available).
+        for (i = i_start ; i < sed_cube_n_y(prof) ; i++) {
+            extra = in_suspension_thickness[i] - max_load[i];
+
+            // deposit the extra sediment.
+            if (extra > 0 && in_suspension_thickness[i] > 0) {
+                deposit_fraction = extra / in_suspension_thickness[i];
+
+                for (n = 0 ; n < n_grains ; n++) {
+                    in_suspension[i][n] *= deposit_fraction;
+                }
+
+                sed_column_add_vec(sed_cube_col(prof, i), in_suspension[i]);
+                in_suspension_thickness[i] = 0.;
+
+                for (n = 0 ; n < n_grains ; n++) {
+                    in_suspension[i][n] /= deposit_fraction;
+                    in_suspension[i][n] *= (1. - deposit_fraction);
+                    in_suspension_thickness[i] += in_suspension[i][n];
+                }
+
+                //in_suspension_thickness[i] = max_load[i];
             }
-         }
-      }
-   
-      // determine the maximum u_grav in the profile and the largest time step for
-      // stability.
-      u_grav_max = 0.;
-      for ( i=i_start ; i<sed_cube_n_y(prof) ; i++ )
-      {
-         flux = in_suspension_thickness[i]*u_grav[i];
-         for ( n=0 ; n<n_grains ; n++ )
-            if ( fabs(u_grav[i]*k_grain[n]) > u_grav_max && fabs(flux)>0. )
-               u_grav_max = fabs(u_grav[i]*k_grain[n]);
-      }
+            // erode sediment.
+            else if (u_wave[i] > u_wave_critical && extra < 0 && EROSION_IS_ON) {
+                extra *= -1.;
 
-      if ( u_grav_max<=0. )
-         break;
+                max_erode_depth = sed_column_depth_age(sed_cube_col(prof, i),
+                        sed_cube_age(prof)
+                        - ERODE_DEPTH_IN_YEARS);
+                //            max_erode_depth = .25;
 
-      dt = dx / u_grav_max;
+                if (extra > max_erode_depth) {
+                    extra = max_erode_depth;
+                }
 
-      // now move the sediment still in suspension.
-      for ( i=i_start ; i<sed_cube_n_y(prof)-1 ; i++ )
-      {
-         flux_fraction = u_grav[i]*dt/dx;
-         if ( flux_fraction>0 && u_grav[i]>0 )
-            for ( n=0 ; n<n_grains ; n++ )
-            {
-               temp[i+1][n]        += in_suspension[i][n]*flux_fraction*k_grain[n];
-               in_suspension[i][n] -= in_suspension[i][n]*flux_fraction*k_grain[n];
+                if (extra > 0) {
+
+                    //if ( extra>.25 )
+                    //   extra = .25;
+
+                    sed_column_extract_top(sed_cube_col(prof, i), extra, temp_cell);
+
+                    for (n = 0 ; n < n_grains ; n++)
+                        in_suspension[i][n] +=   sed_cell_fraction(temp_cell, n)
+                            * sed_cell_size(temp_cell);
+
+                    in_suspension_thickness[i] += sed_cell_size(temp_cell);
+                }
             }
-         else if ( flux_fraction<0 && u_grav[i]<0 )
-         {
+        }
+
+        // determine the maximum u_grav in the profile and the largest time step for
+        // stability.
+        u_grav_max = 0.;
+
+        for (i = i_start ; i < sed_cube_n_y(prof) ; i++) {
+            flux = in_suspension_thickness[i] * u_grav[i];
+
+            for (n = 0 ; n < n_grains ; n++)
+                if (fabs(u_grav[i]*k_grain[n]) > u_grav_max && fabs(flux) > 0.) {
+                    u_grav_max = fabs(u_grav[i] * k_grain[n]);
+                }
+        }
+
+        if (u_grav_max <= 0.) {
+            break;
+        }
+
+        dt = dx / u_grav_max;
+
+        // now move the sediment still in suspension.
+        for (i = i_start ; i < sed_cube_n_y(prof) - 1 ; i++) {
+            flux_fraction = u_grav[i] * dt / dx;
+
+            if (flux_fraction > 0 && u_grav[i] > 0)
+                for (n = 0 ; n < n_grains ; n++) {
+                    temp[i + 1][n]        += in_suspension[i][n] * flux_fraction * k_grain[n];
+                    in_suspension[i][n] -= in_suspension[i][n] * flux_fraction * k_grain[n];
+                } else if (flux_fraction < 0 && u_grav[i] < 0) {
+                flux_fraction *= -1.;
+
+                for (n = 0 ; n < n_grains ; n++) {
+                    temp[i - 1][n]        += in_suspension[i][n] * flux_fraction * k_grain[n];
+                    in_suspension[i][n] -= in_suspension[i][n] * flux_fraction * k_grain[n];
+                }
+            }
+        }
+
+        // do the last cell.
+        flux_fraction = u_grav[i] * dt / dx;
+
+        if (u_grav[i] < 0) {
             flux_fraction *= -1.;
-            for ( n=0 ; n<n_grains ; n++ )
-            {
-               temp[i-1][n]        += in_suspension[i][n]*flux_fraction*k_grain[n];
-               in_suspension[i][n] -= in_suspension[i][n]*flux_fraction*k_grain[n];
+
+            for (n = 0 ; n < n_grains ; n++) {
+                temp[i - 1][n]        += in_suspension[i][n] * flux_fraction * k_grain[n];
+                in_suspension[i][n] -= in_suspension[i][n] * flux_fraction * k_grain[n];
             }
-         }
-      }
+        } else if (u_grav[i] > 0) {
+            for (n = 0 ; n < n_grains ; n++) {
+                in_suspension[i][n] -= in_suspension[i][n] * flux_fraction * k_grain[n];
+            }
+        }
 
-      // do the last cell.
-      flux_fraction = u_grav[i]*dt/dx;
-      if ( u_grav[i] < 0 )
-      {
-         flux_fraction *= -1.;
-         for ( n=0 ; n<n_grains ; n++ )
-         {
-            temp[i-1][n]        += in_suspension[i][n]*flux_fraction*k_grain[n];
-            in_suspension[i][n] -= in_suspension[i][n]*flux_fraction*k_grain[n];
-         }
-      }
-      else if ( u_grav[i]>0 )
-      {
-         for ( n=0 ; n<n_grains ; n++ )
-            in_suspension[i][n] -= in_suspension[i][n]*flux_fraction*k_grain[n];
-      }
+        // do the first cell.
+        flux_fraction = u_grav[0] * dt / dx;
 
-      // do the first cell.
-      flux_fraction = u_grav[0]*dt/dx;
-      if ( u_grav[0] > 0 )
-      {
-         for ( n=0 ; n<n_grains ; n++ )
-         {
-            temp[1][n]          += in_suspension[0][n]*flux_fraction*k_grain[n];
-            in_suspension[0][n] -= in_suspension[0][n]*flux_fraction*k_grain[n];
-         }
-      }
-      else
-         for ( n=0 ; n<n_grains ; n++ )
-            in_suspension[0][n] -= in_suspension[0][n]*flux_fraction*k_grain[n];
-   
-      for ( i=0 ; i<sed_cube_n_y(prof) ; i++ )
-      {
-         in_suspension_thickness[i] = 0.;
-         for ( n=0 ; n<n_grains ; n++ )
-         {
-            in_suspension[i][n]        += temp[i][n];
-            in_suspension_thickness[i] += temp[i][n];
-            temp[i][n]                  = 0.;
-         }
-      }
-   
-      sediment_in_suspension = 0.;
-      for ( i=0 ; i<sed_cube_n_y(prof)-1 ; i++ )
-         sediment_in_suspension += in_suspension_thickness[i];
+        if (u_grav[0] > 0) {
+            for (n = 0 ; n < n_grains ; n++) {
+                temp[1][n]          += in_suspension[0][n] * flux_fraction * k_grain[n];
+                in_suspension[0][n] -= in_suspension[0][n] * flux_fraction * k_grain[n];
+            }
+        } else
+            for (n = 0 ; n < n_grains ; n++) {
+                in_suspension[0][n] -= in_suspension[0][n] * flux_fraction * k_grain[n];
+            }
 
-      time_elapsed += dt;
-   }
-   while ( sediment_in_suspension>.01*initial_sediment && time_elapsed<duration );
+        for (i = 0 ; i < sed_cube_n_y(prof) ; i++) {
+            in_suspension_thickness[i] = 0.;
 
-   // deposit any sediment that might still be in suspension.
-   for ( i=0 ; i<sed_cube_n_y(prof) ; i++ )
-      sed_column_add_vec( sed_cube_col(prof,i) , in_suspension[i] );
+            for (n = 0 ; n < n_grains ; n++) {
+                in_suspension[i][n]        += temp[i][n];
+                in_suspension_thickness[i] += temp[i][n];
+                temp[i][n]                  = 0.;
+            }
+        }
 
-   sed_cell_destroy( temp_cell );
+        sediment_in_suspension = 0.;
 
-   eh_free( in_suspension_thickness );
-   eh_free( in_suspension[0]        );
-   eh_free( in_suspension           );
-   eh_free( temp[0]                 );
-   eh_free( temp                    );
+        for (i = 0 ; i < sed_cube_n_y(prof) - 1 ; i++) {
+            sediment_in_suspension += in_suspension_thickness[i];
+        }
 
-   eh_free( k_grain  );
-   eh_free( max_load );
-   eh_free( u_max    );
-   eh_free( u_grav   );
-   eh_free( u_wave   );
+        time_elapsed += dt;
+    } while (sediment_in_suspension > .01 * initial_sediment && time_elapsed < duration);
 
-   return 0;
+    // deposit any sediment that might still be in suspension.
+    for (i = 0 ; i < sed_cube_n_y(prof) ; i++) {
+        sed_column_add_vec(sed_cube_col(prof, i), in_suspension[i]);
+    }
+
+    sed_cell_destroy(temp_cell);
+
+    eh_free(in_suspension_thickness);
+    eh_free(in_suspension[0]);
+    eh_free(in_suspension);
+    eh_free(temp[0]);
+    eh_free(temp);
+
+    eh_free(k_grain);
+    eh_free(max_load);
+    eh_free(u_max);
+    eh_free(u_grav);
+    eh_free(u_wave);
+
+    return 0;
 }
 
 /** Calculate wave orbital velocity
@@ -383,44 +399,54 @@ int muddy(Sed_cube prof,Sed_cell *in_suspension_cell, double *wave , double dura
 
 \return The orbital velocity
 */
-double get_orbital_velocity( double d , double H , double T , double L )
+double
+get_orbital_velocity(double d, double H, double T, double L)
 {
-   double g=9.81;
-   double u;
+    double g = 9.81;
+    double u;
 
-   if ( H>d/2. )
-      H = d/2.;
+    if (H > d / 2.) {
+        H = d / 2.;
+    }
 
-   if ( d<=.5 )
-      u = 0;
-   else if ( d<L/20. )
-      u = H/2.*sqrt(g/d);
-//   else if ( d<L/2 )
-   else
-      u = M_PI*H/(T*sinh(2.*M_PI*d/L));
-/*
-   else
-      u = 0.;
-*/
-   return u;
+    if (d <= .5) {
+        u = 0;
+    } else if (d < L / 20.) {
+        u = H / 2.*sqrt(g / d);
+    }
+    //   else if ( d<L/2 )
+    else {
+        u = M_PI * H / (T * sinh(2.*M_PI * d / L));
+    }
+
+    /*
+       else
+          u = 0.;
+    */
+    return u;
 }
 
-int test_in_suspension( double *in_suspension , double thickness , int n_grains )
+int
+test_in_suspension(double* in_suspension, double thickness, int n_grains)
 {
-   int n;
-   int error = 0;
-   double total = 0;
-   if ( thickness > 1e-3 )
-   {
-      for ( n=0 ; n<n_grains ; n++ )
-         total += in_suspension[n];
-      if ( fabs(total-thickness)/total > 1e-3 )
-          error++;
-      if ( error )
-      {
-         eh_watch_dbl( total );
-         eh_watch_dbl( thickness );
-      }
-   }
-   return error;
+    int n;
+    int error = 0;
+    double total = 0;
+
+    if (thickness > 1e-3) {
+        for (n = 0 ; n < n_grains ; n++) {
+            total += in_suspension[n];
+        }
+
+        if (fabs(total - thickness) / total > 1e-3) {
+            error++;
+        }
+
+        if (error) {
+            eh_watch_dbl(total);
+            eh_watch_dbl(thickness);
+        }
+    }
+
+    return error;
 }

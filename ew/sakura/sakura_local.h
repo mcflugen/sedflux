@@ -60,114 +60,139 @@ G_BEGIN_DECLS
 # define DAY (86400.)
 //@}
 
-typedef struct
-{
-   double* rho_grain;   //< Grain density
-   double* rho_dep;     //< Bulk deposit density
-   double* u_settling;  //< Settling velocity
-   gint    len;         //< Number of grain types
+typedef struct {
+    double* rho_grain;   //< Grain density
+    double* rho_dep;     //< Bulk deposit density
+    double* u_settling;  //< Settling velocity
+    gint    len;         //< Number of grain types
 }
 Sakura_sediment;
 
-typedef struct
-{
-   double  u;       //< Flow velocity
-   double  h;       //< Flow height
-   double  c;       //< Flow concentration
-   double* c_grain; //< Flow concentration for each grain type
-   gint    n_grain; //< Number of grain types
+typedef struct {
+    double  u;       //< Flow velocity
+    double  h;       //< Flow height
+    double  c;       //< Flow concentration
+    double* c_grain; //< Flow concentration for each grain type
+    gint    n_grain; //< Number of grain types
 }
 Sakura_node;
 
-typedef struct
-{
-   double*  x;       //< Node positions
-   double*  w;       //< Node widths
-   double*  h;       //< Node flow heights
-   double*  u;       //< Node flow velocities
-   double*  c;       //< Node concentrations
-   double** c_grain; //< Node concentrations for each grain type
+typedef struct {
+    double*  x;       //< Node positions
+    double*  w;       //< Node widths
+    double*  h;       //< Node flow heights
+    double*  u;       //< Node flow velocities
+    double*  c;       //< Node concentrations
+    double** c_grain; //< Node concentrations for each grain type
 
-   double** d;       //< Total deposition at each node
-   double** e;       //< Total erosion at each node
+    double** d;       //< Total deposition at each node
+    double** e;       //< Total erosion at each node
 
-   gint     len;     //< Number of nodes
-   gint     n_grain; //< Number of grain types
+    gint     len;     //< Number of nodes
+    gint     n_grain; //< Number of grain types
 }
 Sakura_array;
 
-Sakura_sediment* sakura_sediment_new           ( gint n_grains );
-Sakura_sediment* sakura_sediment_destroy       ( Sakura_sediment* s );
-Sakura_sediment* sakura_sediment_set_rho_grain ( Sakura_sediment* s , double* x );
-Sakura_sediment* sakura_sediment_set_rho_dep   ( Sakura_sediment* s , double* x );
-Sakura_sediment* sakura_sediment_set_u_settling( Sakura_sediment* s , double* x );
+Sakura_sediment*
+sakura_sediment_new(gint n_grains);
+Sakura_sediment*
+sakura_sediment_destroy(Sakura_sediment* s);
+Sakura_sediment*
+sakura_sediment_set_rho_grain(Sakura_sediment* s, double* x);
+Sakura_sediment*
+sakura_sediment_set_rho_dep(Sakura_sediment* s, double* x);
+Sakura_sediment*
+sakura_sediment_set_u_settling(Sakura_sediment* s, double* x);
 
-Sakura_array* sakura_array_new    ( gint len , gint n_grain );
-Sakura_array* sakura_array_destroy( Sakura_array* a );
-Sakura_array* sakura_array_copy   ( Sakura_array* d , Sakura_array* s );
-Sakura_array* sakura_array_set_x  ( Sakura_array* a , double* x );
-Sakura_array* sakura_array_set_w  ( Sakura_array* a , double* w );
-Sakura_array* sakura_array_set_bc ( Sakura_array* a , Sakura_node* inflow , Sakura_node* outflow );
-double        sakura_array_mass_in_susp  ( Sakura_array* a , Sakura_sediment* s );
-double        sakura_array_mass_eroded   ( Sakura_array* a , Sakura_sediment* s );
-double        sakura_array_mass_deposited( Sakura_array* a , Sakura_sediment* s );
+Sakura_array*
+sakura_array_new(gint len, gint n_grain);
+Sakura_array*
+sakura_array_destroy(Sakura_array* a);
+Sakura_array*
+sakura_array_copy(Sakura_array* d, Sakura_array* s);
+Sakura_array*
+sakura_array_set_x(Sakura_array* a, double* x);
+Sakura_array*
+sakura_array_set_w(Sakura_array* a, double* w);
+Sakura_array*
+sakura_array_set_bc(Sakura_array* a, Sakura_node* inflow, Sakura_node* outflow);
+double
+sakura_array_mass_in_susp(Sakura_array* a, Sakura_sediment* s);
+double
+sakura_array_mass_eroded(Sakura_array* a, Sakura_sediment* s);
+double
+sakura_array_mass_deposited(Sakura_array* a, Sakura_sediment* s);
 
-Sakura_node* sakura_node_new    (                  double u , double c , double h , double* c_grain , gint len );
-Sakura_node* sakura_node_set    ( Sakura_node* x , double u , double c , double h , double* c_grain , gint len );
-Sakura_node* sakura_node_destroy( Sakura_node* x );
+Sakura_node*
+sakura_node_new(double u, double c, double h, double* c_grain, gint len);
+Sakura_node*
+sakura_node_set(Sakura_node* x, double u, double c, double h, double* c_grain,
+    gint len);
+Sakura_node*
+sakura_node_destroy(Sakura_node* x);
 
-gboolean sakura_set_outflow( Sakura_node* out , Sakura_array* a , double x_head , double dt , double dx );
-double sakura_get_sin_slope( Sakura_get_func f , gpointer data , Sakura_array* a , gint i );
-gboolean calculate_mid_vel( Sakura_array* a_mid , Sakura_array* a , gint ind_head , Sakura_const_st* Const );
-gboolean calculate_next_vel( Sakura_array* a_last , Sakura_array* a_mid , Sakura_array* a_next , gint ind_head , Sakura_const_st* Const );
-gboolean compute_c_grain( Sakura_array* a , Sakura_array* a_last , double* u , gint i , double dx , Sakura_const_st* Const , Sakura_sediment* sed );
-gboolean calculate_next_c_and_h( Sakura_array* a_new , Sakura_array* a_last , double* u_temp , gint ind_head , Sakura_const_st* Const , Sakura_sediment* sed );
-gboolean calculate_mid_c_and_h( Sakura_array* a_mid , Sakura_array* a_last , Sakura_array* a_next );
-gint calculate_head_index( Sakura_array* a , double* u , gint ind_head , double dx , double dt , double* x_head );
+gboolean
+sakura_set_outflow(Sakura_node* out, Sakura_array* a, double x_head, double dt,
+    double dx);
+double
+sakura_get_sin_slope(Sakura_get_func f, gpointer data, Sakura_array* a, gint i);
+gboolean
+calculate_mid_vel(Sakura_array* a_mid, Sakura_array* a, gint ind_head,
+    Sakura_const_st* Const);
+gboolean
+calculate_next_vel(Sakura_array* a_last, Sakura_array* a_mid, Sakura_array* a_next,
+    gint ind_head, Sakura_const_st* Const);
+gboolean
+compute_c_grain(Sakura_array* a, Sakura_array* a_last, double* u, gint i, double dx,
+    Sakura_const_st* Const, Sakura_sediment* sed);
+gboolean
+calculate_next_c_and_h(Sakura_array* a_new, Sakura_array* a_last, double* u_temp,
+    gint ind_head, Sakura_const_st* Const, Sakura_sediment* sed);
+gboolean
+calculate_mid_c_and_h(Sakura_array* a_mid, Sakura_array* a_last, Sakura_array* a_next);
+gint
+calculate_head_index(Sakura_array* a, double* u, gint ind_head, double dx, double dt,
+    double* x_head);
 
-typedef struct
-{
-   double*   x;
-   double*   depth;
-   double*   width;
-   double*   slope;
-   double**  dep;
-   gint      n_grains;
-   gint      len;
-   double    dx;
+typedef struct {
+    double*   x;
+    double*   depth;
+    double*   width;
+    double*   slope;
+    double**  dep;
+    gint      n_grains;
+    gint      len;
+    double    dx;
 }
 Sakura_bathy_st;
 
-typedef struct
-{
-   double  duration;
-   double  width;
-   double  depth;
-   double  velocity;
-   double  q;
-   double* fraction;
-   double  rho_flow;
-   gint    n_grains;
+typedef struct {
+    double  duration;
+    double  width;
+    double  depth;
+    double  velocity;
+    double  q;
+    double* fraction;
+    double  rho_flow;
+    gint    n_grains;
 }
 Sakura_flood_st;
 
-typedef struct
-{
-   double* size_equiv;
-   double* lambda;
-   double* bulk_density;
-   double* grain_density;
-   double* u_settling;
-   double* reynolds_no;
-   gint    n_grains;
+typedef struct {
+    double* size_equiv;
+    double* lambda;
+    double* bulk_density;
+    double* grain_density;
+    double* u_settling;
+    double* reynolds_no;
+    gint    n_grains;
 }
 Sakura_sediment_st;
 
-typedef struct
-{
-   Sakura_bathy_st* b;
-   double*          phe;
-   gint             n_grains;
+typedef struct {
+    Sakura_bathy_st* b;
+    double*          phe;
+    gint             n_grains;
 }
 Sakura_arch_st;
 
@@ -202,84 +227,116 @@ Sakura_arch_st;
 
 #define SAKURA_DEFAULT_FLOOD_FILE               "sakura_flood.kvf"
 
-typedef struct
-{
-   double  basin_len;
-   double  dx;
-   double  dt;
-   double  out_dt;
-   double  max_t;
-   double  rho_sea_water;
-   double  rho_river_water;
-   double* lambda;
-   double* size_equiv;
-   double* size_comp;
-   double* grain_fraction;
-   double* flow_fraction;
-   double* bulk_density;
-   double* grain_density;
-   double  dep_start;
-   double  size_bottom;
-   double  rho_bottom;
-   double* bottom_fraction;
-   double  sua;
-   double  sub;
-   double  e_a;
-   double  e_b;
-   double  c_drag;
-   double  tan_phi;
-   double  mu_water;
-   char*   flood_file;
-   gint    n_grains;
+typedef struct {
+    double  basin_len;
+    double  dx;
+    double  dt;
+    double  out_dt;
+    double  max_t;
+    double  rho_sea_water;
+    double  rho_river_water;
+    double* lambda;
+    double* size_equiv;
+    double* size_comp;
+    double* grain_fraction;
+    double* flow_fraction;
+    double* bulk_density;
+    double* grain_density;
+    double  dep_start;
+    double  size_bottom;
+    double  rho_bottom;
+    double* bottom_fraction;
+    double  sua;
+    double  sub;
+    double  e_a;
+    double  e_b;
+    double  c_drag;
+    double  tan_phi;
+    double  mu_water;
+    char*   flood_file;
+    gint    n_grains;
 
-   double channel_width;
-   double channel_len;
+    double channel_width;
+    double channel_len;
 }
 Sakura_param_st;
 
-double** sakura_wrapper( Sakura_bathy_st*    b ,
-                         Sakura_flood_st*    f ,
-                         Sakura_sediment_st* s ,
-                         Sakura_const_st*    c ,
-                         gint* n_grains        ,
-                         gint* len );
+double**
+sakura_wrapper(Sakura_bathy_st*    b,
+    Sakura_flood_st*    f,
+    Sakura_sediment_st* s,
+    Sakura_const_st*    c,
+    gint* n_grains,
+    gint* len);
 
-void sakura_set_width( Sakura_bathy_st* bathy_data  ,
-                       double           river_width ,
-                       double           spreading_angle );
+void
+sakura_set_width(Sakura_bathy_st* bathy_data,
+    double           river_width,
+    double           spreading_angle);
 
-Sakura_param_st*    sakura_scan_parameter_file( const gchar* file , GError** error );
-Sakura_param_st*    sakura_check_params       ( Sakura_param_st* p , GError** error );
-Sakura_bathy_st*    sakura_scan_bathy_file    ( const gchar* file , Sakura_param_st* p , GError** error );
-Sakura_flood_st**   sakura_scan_flood_file    ( const gchar* file , Sakura_param_st* p , GError** error );
-Sakura_flood_st*    sakura_set_flood_data     ( Sed_hydro h , double rho_river_water );
-Sakura_flood_st*    sakura_sed_set_flood_data ( Sed_hydro h , double rho_river_water );
-Sakura_flood_st*    sakura_destroy_flood_data ( Sakura_flood_st* f );
-Sakura_sediment_st* sakura_set_sediment_data  ( Sakura_param_st* p );
-Sakura_const_st*    sakura_set_constant_data  ( Sakura_param_st* p , Sakura_bathy_st* b );
-Sakura_const_st*    sakura_set_constant_output_data( Sakura_const_st* c , const gchar* file , Sakura_var* id , gint dt );
-Sakura_bathy_st*    sakura_set_bathy_data     ( double** bathy , gint len , double dx , gint n_grains );
-Sakura_bathy_st*    sakura_new_bathy_data     ( gint n_grains , gint len );
-Sakura_bathy_st*    sakura_copy_bathy_data    ( Sakura_bathy_st* d , const Sakura_bathy_st* s );
-Sakura_bathy_st*    sakura_destroy_bathy_data ( Sakura_bathy_st* b );
-Sakura_bathy_st*    sakura_update_bathy_data  ( Sakura_bathy_st* b , double** deposition , double** erosion , gint n_grains );
-gint                sakura_write_data         ( const gchar*     file , Eh_dbl_grid deposit );
-gint                sakura_write_output       ( const gchar* file  ,
-                                                Sakura_bathy_st* b ,
-                                                double** deposit   ,
-                                                gssize n_grains );
-double sakura_reynolds_number( double rho_grain , double equiv_dia , double rho_river_water , double mu_river_water );
-double sakura_settling_velocity( double rho_grain , double equiv_dia , double rho_river_water , double mu_river_water );
+Sakura_param_st*
+sakura_scan_parameter_file(const gchar* file, GError** error);
+Sakura_param_st*
+sakura_check_params(Sakura_param_st* p, GError** error);
+Sakura_bathy_st*
+sakura_scan_bathy_file(const gchar* file, Sakura_param_st* p, GError** error);
+Sakura_flood_st**
+sakura_scan_flood_file(const gchar* file, Sakura_param_st* p, GError** error);
+Sakura_flood_st*
+sakura_set_flood_data(Sed_hydro h, double rho_river_water);
+Sakura_flood_st*
+sakura_sed_set_flood_data(Sed_hydro h, double rho_river_water);
+Sakura_flood_st*
+sakura_destroy_flood_data(Sakura_flood_st* f);
+Sakura_sediment_st*
+sakura_set_sediment_data(Sakura_param_st* p);
+Sakura_const_st*
+sakura_set_constant_data(Sakura_param_st* p, Sakura_bathy_st* b);
+Sakura_const_st*
+sakura_set_constant_output_data(Sakura_const_st* c, const gchar* file, Sakura_var* id,
+    gint dt);
+Sakura_bathy_st*
+sakura_set_bathy_data(double** bathy, gint len, double dx, gint n_grains);
+Sakura_bathy_st*
+sakura_new_bathy_data(gint n_grains, gint len);
+Sakura_bathy_st*
+sakura_copy_bathy_data(Sakura_bathy_st* d, const Sakura_bathy_st* s);
+Sakura_bathy_st*
+sakura_destroy_bathy_data(Sakura_bathy_st* b);
+Sakura_bathy_st*
+sakura_update_bathy_data(Sakura_bathy_st* b, double** deposition, double** erosion,
+    gint n_grains);
+gint
+sakura_write_data(const gchar*     file, Eh_dbl_grid deposit);
+gint
+sakura_write_output(const gchar* file,
+    Sakura_bathy_st* b,
+    double** deposit,
+    gssize n_grains);
+double
+sakura_reynolds_number(double rho_grain, double equiv_dia, double rho_river_water,
+    double mu_river_water);
+double
+sakura_settling_velocity(double rho_grain, double equiv_dia, double rho_river_water,
+    double mu_river_water);
 
-void   sakura_get_phe  ( Sakura_arch_st* data , double x , Sakura_phe_st*  phe_data );
-double sakura_add      ( Sakura_arch_st* data , double x , Sakura_cell_st* s );
-double sakura_remove   ( Sakura_arch_st* data , double x , Sakura_cell_st* s );
-double sakura_get_depth( Sakura_arch_st* data , double x );
+void
+sakura_get_phe(Sakura_arch_st* data, double x, Sakura_phe_st*  phe_data);
+double
+sakura_add(Sakura_arch_st* data, double x, Sakura_cell_st* s);
+double
+sakura_remove(Sakura_arch_st* data, double x, Sakura_cell_st* s);
+double
+sakura_get_depth(Sakura_arch_st* data, double x);
 
-void   sakura_sed_get_phe        ( Sed_cube p , double y , Sakura_phe_st* phe_data );
-double sakura_sed_add_sediment   ( Sed_cube p , double y , Sakura_cell_st* s );
-double sakura_sed_remove_sediment( Sed_cube p , double y , Sakura_cell_st* s );
-double sakura_sed_get_depth      ( Sed_cube p , double y );
+void
+sakura_sed_get_phe(Sed_cube p, double y, Sakura_phe_st* phe_data);
+double
+sakura_sed_add_sediment(Sed_cube p, double y, Sakura_cell_st* s);
+double
+sakura_sed_remove_sediment(Sed_cube p, double y, Sakura_cell_st* s);
+double
+sakura_sed_get_depth(Sed_cube p, double y);
 /*
 typedef struct
 {

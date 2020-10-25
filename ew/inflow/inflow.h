@@ -43,65 +43,65 @@ G_BEGIN_DECLS
 
 #include <sed/datadir_path.h>
 #if !defined( DATADIR )
-# define DATADIR "/usr/local/share"
+    #define DATADIR "/usr/local/share"
 #endif
 #define INFLOW_TEST_PARAM_FILE DATADIR "/ew/inflow_param.kvf"
 #define INFLOW_TEST_BATHY_FILE DATADIR "/ew/inflow_bathy.csv"
 #define INFLOW_TEST_FLOOD_FILE DATADIR "/ew/inflow_flood.kvf"
 
-typedef enum
-{
-   INFLOW_ERROR_BAD_PARAMETER
+typedef enum {
+    INFLOW_ERROR_BAD_PARAMETER
 }
 Inflow_error;
 
 #define INFLOW_ERROR inflow_error_quark()
 
-typedef struct
-{
-   double x;            //< Position to query
-   double dx;           //< Grid spacing
-   double erode_depth;  //< Burial depth to query
-   double *phe;         //< Fraction of each grain size
+typedef struct {
+    double x;            //< Position to query
+    double dx;           //< Grid spacing
+    double erode_depth;  //< Burial depth to query
+    double* phe;         //< Fraction of each grain size
 }
 Inflow_phe_query_st;
 
-typedef void (*Inflow_query_func) ( Inflow_phe_query_st* data , gpointer user_data );
+typedef void (*Inflow_query_func)(Inflow_phe_query_st* data, gpointer user_data);
 
-typedef struct
-{
-   double e_a;
-   double e_b;
-   double sua;
-   double sub;
-   double c_drag;
-   double tan_phi;
-   double mu_water;
-   double rho_river_water;
-   double rho_sea_water;
-   double channel_width;
-   double channel_len;
-   double dep_start;
+typedef struct {
+    double e_a;
+    double e_b;
+    double sua;
+    double sub;
+    double c_drag;
+    double tan_phi;
+    double mu_water;
+    double rho_river_water;
+    double rho_sea_water;
+    double channel_width;
+    double channel_len;
+    double dep_start;
 
-   Inflow_query_func get_phe;
-   gpointer          get_phe_data;
+    Inflow_query_func get_phe;
+    gpointer          get_phe_data;
 }
 Inflow_const_st;
 
-gboolean inflow( double day       , double x[]        , double slopeX[]  ,
-                 double wX[]      , int nNodes        , double dx        , 
-                 double xDep      , double riverWidth , double u0        ,
-                 double h0        , double dc         , double *gzF      ,
-                 double *grainDia , double *lambda    , double *rhoSed   ,
-                 double *rhoGrain , int nGrains       , double rho0      ,
-                 double rhoF0     , Inflow_const_st* c, double **deposit ,
-                 double** eroded  , FILE *fpout );
-Sed_hydro inflow_flood_from_cell( Sed_cell c , double area );
-gboolean  sed_inflow( Sed_cube         p       ,
-                      Sed_hydro        f       ,
-                      gint             i_start ,
-                      double           dx      ,
-                      Inflow_const_st* c );
+gboolean
+inflow(double day, double x[], double slopeX[],
+    double wX[], int nNodes, double dx,
+    double xDep, double riverWidth, double u0,
+    double h0, double dc, double* gzF,
+    double* grainDia, double* lambda, double* rhoSed,
+    double* rhoGrain, int nGrains, double rho0,
+    double rhoF0, Inflow_const_st* c, double** deposit,
+    double** eroded, FILE* fpout);
+Sed_hydro
+inflow_flood_from_cell(Sed_cell c, double area);
+gboolean
+sed_inflow(Sed_cube         p,
+    Sed_hydro        f,
+    gint             i_start,
+    double           dx,
+    Inflow_const_st* c);
 
 G_END_DECLS
 

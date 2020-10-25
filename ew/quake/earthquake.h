@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-double earthquake(double a,double dt);
+double earthquake(double a, double dt);
 
 #ifdef __cplusplus
 }

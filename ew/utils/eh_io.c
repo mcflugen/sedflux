@@ -2,175 +2,167 @@
 
 #if G_BYTE_ORDER==G_LITTLE_ENDIAN
 
-gsize eh_fread_int32_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fread_int32_from_be(void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint32) );
+    eh_require(size == sizeof(gint32));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint32 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint32 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         n += fread( &i_val , sizeof(gint32) , 1 , stream );
-         ((gint32*)ptr)[i] = GINT32_TO_BE( i_val );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            n += fread(&i_val, sizeof(gint32), 1, stream);
+            ((gint32*)ptr)[i] = GINT32_TO_BE(i_val);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fread_int64_from_be( void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fread_int64_from_be(void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint64) );
+    eh_require(size == sizeof(gint64));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint64 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint64 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         n += fread( &i_val , sizeof(gint64) , 1 , stream );
-         ((gint64*)ptr)[i] = GINT64_TO_BE( i_val );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            n += fread(&i_val, sizeof(gint64), 1, stream);
+            ((gint64*)ptr)[i] = GINT64_TO_BE(i_val);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fwrite_int32_to_be( const void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fwrite_int32_to_be(const void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint32) );
+    eh_require(size == sizeof(gint32));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint32 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint32 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         i_val = GINT32_TO_BE( ((gint32*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(gint32) , 1 , stream );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            i_val = GINT32_TO_BE(((gint32*)(ptr))[i]);
+            n += fwrite(&i_val, sizeof(gint32), 1, stream);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fwrite_int64_to_be( const void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fwrite_int64_to_be(const void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint64) );
+    eh_require(size == sizeof(gint64));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint64 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint64 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         i_val = GINT64_TO_BE( ((gint64*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(gint64) , 1 , stream );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            i_val = GINT64_TO_BE(((gint64*)(ptr))[i]);
+            n += fwrite(&i_val, sizeof(gint64), 1, stream);
+        }
+    }
 
-   return n;
+    return n;
 }
 
 #else
 
 
-gsize eh_fread_int32_from_le( void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fread_int32_from_le(void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint32) );
+    eh_require(size == sizeof(gint32));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint32 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint32 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         n += fread( &i_val , sizeof(gint32) , 1 , stream );
-         ((gint32*)ptr)[i] = GINT32_TO_LE( i_val );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            n += fread(&i_val, sizeof(gint32), 1, stream);
+            ((gint32*)ptr)[i] = GINT32_TO_LE(i_val);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fread_int64_from_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fread_int64_from_le(const void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint64) );
+    eh_require(size == sizeof(gint64));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint64 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint64 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         n += fread( &i_val , sizeof(gint64) , 1 , stream );
-         ((gint64*)ptr)[i] = GINT64_TO_LE( i_val );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            n += fread(&i_val, sizeof(gint64), 1, stream);
+            ((gint64*)ptr)[i] = GINT64_TO_LE(i_val);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fwrite_int32_to_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fwrite_int32_to_le(const void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint32) );
+    eh_require(size == sizeof(gint32));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint32 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint32 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         i_val = GINT32_TO_LE( ((gint32*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(gint32) , 1 , stream );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            i_val = GINT32_TO_LE(((gint32*)(ptr))[i]);
+            n += fwrite(&i_val, sizeof(gint32), 1, stream);
+        }
+    }
 
-   return n;
+    return n;
 }
 
-gsize eh_fwrite_int64_to_le( const void *ptr , gsize size , gsize nitems , FILE* stream  )
+gsize
+eh_fwrite_int64_to_le(const void* ptr, gsize size, gsize nitems, FILE* stream)
 {
-   gsize n = 0;
+    gsize n = 0;
 
-   eh_require( size==sizeof(gint64) );
+    eh_require(size == sizeof(gint64));
 
-   if ( ptr && stream )
-   {
-      gsize i;
-      gint64 i_val;
+    if (ptr && stream) {
+        gsize i;
+        gint64 i_val;
 
-      for ( i=0 ; i<nitems ; i++ )
-      {
-         i_val = GINT64_TO_LE( ((gint64*)(ptr))[i] );
-         n += fwrite( &i_val , sizeof(gint64) , 1 , stream );
-      }
-   }
+        for (i = 0 ; i < nitems ; i++) {
+            i_val = GINT64_TO_LE(((gint64*)(ptr))[i]);
+            n += fwrite(&i_val, sizeof(gint64), 1, stream);
+        }
+    }
 
-   return n;
+    return n;
 }
 
 #endif
@@ -181,128 +173,125 @@ gsize eh_fwrite_int64_to_le( const void *ptr , gsize size , gsize nitems , FILE*
 # ifdef HAVE_FGETLN
 
 gssize
-getline( gchar** lineptr , gsize *n , FILE* stream )
+getline(gchar** lineptr, gsize* n, FILE* stream)
 {
-   gssize result = -1;
-   gsize  len;
-   gchar* s = fgetln( stream , &len );
+    gssize result = -1;
+    gsize  len;
+    gchar* s = fgetln(stream, &len);
 
-   if ( s || feof(stream) )
-   {
-      if ( len+1>*n )
-      {
-         *lineptr = eh_renew( gchar* , *lineptr , len+1 );
-         *n       = len+1;
-      }
+    if (s || feof(stream)) {
+        if (len + 1 > *n) {
+            *lineptr = eh_renew(gchar*, *lineptr, len + 1);
+            *n       = len + 1;
+        }
 
-      memcpy( *lineptr , s , len );
-      (*lineptr)[len] = '\0';
+        memcpy(*lineptr, s, len);
+        (*lineptr)[len] = '\0';
 
-      if ( !feof(stream) )
-         result   = len; // Careful! Assignment of unsigned int to signed int
-      else
-         result   = -1;
-   }
-   else {
-     *n = 0;
-     *lineptr = NULL;
-   }
+        if (!feof(stream)) {
+            result   = len;    // Careful! Assignment of unsigned int to signed int
+        } else {
+            result   = -1;
+        }
+    } else {
+        *n = 0;
+        *lineptr = NULL;
+    }
 
-   return result;
+    return result;
 }
 # else /* don't have fgetln */
 gssize
-getline( gchar** lineptr , gsize *n , FILE* stream )
+getline(gchar** lineptr, gsize* n, FILE* stream)
 {
-   const int block_size = 256;
-   gssize result = -1;
+    const int block_size = 256;
+    gssize result = -1;
 
-   if ( *lineptr==NULL || *n==0 )
-   {
-      *n = block_size;
-      *lineptr = eh_new (gchar, *n);
-   }
+    if (*lineptr == NULL || *n == 0) {
+        *n = block_size;
+        *lineptr = eh_new(gchar, *n);
+    }
 
-   if ( *lineptr )
-   {
-      gchar* p;
-      gchar* found_eol = NULL;
-      const gint start = ftell (stream);
-      int bytes_read = 0;
+    if (*lineptr) {
+        gchar* p;
+        gchar* found_eol = NULL;
+        const gint start = ftell(stream);
+        int bytes_read = 0;
 
-      p = fgets (*lineptr, *n-1, stream); /* Read in a block of characters */
-      if (p) {
-        bytes_read = strlen (p);
-        found_eol = (gchar*)memchr (p ,'\n', bytes_read); /* Look for the delimiter */
-      }
-      else {
-        bytes_read = 0;
-        found_eol = NULL;
-      }
+        p = fgets(*lineptr, *n - 1, stream); /* Read in a block of characters */
 
-      if (bytes_read > 0 && !found_eol && !feof (stream)) {
-        int len = *n;
-
-        // Scan until a new line is found
-        for (p += len; p && !found_eol; p += block_size, len += block_size) {
-          *lineptr = eh_renew (gchar, *lineptr, len + block_size);
-          *n = len + block_size;
-          p = fgets (p, block_size-1, stream);
-
-          if (p) {
-            bytes_read += strlen (p);
-            found_eol = (gchar*) memchr (p, '\n', block_size);
-          }
+        if (p) {
+            bytes_read = strlen(p);
+            found_eol = (gchar*)memchr(p, '\n', bytes_read);  /* Look for the delimiter */
+        } else {
+            bytes_read = 0;
+            found_eol = NULL;
         }
-      }
 
-      if (ferror (stream))
-        result = -1;
-      else {
-        if (feof (stream) && bytes_read == 0)
-          result = -1;
-        else {
-          result = strlen (*lineptr);
+        if (bytes_read > 0 && !found_eol && !feof(stream)) {
+            int len = *n;
 
-          // Move the file pointer to after the delimeter
-          fseek (stream, start + result, SEEK_SET);
+            // Scan until a new line is found
+            for (p += len; p && !found_eol; p += block_size, len += block_size) {
+                *lineptr = eh_renew(gchar, *lineptr, len + block_size);
+                *n = len + block_size;
+                p = fgets(p, block_size - 1, stream);
+
+                if (p) {
+                    bytes_read += strlen(p);
+                    found_eol = (gchar*) memchr(p, '\n', block_size);
+                }
+            }
         }
-      }
+
+        if (ferror(stream)) {
+            result = -1;
+        } else {
+            if (feof(stream) && bytes_read == 0) {
+                result = -1;
+            } else {
+                result = strlen(*lineptr);
+
+                // Move the file pointer to after the delimeter
+                fseek(stream, start + result, SEEK_SET);
+            }
+        }
 
 #if 0
-      if (!feof (stream) && !t) /* Delimeter not found */
-      {
-         gint len = *n;
 
-         for ( p+=len ; p && !t ; p+=2048,len+=2048 )
-         {
-            *lineptr  = eh_renew( gchar , *lineptr , len+2048 ); /* Extend the length of the string */
-            *n        = len + 2048;
-            p         = fgets( p , 2048 , stream ); /* Read the next block of bytes */
+        if (!feof(stream) && !t) { /* Delimeter not found */
+            gint len = *n;
 
-            if ( p )
-               t = (gchar*)memchr( p , '\n' , 2048 ); /* Look for the delimiter */
-         }
-      }
+            for (p += len ; p && !t ; p += 2048, len += 2048) {
+                *lineptr  = eh_renew(gchar, *lineptr,
+                        len + 2048);   /* Extend the length of the string */
+                *n        = len + 2048;
+                p         = fgets(p, 2048, stream);     /* Read the next block of bytes */
 
-      if (ferror (stream))
-         result = -1;
-      else
-      {
-         if (feof (stream))
-           result = -1
-         else {
-           // Careful! Assignment of unsigned int to signed int
-           result = strlen( *lineptr );
+                if (p) {
+                    t = (gchar*)memchr(p, '\n', 2048);    /* Look for the delimiter */
+                }
+            }
+        }
 
-           // Move the file pointer to after the delimeter
-           fseek( stream , start+result , SEEK_SET );
-         }
-      }
+        if (ferror(stream)) {
+            result = -1;
+        } else {
+            if (feof(stream))
+                result = -1
+                else {
+                    // Careful! Assignment of unsigned int to signed int
+                    result = strlen(*lineptr);
+
+                    // Move the file pointer to after the delimeter
+                    fseek(stream, start + result, SEEK_SET);
+                }
+        }
+
 #endif
-   }
+    }
 
-   return result;
+    return result;
 }
 # endif
 #endif /* don't have getline */
@@ -313,229 +302,223 @@ getline( gchar** lineptr , gsize *n , FILE* stream )
 #include <string.h>
 
 #ifndef DATA_DELIMETER
-# define DATA_DELIMETER ":"
+    #define DATA_DELIMETER ":"
 #endif
 
-#ifndef TOKEN_DELIMETER 
-# define TOKEN_DELIMETER ","
+#ifndef TOKEN_DELIMETER
+    #define TOKEN_DELIMETER ","
 #endif
 
 #include <errno.h>
 
 gchar*
-eh_scan_str( FILE* fp , GError** error )
+eh_scan_str(FILE* fp, GError** error)
 {
-   gchar* s = NULL;
+    gchar* s = NULL;
 
-   eh_require( fp );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+    eh_require(fp);
+    eh_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-   if ( fp )
-   {
-      gsize  n;
-      gchar*  s;
-      GError* tmp_err = NULL;
+    if (fp) {
+        gsize  n;
+        gchar*  s;
+        GError* tmp_err = NULL;
 
-      getline( &s , &n , fp );
+        getline(&s, &n, fp);
 
-      if ( s )
-      {
-         s = (gchar*)g_memdup (s, n+1);
-         s[n] = '\0';
-      }
-      else if ( feof(fp) )
-         s    = NULL;
-      else
-         eh_set_file_error_from_errno( &tmp_err , NULL , errno );
+        if (s) {
+            s = (gchar*)g_memdup(s, n + 1);
+            s[n] = '\0';
+        } else if (feof(fp)) {
+            s    = NULL;
+        } else {
+            eh_set_file_error_from_errno(&tmp_err, NULL, errno);
+        }
 
-      if ( tmp_err ) g_propagate_error( error , tmp_err );
-   }
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
+        }
+    }
 
-   return s;
+    return s;
 }
 
 gchar**
-eh_scan_str_array( FILE* fp , gint* len , GError** error )
+eh_scan_str_array(FILE* fp, gint* len, GError** error)
 {
-   gchar** s_arr = NULL;
+    gchar** s_arr = NULL;
 
-   eh_require( fp );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+    eh_require(fp);
+    eh_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-   if ( fp )
-   {
-      gint    n;
-      GError* tmp_err = NULL;
-      gchar*  s       = eh_scan_str( fp , &tmp_err );
+    if (fp) {
+        gint    n;
+        GError* tmp_err = NULL;
+        gchar*  s       = eh_scan_str(fp, &tmp_err);
 
-      if ( s )
-      {
-         s_arr = g_strsplit_set( s , ";," , -1 );
-         n     = g_strv_length( s_arr );
+        if (s) {
+            s_arr = g_strsplit_set(s, ";,", -1);
+            n     = g_strv_length(s_arr);
 
-         eh_free( s );
-      }
-      else if ( feof(fp) )
-      {
-         s_arr    = NULL;
-         n        = 0;
-      }
-      else
-         eh_set_file_error_from_errno( &tmp_err , NULL , errno );
+            eh_free(s);
+        } else if (feof(fp)) {
+            s_arr    = NULL;
+            n        = 0;
+        } else {
+            eh_set_file_error_from_errno(&tmp_err, NULL, errno);
+        }
 
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         s_arr = NULL;
-         n     = 0;
-      }
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
+            s_arr = NULL;
+            n     = 0;
+        }
 
-      if ( len ) *len = n;
-   }
+        if (len) {
+            *len = n;
+        }
+    }
 
-   return s_arr;
+    return s_arr;
 }
 
 gint*
-eh_scan_int_array( FILE* fp , gint* len , GError** error )
+eh_scan_int_array(FILE* fp, gint* len, GError** error)
 {
-   gint* i_arr = NULL;
+    gint* i_arr = NULL;
 
-   eh_require( fp );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+    eh_require(fp);
+    eh_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-   if ( fp )
-   {
-      gint    n       = 0;
-      GError* tmp_err = NULL;
-      gchar** str_arr = eh_scan_str_array( fp , &n , &tmp_err );
+    if (fp) {
+        gint    n       = 0;
+        GError* tmp_err = NULL;
+        gchar** str_arr = eh_scan_str_array(fp, &n, &tmp_err);
 
-      if ( str_arr )
-      {
-         gint i;
+        if (str_arr) {
+            gint i;
 
-         n = g_strv_length( str_arr );
+            n = g_strv_length(str_arr);
 
-         i_arr = eh_new( gint , n );
+            i_arr = eh_new(gint, n);
 
-         for ( i=0 ; i<n && !tmp_err ; i++ )
-            i_arr[i] = eh_str_to_int( str_arr[i] , &tmp_err );
+            for (i = 0 ; i < n && !tmp_err ; i++) {
+                i_arr[i] = eh_str_to_int(str_arr[i], &tmp_err);
+            }
 
-         g_strfreev( str_arr );
+            g_strfreev(str_arr);
 
-         if ( tmp_err )
-         {
-            eh_free( i_arr );
+            if (tmp_err) {
+                eh_free(i_arr);
+                i_arr = NULL;
+                n     = 0;
+            }
+        }
+
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
             i_arr = NULL;
             n     = 0;
-         }
-      }
+        }
 
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         i_arr = NULL;
-         n     = 0;
-      }
+        if (len) {
+            *len = n;
+        }
+    }
 
-      if ( len ) *len = n;
-   }
-
-   return i_arr;
+    return i_arr;
 }
 
 double*
-eh_scan_dbl_array( FILE* fp , gint* len , GError** error )
+eh_scan_dbl_array(FILE* fp, gint* len, GError** error)
 {
-   double* d_arr = NULL;
+    double* d_arr = NULL;
 
-   eh_require( fp );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+    eh_require(fp);
+    eh_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-   if ( fp )
-   {
-      gint    n       = 0;
-      GError* tmp_err = NULL;
-      gchar** str_arr = eh_scan_str_array( fp , &n , &tmp_err );
+    if (fp) {
+        gint    n       = 0;
+        GError* tmp_err = NULL;
+        gchar** str_arr = eh_scan_str_array(fp, &n, &tmp_err);
 
-      if ( str_arr )
-      {
-         gint i;
-         n = g_strv_length( str_arr );
+        if (str_arr) {
+            gint i;
+            n = g_strv_length(str_arr);
 
-         d_arr = eh_new( double , n );
+            d_arr = eh_new(double, n);
 
-         for ( i=0 ; i<n && !tmp_err ; i++ )
-            d_arr[i] = eh_str_to_dbl( str_arr[i] , &tmp_err );
+            for (i = 0 ; i < n && !tmp_err ; i++) {
+                d_arr[i] = eh_str_to_dbl(str_arr[i], &tmp_err);
+            }
 
-         g_strfreev( str_arr );
+            g_strfreev(str_arr);
 
-         if ( tmp_err )
-         {
-            eh_free( d_arr );
+            if (tmp_err) {
+                eh_free(d_arr);
+                d_arr = NULL;
+                n     = 0;
+            }
+        }
+
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
             d_arr = NULL;
             n     = 0;
-         }
-      }
+        }
 
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         d_arr = NULL;
-         n     = 0;
-      }
+        if (len) {
+            *len = n;
+        }
+    }
 
-      if ( len ) *len = n;
-   }
-
-   return d_arr;
+    return d_arr;
 }
 
 gboolean*
-eh_scan_boolean_array( FILE *fp , gint* len , GError** error )
+eh_scan_boolean_array(FILE* fp, gint* len, GError** error)
 {
-   gboolean* b_arr = NULL;
+    gboolean* b_arr = NULL;
 
-   eh_require( fp );
-   eh_return_val_if_fail( error==NULL || *error==NULL , NULL );
+    eh_require(fp);
+    eh_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
-   if ( fp )
-   {
-      gint    n       = 0;
-      GError* tmp_err = NULL;
-      gchar** str_arr = eh_scan_str_array( fp , &n , &tmp_err );
+    if (fp) {
+        gint    n       = 0;
+        GError* tmp_err = NULL;
+        gchar** str_arr = eh_scan_str_array(fp, &n, &tmp_err);
 
-      if ( str_arr )
-      {
-         gint i;
-         n = g_strv_length( str_arr );
+        if (str_arr) {
+            gint i;
+            n = g_strv_length(str_arr);
 
-         b_arr = eh_new( gboolean , n );
+            b_arr = eh_new(gboolean, n);
 
-         for ( i=0 ; i<n && !tmp_err ; i++ )
-            b_arr[i] = eh_str_to_boolean( str_arr[i] , &tmp_err );
+            for (i = 0 ; i < n && !tmp_err ; i++) {
+                b_arr[i] = eh_str_to_boolean(str_arr[i], &tmp_err);
+            }
 
-         g_strfreev( str_arr );
+            g_strfreev(str_arr);
 
-         if ( tmp_err )
-         {
-            eh_free( b_arr );
+            if (tmp_err) {
+                eh_free(b_arr);
+                b_arr = NULL;
+                n     = 0;
+            }
+        }
+
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
             b_arr = NULL;
             n     = 0;
-         }
-      }
+        }
 
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         b_arr = NULL;
-         n     = 0;
-      }
+        if (len) {
+            *len = n;
+        }
+    }
 
-      if ( len ) *len = n;
-   }
-
-   return b_arr;
+    return b_arr;
 }
 /*
 gint
@@ -635,99 +618,107 @@ read_logical_value( FILE *fp )
 
 */
 void
-eh_print_msg( int msg_level , char *function_name , char *msg )
+eh_print_msg(int msg_level, char* function_name, char* msg)
 {
 
-   g_strchomp( msg );
+    g_strchomp(msg);
 
-   switch ( msg_level )
-   {
-      case 0:
-         break;
-      case 1:
-         fprintf( stderr , "%s: %s: %s\n" , "warning" , function_name , msg );
-         break;
-      case 2:
-         fprintf( stderr , "%s: %s: %s\n" , "error" , function_name , msg );
-         fprintf( stderr , "quitting...\n" );
-         eh_exit(-1);
-   }
+    switch (msg_level) {
+        case 0:
+            break;
+
+        case 1:
+            fprintf(stderr, "%s: %s: %s\n", "warning", function_name, msg);
+            break;
+
+        case 2:
+            fprintf(stderr, "%s: %s: %s\n", "error", function_name, msg);
+            fprintf(stderr, "quitting...\n");
+            eh_exit(-1);
+    }
 
 }
 
-char *eh_input_str( const char *msg , const char *default_str )
+char*
+eh_input_str(const char* msg, const char* default_str)
 {
-   char *str = eh_new( char , S_LINEMAX );
+    char* str = eh_new(char, S_LINEMAX);
 
-   //---
-   // Print the message followed by the default string in [].
-   //---
-   fprintf( stderr , "%s " , msg );
-   if ( default_str )
-      fprintf( stderr , "[%s] " , default_str );
-   fprintf( stderr , ": " );
+    //---
+    // Print the message followed by the default string in [].
+    //---
+    fprintf(stderr, "%s ", msg);
 
-   //---   
-   // Read a line of input.  If the line is blank, use the default string.
-   // Remove leading and trailing whitespace from the string.
-   //---
-   fgets( str , S_LINEMAX , stdin );
-   if ( default_str && strncmp( str , "\n" , 1 )==0 )
-      strcpy( str , default_str );
-   g_strstrip( str );
+    if (default_str) {
+        fprintf(stderr, "[%s] ", default_str);
+    }
 
-   return str;
+    fprintf(stderr, ": ");
+
+    //---
+    // Read a line of input.  If the line is blank, use the default string.
+    // Remove leading and trailing whitespace from the string.
+    //---
+    fgets(str, S_LINEMAX, stdin);
+
+    if (default_str && strncmp(str, "\n", 1) == 0) {
+        strcpy(str, default_str);
+    }
+
+    g_strstrip(str);
+
+    return str;
 }
 
 gboolean
-eh_input_boolean (const char *msg, gboolean default_val)
+eh_input_boolean(const char* msg, gboolean default_val)
 {
-   char *str = eh_new( char , S_LINEMAX );
-   gboolean ans, valid_ans = FALSE;
+    char* str = eh_new(char, S_LINEMAX);
+    gboolean ans, valid_ans = FALSE;
 
-   while ( !valid_ans )
-   {
-      fprintf( stderr , "%s [%s]: " , msg , (default_val)?"yes":"no" );
-   
-      fgets( str , S_LINEMAX , stdin );
+    while (!valid_ans) {
+        fprintf(stderr, "%s [%s]: ", msg, (default_val) ? "yes" : "no");
 
-      if ( g_ascii_strncasecmp( str , "\n" , 1 ) == 0 )
-      {
-         ans = default_val;
-         valid_ans = TRUE;
-      }
-      else if (    g_ascii_strncasecmp( str , "YES" , 2 )==0
-                || g_ascii_strncasecmp( str , "Y"   , 1 )==0 )
-      {
-         ans = TRUE;
-         valid_ans = TRUE;
-      }
-      else if (    g_ascii_strncasecmp( str , "NO" , 2 )==0 
-                || g_ascii_strncasecmp( str , "N"  , 1 )==0 )
-      {  
-         ans = FALSE;
-         valid_ans = TRUE;
-      }
-   }
+        fgets(str, S_LINEMAX, stdin);
 
-   eh_free( str );
+        if (g_ascii_strncasecmp(str, "\n", 1) == 0) {
+            ans = default_val;
+            valid_ans = TRUE;
+        } else if (g_ascii_strncasecmp(str, "YES", 2) == 0
+            || g_ascii_strncasecmp(str, "Y", 1) == 0) {
+            ans = TRUE;
+            valid_ans = TRUE;
+        } else if (g_ascii_strncasecmp(str, "NO", 2) == 0
+            || g_ascii_strncasecmp(str, "N", 1) == 0) {
+            ans = FALSE;
+            valid_ans = TRUE;
+        }
+    }
 
-   return ans;
+    eh_free(str);
+
+    return ans;
 }
 
 gchar*
-eh_get_input_val( FILE *fp , const char *msg , const char *default_str )
+eh_get_input_val(FILE* fp, const char* msg, const char* default_str)
 {
-   char *str = eh_new( char , S_LINEMAX );
+    char* str = eh_new(char, S_LINEMAX);
 
-   fprintf( stderr , "%s " , msg );
-   if ( default_str )
-      fprintf( stderr , "[%s] " , default_str );
-   fprintf( stderr , ": " );
+    fprintf(stderr, "%s ", msg);
 
-   fgets( str , S_LINEMAX , fp );
-   if ( default_str && strncmp( str , "\n" , 1 )==0 )
-      strcpy( str , default_str );
-   g_strstrip( str );
-   return str;
+    if (default_str) {
+        fprintf(stderr, "[%s] ", default_str);
+    }
+
+    fprintf(stderr, ": ");
+
+    fgets(str, S_LINEMAX, fp);
+
+    if (default_str && strncmp(str, "\n", 1) == 0) {
+        strcpy(str, default_str);
+    }
+
+    g_strstrip(str);
+    return str;
 }

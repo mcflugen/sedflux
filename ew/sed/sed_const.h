@@ -37,9 +37,9 @@ G_BEGIN_DECLS
 
 #define S_CHECK_VERSION(major,minor,micro)    \
     (S_MAJOR_VERSION > (major) || \
-     (S_MAJOR_VERSION == (major) && S_MINOR_VERSION > (minor)) || \
-     (S_MAJOR_VERSION == (major) && S_MINOR_VERSION == (minor) && \
-      S_MICRO_VERSION >= (micro)))
+        (S_MAJOR_VERSION == (major) && S_MINOR_VERSION > (minor)) || \
+        (S_MAJOR_VERSION == (major) && S_MINOR_VERSION == (minor) && \
+            S_MICRO_VERSION >= (micro)))
 
 #define S_MPS_PER_KNOT      (.51444)
 #define S_SECONDS_PER_HOUR  (3600.)
@@ -66,24 +66,22 @@ G_BEGIN_DECLS
 #define S_RHO_GRAIN         (S_RHO_QUARTZ)  // Maximum sediment density (kg/m^3)
 #define S_RHO_MANTLE        (3300.)         // Density of the mantle (kg/m^3)
 
-typedef enum
-{
-   UNITS_MKS,
-   UNITS_CGS,
-   UNITS_IMPERIAL
+typedef enum {
+    UNITS_MKS,
+    UNITS_CGS,
+    UNITS_IMPERIAL
 }
 Sed_units;
 
-typedef struct
-{
-   double gravity;
-   double rho_sea_h2o;
-   double rho_h2o;
-   double eta_h2o;
-   double mu_h2o;
-   double salinity;
-   double rho_quartz;
-   double rho_mantle;
+typedef struct {
+    double gravity;
+    double rho_sea_h2o;
+    double rho_h2o;
+    double eta_h2o;
+    double mu_h2o;
+    double salinity;
+    double rho_quartz;
+    double rho_mantle;
 }
 Sed_constants;
 
@@ -93,14 +91,14 @@ Sed_constants;
 #define secs_to_years( a ) ( (a)/S_SECONDS_PER_YEAR )
 
 #ifndef FRAC
-# define FRAC(a) ( (a) - (int)(a) )
+    #define FRAC(a) ( (a) - (int)(a) )
 #endif
 #ifndef SWAP
-# define SWAP(a,b,a_type) { a_type temp=(a); (a)=(b); (b)=temp; }
+    #define SWAP(a,b,a_type) { a_type temp=(a); (a)=(b); (b)=temp; }
 #endif
 
 #ifndef S_ADDBINS
-# define S_ADDBINS (512)
+    #define S_ADDBINS (512)
 #endif
 
 // Define the facies.
@@ -120,67 +118,67 @@ Sed_constants;
 #define S_EAST_EDGE  ( 1<<3 )
 
 #define DEFAULT_SEDIMENT_FILE { \
-"--- 'Grain 1 (bedload)' ---                                                 ",\
-"grain size (microns):       200                                             ",\
-"grain density (kg/m^3):     2625                                            ",\
-"saturated density (kg/m^3): 1850                                            ",\
-"minimum void ratio (-):     .30                                             ",\
-"plastic index (-):          .1                                              ",\
-"diffusion coefficient (-):  .25                                             ",\
-"removal rate (1/day):       50                                              ",\
-"consolidation coefficient (m^2/yr): 100000                                  ",\
-"compaction coefficient (-): 0.0000000368                                    ",\
-"--- 'Grain 2' ---                                                           ",\
-"grain size (microns):       100                                             ",\
-"grain density (kg/m^3):     2600                                            ",\
-"saturated density (kg/m^3): 1800                                            ",\
-"minimum void ratio (-):     .2                                              ",\
-"plastic index (-):          .2                                              ",\
-"diffusion coefficient (-):  .25                                             ",\
-"removal rate (1/day):       16.8                                            ",\
-"consolidation coefficient (m^2/yr): 10000                                   ",\
-"compaction coefficient (-): 0.00000005                                      ",\
-"--- 'Grain 3' ---                                                           ",\
-"grain size (microns):       40                                              ",\
-"grain density (kg/m^3):     2550                                            ",\
-"saturated density (kg/m^3): 1750                                            ",\
-"minimum void ratio (-):     .15                                             ",\
-"plastic index (-):          .3                                              ",\
-"diffusion coefficient (-):  .5                                              ",\
-"removal rate (1/day):       9                                               ",\
-"consolidation coefficient (m^2/yr): 1000                                    ",\
-"compaction coefficient (-): 0.00000007                                      ",\
-"--- 'Grain 4' ---                                                           ",\
-"grain size (microns):       10                                              ",\
-"grain density (kg/m^3):     2500                                            ",\
-"saturated density (kg/m^3): 1700                                            ",\
-"minimum void ratio (-):     .1                                              ",\
-"plastic index (-):          .4                                              ",\
-"diffusion coefficient (-):  .75                                             ",\
-"removal rate (1/day):       3.2                                             ",\
-"consolidation coefficient (m^2/yr): 100                                     ",\
-"compaction coefficient (-): 0.00000008                                      ",\
-"--- 'Grain 5' ---                                                           ",\
-"grain size (microns):       1                                               ",\
-"grain density (kg/m^3):     2450                                            ",\
-"saturated density (kg/m^3): 1650                                            ",\
-"minimum void ratio (-):     .05                                             ",\
-"plastic index (-):          .5                                              ",\
-"diffusion coefficient (-):  1.                                              ",\
-"removal rate (1/day):       2.4                                             ",\
-"consolidation coefficient (m^2/yr): 10                                      ",\
-"compaction coefficient (-): 0.000000368                                     ",\
-NULL }
+        "--- 'Grain 1 (bedload)' ---                                                 ",\
+        "grain size (microns):       200                                             ",\
+        "grain density (kg/m^3):     2625                                            ",\
+        "saturated density (kg/m^3): 1850                                            ",\
+        "minimum void ratio (-):     .30                                             ",\
+        "plastic index (-):          .1                                              ",\
+        "diffusion coefficient (-):  .25                                             ",\
+        "removal rate (1/day):       50                                              ",\
+        "consolidation coefficient (m^2/yr): 100000                                  ",\
+        "compaction coefficient (-): 0.0000000368                                    ",\
+        "--- 'Grain 2' ---                                                           ",\
+        "grain size (microns):       100                                             ",\
+        "grain density (kg/m^3):     2600                                            ",\
+        "saturated density (kg/m^3): 1800                                            ",\
+        "minimum void ratio (-):     .2                                              ",\
+        "plastic index (-):          .2                                              ",\
+        "diffusion coefficient (-):  .25                                             ",\
+        "removal rate (1/day):       16.8                                            ",\
+        "consolidation coefficient (m^2/yr): 10000                                   ",\
+        "compaction coefficient (-): 0.00000005                                      ",\
+        "--- 'Grain 3' ---                                                           ",\
+        "grain size (microns):       40                                              ",\
+        "grain density (kg/m^3):     2550                                            ",\
+        "saturated density (kg/m^3): 1750                                            ",\
+        "minimum void ratio (-):     .15                                             ",\
+        "plastic index (-):          .3                                              ",\
+        "diffusion coefficient (-):  .5                                              ",\
+        "removal rate (1/day):       9                                               ",\
+        "consolidation coefficient (m^2/yr): 1000                                    ",\
+        "compaction coefficient (-): 0.00000007                                      ",\
+        "--- 'Grain 4' ---                                                           ",\
+        "grain size (microns):       10                                              ",\
+        "grain density (kg/m^3):     2500                                            ",\
+        "saturated density (kg/m^3): 1700                                            ",\
+        "minimum void ratio (-):     .1                                              ",\
+        "plastic index (-):          .4                                              ",\
+        "diffusion coefficient (-):  .75                                             ",\
+        "removal rate (1/day):       3.2                                             ",\
+        "consolidation coefficient (m^2/yr): 100                                     ",\
+        "compaction coefficient (-): 0.00000008                                      ",\
+        "--- 'Grain 5' ---                                                           ",\
+        "grain size (microns):       1                                               ",\
+        "grain density (kg/m^3):     2450                                            ",\
+        "saturated density (kg/m^3): 1650                                            ",\
+        "minimum void ratio (-):     .05                                             ",\
+        "plastic index (-):          .5                                              ",\
+        "diffusion coefficient (-):  1.                                              ",\
+        "removal rate (1/day):       2.4                                             ",\
+        "consolidation coefficient (m^2/yr): 10                                      ",\
+        "compaction coefficient (-): 0.000000368                                     ",\
+        NULL }
 
 #define DEFAULT_HYDRO_INLINE_FILE { \
-"Number of grain sizes:                    5                                 ",\
-"Event duration:                           .25y                              ",\
-"Bedload (kg/s):                           100.0                             ",\
-"Suspended load concentrations (kg/m^3):   1.0,      1.0,      1.0,      1.0 ",\
-"Velocity (m/s):                           1                                 ",\
-"Width (m):                                100.0                             ",\
-"Depth (m):                                2.0                               ",\
-NULL }
+        "Number of grain sizes:                    5                                 ",\
+        "Event duration:                           .25y                              ",\
+        "Bedload (kg/s):                           100.0                             ",\
+        "Suspended load concentrations (kg/m^3):   1.0,      1.0,      1.0,      1.0 ",\
+        "Velocity (m/s):                           1                                 ",\
+        "Width (m):                                100.0                             ",\
+        "Depth (m):                                2.0                               ",\
+        NULL }
 
 
 G_END_DECLS

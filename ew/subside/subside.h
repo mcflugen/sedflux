@@ -43,7 +43,8 @@ G_BEGIN_DECLS
 #define SUBSIDE_MINOR_VERSION 1
 #define SUBSIDE_MICRO_VERSION 0
 
-void subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y );
+void
+subside_grid_load(Eh_dbl_grid w, Eh_dbl_grid v_0, double eet, double y);
 
 /**
    \brief Solve the flexure equation for a point load.
@@ -60,8 +61,9 @@ void subside_grid_load( Eh_dbl_grid w , Eh_dbl_grid v_0 , double eet , double y 
    \param i_load The x-index of the point load
    \param j_load The y-index of the point load
 */
-void subside_point_load      ( Eh_dbl_grid g , double load , double h ,
-                               double E      , int i_load  , int j_load );
+void
+subside_point_load(Eh_dbl_grid g, double load, double h,
+    double E, int i_load, int j_load);
 /**
    \brief Solve the flexure equation for a half-plane load.
 
@@ -86,10 +88,11 @@ void subside_point_load      ( Eh_dbl_grid g , double load , double h ,
 
    \todo This needs to be extended to 2D.
 */
-void subside_half_plane_load ( Eh_dbl_grid g ,
-                               double load   ,
-                               double h      ,
-                               double E );
+void
+subside_half_plane_load(Eh_dbl_grid g,
+    double load,
+    double h,
+    double E);
 
 /**
    \brief Calculate the flexure parameter
@@ -106,9 +109,12 @@ void subside_half_plane_load ( Eh_dbl_grid g ,
    @param n_dim The number of spatial dimensions (1 or 2)
 
 */
-double get_flexure_parameter ( double h       , double E    , gssize n_dim );
+double
+get_flexure_parameter(double h, double E, gssize n_dim);
 
-void subside_point_load_1d( double* z , double* y , gint len , double load , double y_0 , double alpha );
+void
+subside_point_load_1d(double* z, double* y, gint len, double load, double y_0,
+    double alpha);
 
 G_END_DECLS
 

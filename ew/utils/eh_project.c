@@ -1,402 +1,423 @@
 #include <eh_utils.h>
 
-CLASS( Eh_project )
+CLASS(Eh_project)
 {
-   char *name;
-   char *working_dir_name;
-   GDir *working_dir;
-   GTree *open_files;
-   GKeyFile *info_file;
+    char* name;
+    char* working_dir_name;
+    GDir* working_dir;
+    GTree* open_files;
+    GKeyFile* info_file;
 };
 
-char* construct_project_group_name( Eh_project p );
-int   eh_sort_ptr( gconstpointer a , gconstpointer b , gpointer user_data );
+char*
+construct_project_group_name(Eh_project p);
+int
+eh_sort_ptr(gconstpointer a, gconstpointer b, gpointer user_data);
 
-Eh_project eh_create_project( const char *proj_name )
+Eh_project
+eh_create_project(const char* proj_name)
 {
-   Eh_project new_proj;
+    Eh_project new_proj;
 
-   NEW_OBJECT( Eh_project , new_proj );
+    NEW_OBJECT(Eh_project, new_proj);
 
-   new_proj->name = g_strdup( proj_name );
+    new_proj->name = g_strdup(proj_name);
 
-   new_proj->working_dir = NULL;
+    new_proj->working_dir = NULL;
 
-   new_proj->open_files = g_tree_new_full( &eh_sort_ptr ,
-                                           NULL         ,
-                                           (GDestroyNotify)&fclose ,
-                                           &eh_free_c_style );
+    new_proj->open_files = g_tree_new_full(&eh_sort_ptr,
+            NULL,
+            (GDestroyNotify)&fclose,
+            &eh_free_c_style);
 
-   new_proj->working_dir_name = NULL;
+    new_proj->working_dir_name = NULL;
 
-   // Open the project info file.
-   new_proj->info_file = g_key_file_new();
+    // Open the project info file.
+    new_proj->info_file = g_key_file_new();
 
-   eh_fill_project_info( new_proj );
+    eh_fill_project_info(new_proj);
 
-   return new_proj;
+    return new_proj;
 }
 
-char* eh_project_name( Eh_project p )
+char*
+eh_project_name(Eh_project p)
 {
-   return p->name;
+    return p->name;
 }
 
-char* eh_project_dir_name( Eh_project p )
+char*
+eh_project_dir_name(Eh_project p)
 {
-   return p->working_dir_name;
+    return p->working_dir_name;
 }
 
-GDir* eh_project_dir( Eh_project p )
+GDir*
+eh_project_dir(Eh_project p)
 {
-   return p->working_dir;
+    return p->working_dir;
 }
 
-GKeyFile* eh_project_info_file( Eh_project p )
+GKeyFile*
+eh_project_info_file(Eh_project p)
 {
-   return p->info_file;
+    return p->info_file;
 }
 
-char* eh_project_info_file_full_name( Eh_project p )
+char*
+eh_project_info_file_full_name(Eh_project p)
 {
-   char* base_name = g_strconcat( eh_project_name(p) , ".info" , NULL );
-   char* name      = g_build_filename( eh_project_dir_name(p) ,
-                                       base_name              ,
-                                       NULL );
+    char* base_name = g_strconcat(eh_project_name(p), ".info", NULL);
+    char* name      = g_build_filename(eh_project_dir_name(p),
+            base_name,
+            NULL);
 
-   eh_free( base_name );
+    eh_free(base_name);
 
-   return name;
+    return name;
 }
 
-gchar* eh_project_get_info_val( Eh_project p , const gchar* key )
+gchar*
+eh_project_get_info_val(Eh_project p, const gchar* key)
 {
-   gchar* group_name = construct_project_group_name( p );
-   gchar* value;
+    gchar* group_name = construct_project_group_name(p);
+    gchar* value;
 
-   // If the key doesn't exist, return NULL.
-   // NOTE: value is a copy and so needs to be freed.
-   value = g_key_file_get_value( p->info_file , group_name , key , NULL );
+    // If the key doesn't exist, return NULL.
+    // NOTE: value is a copy and so needs to be freed.
+    value = g_key_file_get_value(p->info_file, group_name, key, NULL);
 
-   eh_free( group_name );
+    eh_free(group_name);
 
-   return value;
-}
-
-Eh_project eh_project_set_info_val( Eh_project p     ,
-                                    const gchar* key ,
-                                    const gchar* value )
-{
-   char* group_name = construct_project_group_name( p );
-
-   eh_require( value!=NULL );
-
-   // If the key doesn't exist, a new one is created.
-   // NOTE: a copy is added
-   g_key_file_set_value( p->info_file , group_name , key , value );
-
-   eh_free( group_name );
-
-   return p;
+    return value;
 }
 
 Eh_project
-eh_project_add_info_val( Eh_project p , const char* key , const gchar* val )
+eh_project_set_info_val(Eh_project p,
+    const gchar* key,
+    const gchar* value)
 {
-   char* group_name = construct_project_group_name( p );
+    char* group_name = construct_project_group_name(p);
 
-   eh_require( val!=NULL );
+    eh_require(value != NULL);
 
-   //---
-   // If the key already exists, add the new value to the list.
-   //
-   // If the key doesn't exit create it and add the value.
-   //---
-   if ( g_key_file_has_key( p->info_file , group_name , key , NULL ) )
-   {
-      gsize n_vals;
-      gchar** cur_val = g_key_file_get_string_list( p->info_file ,
-                                                    group_name   ,
-                                                    key          ,
-                                                    &n_vals      ,
-                                                    NULL );
+    // If the key doesn't exist, a new one is created.
+    // NOTE: a copy is added
+    g_key_file_set_value(p->info_file, group_name, key, value);
 
-      n_vals            = n_vals+1;
-      cur_val           = eh_renew( char* , cur_val , n_vals+1 );
-      cur_val[n_vals-1] = g_strdup( val );
+    eh_free(group_name);
 
-      // Note: g_key_file_set_string_list copies data from cur_val so it's
-      // ok to typecast it as constant and then free cur_val.
-      g_key_file_set_string_list( p->info_file ,
-                                  group_name   ,
-                                  key          ,
-                                  (const gchar**)cur_val ,
-                                  n_vals );
+    return p;
+}
 
-      g_strfreev( cur_val );
-   }
-   else
-      g_key_file_set_value( p->info_file , group_name , key , val );
+Eh_project
+eh_project_add_info_val(Eh_project p, const char* key, const gchar* val)
+{
+    char* group_name = construct_project_group_name(p);
 
-   eh_free( group_name );
+    eh_require(val != NULL);
 
-   return p;
+    //---
+    // If the key already exists, add the new value to the list.
+    //
+    // If the key doesn't exit create it and add the value.
+    //---
+    if (g_key_file_has_key(p->info_file, group_name, key, NULL)) {
+        gsize n_vals;
+        gchar** cur_val = g_key_file_get_string_list(p->info_file,
+                group_name,
+                key,
+                &n_vals,
+                NULL);
+
+        n_vals            = n_vals + 1;
+        cur_val           = eh_renew(char*, cur_val, n_vals + 1);
+        cur_val[n_vals - 1] = g_strdup(val);
+
+        // Note: g_key_file_set_string_list copies data from cur_val so it's
+        // ok to typecast it as constant and then free cur_val.
+        g_key_file_set_string_list(p->info_file,
+            group_name,
+            key,
+            (const gchar**)cur_val,
+            n_vals);
+
+        g_strfreev(cur_val);
+    } else {
+        g_key_file_set_value(p->info_file, group_name, key, val);
+    }
+
+    eh_free(group_name);
+
+    return p;
 }
 
 #define DONT_ASK (TRUE)
 
-Eh_project eh_set_project_dir( Eh_project proj , const char* dir_name )
+Eh_project
+eh_set_project_dir(Eh_project proj, const char* dir_name)
 {
-   GError *error = NULL;
+    GError* error = NULL;
 
-   if ( !dir_name )
-      dir_name = ".";
+    if (!dir_name) {
+        dir_name = ".";
+    }
 
-   if ( proj->working_dir_name )
-      eh_free( proj->working_dir_name );
-   if ( proj->working_dir )
-      g_dir_close( proj->working_dir );
+    if (proj->working_dir_name) {
+        eh_free(proj->working_dir_name);
+    }
 
-   proj->working_dir_name = g_strdup  ( dir_name );
-   proj->working_dir      = g_dir_open( dir_name , 0 , &error );
+    if (proj->working_dir) {
+        g_dir_close(proj->working_dir);
+    }
 
-   if ( error )
-   {
-      if (    ( DONT_ASK || eh_input_boolean( "Ok to create directory?" , TRUE ) )
-           && g_mkdir( dir_name , S_ISUID|S_ISGID|S_IRWXU|S_IRWXG ) == 0 
-           && (proj->working_dir = g_dir_open( dir_name , 0 , &error )) )
-      {
-         g_error_free( error );
-      }
-      else
-      {
-         eh_error( "Unable to open project: %s\n" , error->message );
-      }
-   }
+    proj->working_dir_name = g_strdup(dir_name);
+    proj->working_dir      = g_dir_open(dir_name, 0, &error);
 
-   return proj;
+    if (error) {
+        if ((DONT_ASK || eh_input_boolean("Ok to create directory?", TRUE))
+            && g_mkdir(dir_name, S_ISUID | S_ISGID | S_IRWXU | S_IRWXG) == 0
+            && (proj->working_dir = g_dir_open(dir_name, 0, &error))) {
+            g_error_free(error);
+        } else {
+            eh_error("Unable to open project: %s\n", error->message);
+        }
+    }
+
+    return proj;
 }
 
 #include <time.h>
 
-char* construct_project_group_name( Eh_project p )
+char*
+construct_project_group_name(Eh_project p)
 {
-   return g_strconcat( p->name , " info entry" , NULL );
+    return g_strconcat(p->name, " info entry", NULL);
 }
 
 #include <time.h>
 
-Eh_project eh_set_project_current_time( Eh_project p )
+Eh_project
+eh_set_project_current_time(Eh_project p)
 {
-   GKeyFile *file = p->info_file;
-   char *group_name = construct_project_group_name( p );
+    GKeyFile* file = p->info_file;
+    char* group_name = construct_project_group_name(p);
 
-   //---
-   // Define end date and time.
-   //---
-   eh_require( file )
-   {
-      time_t clock;
-      char date_str[S_LINEMAX];
-      char time_str[S_LINEMAX];
-      struct tm now;
-      GDate *today = g_date_new();
+    //---
+    // Define end date and time.
+    //---
+    eh_require(file) {
+        time_t clock;
+        char date_str[S_LINEMAX];
+        char time_str[S_LINEMAX];
+        struct tm now;
+        GDate* today = g_date_new();
 
-      g_date_set_time_t( today , time(&clock) );
-      localtime_r( &clock , &now );
-      g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
-      sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
+        g_date_set_time_t(today, time(&clock));
+        localtime_r(&clock, &now);
+        g_date_strftime(date_str, S_LINEMAX, "%d/%m/%Y", today);
+        sprintf(time_str, "%d:%d:%d", now.tm_hour, now.tm_min, now.tm_sec);
 
-      eh_require( date_str!=NULL );
-      eh_require( time_str!=NULL );
+        eh_require(date_str != NULL);
+        eh_require(time_str != NULL);
 
-      g_key_file_set_value( file , group_name , "CURRENT DATE"  , date_str );
-      g_key_file_set_value( file , group_name , "CURRENT TIME"  , time_str );
+        g_key_file_set_value(file, group_name, "CURRENT DATE", date_str);
+        g_key_file_set_value(file, group_name, "CURRENT TIME", time_str);
 
-      g_date_free( today );
-   }
+        g_date_free(today);
+    }
 
-   return p;
+    return p;
 }
 
-Eh_project eh_fill_project_info( Eh_project p )
+Eh_project
+eh_fill_project_info(Eh_project p)
 {
-   GKeyFile *file = p->info_file;
-   char *group_name = construct_project_group_name( p );
+    GKeyFile* file = p->info_file;
+    char* group_name = construct_project_group_name(p);
 
-   //---
-   // Place comment at the top of the info file.
-   //---
-   g_key_file_set_comment( file ,
-                           NULL ,
-                           NULL ,
-                           "Automatically generated file. Please do not edit." ,
-                           NULL );
+    //---
+    // Place comment at the top of the info file.
+    //---
+    g_key_file_set_comment(file,
+        NULL,
+        NULL,
+        "Automatically generated file. Please do not edit.",
+        NULL);
 
-   //---
-   // Define start date and time.
-   //---
-   eh_require( file )
-   {
-      time_t clock;
-      char date_str[S_LINEMAX];
-      char time_str[S_LINEMAX];
-      struct tm now;
-      GDate *today = g_date_new();
+    //---
+    // Define start date and time.
+    //---
+    eh_require(file) {
+        time_t clock;
+        char date_str[S_LINEMAX];
+        char time_str[S_LINEMAX];
+        struct tm now;
+        GDate* today = g_date_new();
 
-      g_date_set_time_t( today , time(&clock) );
-      localtime_r( &clock , &now );
-      g_date_strftime( date_str , S_LINEMAX , "%d/%m/%Y" , today );
-      sprintf( time_str , "%d:%d:%d" , now.tm_hour , now.tm_min , now.tm_sec );
+        g_date_set_time_t(today, time(&clock));
+        localtime_r(&clock, &now);
+        g_date_strftime(date_str, S_LINEMAX, "%d/%m/%Y", today);
+        sprintf(time_str, "%d:%d:%d", now.tm_hour, now.tm_min, now.tm_sec);
 
-      eh_require( date_str!=NULL );
-      eh_require( time_str!=NULL );
+        eh_require(date_str != NULL);
+        eh_require(time_str != NULL);
 
-      g_key_file_set_value( file , group_name , "RUN START DATE"  , date_str );
-      g_key_file_set_value( file , group_name , "RUN START TIME"  , time_str );
+        g_key_file_set_value(file, group_name, "RUN START DATE", date_str);
+        g_key_file_set_value(file, group_name, "RUN START TIME", time_str);
 
-      g_date_free( today );
-   }
+        g_date_free(today);
+    }
 
-   //---
-   // Define the user name, host, and current directory.
-   //---
-   g_key_file_set_value( file , group_name , "USER" ,  g_get_user_name() );
-   g_key_file_set_value( file , group_name , "HOST" , g_get_host_name() );
-   g_key_file_set_value( file , group_name , "RUN DIRECTORY" , g_get_current_dir() );
+    //---
+    // Define the user name, host, and current directory.
+    //---
+    g_key_file_set_value(file, group_name, "USER",  g_get_user_name());
+    g_key_file_set_value(file, group_name, "HOST", g_get_host_name());
+    g_key_file_set_value(file, group_name, "RUN DIRECTORY", g_get_current_dir());
 
-   eh_free( group_name );
+    eh_free(group_name);
 
-   return p;
+    return p;
 }
 
 gint
-eh_write_project_info_file( Eh_project proj )
+eh_write_project_info_file(Eh_project proj)
 {
-   gint n = 0;
-   char* info_file = eh_project_info_file_full_name( proj );
+    gint n = 0;
+    char* info_file = eh_project_info_file_full_name(proj);
 
-   eh_require( info_file )
-   {
-      char *file_str;
-      gsize file_len;
-      FILE *fp = eh_fopen( info_file , "w" );
+    eh_require(info_file) {
+        char* file_str;
+        gsize file_len;
+        FILE* fp = eh_fopen(info_file, "w");
 
-      file_str = g_key_file_to_data( proj->info_file , &file_len , NULL );
-      n += fprintf( fp , "%s" , file_str );
+        file_str = g_key_file_to_data(proj->info_file, &file_len, NULL);
+        n += fprintf(fp, "%s", file_str);
 
-      fclose( fp );
-      eh_free( file_str );
-   }
+        fclose(fp);
+        eh_free(file_str);
+    }
 
-   eh_free( info_file );
+    eh_free(info_file);
 
-   return n;
+    return n;
 }
 
-gboolean eh_read_project_info_file( Eh_project proj )
+gboolean
+eh_read_project_info_file(Eh_project proj)
 {
-   char *file_name = g_strconcat( proj->name , ".info" , NULL );
-   char *info_file = g_build_filename( proj->working_dir_name ,
-                                       file_name              ,
-                                       NULL );
-   gboolean read_ok;
+    char* file_name = g_strconcat(proj->name, ".info", NULL);
+    char* info_file = g_build_filename(proj->working_dir_name,
+            file_name,
+            NULL);
+    gboolean read_ok;
 
-   read_ok = g_key_file_load_from_file( proj->info_file ,
-                                        info_file       ,
-                                        G_KEY_FILE_NONE ,
-                                        NULL );
+    read_ok = g_key_file_load_from_file(proj->info_file,
+            info_file,
+            G_KEY_FILE_NONE,
+            NULL);
 
-   eh_free( info_file );
-   eh_free( file_name );
+    eh_free(info_file);
+    eh_free(file_name);
 
-   return read_ok;
+    return read_ok;
 }
 
-Eh_project eh_load_project( gchar* info_file )
+Eh_project
+eh_load_project(gchar* info_file)
 {
-   Eh_project p;
+    Eh_project p;
 
-   if ( g_file_test( info_file , G_FILE_TEST_EXISTS ) )
-   {
-      gchar* project_name = g_path_get_basename( info_file );
-      gboolean read_ok;
+    if (g_file_test(info_file, G_FILE_TEST_EXISTS)) {
+        gchar* project_name = g_path_get_basename(info_file);
+        gboolean read_ok;
 
-      eh_require( project_name )
-      {
-         gchar* ext = g_strrstr( project_name , "." );
-         if ( ext )
-            ext[0] = '\0';
-      }
+        eh_require(project_name) {
+            gchar* ext = g_strrstr(project_name, ".");
 
-      p = eh_create_project( project_name );
+            if (ext) {
+                ext[0] = '\0';
+            }
+        }
 
-      read_ok = g_key_file_load_from_file( p->info_file    ,
-                                           info_file       ,
-                                           G_KEY_FILE_NONE ,
-                                           NULL );
+        p = eh_create_project(project_name);
 
-      if ( !read_ok )
-         p = eh_destroy_project( p );
+        read_ok = g_key_file_load_from_file(p->info_file,
+                info_file,
+                G_KEY_FILE_NONE,
+                NULL);
 
-      eh_free( project_name );
-   }
-   else
-      p = NULL;
+        if (!read_ok) {
+            p = eh_destroy_project(p);
+        }
 
-   return p;
+        eh_free(project_name);
+    } else {
+        p = NULL;
+    }
+
+    return p;
 }
 
-Eh_project eh_destroy_project( Eh_project proj )
+Eh_project
+eh_destroy_project(Eh_project proj)
 {
-   if ( proj )
-   {
-      if ( proj->working_dir )
-         g_dir_close( proj->working_dir );
-      eh_free( proj->working_dir_name );
-      g_key_file_free( proj->info_file );
-      eh_free( proj->name );
-      eh_free( proj );
-   }
+    if (proj) {
+        if (proj->working_dir) {
+            g_dir_close(proj->working_dir);
+        }
 
-   return NULL;
+        eh_free(proj->working_dir_name);
+        g_key_file_free(proj->info_file);
+        eh_free(proj->name);
+        eh_free(proj);
+    }
+
+    return NULL;
 }
 
-int eh_sort_ptr( gconstpointer a , gconstpointer b , gpointer user_data )
+int
+eh_sort_ptr(gconstpointer a, gconstpointer b, gpointer user_data)
 {
-   return (a<b)?-1:((a==b)?0:1);
+    return (a < b) ? -1 : ((a == b) ? 0 : 1);
 }
 
-FILE *eh_open_project_file( Eh_project proj  ,
-                            const char *file ,
-                            const char *mode )
+FILE*
+eh_open_project_file(Eh_project proj,
+    const char* file,
+    const char* mode)
 {
-   char *full_name;
-   FILE *fp;
+    char* full_name;
+    FILE* fp;
 
-   eh_require( proj );
-   eh_require( proj->working_dir_name );
-   eh_require( file );
-   eh_require( mode );
+    eh_require(proj);
+    eh_require(proj->working_dir_name);
+    eh_require(file);
+    eh_require(mode);
 
-   full_name = g_build_filename( proj->working_dir_name , file , NULL );
+    full_name = g_build_filename(proj->working_dir_name, file, NULL);
 
-   fp = fopen( full_name , mode );
-   if ( !fp )
-      eh_error( "Unable to open file: %s\n" , file );
+    fp = fopen(full_name, mode);
 
-   g_tree_insert( proj->open_files , fp , g_strdup( file ) );
+    if (!fp) {
+        eh_error("Unable to open file: %s\n", file);
+    }
 
-   return fp;
+    g_tree_insert(proj->open_files, fp, g_strdup(file));
+
+    return fp;
 }
 
-void eh_close_project_file( Eh_project proj , FILE *fp )
+void
+eh_close_project_file(Eh_project proj, FILE* fp)
 {
-   g_tree_remove( proj->open_files , fp );
+    g_tree_remove(proj->open_files, fp);
 }
 
-void eh_close_project_file_all( Eh_project proj )
+void
+eh_close_project_file_all(Eh_project proj)
 {
-   g_tree_destroy( proj->open_files );
+    g_tree_destroy(proj->open_files);
 }
 

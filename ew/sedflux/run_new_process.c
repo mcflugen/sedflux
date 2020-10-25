@@ -32,66 +32,62 @@
 #include "my_processes.h"
 
 Sed_process_info
-run_new_process( Sed_process proc , Sed_cube prof )
+run_new_process(Sed_process proc, Sed_cube prof)
 {
-   New_process_t*   data = (New_process_t*)sed_process_user_data(proc);
-   Sed_process_info info = SED_EMPTY_INFO;
+    New_process_t*   data = (New_process_t*)sed_process_user_data(proc);
+    Sed_process_info info = SED_EMPTY_INFO;
 
-   /* Do something to the Sed_cube */
-   {
-      double cur_val = sed_cube_sea_level( prof );
-      sed_cube_set_sea_level( prof , cur_val - data->param );
-   }
+    /* Do something to the Sed_cube */
+    {
+        double cur_val = sed_cube_sea_level(prof);
+        sed_cube_set_sea_level(prof, cur_val - data->param);
+    }
 
-   /* Set and return mass balance information */
-   info.mass_added = 0.;
-   info.mass_lost  = 0.;
+    /* Set and return mass balance information */
+    info.mass_added = 0.;
+    info.mass_lost  = 0.;
 
-   return info;
+    return info;
 }
 
 #define S_KEY_PARAM_NAME_1 "parameter"
 #define S_KEY_PARAM_NAME_2 "another parameter"
 
 gboolean
-init_new_process( Sed_process p , Eh_symbol_table tab , GError** error )
+init_new_process(Sed_process p, Eh_symbol_table tab, GError** error)
 {
-   New_process_t* data    = sed_process_new_user_data( p , New_process_t );
-   GError*        tmp_err = NULL;
-   gboolean       is_ok   = TRUE;
+    New_process_t* data    = sed_process_new_user_data(p, New_process_t);
+    GError*        tmp_err = NULL;
+    gboolean       is_ok   = TRUE;
 
-   eh_return_val_if_fail( error==NULL || *error==NULL , FALSE );
+    eh_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-   if ( data )
-   {
-      /* Get the parameter values from the Eh_symbol_table */
+    if (data) {
+        /* Get the parameter values from the Eh_symbol_table */
 
-      /* If there is an error, report it */
-      if ( tmp_err )
-      {
-         g_propagate_error( error , tmp_err );
-         is_ok = FALSE;
-      }
-   }
+        /* If there is an error, report it */
+        if (tmp_err) {
+            g_propagate_error(error, tmp_err);
+            is_ok = FALSE;
+        }
+    }
 
-   return is_ok;
+    return is_ok;
 }
 
 gboolean
-destroy_new_process( Sed_process p )
+destroy_new_process(Sed_process p)
 {
-   if ( p )
-   {
-      New_process_t* data = (New_process_t*)sed_process_user_data( p );
+    if (p) {
+        New_process_t* data = (New_process_t*)sed_process_user_data(p);
 
-      if ( data )
-      {
-         /* Free resources used by data ... */
+        if (data) {
+            /* Free resources used by data ... */
 
-         /* ... and the data itself */
-         eh_free( data );
-      }
-   }
+            /* ... and the data itself */
+            eh_free(data);
+        }
+    }
 
-   return TRUE;
+    return TRUE;
 }

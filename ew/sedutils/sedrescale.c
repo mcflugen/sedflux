@@ -27,108 +27,120 @@
 
 #define THIS_IS_OBSOLETE
 
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
 #if !defined( THIS_IS_OBSOLETE )
 
-   void doHelp(int);
-   FILE *fpin, *fpout;
-   char *infile, *outfile;
-   int i;
-   int rows, cols;
-   double old_max, old_min, new_max, new_min;
-   Profile_header *header;
-   double scale, old_scale, new_scale, new_val;
-   unsigned char *data;
-   Eh_args *args;
+    void doHelp(int);
+    FILE* fpin, *fpout;
+    char* infile, *outfile;
+    int i;
+    int rows, cols;
+    double old_max, old_min, new_max, new_min;
+    Profile_header* header;
+    double scale, old_scale, new_scale, new_val;
+    unsigned char* data;
+    Eh_args* args;
 
-   args = eh_opts_init(argc,argv);
-   if ( eh_check_opts( args , NULL , NULL , NULL )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   new_min = eh_get_opt_dbl( args , "low"  , VAL_NOT_GIVEN );
-   new_max = eh_get_opt_dbl( args , "high" , VAL_NOT_GIVEN );
-   infile  = eh_get_opt_str( args , "in"   , NULL );
-   outfile = eh_get_opt_str( args , "out"  , NULL );
+    if (eh_check_opts(args, NULL, NULL, NULL) != 0) {
+        eh_exit(-1);
+    }
 
-   if ( !infile )
-      fpin = stdin;
-   else
-      if ( !(fpin=fopen(infile,"r")) )
-         perror(infile), eh_exit(-1);
-   if ( !outfile )
-      fpout = stdout;
-   else
-      if ( !(fpout=fopen(outfile,"w")) )
-         perror(outfile), eh_exit(-1);
+    new_min = eh_get_opt_dbl(args, "low", VAL_NOT_GIVEN);
+    new_max = eh_get_opt_dbl(args, "high", VAL_NOT_GIVEN);
+    infile  = eh_get_opt_str(args, "in", NULL);
+    outfile = eh_get_opt_str(args, "out", NULL);
 
-   fprintf(stderr,"Scaling data between %f and %f\n",new_min,new_max);
+    if (!infile) {
+        fpin = stdin;
+    } else if (!(fpin = fopen(infile, "r"))) {
+        perror(infile), eh_exit(-1);
+    }
 
-/* Read the header */   
-   header = sed_read_profile_header( fpin );
-   
-   rows    = header->n_rows;
-   cols    = header->n_cols;
-   old_min = header->min_value;
-   old_max = header->max_value;
-   
-   if ( new_min==VAL_NOT_GIVEN )
-      new_min = old_min;
-   if ( new_max==VAL_NOT_GIVEN )
-      new_max = old_max;
+    if (!outfile) {
+        fpout = stdout;
+    } else if (!(fpout = fopen(outfile, "w"))) {
+        perror(outfile), eh_exit(-1);
+    }
 
-   scale=(old_max-old_min)/(new_max-new_min);
-   old_scale = (255-2)/(old_max-old_min);
-   new_scale = (255-2)/(new_max-new_min);
+    fprintf(stderr, "Scaling data between %f and %f\n", new_min, new_max);
 
-/* read the data */   
-   data = g_new(unsigned char , rows*cols );
-   fread(data,sizeof(unsigned char),rows*cols,fpin);
-   
-/* scale the data */
-   header->min_value=new_min;
-   header->max_value=new_max;
-   for (i=0;i<rows*cols;i++)
-   {
-      if ( !(data[i]==0 || data[i]==0xFF) )
-      {
-         new_val=(((data[i]-1)/old_scale+old_min)-new_min)*new_scale+1;
-         if ( new_val > 0xFF ) new_val=0xFF;
-         data[i]=(unsigned char)new_val;
-      }
-   }
+    /* Read the header */
+    header = sed_read_profile_header(fpin);
 
-/* write the header */
-   sed_print_profile_header( fpout , header );
-   
-/* write the data */   
-   fwrite(data,sizeof(unsigned char),rows*cols,fpout);
+    rows    = header->n_rows;
+    cols    = header->n_cols;
+    old_min = header->min_value;
+    old_max = header->max_value;
 
-   fclose(fpin);
-   fclose(fpout);
+    if (new_min == VAL_NOT_GIVEN) {
+        new_min = old_min;
+    }
+
+    if (new_max == VAL_NOT_GIVEN) {
+        new_max = old_max;
+    }
+
+    scale = (old_max - old_min) / (new_max - new_min);
+    old_scale = (255 - 2) / (old_max - old_min);
+    new_scale = (255 - 2) / (new_max - new_min);
+
+    /* read the data */
+    data = g_new(unsigned char, rows * cols);
+    fread(data, sizeof(unsigned char), rows * cols, fpin);
+
+    /* scale the data */
+    header->min_value = new_min;
+    header->max_value = new_max;
+
+    for (i = 0; i < rows * cols; i++) {
+        if (!(data[i] == 0 || data[i] == 0xFF)) {
+            new_val = (((data[i] - 1) / old_scale + old_min) - new_min) * new_scale + 1;
+
+            if (new_val > 0xFF) {
+                new_val = 0xFF;
+            }
+
+            data[i] = (unsigned char)new_val;
+        }
+    }
+
+    /* write the header */
+    sed_print_profile_header(fpout, header);
+
+    /* write the data */
+    fwrite(data, sizeof(unsigned char), rows * cols, fpout);
+
+    fclose(fpin);
+    fclose(fpout);
 #endif
-   
-   return 0;
+
+    return 0;
 }
 
 #undef THIS_IS_OBSOLETE
 
-void do_help(int verbose)
+void
+do_help(int verbose)
 {
 
-   fprintf(stderr,"Usage: sedrescale [help] [options] [parameters] [filein]\n");
-   
-   if ( !verbose )
-      return;
-      
-   fprintf(stderr,"Options:\n");
-   fprintf(stderr,"\t-o FILENAME -- Write ouput to the file, FILENAME. [ stdout ]\n");
-   fprintf(stderr,"Parameters:\n");
-   fprintf(stderr,"\tlow=      -- Lower limit for scaling. [ 0 ]\n");
-   fprintf(stderr,"\thigh=     -- Upper limit for scaling. [ 1 ]\n");
-   fprintf(stderr,"Input Files:\n");
-   fprintf(stderr,"\tfilein      -- File of sedflux output data. [ stdin ]\n");
-   
-   return;
+    fprintf(stderr, "Usage: sedrescale [help] [options] [parameters] [filein]\n");
+
+    if (!verbose) {
+        return;
+    }
+
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "\t-o FILENAME -- Write ouput to the file, FILENAME. [ stdout ]\n");
+    fprintf(stderr, "Parameters:\n");
+    fprintf(stderr, "\tlow=      -- Lower limit for scaling. [ 0 ]\n");
+    fprintf(stderr, "\thigh=     -- Upper limit for scaling. [ 1 ]\n");
+    fprintf(stderr, "Input Files:\n");
+    fprintf(stderr, "\tfilein      -- File of sedflux output data. [ stdin ]\n");
+
+    return;
 
 }

@@ -18,25 +18,25 @@ G_BEGIN_DECLS
 typedef struct _Add_Rem   Add_Rem;
 typedef struct _Add_Rem_Class Add_Rem_Class;
 
-struct _Add_Rem
-{
-   GtkHBox box;
+struct _Add_Rem {
+    GtkHBox box;
 
-   GtkWidget* label;
-   GtkWidget* add_button;
-   GtkWidget* rem_button;
+    GtkWidget* label;
+    GtkWidget* add_button;
+    GtkWidget* rem_button;
 };
 
-struct _Add_Rem_Class
-{
-   GtkHBoxClass parent_class;
+struct _Add_Rem_Class {
+    GtkHBoxClass parent_class;
 
-   void (*add_line) ( Add_Rem* obj );
-   void (*rem_line) ( Add_Rem* obj );
+    void (*add_line)(Add_Rem* obj);
+    void (*rem_line)(Add_Rem* obj);
 };
 
-GType       add_rem_get_type ( void );
-GtkWidget*   add_rem_new     ( const char* label_str );
+GType
+add_rem_get_type(void);
+GtkWidget*
+add_rem_new(const char* label_str);
 
 G_END_DECLS
 

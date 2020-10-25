@@ -38,36 +38,33 @@
 
 G_BEGIN_DECLS
 
-typedef struct
-{
-   double* x;
-   double* depth;
-   double* width;
-   double* slope;
-   gint len;
+typedef struct {
+    double* x;
+    double* depth;
+    double* width;
+    double* slope;
+    gint len;
 }
 Inflow_bathy_st;
 
-typedef struct
-{
-   double  duration;
-   double  width;
-   double  depth;
-   double  velocity;
-   double  q;
-   double* fraction;
-   double  rho_flow;
-   gint    n_grains;
+typedef struct {
+    double  duration;
+    double  width;
+    double  depth;
+    double  velocity;
+    double  q;
+    double* fraction;
+    double  rho_flow;
+    gint    n_grains;
 }
 Inflow_flood_st;
 
-typedef struct
-{
-   double* size_equiv;
-   double* lambda;
-   double* bulk_density;
-   double* grain_density;
-   gint    n_grains;
+typedef struct {
+    double* size_equiv;
+    double* lambda;
+    double* bulk_density;
+    double* grain_density;
+    gint    n_grains;
 }
 Inflow_sediment_st;
 
@@ -98,69 +95,82 @@ Inflow_sediment_st;
 
 #define INFLOW_DEFAULT_FLOOD_FILE               "flood.kvf"
 
-typedef struct
-{
-   double  basin_len;
-   double  dx;
-   double  rho_sea_water;
-   double  rho_river_water;
-   double* lambda;
-   double* size_equiv;
-   double* size_comp;
-   double* grain_fraction;
-   double* flow_fraction;
-   double* bulk_density;
-   double* grain_density;
-   double  dep_start;
-   double  size_bottom;
-   double  rho_bottom;
-   double* bottom_fraction;
-   double  sua;
-   double  sub;
-   double  e_a;
-   double  e_b;
-   double  c_drag;
-   double  tan_phi;
-   double  mu_water;
-   char*   flood_file;
-   gint    n_grains;
+typedef struct {
+    double  basin_len;
+    double  dx;
+    double  rho_sea_water;
+    double  rho_river_water;
+    double* lambda;
+    double* size_equiv;
+    double* size_comp;
+    double* grain_fraction;
+    double* flow_fraction;
+    double* bulk_density;
+    double* grain_density;
+    double  dep_start;
+    double  size_bottom;
+    double  rho_bottom;
+    double* bottom_fraction;
+    double  sua;
+    double  sub;
+    double  e_a;
+    double  e_b;
+    double  c_drag;
+    double  tan_phi;
+    double  mu_water;
+    char*   flood_file;
+    gint    n_grains;
 
-   double channel_width;
-   double channel_len;
+    double channel_width;
+    double channel_len;
 }
 Inflow_param_st;
 
-typedef struct
-{
-   double* phe_bottom;
-   int     n_grains;
+typedef struct {
+    double* phe_bottom;
+    int     n_grains;
 }
 Inflow_bottom_st;
 
-gboolean inflow_wrapper( Inflow_bathy_st* b    ,
-                         Inflow_flood_st* f    ,
-                         Inflow_sediment_st* s ,
-                         Inflow_const_st* c    ,
-                         double** deposition   ,
-                         double** erosion );
+gboolean
+inflow_wrapper(Inflow_bathy_st* b,
+    Inflow_flood_st* f,
+    Inflow_sediment_st* s,
+    Inflow_const_st* c,
+    double** deposition,
+    double** erosion);
 
-Inflow_param_st*    inflow_scan_parameter_file( const gchar* file , GError** error );
-Inflow_param_st*    inflow_check_params       ( Inflow_param_st* p , GError** error );
-Inflow_bathy_st*    inflow_scan_bathy_file    ( const gchar* file , Inflow_param_st* p , GError** error );
-Inflow_flood_st**   inflow_scan_flood_file    ( const gchar* file , Inflow_param_st* p , GError** error );
-Inflow_flood_st*    inflow_set_flood_data     ( Sed_hydro h , double rho_river_water );
-Inflow_flood_st*    inflow_destroy_flood_data ( Inflow_flood_st* f );
-Inflow_sediment_st* inflow_set_sediment_data  ( Inflow_param_st* p );
-Inflow_const_st*    inflow_set_constant_data  ( Inflow_param_st* p );
-Inflow_bathy_st*    inflow_set_bathy_data     ( double** bathy , gint len , double dx , double basin_len );
-Inflow_bathy_st*    inflow_destroy_bathy_data ( Inflow_bathy_st* b );
-Inflow_bathy_st*    inflow_update_bathy_data  ( Inflow_bathy_st* b , double** deposition , double** erosion , gint n_grains );
-gint                inflow_write_output       ( const gchar* file  ,
-                                                Inflow_bathy_st* b ,
-                                                double** deposit   ,
-                                                gssize n_grains );
+Inflow_param_st*
+inflow_scan_parameter_file(const gchar* file, GError** error);
+Inflow_param_st*
+inflow_check_params(Inflow_param_st* p, GError** error);
+Inflow_bathy_st*
+inflow_scan_bathy_file(const gchar* file, Inflow_param_st* p, GError** error);
+Inflow_flood_st**
+inflow_scan_flood_file(const gchar* file, Inflow_param_st* p, GError** error);
+Inflow_flood_st*
+inflow_set_flood_data(Sed_hydro h, double rho_river_water);
+Inflow_flood_st*
+inflow_destroy_flood_data(Inflow_flood_st* f);
+Inflow_sediment_st*
+inflow_set_sediment_data(Inflow_param_st* p);
+Inflow_const_st*
+inflow_set_constant_data(Inflow_param_st* p);
+Inflow_bathy_st*
+inflow_set_bathy_data(double** bathy, gint len, double dx, double basin_len);
+Inflow_bathy_st*
+inflow_destroy_bathy_data(Inflow_bathy_st* b);
+Inflow_bathy_st*
+inflow_update_bathy_data(Inflow_bathy_st* b, double** deposition, double** erosion,
+    gint n_grains);
+gint
+inflow_write_output(const gchar* file,
+    Inflow_bathy_st* b,
+    double** deposit,
+    gssize n_grains);
 
-void inflow_get_phe( Inflow_phe_query_st* query_data , Inflow_bottom_st* bed_data );
+void
+inflow_get_phe(Inflow_phe_query_st* query_data, Inflow_bottom_st* bed_data);
 
 /*
 typedef struct

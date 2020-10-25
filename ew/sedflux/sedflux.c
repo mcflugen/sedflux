@@ -23,44 +23,46 @@
 #include "my_sedflux.h"
 #include "sedflux_api.h"
 
-Sedflux_param_st* sedflux_setup        ( gchar* command_s );
+Sedflux_param_st*
+sedflux_setup(gchar* command_s);
 
 Sedflux_param_st*
-sedflux_setup( gchar* command_s )
+sedflux_setup(gchar* command_s)
 {
-   Sedflux_param_st* p           = NULL;
-   GError*           error       = NULL;
-   gchar*            command_str = NULL;
-   int               argc;
-   char**            argv;
+    Sedflux_param_st* p           = NULL;
+    GError*           error       = NULL;
+    gchar*            command_str = NULL;
+    int               argc;
+    char**            argv;
 
-   // g_thread_init( NULL );
-   eh_init_glib();
-   g_log_set_handler( NULL , G_LOG_LEVEL_MASK , &eh_logger , NULL );
+    // g_thread_init( NULL );
+    eh_init_glib();
+    g_log_set_handler(NULL, G_LOG_LEVEL_MASK, &eh_logger, NULL);
 
-   argv = g_strsplit( command_s , " " , 0 );
-   argc = g_strv_length( argv );
+    argv = g_strsplit(command_s, " ", 0);
+    argc = g_strv_length(argv);
 
-   command_str = eh_render_command_str (argc, (const char**)argv);
+    command_str = eh_render_command_str(argc, (const char**)argv);
 
-   /* Parse command line arguments */
-   p = sedflux_parse_command_line (argc, (const char**)argv, &error);
-   eh_exit_on_error( error , "Error parsing command line arguments" );
+    /* Parse command line arguments */
+    p = sedflux_parse_command_line(argc, (const char**)argv, &error);
+    eh_exit_on_error(error, "Error parsing command line arguments");
 
-   if (!p->input_dir)
-     p->input_dir = g_strdup (".");
+    if (!p->input_dir) {
+        p->input_dir = g_strdup(".");
+    }
 
-   /* Create the project directory and check permissions */
-   sedflux_setup_project_dir (&p->init_file, &p->input_dir, &p->working_dir,
-                              &error);
-   eh_exit_on_error( error , "Error setting up project directory" );
+    /* Create the project directory and check permissions */
+    sedflux_setup_project_dir(&p->init_file, &p->input_dir, &p->working_dir,
+        &error);
+    eh_exit_on_error(error, "Error setting up project directory");
 
-   sedflux_print_info_file( p->init_file , p->working_dir , command_str , p->run_desc );
+    sedflux_print_info_file(p->init_file, p->working_dir, command_str, p->run_desc);
 
-   /* Setup the signal handling */
-   sed_signal_set_action();
+    /* Setup the signal handling */
+    sed_signal_set_action();
 
-   return p;
+    return p;
 }
 
 /** Get variables at a time and place of a Sed_cube
@@ -75,89 +77,87 @@ sedflux_setup( gchar* command_s )
 */
 #if 0
 double*
-sedflux_get_val_at( Sed_epoch_queue q , Sed_cube p , const gchar* val_s , gint* here , double now )
+sedflux_get_val_at(Sed_epoch_queue q, Sed_cube p, const gchar* val_s, gint* here,
+    double now)
 {
-   double* data = NULL;
+    double* data = NULL;
 
-   eh_require( q    );
-   eh_require( p    );
+    eh_require(q);
+    eh_require(p);
 
-   if ( sedflux_run_until( q , p , now ) )
-   {
-      Sed_measurement m = sed_measurement_new( val_s );
+    if (sedflux_run_until(q, p, now)) {
+        Sed_measurement m = sed_measurement_new(val_s);
 
-      eh_require( m );
+        eh_require(m);
 
-      if ( !here )
-      { /* If here is NULL, get values at all grid cells */
-         gint64   id;
-         Eh_ind_2 sub;
+        if (!here) {
+            /* If here is NULL, get values at all grid cells */
+            gint64   id;
+            Eh_ind_2 sub;
 
-         data = eh_new( double , sed_cube_size( p ) );
-         for ( id=0 ; id<sed_cube_size(p) ; id++ )
-         {
-            sub = sed_cube_sub( p , id );
-            data[id] = sed_measurement_make( m , p , sub.i , sub.j );
-         }
-      }
-      else
-      { /* Get values at specified grid cells */
-         gint64   len;
-         gint64   i;
-         Eh_ind_2 sub;
+            data = eh_new(double, sed_cube_size(p));
 
-         for ( len=0 ; here[len]>=0 ; len++ );
-         data = eh_new( double , len );
-
-         for ( i=0 ; i<len ; i++ )
-         {
-            if ( sed_cube_is_in_domain_id( p , here[i] ) )
-               data[i] = eh_nan();
-            else
-            {
-               sub     = sed_cube_sub( p , here[i] );
-               data[i] = sed_measurement_make( m , p , sub.i , sub.j );
+            for (id = 0 ; id < sed_cube_size(p) ; id++) {
+                sub = sed_cube_sub(p, id);
+                data[id] = sed_measurement_make(m, p, sub.i, sub.j);
             }
-         }
-      }
+        } else {
+            /* Get values at specified grid cells */
+            gint64   len;
+            gint64   i;
+            Eh_ind_2 sub;
 
-      sed_measurement_destroy( m );
+            for (len = 0 ; here[len] >= 0 ; len++);
 
-   }
+            data = eh_new(double, len);
 
-   return data;
+            for (i = 0 ; i < len ; i++) {
+                if (sed_cube_is_in_domain_id(p, here[i])) {
+                    data[i] = eh_nan();
+                } else {
+                    sub     = sed_cube_sub(p, here[i]);
+                    data[i] = sed_measurement_make(m, p, sub.i, sub.j);
+                }
+            }
+        }
+
+        sed_measurement_destroy(m);
+
+    }
+
+    return data;
 }
 #endif
 
 gboolean
-sedflux_set_val_at( Sed_cube p , const gchar* val_s , gint* here, const double* val )
+sedflux_set_val_at(Sed_cube p, const gchar* val_s, gint* here, const double* val)
 {
-   gboolean success = FALSE;
+    gboolean success = FALSE;
 
-   eh_require( p );
+    eh_require(p);
 
-   if ( val && g_ascii_strcasecmp( val_s, "BASEMENT" )==0 )
-   {
-      eh_watch_str( val_s );
-      eh_watch_ptr( here );
-      if ( here )
-      {
-         gint i;
-         gint* id = here;
-         for ( ; *id!=-1; id++ )
-            sed_column_set_base_height( sed_cube_col( p, *id ), val[i] );
+    if (val && g_ascii_strcasecmp(val_s, "BASEMENT") == 0) {
+        eh_watch_str(val_s);
+        eh_watch_ptr(here);
 
-      }
-      else
-      {
-         const gint len = sed_cube_size(p);
-         gint i;
+        if (here) {
+            gint i;
+            gint* id = here;
 
-         for ( i=0; i<len; i++ )
-            sed_column_set_base_height( sed_cube_col( p, i ), val[i] );
-      }
-   }
+            for (; *id != -1; id++) {
+                sed_column_set_base_height(sed_cube_col(p, *id), val[i]);
+            }
 
-   return success;
+        } else {
+            const gint len = sed_cube_size(p);
+            gint i;
+
+            for (i = 0; i < len; i++) {
+                sed_column_set_base_height(sed_cube_col(p, i), val[i]);
+            }
+        }
+    }
+
+    return success;
 }
 

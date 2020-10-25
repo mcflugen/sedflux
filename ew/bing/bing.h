@@ -26,22 +26,20 @@
 
 G_BEGIN_DECLS
 
-typedef struct
-{
-   double U, Uold, Up, Upold;
-   double Dbar, Xbar, Ubar, Upbar;
-   double D, X, Y; 
+typedef struct {
+    double U, Uold, Up, Upold;
+    double Dbar, Xbar, Ubar, Upbar;
+    double D, X, Y;
 } node;
 
-typedef struct
-{
-   double yieldStrength;
-   double viscosity;
-   double numericalViscosity;
-   double flowDensity;
-   double dt;
-   double maxTime;
-   int MC;
+typedef struct {
+    double yieldStrength;
+    double viscosity;
+    double numericalViscosity;
+    double flowDensity;
+    double dt;
+    double maxTime;
+    int MC;
 }
 bing_t;
 
@@ -51,7 +49,8 @@ bing_t;
 #define sign(a) ( ((a)>0)?1:(((a)==0)?0:(-1)) )
 #define PI 3.14159265359
 
-double *bing(pos_t*,pos_t*,bing_t,double*);
+double*
+bing(pos_t*, pos_t*, bing_t, double*);
 
 G_END_DECLS
 

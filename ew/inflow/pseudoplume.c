@@ -30,31 +30,30 @@
 #include <utils/utils.h>
 
 /*** Self Documentation ***/
-static const char *help_msg[] =
-{
-"                                                                             ",
-" pseudoplume [options] [parameters]  [filein]                                ",
-"  run a pseudo-plume.                                                        ",
-"                                                                             ",
-" Options                                                                     ",
-"  -o outfile  - send output to outfile instead of stdout. [stdout]           ",
-"  -v          - be verbose. [off]                                            ",
-"  -h          - print this help message.                                     ",
-"                                                                             ",
-" Parameters                                                                  ",
-"  -pday=value - set the length of a day to be value fraction of 24 hrs. [1]  ",
-"  -pb0=value  - width of the river mouth (m). [1]                            ",
-"  -pu0=value  - velocity at the river mouth (m/s). [1]                       ",
-"  -pI0=value  - sediment inventory at the river mouth (m/s). [1]             ",
-"  -plambda=value  - removal rate for the sediment (1/day). [10]              ",
-"                                                                             ",
-"  -fin        - input bathymetry file. [stdin]                               ",
-"  -fout       - output bathymetry file. [stdout]                             ",
-NULL
+static const char* help_msg[] = {
+    "                                                                             ",
+    " pseudoplume [options] [parameters]  [filein]                                ",
+    "  run a pseudo-plume.                                                        ",
+    "                                                                             ",
+    " Options                                                                     ",
+    "  -o outfile  - send output to outfile instead of stdout. [stdout]           ",
+    "  -v          - be verbose. [off]                                            ",
+    "  -h          - print this help message.                                     ",
+    "                                                                             ",
+    " Parameters                                                                  ",
+    "  -pday=value - set the length of a day to be value fraction of 24 hrs. [1]  ",
+    "  -pb0=value  - width of the river mouth (m). [1]                            ",
+    "  -pu0=value  - velocity at the river mouth (m/s). [1]                       ",
+    "  -pI0=value  - sediment inventory at the river mouth (m/s). [1]             ",
+    "  -plambda=value  - removal rate for the sediment (1/day). [10]              ",
+    "                                                                             ",
+    "  -fin        - input bathymetry file. [stdin]                               ",
+    "  -fout       - output bathymetry file. [stdout]                             ",
+    NULL
 };
 
 #ifndef M_PI
-# define M_PI		3.14159265358979323846
+    #define M_PI        3.14159265358979323846
 #endif
 
 #define DEFAULT_DAY_LENGTH           1
@@ -64,88 +63,99 @@ NULL
 #define DEFAULT_I0                   (1.)
 #define DEFAULT_LAMBDA               (10.)
 
-double *pseudoplume(double *x, int len_x, double lambda, double *I);
+double*
+pseudoplume(double* x, int len_x, double lambda, double* I);
 
-int main(int argc,char *argv[])
+int
+main(int argc, char* argv[])
 {
-   FILE *fp_out;
-   Eh_args *args;
-   char *infile, *outfile;
-   int i,  n_nodes;
-   gboolean verbose;
-   double day, u0, b0, inv0, lambda;
-   double *x, *y, *z;
-   double *I;
+    FILE* fp_out;
+    Eh_args* args;
+    char* infile, *outfile;
+    int i,  n_nodes;
+    gboolean verbose;
+    double day, u0, b0, inv0, lambda;
+    double* x, *y, *z;
+    double* I;
 
-   args = eh_opts_init( argc , argv );
-   if ( eh_check_opts( args , NULL , NULL , help_msg )!=0 )
-      eh_exit(-1);
+    args = eh_opts_init(argc, argv);
 
-   verbose = eh_get_opt_bool( args , "v"      , FALSE              );
-   day     = eh_get_opt_dbl ( args , "day"    , DEFAULT_DAY_LENGTH );
-   b0      = eh_get_opt_dbl ( args , "b0"     , DEFAULT_B0         );
-   u0      = eh_get_opt_dbl ( args , "u0"     , DEFAULT_U0         );
-   inv0    = eh_get_opt_dbl ( args , "I0"     , DEFAULT_I0         );
-   lambda  = eh_get_opt_dbl ( args , "lambda" , DEFAULT_LAMBDA     );
-   infile  = eh_get_opt_str ( args , "in"     , NULL               );
-   outfile = eh_get_opt_str ( args , "out"    , NULL               );
-   
-   lambda /= 86400.;
+    if (eh_check_opts(args, NULL, NULL, help_msg) != 0) {
+        eh_exit(-1);
+    }
 
-   if ( verbose )
-   {
-      fprintf(stderr,"pseudoplume : river width (m)      : %f\n",b0);
-      fprintf(stderr,"pseudoplume : river velocity (m/s) : %f\n",u0);
-      fprintf(stderr,"pseudoplume : removal rate (1/s)   : %f\n",lambda);
-   }
+    verbose = eh_get_opt_bool(args, "v", FALSE);
+    day     = eh_get_opt_dbl(args, "day", DEFAULT_DAY_LENGTH);
+    b0      = eh_get_opt_dbl(args, "b0", DEFAULT_B0);
+    u0      = eh_get_opt_dbl(args, "u0", DEFAULT_U0);
+    inv0    = eh_get_opt_dbl(args, "I0", DEFAULT_I0);
+    lambda  = eh_get_opt_dbl(args, "lambda", DEFAULT_LAMBDA);
+    infile  = eh_get_opt_str(args, "in", NULL);
+    outfile = eh_get_opt_str(args, "out", NULL);
 
-// Read input bathymetry.
-   {
-      Eh_data_record* all_records = eh_data_record_scan_file( infile , "," , EH_FAST_DIM_COL , FALSE , NULL );
+    lambda /= 86400.;
 
-      x = eh_data_record_dup_row( all_records[0] , 0 );
-      y = eh_data_record_dup_row( all_records[0] , 1 );
-      z = eh_data_record_dup_row( all_records[0] , 2 );
+    if (verbose) {
+        fprintf(stderr, "pseudoplume : river width (m)      : %f\n", b0);
+        fprintf(stderr, "pseudoplume : river velocity (m/s) : %f\n", u0);
+        fprintf(stderr, "pseudoplume : removal rate (1/s)   : %f\n", lambda);
+    }
 
-      for ( i=0 ; all_records[i] ; i++ )
-         eh_data_record_destroy( all_records[i] );
-      eh_free( all_records );
-   }
+    // Read input bathymetry.
+    {
+        Eh_data_record* all_records = eh_data_record_scan_file(infile, ",", EH_FAST_DIM_COL,
+                FALSE, NULL);
 
-// Allocate space for the plume deposit.
-   I = eh_new( double , n_nodes );
+        x = eh_data_record_dup_row(all_records[0], 0);
+        y = eh_data_record_dup_row(all_records[0], 1);
+        z = eh_data_record_dup_row(all_records[0], 2);
 
-// Non-dimesionalize x, and lambda.
-   for (i=0;i<n_nodes;i++)
-      x[i] /= b0;
-   lambda *= (b0/u0);
+        for (i = 0 ; all_records[i] ; i++) {
+            eh_data_record_destroy(all_records[i]);
+        }
 
-// Run the pseudoplume.
-   pseudoplume(x,n_nodes,lambda,I);
+        eh_free(all_records);
+    }
 
-// Redimensionalize the output.
-   for (i=0;i<n_nodes;i++)
-   {
-      x[i] *= b0;
-      I[i] *= inv0;
-   }
+    // Allocate space for the plume deposit.
+    I = eh_new(double, n_nodes);
 
-// Add the pseudoplume deposit to the bathymetry.
-   for (i=0;i<n_nodes;i++)
-      y[i] += I[i];
+    // Non-dimesionalize x, and lambda.
+    for (i = 0; i < n_nodes; i++) {
+        x[i] /= b0;
+    }
 
-// Write out the new bathymetry.
-   fp_out = eh_open_file( outfile , "w" );
-   for (i=0;i<n_nodes;i++)
-      fprintf(fp_out,"x, y, w : %f, %f, %f\n",x[i],I[i],z[i]);
-   fclose( fp_out );
+    lambda *= (b0 / u0);
 
-   eh_free(I);
-   eh_free( x );
-   eh_free( y );
-   eh_free( z );
+    // Run the pseudoplume.
+    pseudoplume(x, n_nodes, lambda, I);
 
-   return 0;
+    // Redimensionalize the output.
+    for (i = 0; i < n_nodes; i++) {
+        x[i] *= b0;
+        I[i] *= inv0;
+    }
+
+    // Add the pseudoplume deposit to the bathymetry.
+    for (i = 0; i < n_nodes; i++) {
+        y[i] += I[i];
+    }
+
+    // Write out the new bathymetry.
+    fp_out = eh_open_file(outfile, "w");
+
+    for (i = 0; i < n_nodes; i++) {
+        fprintf(fp_out, "x, y, w : %f, %f, %f\n", x[i], I[i], z[i]);
+    }
+
+    fclose(fp_out);
+
+    eh_free(I);
+    eh_free(x);
+    eh_free(y);
+    eh_free(z);
+
+    return 0;
 }
 
 /////////////////
@@ -171,21 +181,23 @@ int main(int argc,char *argv[])
 #define PSEUDOPLUME_A (0.126)
 #define PSEUDOPLUME_B (1.)
 
-double *pseudoplume(double *x, int len_x, double lambda, double *I)
+double*
+pseudoplume(double* x, int len_x, double lambda, double* I)
 {
-   int i;
-   double x_a=X_A;
-   double a=PSEUDOPLUME_A;
-   double b=PSEUDOPLUME_B;
+    int i;
+    double x_a = X_A;
+    double a = PSEUDOPLUME_A;
+    double b = PSEUDOPLUME_B;
 
-   for (i=0;i<len_x;i++)
-   {
-      if ( x[i] < x_a )
-         I[i] = exp(-lambda*x[i]);
-      else
-         I[i] = exp(-lambda*x_a/3.*(1+2*pow(x[i]/x_a,1.5)))*(1./(1+a*pow(x[i]-x_a,b)));
-   }
+    for (i = 0; i < len_x; i++) {
+        if (x[i] < x_a) {
+            I[i] = exp(-lambda * x[i]);
+        } else {
+            I[i] = exp(-lambda * x_a / 3.*(1 + 2 * pow(x[i] / x_a,
+                            1.5))) * (1. / (1 + a * pow(x[i] - x_a, b)));
+        }
+    }
 
-   return I;
+    return I;
 }
 

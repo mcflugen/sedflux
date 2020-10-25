@@ -26,56 +26,59 @@
 #include "failure.h"
 
 #ifdef DECIDER_STANDALONE
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
-   int decider(const Sed_cube*,double);
-   int decision;
-   Sed_cube p;
+    int decider(const Sed_cube*, double);
+    int decision;
+    Sed_cube p;
 
-   p = sed_cube_read(stdin);
+    p = sed_cube_read(stdin);
 
-   decision = decider(p,DECIDER_THRESHOLD);
+    decision = decider(p, DECIDER_THRESHOLD);
 
-   sed_cube_write(stdout,p);
+    sed_cube_write(stdout, p);
 
-   fprintf(stderr,"decision = %d\n",decision);
+    fprintf(stderr, "decision = %d\n", decision);
 
-   return decision;
+    return decision;
 }
 #endif
 
-int decider( const Sed_cube p , double threshold )
+int
+decider(const Sed_cube p, double threshold)
 {
-   double fsand=0,fclay=0;
-   int decision;
+    double fsand = 0, fclay = 0;
+    int decision;
 
-   eh_require( p );
-   eh_require( threshold>=0 );
-   eh_require( threshold<=1 );
-   eh_require( sed_cube_is_1d(p) );
+    eh_require(p);
+    eh_require(threshold >= 0);
+    eh_require(threshold <= 1);
+    eh_require(sed_cube_is_1d(p));
 
-   {
-      gssize n_grains = sed_sediment_env_n_types( );
-      gssize i;
-      Sed_cell fail = sed_cell_new( n_grains );
-      Sed_cell c    = sed_cell_new( n_grains );
+    {
+        gssize n_grains = sed_sediment_env_n_types();
+        gssize i;
+        Sed_cell fail = sed_cell_new(n_grains);
+        Sed_cell c    = sed_cell_new(n_grains);
 
-      for ( i=0 ; i<sed_cube_n_y(p) ; i++ )
-      {
-         sed_column_top( sed_cube_col(p,i) , sed_cube_thickness(p,0,i) , c );
-         sed_cell_add(fail,c);
-      }
-      fsand = sed_cell_sand_fraction( fail );
-      fclay = sed_cell_clay_fraction( fail );
+        for (i = 0 ; i < sed_cube_n_y(p) ; i++) {
+            sed_column_top(sed_cube_col(p, i), sed_cube_thickness(p, 0, i), c);
+            sed_cell_add(fail, c);
+        }
 
-      sed_cell_destroy( c    );
-      sed_cell_destroy( fail );
-   }
+        fsand = sed_cell_sand_fraction(fail);
+        fclay = sed_cell_clay_fraction(fail);
 
-   if ( fclay >= threshold )
-      decision = DECIDER_DEBRIS_FLOW;
-   else
-      decision = DECIDER_TURBIDITY_CURRENT;
+        sed_cell_destroy(c);
+        sed_cell_destroy(fail);
+    }
 
-   return decision;
+    if (fclay >= threshold) {
+        decision = DECIDER_DEBRIS_FLOW;
+    } else {
+        decision = DECIDER_TURBIDITY_CURRENT;
+    }
+
+    return decision;
 }

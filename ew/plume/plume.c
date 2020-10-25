@@ -53,7 +53,7 @@
 //int     strt;                   /* Straight plume flag, if straight (or Fjord) = 1, else = 0 */
 
 
-FILE    *fidlog;                /* Log file */
+FILE*    fidlog;                /* Log file */
 
 //---
 // Grid data
@@ -69,53 +69,57 @@ FILE    *fidlog;                /* Log file */
 //double Qsr, Qsw[4], Tsr, Tsd[2], merr;
 
 int
-plume( Plume_enviro *env , Plume_grid *grid , Plume_options *opt )
+plume(Plume_enviro* env, Plume_grid* grid, Plume_options* opt)
 {
-   int     err;
-   Plume_mass_bal mb;
+    int     err;
+    Plume_mass_bal mb;
 
-   // Constants derived from Input Parameters
-   err = plumeset( env , grid , opt );
+    // Constants derived from Input Parameters
+    err = plumeset(env, grid, opt);
 
-   // Check for Hydraulic Jumps
-   err = plumejump( env->river );
+    // Check for Hydraulic Jumps
+    err = plumejump(env->river);
 
-   // Set flag for fjords or Straight plumes
+    // Set flag for fjords or Straight plumes
 
-   if ( opt->fjrd || fabs(env->ocean->vo) < ucrit*env->river->u0 )
-      opt->strt = 1;                    // assume: vo ~ 0
-   else
-      opt->strt = 0;
-/*
-   if ( opt->fjrd )
-      opt->strt = 1;
-*/
+    if (opt->fjrd || fabs(env->ocean->vo) < ucrit * env->river->u0) {
+        opt->strt = 1;    // assume: vo ~ 0
+    } else {
+        opt->strt = 0;
+    }
 
-   // Check input values
-   err = plumecheck( env , grid , opt );
-   if( err )
-   {
-//      fprintf( stderr, " PlumeCheck ERROR: Plume Aborted \n\n" );
-      if ( opt->o1 )
-           fprintf( fidlog, " PlumeCheck ERROR: Plume Aborted \n\n" );
-      return -1;
-   }
+    /*
+       if ( opt->fjrd )
+          opt->strt = 1;
+    */
 
-   // Create nicely centered X/Y arrays
-   eh_return_val_if_fail( plumearray( grid , env , opt )==0 , -1 );
+    // Check input values
+    err = plumecheck(env, grid, opt);
 
-   // Calculate centerline position and distance from mouth
-   eh_return_val_if_fail( plumecent( env , grid , opt )==0  , -1 );
+    if (err) {
+        //      fprintf( stderr, " PlumeCheck ERROR: Plume Aborted \n\n" );
+        if (opt->o1) {
+            fprintf(fidlog, " PlumeCheck ERROR: Plume Aborted \n\n");
+        }
 
-   // Calculate distance from/along centerline for all other pts
-   eh_return_val_if_fail( plumedist( grid , opt )==0        , -1 );
+        return -1;
+    }
 
-   // Calculate the plume concentrations
-   eh_return_val_if_fail( plumeconc( env , grid , opt )==0  , -1 );
+    // Create nicely centered X/Y arrays
+    eh_return_val_if_fail(plumearray(grid, env, opt) == 0, -1);
 
-   // Mass Conservation Checks and corrections
-   eh_return_val_if_fail( plumemass( env , grid , &mb )==0  , -1 );
+    // Calculate centerline position and distance from mouth
+    eh_return_val_if_fail(plumecent(env, grid, opt) == 0, -1);
 
-   return 0;
+    // Calculate distance from/along centerline for all other pts
+    eh_return_val_if_fail(plumedist(grid, opt) == 0, -1);
+
+    // Calculate the plume concentrations
+    eh_return_val_if_fail(plumeconc(env, grid, opt) == 0, -1);
+
+    // Mass Conservation Checks and corrections
+    eh_return_val_if_fail(plumemass(env, grid, &mb) == 0, -1);
+
+    return 0;
 
 }

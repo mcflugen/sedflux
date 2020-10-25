@@ -25,10 +25,9 @@
 extern "C" {
 #endif
 
-typedef struct
-{
-   double r;
-   double i;
+typedef struct {
+    double r;
+    double i;
 }
 Complex;
 
@@ -46,5 +45,5 @@ Complex c_rcmul(double x, Complex a);
 }
 #endif
 
-#endif 
+#endif
 

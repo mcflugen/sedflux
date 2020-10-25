@@ -37,18 +37,18 @@ extern "C" {
 
 #define E_CHECK_VERSION(major,minor,micro)    \
     (E_MAJOR_VERSION > (major) || \
-     (E_MAJOR_VERSION == (major) && E_MINOR_VERSION > (minor)) || \
-     (E_MAJOR_VERSION == (major) && E_MINOR_VERSION == (minor) && \
-      E_MICRO_VERSION >= (micro)))
+        (E_MAJOR_VERSION == (major) && E_MINOR_VERSION > (minor)) || \
+        (E_MAJOR_VERSION == (major) && E_MINOR_VERSION == (minor) && \
+            E_MICRO_VERSION >= (micro)))
 
 #define eh_p_msg( msg_level , str ) \
-   eh_print_msg( msg_level , __PRETTY_FUNCTION__ , str )
+    eh_print_msg( msg_level , __PRETTY_FUNCTION__ , str )
 
 #define eh_lower_bound( val , low  ) ( val = ((val)<(low) )?(low ):(val) )
 #define eh_upper_bound( val , high ) ( val = ((val)>(high))?(high):(val) )
 
 #define eh_clamp( val , low , high ) \
-   ( val = ((val)<(low))?(low):(((val)>(high))?(high):(val)) )
+    ( val = ((val)<(low))?(low):(((val)>(high))?(high):(val)) )
 
 #define EH_SWAP_PTR( a , b ) { __typeof__ (b) t=(b); (b)=(a); (a)=t; }
 #define swap_int( a , b ) { int temp=b; b=a; a=temp; }
@@ -69,11 +69,11 @@ extern "C" {
 #define POLYGON_OUT_CROSSINGS ( 1<<1 )
 
 
-#define BIT_ON	00000001
-#define BIT_OFF	00000000
+#define BIT_ON  00000001
+#define BIT_OFF 00000000
 #define NO  0
 #define YES 1
-#define PTR_SIZE 8	/* length of a pointer in bytes */
+#define PTR_SIZE 8  /* length of a pointer in bytes */
 #define ALL -1
 
 /**********
@@ -92,7 +92,7 @@ extern "C" {
 *
 *  put_bit(pt,n,bit)
 *    Sets the value of the nth bit in the data pointed to by pt to value bit.
-*    To work properly pt must be converted to char *. 
+*    To work properly pt must be converted to char *.
 *
 *  nbb(n)
 *    evaluates to the minimum number of bytes able to contain n bits
@@ -100,14 +100,14 @@ extern "C" {
 **********/
 
 #define eh_sign(a)         ( (a>=0)?1:-1 )
-#define eh_max(a,b)    	   ( ( (a) > (b) ) ? (a) : (b) )
+#define eh_max(a,b)        ( ( (a) > (b) ) ? (a) : (b) )
 #define eh_set_max(a,b)    if ( (b)>(a) ) { (a) = (b); }
 #define eh_set_min(a,b)    if ( (b)<(a) ) { (a) = (b); }
 #define eh_dbl_set_max(a,b) { double __t=(b); if ( __t>(a) ) { (a)=__t; } }
 #define eh_dbl_set_min(a,b) { double __t=(b); if ( __t<(a) ) { (a)=__t; } }
-#define eh_min(a,b)    	   ( ( (a) < (b) ) ? (a) : (b) )
+#define eh_min(a,b)        ( ( (a) < (b) ) ? (a) : (b) )
 
-#define get_bit(pt,n)	   ( (pt)[(n)/8]&(0x80>>((n)%8)) )
+#define get_bit(pt,n)      ( (pt)[(n)/8]&(0x80>>((n)%8)) )
 #define turn_bit_on(pt,n)  (pt)[(n)/8] = (pt)[(n)/8] | (0x80>>((n)%8))
 #define turn_bit_off(pt,n) (pt)[(n)/8] = (pt)[(n)/8] &~ (0x80>>((n)%8));
 #define nbb(n)             ( ( (n) + 7 ) / 8 )
@@ -134,7 +134,7 @@ extern "C" {
 *
 *  mmove(dst,src,len)
 *    Copies the len characters pointed to by src into the object pointed to by
-*    dst.  The characters are not copied to a temporary location before being 
+*    dst.  The characters are not copied to a temporary location before being
 *    copied.  Thus, for the data to be copied correctly, the source and
 *    destination objects must not overlap.
 *
@@ -144,15 +144,15 @@ extern "C" {
 # define initarray(pt,len,c) { unsigned long i; for (i=0;i<len;(pt)[i++]=c); }
 #endif
 #define count_pix(pt,len,val,c) { unsigned long i; for (i=0;i<len;i++) if ((pt)[i]==val) c++; }
-#define rotate_array(ar_type,pt,len) { unsigned long i;				      \
-				       ar_type temp;					      \
-				       for (i=0,temp=(pt)[0];i<len-1;(pt)[i]=(pt)[i+1],i++); \
-				       (pt)[len-1]=temp;				      \
-				     }
-#define mmove(dst,src,len) { unsigned long j; 		        \
-			     for (j=0;j<(len);j++) 		\
-			              (dst)[j]=(src)[j];	\
-			   }
+#define rotate_array(ar_type,pt,len) { unsigned long i;                   \
+        ar_type temp;                          \
+        for (i=0,temp=(pt)[0];i<len-1;(pt)[i]=(pt)[i+1],i++); \
+        (pt)[len-1]=temp;                      \
+    }
+#define mmove(dst,src,len) { unsigned long j;               \
+        for (j=0;j<(len);j++)      \
+            (dst)[j]=(src)[j];    \
+    }
 
 
 
