@@ -1,8 +1,9 @@
+language: c
 os:
 - linux
 - osx
-sudo: false
-osx_image: xcode6.4
+dist: xenial
+# osx_image: xcode6.4
 env:
   global:
   - secure: L+Yqd1nmMuQtCDKbhFPpfKiO1dPwH9J4jcdq6KW3vMixlFYs2546ZxhFaDXVgMXogVziq1FcSrNspaPxn0Zxk1ZuUAeFYU+gVp8/jqZGnkTL4UORMk0hHX6EwFNoUJl9LxpmO3140S67td14U0vBz8dOh9oeNui+VrMJn7NGlpI=
