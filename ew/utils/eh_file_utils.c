@@ -197,6 +197,13 @@ eh_open_temp_file(const char* tmpl, char** name_used)
 {
     GError* error = NULL;
     int fd = g_file_open_tmp(tmpl, name_used, &error);
+    if (error != NULL) {
+        g_assert(fd < 0);
+        fprintf(stderr, "Unable to open temp file: %s\n", error->message);
+        g_error_free(error);
+    } else {
+        g_assert(fd >= 0);
+    }
     return fdopen(fd, "w+");
 }
 
