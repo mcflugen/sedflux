@@ -167,7 +167,7 @@ eh_fwrite_int64_to_le(const void* ptr, gsize size, gsize nitems, FILE* stream)
 
 #endif
 
-#undef HAVE_GETLINE
+// #undef HAVE_GETLINE
 
 #ifndef HAVE_GETLINE
 # ifdef HAVE_FGETLN
