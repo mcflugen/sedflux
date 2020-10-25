@@ -30,7 +30,7 @@ before_install:
 - micromamba activate
 - micromamba install mamba --yes -c conda-forge
 install:
-- mamba install cmake c-compiler pkg-config glib -c conda-forge --yes
+- mamba install cmake c-compiler cxx-compiler pkg-config glib -c conda-forge --yes
 script:
 - |
   mkdir _build && cd _build
