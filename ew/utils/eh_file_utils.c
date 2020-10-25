@@ -201,11 +201,11 @@ eh_open_temp_file(const char* tmpl, char** name_used)
         g_assert(fd < 0);
         fprintf(stderr, "Unable to open temp file: %s\n", error->message);
         g_error_free(error);
+        return NULL;
     } else {
         g_assert(fd >= 0);
-        return NULL;
+        return fdopen(fd, "w+");
     }
-    return fdopen(fd, "w+");
 }
 
 #include <fcntl.h>
