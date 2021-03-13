@@ -33,6 +33,10 @@ jobs:
           mamba install --file=requirements.txt
           mamba list
 
+      - name: Install pthreads
+        if: matrix.os == 'windows-latest'
+        run: mamba install pthreads-win32
+
       - name: Make cmake build directory
         working-directory: ${{ github.workspace }}
         run: cmake -E make_directory build
