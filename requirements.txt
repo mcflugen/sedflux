@@ -1,0 +1,5 @@
+cmake
+c-compiler
+cxx-compiler
+pkg-config
+glib
