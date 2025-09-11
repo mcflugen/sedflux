@@ -1,2 +1,0 @@
-/usr/bin/ar qc libflow-static.a "CMakeFiles/flow-static.dir/flow.c.o"
-/usr/bin/ranlib libflow-static.a

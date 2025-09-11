@@ -1,2 +1,0 @@
-/usr/bin/ar qc libbing-static.a "CMakeFiles/bing-static.dir/bing.c.o"
-/usr/bin/ranlib libbing-static.a

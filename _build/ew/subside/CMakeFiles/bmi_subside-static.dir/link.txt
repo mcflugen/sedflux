@@ -1,2 +1,0 @@
-/usr/bin/ar qc libbmi_subside.a "CMakeFiles/bmi_subside-static.dir/bmi_subside.c.o"
-/usr/bin/ranlib libbmi_subside.a

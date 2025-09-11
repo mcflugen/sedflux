@@ -107,31 +107,31 @@ static Sed_property_static all_properties[41] = {
     { "hydraulic_con", "hydro", {&sed_cell_bulk_hydraulic_conductivity}, 1 },
     {
         "shear_strength", "sheer",
-        {(Sed_cell_property_func_1)(sed_cell_shear_strength)}, 2
+        {.f_1 = sed_cell_shear_strength}, 2
     },
     {
         "cohesion", "cohesion",
-        {(Sed_cell_property_func_2)& sed_cell_cohesion}, 2
+        {.f_1 = sed_cell_cohesion}, 2
     },
     {
         "consolidation", "con",
-        {(Sed_cell_property_func_2)& sed_cell_consolidation}, 2
+        {.f_1 = sed_cell_consolidation}, 2
     },
     {
         "consolidation_rate", "du",
-        {(Sed_cell_property_func_2)& sed_cell_consolidation_rate}, 2
+        {.f_1 = sed_cell_consolidation_rate}, 2
     },
     {
         "excess_pressure", "excess",
-        {(Sed_cell_property_func_2)& sed_cell_excess_pressure}, 2
+        {.f_1 = sed_cell_excess_pressure}, 2
     },
     {
         "relative_pressure", "rel",
-        {(Sed_cell_property_func_2)& sed_cell_relative_pressure}, 2
+        {.f_1 = sed_cell_relative_pressure}, 2
     },
     {
         "fraction", "fraction",
-        {(Sed_cell_property_func_2)& sed_cell_fraction}, 2
+        {.f_1 = (Sed_cell_property_func_1)sed_cell_fraction}, 2
     },
     {NULL, NULL, {NULL}, 0}
 };

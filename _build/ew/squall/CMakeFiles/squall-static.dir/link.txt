@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsquall-static.a "CMakeFiles/squall-static.dir/squall.c.o"
-/usr/bin/ranlib libsquall-static.a

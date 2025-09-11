@@ -1,2 +1,0 @@
-/usr/bin/ar qc libbmi_plume.a "CMakeFiles/bmi_plume-static.dir/bmi_plume.c.o" "CMakeFiles/bmi_plume-static.dir/plume_model.c.o"
-/usr/bin/ranlib libbmi_plume.a

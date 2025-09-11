@@ -1,2 +1,0 @@
-/usr/bin/ar qc libdiffusion-static.a "CMakeFiles/diffusion-static.dir/diffusion.c.o"
-/usr/bin/ranlib libdiffusion-static.a

@@ -1,1 +1,0 @@
-/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/sed-print-input.dir/link.d "CMakeFiles/sed-print-input.dir/print_input.c.o" "CMakeFiles/sed-print-input.dir/sed_input_files.c.o" -o sed-print-input  -lm libsedflux-static.a -lgmodule-2.0 -lm ../utils/libutils-static.a -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0 -lm

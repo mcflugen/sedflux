@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmuds-static.a "CMakeFiles/muds-static.dir/muds.c.o"
-/usr/bin/ranlib libmuds-static.a

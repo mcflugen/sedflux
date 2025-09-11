@@ -1,1 +1,0 @@
-/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/sed-test-river.dir/link.d "CMakeFiles/sed-test-river.dir/test_river.c.o" "CMakeFiles/sed-test-river.dir/test_sed.c.o" -o sed-test-river  -lm libsedflux-static.a ../utils/libutils-static.a -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0

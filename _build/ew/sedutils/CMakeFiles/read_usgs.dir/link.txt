@@ -1,1 +1,0 @@
-/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/read_usgs.dir/link.d CMakeFiles/read_usgs.dir/read_usgs.c.o -o read_usgs  -Wl,-rpath,/home/runner/work/sedflux/sedflux/_build/ew/sed:/home/runner/work/sedflux/sedflux/_build/ew/utils: ../sed/libsedflux.so ../utils/libutils.so -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcompact-static.a "CMakeFiles/compact-static.dir/compact.c.o"
-/usr/bin/ranlib libcompact-static.a

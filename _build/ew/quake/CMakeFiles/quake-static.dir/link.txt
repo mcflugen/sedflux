@@ -1,2 +1,0 @@
-/usr/bin/ar qc libquake-static.a "CMakeFiles/quake-static.dir/earthquake.c.o"
-/usr/bin/ranlib libquake-static.a

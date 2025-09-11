@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsubside-static.a "CMakeFiles/subside-static.dir/subside.c.o" "CMakeFiles/subside-static.dir/subside_api.c.o"
-/usr/bin/ranlib libsubside-static.a

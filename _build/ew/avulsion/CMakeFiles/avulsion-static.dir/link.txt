@@ -1,2 +1,0 @@
-/usr/bin/ar qc libavulsion-static.a "CMakeFiles/avulsion-static.dir/avulsion.c.o" "CMakeFiles/avulsion-static.dir/avulsion_api.c.o"
-/usr/bin/ranlib libavulsion-static.a

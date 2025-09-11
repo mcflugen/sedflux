@@ -1,2 +1,0 @@
-/usr/bin/ar qc libfailure-static.a "CMakeFiles/failure-static.dir/failure.c.o" "CMakeFiles/failure-static.dir/getsurface.c.o" "CMakeFiles/failure-static.dir/decider.c.o"
-/usr/bin/ranlib libfailure-static.a

@@ -1,1 +1,0 @@
-/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/flow_3d.dir/link.d CMakeFiles/flow_3d.dir/flow_3d_main.c.o -o flow_3d  libflow-static.a ../sed/libsedflux-static.a ../utils/libutils-static.a -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0
