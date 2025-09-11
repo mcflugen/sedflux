@@ -1,0 +1,1 @@
+/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/run_bing.dir/link.d CMakeFiles/run_bing.dir/bing_main.c.o -o run_bing  libbing-static.a ../sed/libsedflux-static.a ../utils/libutils-static.a -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0

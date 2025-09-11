@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsakura-static.a "CMakeFiles/sakura-static.dir/sakura.c.o" "CMakeFiles/sakura-static.dir/sakura_io.c.o" "CMakeFiles/sakura-static.dir/sakura_sedflux_interface.c.o" "CMakeFiles/sakura-static.dir/sakura_utils.c.o"
+/usr/bin/ranlib libsakura-static.a

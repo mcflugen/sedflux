@@ -1,0 +1,7 @@
+Name: LibSed
+Description: Sedflux utility library
+Version: 
+Requires: glib-2.0 >= 2.25, utils
+Libs: -L/usr/local/lib -lsedflux
+Cflags: -I/usr/local/include/ew-2.0
+

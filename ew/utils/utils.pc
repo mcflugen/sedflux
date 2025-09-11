@@ -1,0 +1,7 @@
+Name: LibUtils
+Description: My utility library
+Version: 
+Requires: glib-2.0 >= 2.25
+Libs: -L/usr/local/lib -lutils -lm
+Cflags: -I/usr/local/include
+

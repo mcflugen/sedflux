@@ -1,0 +1,1 @@
+/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/utils-test-grid.dir/link.d "CMakeFiles/utils-test-grid.dir/test_grid.c.o" -o utils-test-grid  -Wl,-rpath,/home/runner/work/sedflux/sedflux/_build/ew/utils libutils.so -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0

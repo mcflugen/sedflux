@@ -1,0 +1,2 @@
+/usr/bin/ar qc libbio-static.a "CMakeFiles/bio-static.dir/bio.c.o" "CMakeFiles/bio-static.dir/bio_sed_interface.c.o"
+/usr/bin/ranlib libbio-static.a

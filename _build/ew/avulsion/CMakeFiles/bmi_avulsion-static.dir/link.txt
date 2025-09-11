@@ -1,0 +1,2 @@
+/usr/bin/ar qc libbmi_avulsion.a "CMakeFiles/bmi_avulsion-static.dir/bmi_avulsion.c.o"
+/usr/bin/ranlib libbmi_avulsion.a

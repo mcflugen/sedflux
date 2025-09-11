@@ -1,0 +1,2 @@
+/usr/bin/ar qc libxshore-static.a "CMakeFiles/xshore-static.dir/xshore.c.o"
+/usr/bin/ranlib libxshore-static.a

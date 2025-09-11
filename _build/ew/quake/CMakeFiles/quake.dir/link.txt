@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC -Werror=incompatible-pointer-types -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/quake.dir/link.d -shared -Wl,-soname,libquake.so -o libquake.so CMakeFiles/quake.dir/earthquake.c.o  -Wl,-rpath,/home/runner/work/sedflux/sedflux/_build/ew/utils: ../utils/libutils.so -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0

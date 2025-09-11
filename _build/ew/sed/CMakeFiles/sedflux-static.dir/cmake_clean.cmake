@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/sedflux-static.dir/csdms.c.o"
+  "CMakeFiles/sedflux-static.dir/csdms.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_cell.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_cell.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_column.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_column.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_cube.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_cube.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_diag.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_diag.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_epoch.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_epoch.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_hydro.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_hydro.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_hydrotrend.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_hydrotrend.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_input_files.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_input_files.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_process.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_process.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_property.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_property.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_property_file.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_property_file.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_river.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_river.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_sediment.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_sediment.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_signal.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_signal.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_tripod.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_tripod.c.o.d"
+  "CMakeFiles/sedflux-static.dir/sed_wave.c.o"
+  "CMakeFiles/sedflux-static.dir/sed_wave.c.o.d"
+  "libsedflux-static.a"
+  "libsedflux-static.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/sedflux-static.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

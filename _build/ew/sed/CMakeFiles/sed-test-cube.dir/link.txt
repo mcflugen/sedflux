@@ -1,0 +1,1 @@
+/usr/bin/cc -Werror=incompatible-pointer-types -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/sed-test-cube.dir/link.d "CMakeFiles/sed-test-cube.dir/test_cube.c.o" "CMakeFiles/sed-test-cube.dir/test_sed.c.o" -o sed-test-cube  -lm libsedflux-static.a ../utils/libutils-static.a -lm -lglib-2.0 -lgthread-2.0 -lglib-2.0 -lgthread-2.0
